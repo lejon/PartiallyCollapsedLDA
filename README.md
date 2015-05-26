@@ -41,3 +41,7 @@ An example of a "main" class is cc.mallet.topics.tui.ParallelLDA
 
 in bash.
 
+## Acknowledgements
+
+This code was developed with the gracious support of Ericsson AB.
+
