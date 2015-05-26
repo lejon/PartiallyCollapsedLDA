@@ -14,8 +14,8 @@ The toolkit is Open Source Software, and is released under the Common Public Lic
 The dataset (in the datasets folder) and the stopwords file (stopwords.txt, included in the repository) should be in the same folder as you run the sampler.
 
 Example Run command:
-java -cp PCPLDA-X.X.X.jar cc.mallet.topics.tui.ParallelLDA --run_cfg=src/main/resources/configuration/PLDAConfig.cfg
-java -jar PCPLDA-X.X.X.jar --run_cfg=src/main/resources/configuration/PLDAConfig.cfg
+```java -cp PCPLDA-X.X.X.jar cc.mallet.topics.tui.ParallelLDA --run_cfg=src/main/resources/configuration/PLDAConfig.cfg```
+```java -jar PCPLDA-X.X.X.jar --run_cfg=src/main/resources/configuration/PLDAConfig.cfg```
 
 (PCPLDA-X.X.X.jar is created in the 'target' folder by the 'mvn package' command)
 
