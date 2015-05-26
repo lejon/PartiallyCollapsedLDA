@@ -10,7 +10,6 @@ Repo for our Partially Collapsed ParallelLDA implementation described in the art
 
 The toolkit is Open Source Software, and is released under the Common Public License. You are welcome to use the code under the terms of the license for research or commercial purposes, however please acknowledge its use with a citation:
   Magnusson, Jonsson, Villani, Broman.  "Parallelizing LDA using Partially Collapsed Gibbs Sampling."
-    Hopefullt NIPS 2015.
 
 The dataset (in the datasets folder) and the stopwords file (stopwords.txt, included in the repository) should be in the same folder as you run the sampler.
 
