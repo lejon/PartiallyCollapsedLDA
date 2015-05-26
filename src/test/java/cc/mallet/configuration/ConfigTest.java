@@ -92,7 +92,7 @@ public class ConfigTest {
 		LDACommandLineParser cp = new LDACommandLineParser(args);
 		Configuration config = new ParsedLDAConfiguration(cp);
 
-		String [] expectedNames = {"error", "describe", "ericsson", "tr", "trouble", "fault", "problem", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"};
+		String [] expectedNames = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"};
 		config.activateSubconfig("demo");
 		String [] gottenNames = config.getStringArrayProperty("stopwords");
 		for (int i = 0; i < gottenNames.length; i++) {
