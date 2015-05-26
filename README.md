@@ -2,11 +2,13 @@ PCLDA
 =====
 Repo for our Partially Collapsed ParallelLDA implementation described in the article: 
 
+```
    @unpublished{MagnussonJonsson2015,
       author = "Måns Magnusson, Leif Jonsson, Mattias Villani, David Broman",
       title = "Parallelizing LDA using Partially Collapsed Gibbs Sampling",
       note = "http://github.com/lejon/PartiallyCollapsedLDA",
       year = 2015}
+```
 
 The toolkit is Open Source Software, and is released under the Common Public License. You are welcome to use the code under the terms of the license for research or commercial purposes, however please acknowledge its use with a citation:
   Magnusson, Jonsson, Villani, Broman.  "Parallelizing LDA using Partially Collapsed Gibbs Sampling."
