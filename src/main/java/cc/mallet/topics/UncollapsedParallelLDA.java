@@ -96,6 +96,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		super(config);
 
 		documentSamplerPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
+		
 		// With job stealing we can only have one global z / counts timing
 		zTimings = new long[1];
 		countTimings = new long[1];
@@ -223,10 +224,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			//printMMatrix(counts, "Broken Batch:");
 			throw new IllegalArgumentException("(Iteration = " + currentIteration + ", Batch = " + batch + ") Delta does not sum to Zero! Sumtotal: " + sumtotal);
 		}
-		//if(deltacount==0)
-		//	throw new IllegalArgumentException("(Iteration = " + currentIteration + ", Batch = " + batch + ") Deltacount was Zero!");
-
-		//System.out.println("(Iteration = " + currentIteration + ", Batch = " + batch + ") Deltacount = " + deltacount + " Sumtotal: " + sumtotal);
 	}
 
 	public void printTopicTypeCountDelta(int [][] counts, int batch) {
@@ -294,7 +291,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		topicTypeCountMapping = new int [numTopics][numTypes];
 		// Transpose of the above
 		typeTopicCounts       = new int [numTypes][numTopics];
-		//topicTypeCounts.trimToSize();
 
 		// Looping over the new instances to initialize the topic assignment randomly
 		for (Instance instance : training) {
@@ -314,7 +310,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				typeCounts[type] += 1;
 				updateTypeTopicCount(type, topic, 1);
 			}
-			//System.out.println("Added doc:");
+
 			//debugPrintDoc(data.size(),tokens.getFeatures(),topicSequence.getFeatures());
 			TopicAssignment t = new TopicAssignment (instance, topicSequence);
 			data.add (t);
@@ -1025,7 +1021,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	 * Uses AD-LDA logLikelihood calculation
 	 *  
 	 * Here we override SimpleLDA's original likelihood calculation and use the
-	 * AD-LDA logLikelihood calculation. It's unclear to me which is "correct"
+	 * AD-LDA logLikelihood calculation. 
 	 * With this approach all models likelihoods are calculated the same way
 	 */
 	@Override
@@ -1252,8 +1248,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 	/**
 	 * This is not used yet, current random scan only looks at most frequent words
-	 * @author eralljn
-	 *
 	 */
 	class TypeChangePair implements Comparable<TypeChangePair> {
 		public int type;
