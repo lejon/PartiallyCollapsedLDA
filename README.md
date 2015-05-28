@@ -41,6 +41,8 @@ An example of a "main" class is cc.mallet.topics.tui.ParallelLDA
 
 in bash.
 
+Occationally some of the "probabilistic" tests fail due to random chance. This is ok in a statistical sense but not for a test suite so this should eventually be tuned. For now if the suite is re-run it should be ok.
+
 ## Acknowledgements
 
 This code was developed with the gracious support of Ericsson AB.
