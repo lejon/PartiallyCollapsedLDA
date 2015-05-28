@@ -47,3 +47,6 @@ Occationally some of the "probabilistic" tests fail due to random chance. This i
 
 This code was developed with the gracious support of Ericsson AB.
 
+## Public DOI
+[![DOI](https://zenodo.org/badge/13374/lejon/PartiallyCollapsedLDA.svg)](http://dx.doi.org/10.5281/zenodo.18102)
+
