@@ -29,7 +29,7 @@ Please remember that this is a research prototype and the standard disclaimers a
 You will see printouts during unit tests, commented out code, old stuff not cleaned out yet etc.
  
 But the basic sampler is tested and evaluated in a scientific manner and we have gone to great pains to ensure that it is correct.
-The sampler that is referred to in the article as "PC sampler" or "PC LDA" corresponds to the class 'cc.mallet.topics.SpaliasUncollapsedParallelLDA' in the code. The variable selection parts are implemented in the 'cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA' class.
+The sampler that is referred to in the article as "PC sampler" or "PC-LDA" corresponds to the class 'cc.mallet.topics.SpaliasUncollapsedParallelLDA' in the code. The variable selection parts are implemented in the 'cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA' class.
 
 An example of a "main" class is cc.mallet.topics.tui.ParallelLDA
 
