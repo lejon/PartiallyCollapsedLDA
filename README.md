@@ -1,4 +1,4 @@
-PCLDA
+PC-LDA
 =====
 Repo for our Partially Collapsed ParallelLDA implementation described in the article [arXiv:1506.03784](http://arxiv.org/abs/1506.03784 "arXiv:1506.03784"): 
 
