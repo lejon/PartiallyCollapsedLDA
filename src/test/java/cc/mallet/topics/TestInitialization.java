@@ -45,7 +45,7 @@ public class TestInitialization {
 		SimpleLDAConfiguration config = new SimpleLDAConfiguration(new LoggingUtils(), "ALL",
 				numTopics, alpha, beta, numIter,
 				numBatches, rareWordThreshold, showTopicsInterval,
-				startDiagnosticOutput,seed,"datasets/nips.txt");
+				startDiagnosticOutput,seed,"src/main/resources/datasets/nips.txt");
 
 		LoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
@@ -151,7 +151,7 @@ public class TestInitialization {
 		SimpleLDAConfiguration config = new SimpleLDAConfiguration(new LoggingUtils(), whichModel,
 				numTopics, alphaSum, beta, numIter,
 				numBatches, rareWordThreshold, showTopicsInterval,
-				startDiagnosticOutput,4711,"datasets/nips.txt");
+				startDiagnosticOutput,4711,"src/main/resources/datasets/nips.txt");
 
 		LoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
@@ -237,7 +237,7 @@ public class TestInitialization {
 
 	@Test
 	public void testLoadRareWords() throws UnsupportedEncodingException, FileNotFoundException {
-		String dataset_fn = "datasets/SmallTexts.txt";
+		String dataset_fn = "src/main/resources/datasets/SmallTexts.txt";
 		InstanceList nonPrunedInstances = LDAUtils.loadInstances(dataset_fn, "stoplist.txt",0);
 		System.out.println(LDAUtils.instancesToString(nonPrunedInstances));
 		System.out.println("Non pruned Alphabet size: " + nonPrunedInstances.getDataAlphabet().size());
@@ -262,7 +262,7 @@ public class TestInitialization {
 	/*
 	@Test
 	public void testHandleRareWords() throws UnsupportedEncodingException, FileNotFoundException {
-		String dataset_fn = "datasets/SmallTexts.txt";
+		String dataset_fn = "src/main/resources/datasets/SmallTexts.txt";
 		String whichModel = "uncollapsed";
 		Integer numTopics = 20;
 		Double alphaSum = 1.0; 
@@ -306,7 +306,7 @@ public class TestInitialization {
 	
 	@Test
 	public void testHandleLargeRareWords() throws UnsupportedEncodingException, FileNotFoundException {
-		String dataset_fn = "datasets/enron.txt";
+		String dataset_fn = "src/main/resources/datasets/enron.txt";
 		String whichModel = "uncollapsed";
 		Integer numTopics = 20;
 		Double alphaSum = 1.0; 
@@ -379,7 +379,7 @@ public class TestInitialization {
 		SimpleLDAConfiguration config = new SimpleLDAConfiguration(new LoggingUtils(), whichModel,
 				numTopics, alphaSum, beta, numIter,
 				numBatches, rareWordThreshold, showTopicsInterval,
-				startDiagnosticOutput,4711,"datasets/nips.txt");
+				startDiagnosticOutput,4711,"src/main/resources/datasets/nips.txt");
 
 		LoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");

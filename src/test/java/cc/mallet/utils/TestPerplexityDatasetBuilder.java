@@ -37,14 +37,14 @@ public class TestPerplexityDatasetBuilder {
 		SimpleLDAConfiguration config = new SimpleLDAConfiguration(new LoggingUtils(), whichModel,
 				numTopics, alphaSum, beta, numIter,
 				numBatches, rareWordThreshold, showTopicsInterval,
-				startDiagnosticOutput,4711,"datasets/nips.txt");
+				startDiagnosticOutput,4711,"src/main/resources/datasets/nips.txt");
 		
 		return config;
 	}
 
 	@Test
 	public void testSmall() throws UnsupportedEncodingException, FileNotFoundException {
-		String dataset_fn = "datasets/small.txt";
+		String dataset_fn = "src/main/resources/datasets/small.txt";
 		//InstanceList originalInstances = LDAUtils.loadInstances(dataset_fn,	"stoplist.txt", 1);
 		InstanceList originalInstances = LDAUtils.loadInstances(dataset_fn,	null, 1);
 		InstanceList [] datasets = PerplexityDatasetBuilder.buildPerplexityDataset(originalInstances, 2);
@@ -71,7 +71,7 @@ public class TestPerplexityDatasetBuilder {
 
 	@Test
 	public void testNips() throws UnsupportedEncodingException, FileNotFoundException {
-		String dataset_fn = "datasets/nips.txt";
+		String dataset_fn = "src/main/resources/datasets/nips.txt";
 		InstanceList originalInstances = LDAUtils.loadInstances(dataset_fn, "stoplist.txt", 0);
 		
 		InstanceList [] datasets = PerplexityDatasetBuilder.buildPerplexityDataset(originalInstances, 5);
@@ -112,7 +112,7 @@ public class TestPerplexityDatasetBuilder {
 
 	@Test
 	public void testNipsWithSampling() throws IOException {
-		String dataset_fn = "datasets/nips.txt";
+		String dataset_fn = "src/main/resources/datasets/nips.txt";
 		
 		String whichModel = "uncollapsed_paranoid";
 		Integer numBatches = 6;

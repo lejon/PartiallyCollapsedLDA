@@ -37,7 +37,7 @@ public class DeltaWritingTest {
 		SimpleLDAConfiguration config = new SimpleLDAConfiguration(new LoggingUtils(), whichModel,
 				numTopics, alphaSum, beta, numIter,
 				numBatches, rareWordThreshold, showTopicsInterval,
-				startDiagnosticOutput,4711,"datasets/nips.txt");
+				startDiagnosticOutput,4711,"src/main/resources/datasets/nips.txt");
 		
 		UncollapsedParallelLDA uncollapsed = new UncollapsedParallelLDA(config);
 		

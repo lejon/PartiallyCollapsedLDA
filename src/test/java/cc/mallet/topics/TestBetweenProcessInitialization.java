@@ -42,7 +42,7 @@ public class TestBetweenProcessInitialization {
 		SimpleLDAConfiguration config = new SimpleLDAConfiguration(new LoggingUtils(), "ALL",
 				numTopics, alphaSum, beta, numIter,
 				numBatches, rareWordThreshold, showTopicsInterval,
-				startDiagnosticOutput,fixedSeed,"datasets/nips.txt");
+				startDiagnosticOutput,fixedSeed,"src/main/resources/datasets/nips.txt");
 
 		LoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
