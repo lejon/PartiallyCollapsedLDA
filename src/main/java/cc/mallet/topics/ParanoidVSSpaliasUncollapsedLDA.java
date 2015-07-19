@@ -1,9 +1,7 @@
 package cc.mallet.topics;
 
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.LabelSequence;
 
 public class ParanoidVSSpaliasUncollapsedLDA extends NZVSSpaliasUncollapsedParallelLDA {
 
@@ -65,8 +63,8 @@ public class ParanoidVSSpaliasUncollapsedLDA extends NZVSSpaliasUncollapsedParal
 	}
 
 	@Override
-	void sampleTopicAssignmentsParallel(FeatureSequence tokens, LabelSequence topics, int myBatch) {		//SamplingResult res = super.sampleTopicAssignmentsParallel(tokenSequence, oneDocTopics, myBatch);
-		super.sampleTopicAssignmentsParallel(tokens, topics, myBatch);
+	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {		//SamplingResult res = super.sampleTopicAssignmentsParallel(tokenSequence, oneDocTopics, myBatch);
+		super.sampleTopicAssignmentsParallel(ctx);
 		// THIS CANNOT BE ENSURED with a job stealing implementation
 		//ensureConsistentTopicTypeCountDelta(batchLocalTopicTypeUpdates, myBatch);
 		//return res;

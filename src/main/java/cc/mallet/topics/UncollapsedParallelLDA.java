@@ -838,14 +838,14 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 								(FeatureSequence) data.get(docIdx).instance.getData();
 						LabelSequence topicSequence =
 								(LabelSequence) data.get(docIdx).topicSequence;
-						sampleTopicAssignmentsParallel (tokenSequence, topicSequence, myBatch);
+						sampleTopicAssignmentsParallel (new LDADocSamplingContext(tokenSequence, topicSequence, myBatch, docIdx));
 					}
 				}
 				else {
 					int range = (endDoc-startDoc);
 					int startDoc1 = startDoc;
 					int endDoc1 = startDoc + (range / 2);
-					int startDoc2 = endDoc1;
+					int startDoc2 = endDoc1+1;
 					int endDoc2 = endDoc;
 					invokeAll(new RecursiveDocumentSampler(startDoc1,endDoc1,myBatch + 1,limit),
 							new RecursiveDocumentSampler(startDoc2,endDoc2,myBatch + 2,limit));
@@ -919,7 +919,50 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		System.out.println();System.out.println();
 	}
 
-	void sampleTopicAssignmentsParallel(FeatureSequence tokens, LabelSequence topics, int myBatch) {
+	protected class LDADocSamplingContext {
+		FeatureSequence tokens;
+		LabelSequence topics;
+		int myBatch;
+		int docId = -1;
+		
+		public LDADocSamplingContext(FeatureSequence tokens, LabelSequence topics, int myBatch, int docId) {
+			super();
+			this.tokens = tokens;
+			this.topics = topics;
+			this.myBatch = myBatch;
+			this.docId = docId;
+		}
+		public FeatureSequence getTokens() {
+			return tokens;
+		}
+		public void setTokens(FeatureSequence tokens) {
+			this.tokens = tokens;
+		}
+		public LabelSequence getTopics() {
+			return topics;
+		}
+		public void setTopics(LabelSequence topics) {
+			this.topics = topics;
+		}
+		public int getMyBatch() {
+			return myBatch;
+		}
+		public void setMyBatch(int myBatch) {
+			this.myBatch = myBatch;
+		}		
+		public int getDocId() {
+			return docId;
+		}
+		public void setDocId(int docId) {
+			this.docId = docId;
+		}
+	}
+	
+	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+		FeatureSequence tokens = ctx.getTokens();
+		LabelSequence topics = ctx.getTopics();
+		int myBatch = ctx.getMyBatch();
+
 		int type, oldTopic, newTopic;
 
 		final int docLength = tokens.getLength();

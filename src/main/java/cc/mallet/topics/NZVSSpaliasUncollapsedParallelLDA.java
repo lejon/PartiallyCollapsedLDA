@@ -189,7 +189,11 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 	}*/
 
 	@Override
-	void sampleTopicAssignmentsParallel(FeatureSequence tokens, LabelSequence topics, int myBatch) {
+	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+		FeatureSequence tokens = ctx.getTokens();
+		LabelSequence topics = ctx.getTopics();
+		int myBatch = ctx.getMyBatch();
+		
 		int type, oldTopic, newTopic;
 
 		final int docLength = tokens.getLength();
