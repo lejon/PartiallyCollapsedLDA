@@ -5,7 +5,8 @@
 	<artifactId>PCPLDA</artifactId>
 
 	<!-- v1.1.9: First public release -->
-	<version>1.1.9</version>
+	<!-- v2.0.0: Major API re-design for better subclassing -->
+	<version>2.0.0-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
