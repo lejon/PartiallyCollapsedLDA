@@ -81,16 +81,28 @@ public class LDAUtils {
 	 * @throws FileNotFoundException 
 	 */
 	public static InstanceList loadInstances(String inputFile, String stoplistFile, int pruneCount) throws FileNotFoundException {
-		SimpleTokenizer tokenizer = null;
+		return loadInstances(inputFile, stoplistFile, pruneCount, true);
+	}
+	
+	public static InstanceList loadInstances(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers) throws FileNotFoundException {
+		SimpleTokenizer tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*(\\S*)[\\s,]*(.*)$";
 		int dataGroup = 3;
 		int labelGroup = 2;
 		int nameGroup = 1; // data, label, name fields
 
 		if (stoplistFile != null) {
-			tokenizer = new NumericAlsoTokenizer(new File(stoplistFile));
+			if(keepNumbers) {				
+				tokenizer = new NumericAlsoTokenizer(new File(stoplistFile));
+			} else {
+				tokenizer = new SimpleTokenizer(new File(stoplistFile));
+			}
 		} else {
-			tokenizer = new NumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
+			if(keepNumbers) {
+				tokenizer = new NumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
+			} else {
+				tokenizer = new SimpleTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
+			}
 		}
 
 		if (pruneCount > 0) {
@@ -225,7 +237,6 @@ public class LDAUtils {
 	}	
 	
 	public static void logLikelihoodToFile(LogState parameterObject) {
-		parameterObject.logger.info("\n<" + parameterObject.iteration + "> Log Likelihood: " + parameterObject.logLik + "\n" +parameterObject.wordsPerTopic);
 		String likelihoodFile = parameterObject.loggingPath + "/likelihood.txt";
 		try(PrintWriter out = new PrintWriter(new BufferedWriter(
 				new FileWriter(likelihoodFile, true)))) {
@@ -448,14 +459,24 @@ public class LDAUtils {
 	}
 	
 	public static String formatDouble(double d, DecimalFormat mydecimalFormat) {
+		return formatDouble(d, mydecimalFormat, 4);
+	}
+	
+	public static String formatDouble(double d, DecimalFormat mydecimalFormat, int noDigits) {
+		if ( d == 0.0 ) return "<0.0>";
 		if ( d<0.0001 && d>0 || d > -0.0001 && d < 0) {
 			return mydecimalFormat.format(d);
 		} else {
-			return String.format("%.4f", d);
+			String formatString = "%." + noDigits + "f";
+			return String.format(formatString, d);
 		}
 	}
-
+	
 	public static void writeASCIIDoubleMatrix(double[][] matrix, int rows, int columns, String fn, String sep) throws FileNotFoundException, IOException {
+		writeASCIIDoubleMatrix(matrix, rows, columns, fn, sep, 4);
+	}
+
+	public static void writeASCIIDoubleMatrix(double[][] matrix, int rows, int columns, String fn, String sep, int noDigits) throws FileNotFoundException, IOException {
 		DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0");
 		File file = new File(fn);
 		if (file.exists()) {
@@ -467,7 +488,7 @@ public class LDAUtils {
 				PrintWriter pw  = new PrintWriter(bw)) {
 			for (int i = 0; i < matrix.length; i++) {
 				for (int j = 0; j < matrix[i].length; j++) {
-					pw.print(formatDouble(matrix[i][j],mydecimalFormat) + "");
+					pw.print(formatDouble(matrix[i][j],mydecimalFormat,noDigits) + "");
 					if((j+1)<matrix[i].length) {
 						pw.print(sep + " ");
 					}
