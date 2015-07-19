@@ -29,7 +29,16 @@ public class LoggingUtils {
 
 	String baseDir = "";
 	File currentLogDirf = null;
-	private List<Timing> timings = new ArrayList<Timing>();
+	List<Timing> timings = new ArrayList<Timing>();
+
+	public LoggingUtils() {	}
+	
+	public LoggingUtils(String baseDir, File currentLogDirf, List<Timing> timings) {
+		super();
+		this.baseDir = baseDir;
+		this.currentLogDirf = currentLogDirf;
+		this.timings.addAll(timings);
+	}
 
 	public synchronized File getLogDir() {
 		if(currentLogDirf==null) throw new IllegalArgumentException("You havent initialized the Logger before usage");
@@ -135,11 +144,11 @@ public class LoggingUtils {
 		return suiteNameBase;
 	}
 
-	public void logTiming(Timing timeing) {
+	public synchronized void logTiming(Timing timeing) {
 		timings.add(timeing);
 	}
 
-	public void clearTimings() {
+	public synchronized void clearTimings() {
 		timings.clear();
 	}
 
@@ -258,7 +267,7 @@ public class LoggingUtils {
 		return result;
 	}
 
-	private void logTimings(String logfilename,String logdir) throws FileNotFoundException {
+	public void logTimings(String logfilename,String logdir) throws FileNotFoundException {
 		String separator = ",";
 		if(timings.size()>0) {
 			PrintWriter out = new PrintWriter(logdir + logfilename + ".txt");
