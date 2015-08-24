@@ -466,7 +466,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				logState = new LogState(logLik, iteration, tw, loggingPath, logger);
 				LDAUtils.logLikelihoodToFile(logState);
 				System.out.println(tw);
-				logger.info("\n<" + iteration + "> Log Likelihood: " + logLik + "\n" + wordsPerTopic);
+				logger.info("\n<" + iteration + "> Log Likelihood: " + logLik);
 				if(logTypeTopicDensity || logDocumentDensity) {
 					density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 					docDensity = kdDensities.get() / (double) numTopics / numTypes;
