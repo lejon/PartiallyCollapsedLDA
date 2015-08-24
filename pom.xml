@@ -6,7 +6,8 @@
 
 	<!-- v1.1.9: First public release -->
 	<!-- v2.0.0: Major API re-design for better subclassing -->
-	<version>2.0.0-SNAPSHOT</version>
+	<!-- v2.1.1: Fixed small bug when trying to print top words when have none. Added simple support for gracefully aborting the sampler -->
+	<version>2.1.1</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
