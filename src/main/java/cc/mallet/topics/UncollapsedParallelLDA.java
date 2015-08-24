@@ -405,7 +405,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			LDAUtils.logStatsToFile(stats);
 		}
 
-		for (int iteration = 1; iteration <= iterations; iteration++) {
+		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
 			preIteration();
 			currentIteration = iteration;
 			//if((iteration%100)==0) System.out.println("Iteration: " + iteration);

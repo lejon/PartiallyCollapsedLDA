@@ -17,8 +17,9 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;
 
-public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler {
+public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, AbortableSampler {
 
+	protected static volatile boolean abort = false;
 	/**
 	 * Base class for all modifications of SimpleLDA done to test the Partially Collapsed Gibbs Sampler.
 	 * I had to extend SimpleLDA to instantiate a new logger to manage input, as the original logger is
@@ -93,7 +94,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler {
 		String tw = topWords (wordsPerTopic);
 		LDAUtils.logLikelihoodToFile(logLik,0,tw,loggingPath,logger);
 
-		for (int iteration = 1; iteration <= iterations; iteration++) {
+		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
 			currentIteration = iteration;
 
 			long iterationStart = System.currentTimeMillis();
@@ -272,6 +273,16 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler {
 				tokensPerTopic[topic] += typeTopicCounts[type][topic];
 			}
 		}
+	}
+
+	@Override
+	public void abort() {
+		abort = true; 
+	}
+
+	@Override
+	public boolean getAbort() {
+		return abort;
 	}
 
 
