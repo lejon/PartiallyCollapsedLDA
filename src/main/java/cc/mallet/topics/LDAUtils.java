@@ -175,6 +175,9 @@ public class LDAUtils {
 	}
 
 	public static String[][] getTopWords(int noWords, int numTypes, int numTopics, int[][] typeTopicCounts, Alphabet alphabet) {
+		if(noWords>numTypes) {
+			throw new IllegalArgumentException("Asked for more words (" + noWords + ") than there are types (unique words = noTypes = " + numTypes + ")."); 
+		}
 		IDSorter[] sortedWords = new IDSorter[numTypes];
 		String [][] topTopicWords = new String[numTopics][noWords];
 
@@ -185,7 +188,7 @@ public class LDAUtils {
 
 			Arrays.sort(sortedWords);
 
-			for (int i=0; i < noWords; i++) {
+			for (int i=0; i < noWords && i < topTopicWords[topic].length && i < numTypes; i++) {
 				topTopicWords[topic][i] = (String) alphabet.lookupObject(sortedWords[i].getID());
 			}
 		}
