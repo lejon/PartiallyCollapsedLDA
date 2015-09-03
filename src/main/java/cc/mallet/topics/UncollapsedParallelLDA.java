@@ -840,7 +840,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 								(FeatureSequence) data.get(docIdx).instance.getData();
 						LabelSequence topicSequence =
 								(LabelSequence) data.get(docIdx).topicSequence;
-						sampleTopicAssignmentsParallel (new LDADocSamplingContext(tokenSequence, topicSequence, myBatch, docIdx));
+						sampleTopicAssignmentsParallel (new UncollapsedLDADocSamplingContext(tokenSequence, topicSequence, myBatch, docIdx));
 					}
 				}
 				else {
@@ -921,45 +921,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		System.out.println();System.out.println();
 	}
 
-	protected class LDADocSamplingContext {
-		FeatureSequence tokens;
-		LabelSequence topics;
-		int myBatch;
-		int docId = -1;
-		
-		public LDADocSamplingContext(FeatureSequence tokens, LabelSequence topics, int myBatch, int docId) {
-			super();
-			this.tokens = tokens;
-			this.topics = topics;
-			this.myBatch = myBatch;
-			this.docId = docId;
-		}
-		public FeatureSequence getTokens() {
-			return tokens;
-		}
-		public void setTokens(FeatureSequence tokens) {
-			this.tokens = tokens;
-		}
-		public LabelSequence getTopics() {
-			return topics;
-		}
-		public void setTopics(LabelSequence topics) {
-			this.topics = topics;
-		}
-		public int getMyBatch() {
-			return myBatch;
-		}
-		public void setMyBatch(int myBatch) {
-			this.myBatch = myBatch;
-		}		
-		public int getDocId() {
-			return docId;
-		}
-		public void setDocId(int docId) {
-			this.docId = docId;
-		}
-	}
-	
 	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
