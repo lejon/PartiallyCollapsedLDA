@@ -11,6 +11,7 @@ import org.apache.commons.lang.NotImplementedException;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.topics.SimpleLDA;
 import cc.mallet.topics.TopicAssignment;
+import cc.mallet.types.Alphabet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
@@ -29,6 +30,8 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	 */
 	private static final long serialVersionUID = 1L;
 	int startSeed;
+	
+	protected Alphabet targetAlphabet;
 
 	protected LDAConfiguration config;
 

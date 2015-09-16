@@ -34,6 +34,7 @@ import cc.mallet.topics.randomscan.topic.TopicBatchBuilder;
 import cc.mallet.topics.randomscan.topic.TopicBatchBuilderFactory;
 import cc.mallet.topics.randomscan.topic.TopicIndexBuilder;
 import cc.mallet.topics.randomscan.topic.TopicIndexBuilderFactory;
+import cc.mallet.types.Alphabet;
 import cc.mallet.types.ConditionalDirichlet;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
@@ -276,6 +277,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	@Override
 	public void addInstances (InstanceList training) {
 		alphabet = training.getDataAlphabet();
+		targetAlphabet = training.getTargetAlphabet();
 		numTypes = alphabet.size();
 		typeCounts = new int[numTypes];
 		batchLocalTopicTypeUpdates = new AtomicInteger[numTopics][numTypes];
@@ -1280,4 +1282,55 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			this.deltaCount = deltaCount;
 		}
 	}
+	
+	public void setPhi(double[][] phi) {
+		this.phi = phi;
+	}
+
+	/**
+	 * Safer version of setPhi where the data and target alphabets are compared 
+	 * to ensure that the vocabularies and document classes are the same as in
+	 * the sampler that generated Phi
+	 * @param phi
+	 * @param dataAlphabet
+	 * @param targetAlphabet
+	 */
+	public void setPhi(double[][] phi, Alphabet dataAlphabet, Alphabet targetAlphabet) {
+		if(!dataAlphabet.equals(getAlphabet())) {
+			throw new IllegalArgumentException("Vocabularies does not match!");
+		}
+		if(!targetAlphabet.equals(this.targetAlphabet)) {
+			throw new IllegalArgumentException("Document class labels does not match!");
+		}
+		this.phi = phi;
+	}
+	
+	public double [][] getZbar() {
+		double [][] docTopicMeans = new double [data.size()][numTopics];
+		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
+			FeatureSequence tokenSequence =
+					(FeatureSequence) data.get(docIdx).instance.getData();
+			LabelSequence topicSequence =
+					(LabelSequence) data.get(docIdx).topicSequence;
+
+			int docLength = tokenSequence.getLength();
+			int [] oneDocTopics = topicSequence.getFeatures();
+
+			double[] localTopicCounts = new double[numTopics];
+
+			for (int position = 0; position < docLength; position++) {
+				int topicInd = oneDocTopics[position];
+				localTopicCounts[topicInd]++;
+			}
+
+			for (int k = 0; k < numTopics; k++) {
+				docTopicMeans[docIdx][k] = localTopicCounts[k] / docLength;
+				if(Double.isInfinite(docTopicMeans[docIdx][k]) || Double.isNaN(docTopicMeans[docIdx][k]) || docTopicMeans[docIdx][k] < 0) { 
+					throw new IllegalStateException("docTopicMeans is broken!");  
+				}
+			}
+		}
+		return docTopicMeans;
+	}
+
 }

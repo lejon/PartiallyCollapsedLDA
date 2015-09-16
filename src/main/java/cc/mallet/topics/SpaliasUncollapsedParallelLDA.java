@@ -10,6 +10,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.types.Alphabet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
@@ -370,37 +371,4 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		}
 		return cumsum.length-1;
 	}
-
-	public void setPhi(double[][] phi) {
-		this.phi = phi;
-	}
-	
-	public double [][] getZbar() {
-		double [][] docTopicMeans = new double [data.size()][numTopics];
-		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
-			FeatureSequence tokenSequence =
-					(FeatureSequence) data.get(docIdx).instance.getData();
-			LabelSequence topicSequence =
-					(LabelSequence) data.get(docIdx).topicSequence;
-
-			int docLength = tokenSequence.getLength();
-			int [] oneDocTopics = topicSequence.getFeatures();
-
-			double[] localTopicCounts = new double[numTopics];
-
-			for (int position = 0; position < docLength; position++) {
-				int topicInd = oneDocTopics[position];
-				localTopicCounts[topicInd]++;
-			}
-
-			for (int k = 0; k < numTopics; k++) {
-				docTopicMeans[docIdx][k] = localTopicCounts[k] / docLength;
-				if(Double.isInfinite(docTopicMeans[docIdx][k]) || Double.isNaN(docTopicMeans[docIdx][k]) || docTopicMeans[docIdx][k] < 0) { 
-					throw new IllegalStateException("docTopicMeans is broken!");  
-				}
-			}
-		}
-		return docTopicMeans;
-	}
-
 }
