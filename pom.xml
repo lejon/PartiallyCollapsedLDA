@@ -8,7 +8,8 @@
 	<!-- v2.0.0: Major API re-design for better subclassing -->
 	<!-- v2.1.1: Fixed small bug when trying to print top words when have none. Added simple support for gracefully aborting the sampler -->
 	<!-- v2.1.2: Target class is now a proper MALLET label in a "traget Alphabet". Phi is settable. -->
-	<version>2.1.2</version>
+	<!-- v2.2.2: Added API method for setting Phi "safely", which ensures that Alphabets match -->
+	<version>2.2.2</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
