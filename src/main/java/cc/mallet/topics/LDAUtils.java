@@ -29,6 +29,7 @@ import cc.mallet.pipe.Pipe;
 import cc.mallet.pipe.SerialPipes;
 import cc.mallet.pipe.SimpleTokenizer;
 import cc.mallet.pipe.StringList2FeatureSequence;
+import cc.mallet.pipe.Target2Label;
 import cc.mallet.pipe.iterator.CsvIterator;
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.topics.TopicInferencer;
@@ -162,9 +163,12 @@ public class LDAUtils {
 		CharSequenceLowercase csl = new CharSequenceLowercase();
 		StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
 
+		Target2Label ttl = new Target2Label ();
+		
 		pipes.add(csl);
 		pipes.add(tokenizer);
 		pipes.add(sl2fs);
+		pipes.add(ttl);
 
 		Pipe serialPipe = new SerialPipes(pipes);
 
