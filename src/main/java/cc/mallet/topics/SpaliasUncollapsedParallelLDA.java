@@ -10,7 +10,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.types.Alphabet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
@@ -26,6 +25,8 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
 	private ExecutorService tableBuilderExecutor;
+	
+	boolean staticPhiAliasTableIsBuild = false;
 
 	public SpaliasUncollapsedParallelLDA(LDAConfiguration config) {
 		super(config);
@@ -127,6 +128,48 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 			System.exit(-1);
 		}
 		super.preIteration();
+	}
+	
+	public void preIterationGivenPhi() {
+		
+		if(!staticPhiAliasTableIsBuild) {
+			transpose(phi, phitrans);
+
+			List<ParallelTableBuilder> builders = new ArrayList<>();
+			final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
+			if(topicTypeIndices!=null) {
+				// The topicIndexBuilder supports having different types per topic,
+				// this is currently not used, so we can just pick the first topic
+				// since it will be the same for all topics
+				int [] typesToSample = topicTypeIndices[0];
+				for (int typeIdx = 0; typeIdx < typesToSample.length; typeIdx++) {
+					builders.add(new ParallelTableBuilder(typesToSample[typeIdx]));
+				}
+				// if the topicIndexBuilder returns null it means sample ALL types
+			} else {
+				for (int type = 0; type < numTypes; type++) {
+					builders.add(new ParallelTableBuilder(type));
+				}
+			}
+
+			List<Future<TableBuildResult>> results;
+			try {
+				results = tableBuilderExecutor.invokeAll(builders);
+				for (Future<TableBuildResult> result : results) {
+					aliasTables[result.get().type] = result.get().table;
+					typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				System.exit(-1);
+			}
+			super.preIterationGivenPhi();
+			
+			staticPhiAliasTableIsBuild = true;
+		}
 	}
 
 	@Override

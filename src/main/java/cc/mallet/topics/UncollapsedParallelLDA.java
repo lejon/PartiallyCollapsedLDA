@@ -503,6 +503,58 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 	}
 
+	public void sampleZGivenPhi(int iterations) {
+		preSample();
+
+		double logLik = modelLogLikelihood();	
+		String tw = topWords (wordsPerTopic);
+
+		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
+			preIterationGivenPhi();
+			currentIteration = iteration;
+			//if((iteration%100)==0) System.out.println("Iteration: " + iteration);
+			// Saves timestamp
+			long iterationStart = System.currentTimeMillis();
+			for (int i = 0; i < zTimings.length; i++) {
+				zTimings[i] = iterationStart;
+			}
+
+			// Sample z by dividing the corpus in batches
+			preZ();
+			loopOverBatches();
+
+			long beforeSync = System.currentTimeMillis();
+			try {
+				updateCounts();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			postZ();
+			long endTypeTopicUpdate = System.currentTimeMillis();
+			logger.fine("Time for updating type-topic counts: " + 
+					(endTypeTopicUpdate - beforeSync) + "ms\t");
+
+			logger.fine("\nIteration " + iteration);
+			logger.fine("--------------------");
+
+			// Occasionally print more information
+			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
+				logLik = modelLogLikelihood();	
+				tw = topWords (wordsPerTopic);
+				System.out.println(tw);
+				logger.info("\n<" + iteration + "> Log Likelihood: " + logLik);
+			}
+
+			kdDensities.set(0);
+
+			postIterationGivenPhi();
+			//long iterEnd = System.currentTimeMillis();
+			//System.out.println("Iteration "+ currentIteration + " took: " + (iterEnd-iterStart) + " milliseconds...");
+		}
+
+		postSample();
+	}
+	
 	// Nothing to do, hooks for subclasses
 	private void postPhi() {
 	}
@@ -1332,5 +1384,16 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 		return docTopicMeans;
 	}
+
+	// Nothing to do, hooks for subclasses
+	public void preIterationGivenPhi() {
+		
+	}
+	
+	// Nothing to do, hooks for subclasses
+	public void postIterationGivenPhi() {
+		
+	}
+
 
 }
