@@ -131,7 +131,6 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	}
 	
 	public void preIterationGivenPhi() {
-		
 		if(!staticPhiAliasTableIsBuild) {
 			transpose(phi, phitrans);
 
@@ -250,7 +249,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 			int topicIdx = 1;
 			while ( topicIdx < nonZeroTopicCnt ) {
 				topic = nonZeroTopics[topicIdx];
-				score = localTopicCounts[topic] * phiType[topic];
+				score = localTopicCounts[topic] * phiType[topic] * topicPriors[topic][type];
 				cumsum[topicIdx] = score + cumsum[topicIdx-1];
 				topicIdx++;
 			}

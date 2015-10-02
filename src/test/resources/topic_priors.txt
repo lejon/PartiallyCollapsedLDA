@@ -1,0 +1,2 @@
+0, java, jvm, jre, NullPointerException
+19, cell, control, cabinet
