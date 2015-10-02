@@ -235,6 +235,86 @@ public class SystematicSamplingTest {
 			fail("Counts are not from the same distribution: p-value = " + pval);
 		}
 	}
+	
+	@Test
+	public void testSystemicSamplingMaxTimes() {
+		double epsilon = 0.001;
+		int [] counts = {4, 140, 14, 20, 13, 110, 29, 90, 34, 29, 230};
+		
+		System.out.println("Given counts are:");
+		for (int i = 0; i < counts.length; i++) {
+			System.out.print(counts[i] + ", ");
+		}
+		System.out.println();
+		
+		int sum = SystematicSampling.sum(counts);
+		System.out.println("Sum is: " + sum);
+		double [] probs = new double[counts.length];
+		for (int i = 0; i < probs.length; i++) {
+			probs[i] = ((double)counts[i]) / sum;
+		}
+
+		int [] samples = new int[counts.length]; 
+		int n = SystematicSampling.max(counts);
+		int loops = n;
+		System.out.println("max is: " + n);
+		for (int loop = 0; loop < loops; loop++) {
+			int [] indices = SystematicSampling.sample(counts, n);
+			for (int j = 0; j < indices.length; j++) {
+				samples[indices[j]] += 1;
+			}
+		}
+		System.out.println("Samples are:");
+		for (int i = 0; i < samples.length; i++) {
+			System.out.print(samples[i] + ", ");
+		}
+		System.out.println();
+
+		int sampleSum = SystematicSampling.sum(samples);
+		double [] sampleProbs = new double[counts.length];
+		for (int i = 0; i < probs.length; i++) {
+			sampleProbs[i] = ((double)samples[i]) / sampleSum;
+		}
+
+		System.out.println("Given probs are:");
+		for (int i = 0; i < probs.length; i++) {
+			System.out.print(String.format("%02f, ",probs[i]));
+		}
+		System.out.println();
+		System.out.println("Sample probs are:");
+		for (int i = 0; i < sampleProbs.length; i++) {
+			System.out.print(String.format("%02f, ", sampleProbs[i]));
+		}
+		System.out.println();
+
+		Dirichlet dir = new Dirichlet(probs);
+		double llratio = dir.dirichletMultinomialLikelihoodRatio(counts, samples);
+		System.out.println("LLratio: " + llratio);
+
+		ChiSquareTest cs = new ChiSquareTest();
+		long [] lcounts = new long[counts.length];
+		for (int i = 0; i < lcounts.length; i++) {
+			lcounts[i] = counts [i];
+		}
+		long [] lsamples = new long[samples.length];
+		for (int i = 0; i < lcounts.length; i++) {
+			lsamples[i] = samples[i];
+		}
+
+		ChiSquaredDistribution distribution = new ChiSquaredDistribution((double) counts.length - 1);
+		System.out.println("Chi of llratio: " +  (1-distribution.cumulativeProbability(llratio)));
+
+		double pval = cs.chiSquareTestDataSetsComparison(lcounts, lsamples);
+		System.out.println("p-value: " + pval);
+		// The test returns:
+		/* The number (pval) returned is the smallest significance level at which one
+		 * can reject the null hypothesis that the observed counts conform to the
+		 * same distribution.
+		 */
+		if(llratio<epsilon) {
+			fail("Counts are not from the same distribution: p-value = " + pval);
+		}
+	}
 
 	/** 
 	 * When the step is 1 all bins should be included as many times as
