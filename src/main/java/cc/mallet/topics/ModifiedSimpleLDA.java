@@ -289,4 +289,37 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	}
 
 
+	public double [][] getZbar() {
+		return ModifiedSimpleLDA.getZbar(data,numTopics);
+	}
+
+	public static double [][] getZbar(ArrayList<TopicAssignment> data, int numTopics) {
+		double [][] docTopicMeans = new double [data.size()][numTopics];
+		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
+			FeatureSequence tokenSequence =
+					(FeatureSequence) data.get(docIdx).instance.getData();
+			LabelSequence topicSequence =
+					(LabelSequence) data.get(docIdx).topicSequence;
+	
+			int docLength = tokenSequence.getLength();
+			int [] oneDocTopics = topicSequence.getFeatures();
+	
+			double[] localTopicCounts = new double[numTopics];
+	
+			for (int position = 0; position < docLength; position++) {
+				int topicInd = oneDocTopics[position];
+				localTopicCounts[topicInd]++;
+			}
+	
+			for (int k = 0; k < numTopics; k++) {
+				docTopicMeans[docIdx][k] = localTopicCounts[k] / docLength;
+				if(Double.isInfinite(docTopicMeans[docIdx][k]) || Double.isNaN(docTopicMeans[docIdx][k]) || docTopicMeans[docIdx][k] < 0) { 
+					throw new IllegalStateException("docTopicMeans is broken!");  
+				}
+			}
+		}
+		return docTopicMeans;
+	}
+
+
 }

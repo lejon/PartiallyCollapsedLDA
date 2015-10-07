@@ -47,7 +47,6 @@ import cc.mallet.types.IDSorter;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
-import cc.mallet.types.MatrixOps;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LDAThreadFactory;
@@ -154,9 +153,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				e.printStackTrace();
 				throw new IllegalArgumentException(e);
 			}
-			System.out.println("############## SET PRIORS ###############");
-			System.out.println("Priors are: ");
-			MatrixOps.print(topicPriors);
+			System.out.println("UncollapsedParallelLDA: Set priors from: " + config.getTopicPriorFilename());
 		} else {
 			double [][] priors = new double[numTopics][numTypes];
 			for (int i = 0; i < priors.length; i++) {			
@@ -1485,34 +1482,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		this.phi = phi;
 	}
 	
-	public double [][] getZbar() {
-		double [][] docTopicMeans = new double [data.size()][numTopics];
-		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
-			FeatureSequence tokenSequence =
-					(FeatureSequence) data.get(docIdx).instance.getData();
-			LabelSequence topicSequence =
-					(LabelSequence) data.get(docIdx).topicSequence;
-
-			int docLength = tokenSequence.getLength();
-			int [] oneDocTopics = topicSequence.getFeatures();
-
-			double[] localTopicCounts = new double[numTopics];
-
-			for (int position = 0; position < docLength; position++) {
-				int topicInd = oneDocTopics[position];
-				localTopicCounts[topicInd]++;
-			}
-
-			for (int k = 0; k < numTopics; k++) {
-				docTopicMeans[docIdx][k] = localTopicCounts[k] / docLength;
-				if(Double.isInfinite(docTopicMeans[docIdx][k]) || Double.isNaN(docTopicMeans[docIdx][k]) || docTopicMeans[docIdx][k] < 0) { 
-					throw new IllegalStateException("docTopicMeans is broken!");  
-				}
-			}
-		}
-		return docTopicMeans;
-	}
-
 	// Nothing to do, hooks for subclasses
 	public void preIterationGivenPhi() {
 		

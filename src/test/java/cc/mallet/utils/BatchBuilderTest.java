@@ -99,13 +99,16 @@ public class BatchBuilderTest {
 
 		@Override
 		public int[][] getDocumentTopicMatrix() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public int[][] getTypeTopicMatrix() {
-			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public double[][] getZbar() {
 			return null;
 		}
 	}
