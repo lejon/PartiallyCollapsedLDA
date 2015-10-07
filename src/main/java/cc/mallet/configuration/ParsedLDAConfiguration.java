@@ -436,4 +436,9 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 				(getStringProperty("log_phi_density").equalsIgnoreCase("true") 
 						|| getStringProperty("log_phi_density").equals("1"));
 	}
+
+	@Override
+	public String getTopicPriorFilename() {
+		return getStringProperty("topic_prior_filename");
+	}
 }

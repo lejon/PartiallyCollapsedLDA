@@ -881,5 +881,10 @@ public class TopicMassExperiment {
 		public boolean logPhiDensity(String logPhiDensityDefault) {
 			return false;
 		}
+
+		@Override
+		public String getTopicPriorFilename() {
+			return pc.getTopicPriorFilename();
+		}
 	}
 }

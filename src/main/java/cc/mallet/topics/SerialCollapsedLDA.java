@@ -394,4 +394,9 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 		}
 		return res;
 	}
+	
+	public double [][] getZbar() {
+		return ModifiedSimpleLDA.getZbar(data,numTopics);
+	}
+
 }

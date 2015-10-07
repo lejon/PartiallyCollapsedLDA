@@ -118,4 +118,6 @@ public interface LDAConfiguration {
 	public double getVariableSelectionPrior(double vsPriorDefault);
 
 	public boolean logPhiDensity(String logPhiDensityDefault);
+
+	public String getTopicPriorFilename();
 }

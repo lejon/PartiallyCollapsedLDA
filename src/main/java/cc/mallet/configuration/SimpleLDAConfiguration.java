@@ -25,7 +25,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private int resultSetSize = 1;
 	private Integer fullPhiPeriod;
 	private Double topTokensToSample;
-
+	private String topicPriorFilename;
 	// How to build which words in the topics to sample
 	private String topic_building_scheme;
 	// How to build the topic batches
@@ -94,6 +94,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	@Override
 	public String getDatasetFilename() {
 		return dataset_fn;
+	}
+
+	public void setDatasetFilename(String fn) {
+		dataset_fn = fn;
 	}
 
 	@Override
@@ -374,5 +378,13 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	@Override
 	public boolean logPhiDensity(String logPhiDensityDefault) {
 		return false;
+	}
+
+	public String getTopicPriorFilename() {
+		return topicPriorFilename;
+	}
+
+	public void setTopicPriorFilename(String topicPriorFilename) {
+		this.topicPriorFilename = topicPriorFilename;
 	}
 }

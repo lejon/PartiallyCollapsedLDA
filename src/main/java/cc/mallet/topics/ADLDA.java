@@ -476,4 +476,8 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 		}
 		return res;
 	}
+	
+	public double [][] getZbar() {
+		return ModifiedSimpleLDA.getZbar(data,numTopics);
+	}
 }

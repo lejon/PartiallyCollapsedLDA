@@ -10,9 +10,14 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -27,9 +32,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.topics.TopicAssignment;
 import cc.mallet.topics.randomscan.document.BatchBuilderFactory;
 import cc.mallet.topics.randomscan.document.DocumentBatchBuilder;
+import cc.mallet.topics.randomscan.topic.AllWordsTopicIndexBuilder;
 import cc.mallet.topics.randomscan.topic.TopicBatchBuilder;
 import cc.mallet.topics.randomscan.topic.TopicBatchBuilderFactory;
 import cc.mallet.topics.randomscan.topic.TopicIndexBuilder;
@@ -48,7 +53,7 @@ import cc.mallet.util.LDAThreadFactory;
 import cc.mallet.util.LoggingUtils;
 
 
-public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibbsSampler{
+public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibbsSampler, LDASamplerWithPhi {
 
 	private static final long serialVersionUID = 1L;
 	protected double[][] phi;
@@ -92,6 +97,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	long [] countTimings;
 
 	SparseDirichlet dirichletSampler;
+	boolean haveTopicPriors = false;
+	protected double[][] topicPriors;
 
 	public UncollapsedParallelLDA(LDAConfiguration config) {
 		super(config);
@@ -135,6 +142,87 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		for (int i = 0; i < globalDeltaNUpdates.length; i++) {
 			globalDeltaNUpdates[i] = new TIntIntHashMap();
 		}
+	}
+
+	protected void initializePriors(LDAConfiguration config) {
+		if(config.getTopicPriorFilename()!=null) {
+			try {
+				topicPriors = calculatePriors(config.getTopicPriorFilename(), numTopics, numTypes, alphabet);
+				haveTopicPriors = true;
+			} catch (IOException e) {
+				e.printStackTrace();
+				throw new IllegalArgumentException(e);
+			}
+			System.out.println("UncollapsedParallelLDA: Set priors from: " + config.getTopicPriorFilename());
+		} else {
+			double [][] priors = new double[numTopics][numTypes];
+			for (int i = 0; i < priors.length; i++) {			
+				Arrays.fill(priors[i], 1.0);
+			}
+			topicPriors = priors;
+		}
+	}
+
+	protected static double [][] calculatePriors(String topicPriorFilename, int numTopics, 
+			int numTypes, Alphabet alphabet) throws IOException {
+		double [][] priors = new double[numTopics][numTypes];
+		for (int i = 0; i < priors.length; i++) {			
+			Arrays.fill(priors[i], 1.0);
+		}
+		List<String> lines = Files.readAllLines(Paths.get(topicPriorFilename), Charset.defaultCharset());
+		@SuppressWarnings("rawtypes")
+		Collection [] zeroOut = extractPriorSpec(lines, numTopics);
+		for (int topic = 0; topic < zeroOut.length; topic++) {
+			for (Object wordToZero : zeroOut[topic]) {
+				String word = wordToZero.toString().trim();
+				int wordIdx = alphabet.lookupIndex(word,false);
+				//if(wordIdx<0) throw new IllegalArgumentException("Word \"" + word + "\" does not exist in the dictionary!");
+				if(wordIdx<0) { 
+					System.err.println("WARNING: UncollapsedParallelLDA.calculatePriors: Word \"" + word + "\" does not exist in the dictionary!");
+					continue;
+				}
+				priors[topic][wordIdx] = 0.0;
+			}
+		}
+		return priors;
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	static Collection [] extractPriorSpec(List<String> lines, int numTopics) {
+		TreeSet [] toZeroOut = new TreeSet[numTopics];
+		TreeSet [] toKeep = new TreeSet[numTopics];
+		for (int i = 0; i < numTopics; i++) {
+			toZeroOut[i] = new TreeSet<String>();
+		}
+		for (int i = 0; i < numTopics; i++) {
+			toKeep[i] = new TreeSet<String>();
+		}
+		
+		// Each line will be in the format topic, word1, word2, word3 ...
+		for (String string : lines) {
+			// Skip comments
+			if(string.startsWith("#")) continue;
+			String [] spec = string.split(",");
+			// First find the topic we are specifying, it is stored first
+			int currentTopic = Integer.parseInt(spec[0]);
+			for (int i = 1; i < spec.length; i++) {
+				String word = spec[i];
+				for (int topic = 0; topic < numTopics; topic++) {
+					if(topic==currentTopic) {
+						toKeep[topic].add(word);
+					} else {
+						toZeroOut[topic].add(word);
+					}
+				}
+			}
+		}
+		
+		for (int topic = 0; topic < numTopics; topic++) {
+			toZeroOut[topic].removeAll(toKeep[topic]);
+		}
+		
+		
+		return toZeroOut;
 	}
 
 	public int[][] getTopIndices() {
@@ -321,6 +409,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		typeFrequencyIndex = IndexSorter.getSortedIndices(typeCounts);
 		typeFrequencyCumSum = calcTypeFrequencyCumSum(typeFrequencyIndex,typeCounts);
 
+		initializePriors(config);
+		
 		// Initialize the distribution of words in topics, phi, to the prior value
 		phi = new double[numTopics][numTypes];
 		// Sample up the initial Phi Matrix according to random initialization
@@ -328,7 +418,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		for (int i = 0; i < numTopics; i++) {
 			topicIndices[i] = i;
 		}
-		loopOverTopics(topicIndices, phi);
+		initialSamplePhi(topicIndices, phi);
 
 		bb = BatchBuilderFactory.get(config, this);
 		bb.calculateBatch();
@@ -824,16 +914,28 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	 * @param	size	Amount of rows to generate
 	 * @param	phiMatrix	Pointer to the phi matrix
 	 */
-	public void loopOverTopics(int [] indices, double[][] phiMatrix) {
-		loopOverTopics(indices, null, phiMatrix);
+	public void initialSamplePhi(int [] indices, double[][] phiMatrix) {
+		for (int topic : indices) {
+			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic]; 
+			// Generates a standard array to feed to the Dirichlet constructor
+			// from the dictionary representation. 
+			phiMatrix[topic] = dirichletSampler.nextDistribution(relevantTypeTopicCounts);
+		}
+		if(haveTopicPriors) {
+			for (int topic = 0; topic < phiMatrix.length; topic++) {
+				for (int type = 0; type < phiMatrix[topic].length; type++) {
+					phiMatrix[topic][type] *= topicPriors[topic][type];
+				}
+			}
+		}
 	}
 
 	/**
 	 * Samples new Phi's. If <code>topicTypeIndices</code> is NOT null it will sample phi conditionally
 	 * on the indices in <code>topicTypeIndices</code>
 	 * 
-	 * @param indices
-	 * @param topicTypeIndices
+	 * @param indices indices of the topics that should be sampled, the other ones are skipped 
+	 * @param topicTypeIndices matrix containing the indices of the types that should be sampled (per topic)
 	 * @param phiMatrix
 	 */
 	public void loopOverTopics(int [] indices, int[][] topicTypeIndices, double[][] phiMatrix) {
@@ -842,7 +944,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic]; 
 			// Generates a standard array to feed to the Dirichlet constructor
 			// from the dictionary representation. 
-			if(topicTypeIndices==null) {
+			if(topicTypeIndices==null && !haveTopicPriors ) {
 				phiMatrix[topic] = dirichletSampler.nextDistribution(relevantTypeTopicCounts);
 			} else {
 				double[] dirichletParams = new double[numTypes];
@@ -850,8 +952,31 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					int thisCount = relevantTypeTopicCounts[type];
 					dirichletParams[type] = beta + thisCount; 
 				}
+				
+				if(topicTypeIndices==null) {
+					topicTypeIndices = AllWordsTopicIndexBuilder.getAllIndicesMatrix(numTypes, numTopics);
+				}
+				int[] typeIndicesToSample = topicTypeIndices[topic];
+				
+				// If we have priors, remove any type in this topic that has zero probability
+				if(haveTopicPriors) {
+					List<Integer> mergedIndexList = new ArrayList<Integer>();
+					double [] thisTopicPriors = topicPriors[topic];
+					for (int type = 0; type < typeIndicesToSample.length; type++) {
+						if(thisTopicPriors[type]!=0.0) {
+							mergedIndexList.add(typeIndicesToSample[type]);
+						}
+					}
+					int [] newTypeIndicesToSample = new int[mergedIndexList.size()];
+					for (int i = 0; i < mergedIndexList.size(); i++) {
+						newTypeIndicesToSample[i] = mergedIndexList.get(i);
+					}
+					typeIndicesToSample = newTypeIndicesToSample;
+				}
+								
 				ConditionalDirichlet dist = new ConditionalDirichlet(dirichletParams);
-				double [] newPhi = dist.nextConditionalDistribution(phiMatrix[topic],topicTypeIndices[topic]); 
+				double [] newPhi = dist.nextConditionalDistribution(phiMatrix[topic],typeIndicesToSample); 
+				
 				phiMatrix[topic] = newPhi;
 			}
 		}
@@ -1019,7 +1144,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			sum = 0.0;
 
 			for (int topic = 0; topic < numTopics; topic++) {
-				score = (localTopicCounts[topic] + alpha) * phi[topic][type];
+				score = (localTopicCounts[topic] + alpha) * phi[topic][type] * topicPriors[topic][type];
 				topicTermScores[topic] = score;
 				sum += score;
 			}
@@ -1279,7 +1404,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 
 		// This call samples phi given the new topic indicators
-		loopOverTopics(topicIndices, phi);
+		initialSamplePhi(topicIndices, phi);
 	}
 
 	/**
@@ -1357,34 +1482,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		this.phi = phi;
 	}
 	
-	public double [][] getZbar() {
-		double [][] docTopicMeans = new double [data.size()][numTopics];
-		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
-			FeatureSequence tokenSequence =
-					(FeatureSequence) data.get(docIdx).instance.getData();
-			LabelSequence topicSequence =
-					(LabelSequence) data.get(docIdx).topicSequence;
-
-			int docLength = tokenSequence.getLength();
-			int [] oneDocTopics = topicSequence.getFeatures();
-
-			double[] localTopicCounts = new double[numTopics];
-
-			for (int position = 0; position < docLength; position++) {
-				int topicInd = oneDocTopics[position];
-				localTopicCounts[topicInd]++;
-			}
-
-			for (int k = 0; k < numTopics; k++) {
-				docTopicMeans[docIdx][k] = localTopicCounts[k] / docLength;
-				if(Double.isInfinite(docTopicMeans[docIdx][k]) || Double.isNaN(docTopicMeans[docIdx][k]) || docTopicMeans[docIdx][k] < 0) { 
-					throw new IllegalStateException("docTopicMeans is broken!");  
-				}
-			}
-		}
-		return docTopicMeans;
-	}
-
 	// Nothing to do, hooks for subclasses
 	public void preIterationGivenPhi() {
 		
@@ -1393,6 +1490,16 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	// Nothing to do, hooks for subclasses
 	public void postIterationGivenPhi() {
 		
+	}
+
+	@Override
+	public double[][] getPhi() {
+		return phi;
+	}
+
+	@Override
+	public double[][] getTopicPriors() {
+		return topicPriors;
 	}
 
 

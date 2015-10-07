@@ -10,7 +10,9 @@
 	<!-- v2.1.2: Target class is now a proper MALLET label in a "traget Alphabet". Phi is settable. -->
 	<!-- v2.2.2: Added API method for setting Phi "safely", which ensures that Alphabets match -->
 	<!-- v2.3.2: Added API method sampling Z with Phi fixed -->
-	<version>2.3.2</version>
+	<!-- v3.0.0: Added API and implementation for setting priors on topics for specific words  -->
+	<!-- v3.1.0: Added API method for extracting the document topic means (z_bar)  -->
+	<version>3.1.0-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
