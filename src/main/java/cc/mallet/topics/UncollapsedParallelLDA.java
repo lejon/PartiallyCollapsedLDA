@@ -1479,6 +1479,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		if(!targetAlphabet.equals(this.targetAlphabet)) {
 			throw new IllegalArgumentException("Document class labels does not match!");
 		}
+		
+		ensureConsistentPhi(phi);
 		this.phi = phi;
 	}
 	

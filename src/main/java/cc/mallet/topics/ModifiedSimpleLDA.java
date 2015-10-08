@@ -312,9 +312,13 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			}
 	
 			for (int k = 0; k < numTopics; k++) {
-				docTopicMeans[docIdx][k] = localTopicCounts[k] / docLength;
+				if(docLength==0) {
+					docTopicMeans[docIdx][k] = 0.0;
+				} else {					
+					docTopicMeans[docIdx][k] = localTopicCounts[k] / docLength;
+				}
 				if(Double.isInfinite(docTopicMeans[docIdx][k]) || Double.isNaN(docTopicMeans[docIdx][k]) || docTopicMeans[docIdx][k] < 0) { 
-					throw new IllegalStateException("docTopicMeans is broken!");  
+					throw new IllegalStateException("docTopicMeans is broken: DocIdx=" + docIdx + " Topic=" + k + " mean=" + docTopicMeans[docIdx][k]);  
 				}
 			}
 		}
