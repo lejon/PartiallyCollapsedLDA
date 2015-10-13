@@ -95,7 +95,7 @@ public class ParallelLDA {
 				System.out.println("Scheme: " + whichModel);
 
 				InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
-						"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+						config.getStoplistFilename("stoplist"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
 
 				LDAGibbsSampler model = createModel(config, whichModel);
 				
@@ -133,7 +133,7 @@ public class ParallelLDA {
 						ParallelLDA.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
 				File lgDir = lu.getLogDir();
 				PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
-				out.println(LDAUtils.formatTopWords(model.getTopWords(20)));
+				out.println(LDAUtils.formatTopWords(model.getTopWords(50)));
 				out.flush();
 				out.close();
 

@@ -120,4 +120,8 @@ public interface LDAConfiguration {
 	public boolean logPhiDensity(String logPhiDensityDefault);
 
 	public String getTopicPriorFilename();
+
+	public String getStoplistFilename(String string);
+
+	public boolean keepNumbers();
 }

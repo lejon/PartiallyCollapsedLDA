@@ -12,7 +12,9 @@
 	<!-- v2.3.2: Added API method sampling Z with Phi fixed -->
 	<!-- v3.0.0: Added API and implementation for setting priors on topics for specific words  -->
 	<!-- v3.1.0: Added API method for extracting the document topic means (z_bar)  -->
-	<version>3.1.0-SNAPSHOT</version>
+	<!-- v3.1.1: More robust implementation of setPhi and getZbar -->
+	<!-- v3.1.2: Get stop list and keep_numbers from config file -->
+	<version>3.1.2-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 

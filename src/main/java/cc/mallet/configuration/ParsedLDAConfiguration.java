@@ -441,4 +441,20 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 	public String getTopicPriorFilename() {
 		return getStringProperty("topic_prior_filename");
 	}
+	
+	@Override
+	public String getStoplistFilename(String string) {
+		String stoplistFn = getStringProperty("stoplist");
+		if(stoplistFn==null || stoplistFn.length()==0) {
+			stoplistFn = "stoplist.txt";
+		}
+		return stoplistFn;
+	}
+
+	@Override
+	public boolean keepNumbers() {
+		return (getStringProperty("keep_numbers")!=null) && 
+		(getStringProperty("keep_numbers").equalsIgnoreCase("true") 
+				|| getStringProperty("keep_numbers").equals("1"));
+	}
 }

@@ -387,4 +387,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	public void setTopicPriorFilename(String topicPriorFilename) {
 		this.topicPriorFilename = topicPriorFilename;
 	}
+
+	@Override
+	public String getStoplistFilename(String string) {
+		return "stoplist.txt";
+	}
+
+	@Override
+	public boolean keepNumbers() {
+		return false;
+	}
 }

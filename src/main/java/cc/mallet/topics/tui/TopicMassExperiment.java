@@ -886,5 +886,15 @@ public class TopicMassExperiment {
 		public String getTopicPriorFilename() {
 			return pc.getTopicPriorFilename();
 		}
+
+		@Override
+		public String getStoplistFilename(String string) {
+			return pc.getStoplistFilename(string);
+		}
+
+		@Override
+		public boolean keepNumbers() {
+			return pc.keepNumbers();
+		}
 	}
 }
