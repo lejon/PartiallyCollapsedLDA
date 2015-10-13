@@ -87,7 +87,7 @@ public class LDAUtils {
 	
 	public static InstanceList loadInstances(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers) throws FileNotFoundException {
 		SimpleTokenizer tokenizer;
-		String lineRegex = "^(\\S*)[\\s,]*(\\S*)[\\s,]*(.*)$";
+		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
 		int labelGroup = 2;
 		int nameGroup = 1; // data, label, name fields
