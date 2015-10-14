@@ -443,10 +443,10 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 	}
 	
 	@Override
-	public String getStoplistFilename(String string) {
+	public String getStoplistFilename(String defaultStoplist) {
 		String stoplistFn = getStringProperty("stoplist");
 		if(stoplistFn==null || stoplistFn.length()==0) {
-			stoplistFn = "stoplist.txt";
+			stoplistFn = defaultStoplist;
 		}
 		return stoplistFn;
 	}

@@ -95,7 +95,7 @@ public class ParallelLDA {
 				System.out.println("Scheme: " + whichModel);
 
 				InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
-						config.getStoplistFilename("stoplist"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
+						config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
 
 				LDAGibbsSampler model = createModel(config, whichModel);
 				
