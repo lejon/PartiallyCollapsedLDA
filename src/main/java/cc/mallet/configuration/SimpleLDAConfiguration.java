@@ -397,4 +397,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	public boolean keepNumbers() {
 		return false;
 	}
+
+	@Override
+	public boolean saveDocumentTopicMeans() {
+		return false;
+	}
+
+	@Override
+	public String getDocumentTopicMeansOutputFilename() {
+		return null;
+	}
 }

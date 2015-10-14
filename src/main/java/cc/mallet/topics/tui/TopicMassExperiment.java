@@ -896,5 +896,15 @@ public class TopicMassExperiment {
 		public boolean keepNumbers() {
 			return pc.keepNumbers();
 		}
+
+		@Override
+		public boolean saveDocumentTopicMeans() {
+			return pc.saveDocumentTopicMeans();
+		}
+
+		@Override
+		public String getDocumentTopicMeansOutputFilename() {
+			return pc.getDocumentTopicMeansOutputFilename();
+		}
 	}
 }

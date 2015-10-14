@@ -124,4 +124,8 @@ public interface LDAConfiguration {
 	public String getStoplistFilename(String string);
 
 	public boolean keepNumbers();
+
+	public boolean saveDocumentTopicMeans();
+
+	public String getDocumentTopicMeansOutputFilename();
 }

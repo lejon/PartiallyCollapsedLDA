@@ -90,6 +90,12 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 		return (subConfName == null ? "" : subConfName + ".") + key ;
 	}
 
+	public boolean getBooleanProperty(String key) {
+		return (getStringProperty(key)!=null) && 
+				(getStringProperty(key).equalsIgnoreCase("true") 
+						|| getStringProperty(key).equals("1"));
+	}
+
 	public String [] getStringArrayProperty(String key) {
 		return trimStringArray(super.getStringArray(translateKey(key)));
 	}
@@ -293,20 +299,20 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 
 	@Override
 	public boolean getDebug() {
-		return (getStringProperty("debug")!=null) && 
-				(getStringProperty("debug").equalsIgnoreCase("true") || getStringProperty("debug").equals("1"));
+		String key = "debug";
+		return getBooleanProperty(key);
 	}
 
 	@Override
 	public boolean getPrintPhi() {
-		return (getStringProperty("print_phi")!=null) && 
-				(getStringProperty("print_phi").equalsIgnoreCase("true") || getStringProperty("print_phi").equals("1"));
+		String key = "print_phi";
+		return getBooleanProperty(key);
 	}
 
 	@Override
 	public boolean getMeasureTiming() {
-		return (getStringProperty("measure_timing")!=null) && 
-				(getStringProperty("measure_timing").equalsIgnoreCase("true") || getStringProperty("measure_timing").equals("1"));
+		String key = "measure_timing";
+		return getBooleanProperty(key);
 	}
 
 	@Override
@@ -406,16 +412,14 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 
 	@Override
 	public boolean logTypeTopicDensity(boolean logTypeTopicDensityDefault) {
-		return (getStringProperty("log_type_topic_density")!=null) && 
-				(getStringProperty("log_type_topic_density").equalsIgnoreCase("true") 
-						|| getStringProperty("log_type_topic_density").equals("1"));
+		String key = "log_type_topic_density";
+		return getBooleanProperty(key);
 	}
 
 	@Override
 	public boolean logDocumentDensity(boolean logDocumentDensityDefault) {
-		return (getStringProperty("log_document_density")!=null) && 
-				(getStringProperty("log_document_density").equalsIgnoreCase("true") 
-						|| getStringProperty("log_document_density").equals("1"));
+		String key = "log_document_density";
+		return getBooleanProperty(key);
 	}
 
 	@Override
@@ -432,9 +436,8 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 
 	@Override
 	public boolean logPhiDensity(String logPhiDensityDefault) {
-		return (getStringProperty("log_phi_density")!=null) && 
-				(getStringProperty("log_phi_density").equalsIgnoreCase("true") 
-						|| getStringProperty("log_phi_density").equals("1"));
+		String key = "log_phi_density";
+		return getBooleanProperty(key);
 	}
 
 	@Override
@@ -453,8 +456,18 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 
 	@Override
 	public boolean keepNumbers() {
-		return (getStringProperty("keep_numbers")!=null) && 
-		(getStringProperty("keep_numbers").equalsIgnoreCase("true") 
-				|| getStringProperty("keep_numbers").equals("1"));
+		String key = "keep_numbers";
+		return getBooleanProperty(key);
+	}
+
+	@Override
+	public boolean saveDocumentTopicMeans() {
+		String key = "save_doc_topic_means";
+		return getBooleanProperty(key);
+	}
+
+	@Override
+	public String getDocumentTopicMeansOutputFilename() {
+		return getStringProperty("doc_topic_mean_filename");
 	}
 }

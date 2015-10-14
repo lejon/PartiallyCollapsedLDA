@@ -124,6 +124,13 @@ public class ParallelLDA {
 				model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
 				t.stop();
 				System.out.println("Finished:" + new Date());
+				
+				File lgDir = lu.getLogDir();
+				if(config.saveDocumentTopicMeans()) {
+					String docTopicMeanFn = config.getDocumentTopicMeansOutputFilename();
+					double [][] means = model.getZbar();
+					LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
+				}
 
 				List<String> metadata = new ArrayList<String>();
 				metadata.add("No. Topics: " + model.getNoTopics());
@@ -131,7 +138,6 @@ public class ParallelLDA {
 				// Save stats for this run
 				lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
 						ParallelLDA.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
-				File lgDir = lu.getLogDir();
 				PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
 				out.println(LDAUtils.formatTopWords(model.getTopWords(50)));
 				out.flush();

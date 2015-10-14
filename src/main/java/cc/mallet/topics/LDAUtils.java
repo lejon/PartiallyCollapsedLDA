@@ -470,7 +470,6 @@ public class LDAUtils {
 	}
 	
 	public static String formatDouble(double d, DecimalFormat mydecimalFormat, int noDigits) {
-		if ( d == 0.0 ) return "<0.0>";
 		if ( d<0.0001 && d>0 || d > -0.0001 && d < 0) {
 			return mydecimalFormat.format(d);
 		} else {
@@ -479,6 +478,21 @@ public class LDAUtils {
 		}
 	}
 	
+	public static String formatDoubleMarkZero(double d, DecimalFormat mydecimalFormat, int noDigits) {
+		if ( d == 0.0 ) return "<0.0>";
+		if ( d<0.0001 && d>0 || d > -0.0001 && d < 0) {
+			return mydecimalFormat.format(d);
+		} else {
+			String formatString = "%." + noDigits + "f";
+			return String.format(formatString, d);
+		}
+	}
+
+
+	public static void writeASCIIDoubleMatrix(double[][] matrix, String fn, String sep) throws FileNotFoundException, IOException {
+		writeASCIIDoubleMatrix(matrix, matrix.length, matrix[0].length, fn, sep, 4);
+	}
+
 	public static void writeASCIIDoubleMatrix(double[][] matrix, int rows, int columns, String fn, String sep) throws FileNotFoundException, IOException {
 		writeASCIIDoubleMatrix(matrix, rows, columns, fn, sep, 4);
 	}
