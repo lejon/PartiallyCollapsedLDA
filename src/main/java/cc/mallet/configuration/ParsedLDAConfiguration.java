@@ -91,9 +91,8 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 	}
 
 	public boolean getBooleanProperty(String key) {
-		return (getStringProperty(key)!=null) && 
-				(getStringProperty(key).equalsIgnoreCase("true") 
-						|| getStringProperty(key).equals("1"));
+		String stringProperty = getStringProperty(key).trim();
+		return (stringProperty!=null) && (stringProperty.equalsIgnoreCase("true") || stringProperty.equalsIgnoreCase("yes") || stringProperty.equals("1"));
 	}
 
 	public String [] getStringArrayProperty(String key) {
