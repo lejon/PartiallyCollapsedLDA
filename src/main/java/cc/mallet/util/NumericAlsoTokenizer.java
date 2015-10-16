@@ -4,12 +4,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import cc.mallet.pipe.SimpleTokenizer;
 import cc.mallet.types.Instance;
+import cc.mallet.types.SimpleTokenizerLarge;
 
-public class NumericAlsoTokenizer extends SimpleTokenizer {
+public class NumericAlsoTokenizer extends SimpleTokenizerLarge {
 
 	private static final long serialVersionUID = 1L;
+	
+	protected static int tokenBufferSize = 10000;
 
 	public NumericAlsoTokenizer(int languageFlag) {
 		super(languageFlag);
@@ -32,7 +34,7 @@ public class NumericAlsoTokenizer extends SimpleTokenizer {
 
 		ArrayList<String> tokens = new ArrayList<String>();
 
-		int[] tokenBuffer = new int[10000];
+		int[] tokenBuffer = new int[tokenBufferSize];
 		int length = -1;
 
 		// Using code points instead of chars allows us

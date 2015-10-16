@@ -31,8 +31,6 @@ import cc.mallet.pipe.SimpleTokenizer;
 import cc.mallet.pipe.StringList2FeatureSequence;
 import cc.mallet.pipe.Target2Label;
 import cc.mallet.pipe.iterator.CsvIterator;
-import cc.mallet.topics.TopicAssignment;
-import cc.mallet.topics.TopicInferencer;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
@@ -41,6 +39,7 @@ import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
+import cc.mallet.types.SimpleTokenizerLarge;
 import cc.mallet.util.NumericAlsoTokenizer;
 import cc.mallet.util.Randoms;
 
@@ -86,7 +85,7 @@ public class LDAUtils {
 	}
 	
 	public static InstanceList loadInstances(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers) throws FileNotFoundException {
-		SimpleTokenizer tokenizer;
+		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
 		int labelGroup = 2;
@@ -96,13 +95,13 @@ public class LDAUtils {
 			if(keepNumbers) {				
 				tokenizer = new NumericAlsoTokenizer(new File(stoplistFile));
 			} else {
-				tokenizer = new SimpleTokenizer(new File(stoplistFile));
+				tokenizer = new SimpleTokenizerLarge(new File(stoplistFile));
 			}
 		} else {
 			if(keepNumbers) {
 				tokenizer = new NumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
 			} else {
-				tokenizer = new SimpleTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
+				tokenizer = new SimpleTokenizerLarge(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
 			}
 		}
 
