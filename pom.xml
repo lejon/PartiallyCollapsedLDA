@@ -16,7 +16,8 @@
 	<!-- v3.1.2: Get stop list and keep_numbers from config file -->
 	<!-- v3.1.3: Support for saving document topic means -->
 	<!-- v3.1.4: Cleaner implementation of getBooleanProperty -->
-	<version>3.1.4-SNAPSHOT</version>
+	<!-- v3.1.5: Added SimpleTokenizerLarge with a (settable) larger buffer -->
+	<version>3.1.5-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
