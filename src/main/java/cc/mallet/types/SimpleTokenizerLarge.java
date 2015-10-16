@@ -112,5 +112,13 @@ public class SimpleTokenizerLarge extends SimpleTokenizer {
 		
 		return instance;
 	}
+
+	public static int getTokenBufferSize() {
+		return tokenBufferSize;
+	}
+
+	public static void setTokenBufferSize(int tokenBufferSize) {
+		SimpleTokenizerLarge.tokenBufferSize = tokenBufferSize;
+	}
 	
 }

@@ -115,5 +115,14 @@ public class NumericAlsoTokenizer extends SimpleTokenizerLarge {
 	
 	return instance;
 	}
+	
+	public static int getTokenBufferSize() {
+		return tokenBufferSize;
+	}
+
+	public static void setTokenBufferSize(int tokenBufferSize) {
+		SimpleTokenizerLarge.tokenBufferSize = tokenBufferSize;
+	}
+
 
 }
