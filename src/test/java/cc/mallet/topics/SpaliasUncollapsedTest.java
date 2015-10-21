@@ -12,7 +12,6 @@ import org.junit.Test;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.MatrixOps;
 import cc.mallet.types.ParallelDirichlet;
 import cc.mallet.util.LoggingUtils;
 
