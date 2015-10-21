@@ -70,7 +70,7 @@ public class SpaliasMainRemote {
 		System.out.println("Scheme: " + whichModel);
 
 		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
-				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+				config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
 
 		List<ActorRef> samplers = new ArrayList<>();
 		String [] machines = config.getRemoteWorkerMachines();

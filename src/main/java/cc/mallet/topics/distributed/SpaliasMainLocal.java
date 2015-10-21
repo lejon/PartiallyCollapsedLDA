@@ -58,7 +58,7 @@ public class SpaliasMainLocal {
 	System.out.println("Scheme: " + whichModel);
 
 	InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
-			"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+			config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
 	
 	List<ActorRef> samplers = new ArrayList<>();
 	for(int i = 0; i < config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT); i++) {
