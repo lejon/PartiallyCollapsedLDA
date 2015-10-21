@@ -6,14 +6,13 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Random;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
-import cc.mallet.topics.LDAGibbsSampler;
-import cc.mallet.topics.LDAUtils;
-import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.types.InstanceList;
+import cc.mallet.types.MatrixOps;
 import cc.mallet.types.ParallelDirichlet;
 import cc.mallet.util.LoggingUtils;
 
@@ -76,6 +75,64 @@ public class SpaliasUncollapsedTest {
 		System.out.println("Finished:" + new Date());
 
 		System.out.println("I am done!");
+	}
+	
+	@Test
+	public void sampleZGivenPhi() throws IOException {	
+		String whichModel = "spalias_uncollapsed";
+		Integer numBatches = 6;
+
+		Integer numIter = 100;
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
+				numBatches);
+
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("Using dataset: " + dataset_fn);
+		System.out.println("Scheme: " + whichModel);
+		LoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("TestRuns");
+		config.setLoggingUtil(lu);
+
+		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
+				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+
+		SpaliasUncollapsedParallelLDA model = new SpaliasUncollapsedParallelLDA(config);
+		System.out.println(
+				String.format("Spalias Uncollapsed Parallell LDA (%d batches).", 
+						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		model.addInstances(instances);
+
+		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+		System.out.println("_____________________________\n");
+
+		// Runs the model
+		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+		
+		double [][] phiBefore = clone(model.getPhi());
+		
+		model.sampleZGivenPhi(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+		
+		double [][] phiAfter = clone(model.getPhi());
+		
+		for (int i = 0; i < phiBefore.length; i++) {			
+			Assert.assertArrayEquals(phiBefore[i], phiAfter[i], 0.00000001);
+		}
+		
+	}
+	
+	public static double [][] clone(double [][] arr1) {
+		double [][] result = new double [arr1.length][];
+		
+		for (int i = 0; i < arr1.length; i++) {
+			result[i] = arr1[i].clone();
+		}
+		return result;
 	}
 	
 	@Test

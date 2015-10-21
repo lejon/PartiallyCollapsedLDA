@@ -593,6 +593,11 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 	}
 
+	/**
+	 * This method only samples Zbar given Phi, i.e it does not sample/update Phi
+	 * 
+	 * @param iterations
+	 */
 	public void sampleZGivenPhi(int iterations) {
 		preSample();
 
