@@ -93,13 +93,19 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 		samplers = samplerNodes;
 
 		//noBatches = config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT);
-		noTopicBatches = config.getNoTopicBatches(LDAConfiguration.NO_TOPIC_BATCHES_DEFAULT);
+		// Cannot have more batches than sampler nodes
+		noTopicBatches = Math.min(samplers.size(),config.getNoTopicBatches(LDAConfiguration.NO_TOPIC_BATCHES_DEFAULT));
 		//vocabMapping = new int [noBatches][];
 		//docVocabMapping = new int [noBatches][];
 
 		debug = config.getDebug();
-		this.batchIndexes = new int[config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)];
-		for (int bb = 0; bb < config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT); bb++) batchIndexes[bb] = bb;
+		//Cannot have more batches than sampler nodes
+		Integer noBatches = Math.min(samplers.size(),config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT));
+		if(samplers.size() < config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)) {
+			System.err.println("WARNING: DistributedSpaliasUncollapsedSampler(): Requested no. batches is bigger than available no. samplers. Setting no. batches to no. available samplers!");
+		}
+		this.batchIndexes = new int[noBatches];
+		for (int bb = 0; bb < noBatches; bb++) batchIndexes[bb] = bb;
 
 		startupThreadPools();
 
