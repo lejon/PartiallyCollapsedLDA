@@ -57,7 +57,13 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 	private static final long serialVersionUID = 1L;
 	protected double[][] phi;
-
+	// This matrix will hold a cumulated sample of phi, when it is retrieved we calculate the mean by dividing with how many phi we have sampled
+	protected double[][] phiMean;
+	// How many iterations should the Phi burn in period be
+	protected int phiBurnIn = 0;
+	protected int phiMeanThin = 0;
+	protected int noSampledPhi= 0;
+	
 	DocumentBatchBuilder bb;
 	TopicBatchBuilder tbb;
 
@@ -80,8 +86,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	// Matrix M of topic-token assignments
 	// We keep this since we often want fast access to a whole topic
 	protected int [][] topicTypeCountMapping;
-	private Integer	noTopicBatches;
-	private boolean	debug;
+	protected Integer	noTopicBatches;
+	protected boolean	debug;
 	private static ForkJoinPool documentSamplerPool;
 	private ExecutorService	phiSamplePool;
 	private ExecutorService	topicUpdaters;
@@ -97,9 +103,11 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	long [] countTimings;
 
 	SparseDirichlet dirichletSampler;
-	boolean haveTopicPriors = false;
+	protected boolean haveTopicPriors = false;
 	protected double[][] topicPriors;
+	protected boolean savePhiMeans = false;
 
+	
 	public UncollapsedParallelLDA(LDAConfiguration config) {
 		super(config);
 
@@ -142,6 +150,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		for (int i = 0; i < globalDeltaNUpdates.length; i++) {
 			globalDeltaNUpdates[i] = new TIntIntHashMap();
 		}
+		
+		savePhiMeans = config.savePhiMeans();
+		phiBurnIn    = config.getPhiBurnIn(LDAConfiguration.PHI_BURN_IN_DEFAULT);
+		phiMeanThin  = config.getPhiMeanThin(LDAConfiguration.PHI_THIN_DEFAULT);
 	}
 
 	protected void initializePriors(LDAConfiguration config) {
@@ -413,6 +425,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		
 		// Initialize the distribution of words in topics, phi, to the prior value
 		phi = new double[numTopics][numTypes];
+		if(savePhiMeans()) {
+			phiMean = new double[numTopics][numTypes];
+		}
 		// Sample up the initial Phi Matrix according to random initialization
 		int [] topicIndices = new int[numTopics];
 		for (int i = 0; i < numTopics; i++) {
@@ -557,8 +572,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				tw = topWords (wordsPerTopic);
 				logState = new LogState(logLik, iteration, tw, loggingPath, logger);
 				LDAUtils.logLikelihoodToFile(logState);
-				System.out.println(tw);
 				logger.info("\n<" + iteration + "> Log Likelihood: " + logLik);
+				System.err.println(tw);
 				if(logTypeTopicDensity || logDocumentDensity) {
 					density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 					docDensity = kdDensities.get() / (double) numTopics / numTypes;
@@ -650,8 +665,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		postSample();
 	}
 	
-	// Nothing to do, hooks for subclasses
-	private void postPhi() {
+	protected void postPhi() {
+		if(savePhiMeans() && samplePhiThisIteration()) {
+			noSampledPhi++;
+		}
 	}
 
 	// Nothing to do, hooks for subclasses
@@ -984,6 +1001,11 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				
 				phiMatrix[topic] = newPhi;
 			}
+			if(savePhiMeans() && samplePhiThisIteration()) {
+				for (int phi = 0; phi < phiMatrix[topic].length; phi++) {
+					phiMean[topic][phi] += phiMatrix[topic][phi];
+				}
+			}
 		}
 		long elapsedMillis = System.currentTimeMillis();
 		long threadId = Thread.currentThread().getId();
@@ -996,6 +1018,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			pw.flush();
 			pw.close();
 		}
+	}
+
+	boolean samplePhiThisIteration() {
+		return phiBurnIn > 0 && currentIteration > phiBurnIn && currentIteration % phiMeanThin  == 0;
 	}
 
 	class RecursiveDocumentSampler extends RecursiveAction {
@@ -1467,6 +1493,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	
 	public void setPhi(double[][] phi) {
 		this.phi = phi;
+		if(savePhiMeans()) {
+			phiMean = new double[numTopics][numTypes];
+		}
+
 	}
 
 	/**
@@ -1487,8 +1517,15 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		
 		ensureConsistentPhi(phi);
 		this.phi = phi;
+		if(savePhiMeans()) {
+			phiMean = new double[numTopics][numTypes];
+		}
 	}
 	
+	protected boolean savePhiMeans() {
+		return savePhiMeans;
+	}
+
 	// Nothing to do, hooks for subclasses
 	public void preIterationGivenPhi() {
 		
@@ -1499,6 +1536,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		
 	}
 
+	/* 
+	 * Returns the last sampled Phi
+	 */
 	@Override
 	public double[][] getPhi() {
 		return phi;
@@ -1509,5 +1549,22 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		return topicPriors;
 	}
 
+	/* 
+	 * Returns the mean 
+	 */
+	@Override
+	public double[][] getPhiMeans() {
+		if(noSampledPhi==0) throw new IllegalStateException("Have not sampled any Phi's");
+		double [][] result = new double[phiMean.length][phiMean[0].length];
+		for (int i = 0; i < phiMean.length; i++) {
+			for (int j = 0; j < phiMean[i].length; j++) {
+				result[i][j] = phiMean[i][j] / noSampledPhi;
+			}
+		}
+		return result;
+	}
 
+	public int getNoSampledPhi() {
+		return noSampledPhi;
+	}
 }

@@ -14,6 +14,7 @@ import cc.mallet.configuration.ParsedLDAConfiguration;
 import cc.mallet.topics.ADLDA;
 import cc.mallet.topics.EfficientUncollapsedParallelLDA;
 import cc.mallet.topics.LDAGibbsSampler;
+import cc.mallet.topics.LDASamplerWithPhi;
 import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA;
 import cc.mallet.topics.ParanoidSpaliasUncollapsedLDA;
@@ -130,6 +131,15 @@ public class ParallelLDA {
 					String docTopicMeanFn = config.getDocumentTopicMeansOutputFilename();
 					double [][] means = model.getZbar();
 					LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
+				}
+
+				if(model instanceof LDASamplerWithPhi) {
+					LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
+					if(config.savePhiMeans()) {
+						String docTopicMeanFn = config.getPhiMeansOutputFilename();
+						double [][] means = modelWithPhi.getPhiMeans();
+						LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
+					}
 				}
 
 				List<String> metadata = new ArrayList<String>();

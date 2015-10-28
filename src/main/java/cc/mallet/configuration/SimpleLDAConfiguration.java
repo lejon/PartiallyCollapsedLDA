@@ -33,6 +33,8 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	int instability_period;
 	private double[] fixed_split_size_doc;
 	private int skipStep = 1;
+	private boolean savePhi;
+	private int phiBurnIn;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -406,5 +408,34 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	@Override
 	public String getDocumentTopicMeansOutputFilename() {
 		return null;
+	}
+
+	@Override
+	public String getPhiMeansOutputFilename() {
+		return null;
+	}
+
+	@Override
+	public boolean savePhiMeans() {
+		return savePhi;
+	}
+
+	public void setPhiBurnIn(int phiBurnIn) {
+		this.phiBurnIn = phiBurnIn;
+	}
+
+	
+	@Override
+	public int getPhiBurnIn(int phiBurnInDefault) {
+		return phiBurnIn;
+	}
+	
+	@Override
+	public int getPhiMeanThin(int phiMeanThinDefault) {
+		return phiMeanThinDefault;
+	}
+
+	public void setSavePhi(boolean savePhi) {
+		this.savePhi = savePhi;
 	}
 }

@@ -18,7 +18,8 @@
 	<!-- v3.1.4: Cleaner implementation of getBooleanProperty -->
 	<!-- v3.1.5: Added SimpleTokenizerLarge with a (settable) larger buffer -->
 	<!-- v3.1.6: Fixed bug in config. Doing trim on null property -->
-	<version>3.1.6-SNAPSHOT</version>
+	<!-- v3.1.7: Added ability to save and export Phi means from model -->
+	<version>3.1.7-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 

@@ -40,8 +40,7 @@ public class SpaliasUncollapsedTest {
 		Integer numBatches = 6;
 
 		Integer numIter = 100;
-		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
-				numBatches);
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
 
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
@@ -803,6 +802,102 @@ public class SpaliasUncollapsedTest {
 		}
 	}
 	
+	
+	@Test
+	public void testGetPhiMeans() throws IOException {
+		String whichModel = "spalias_uncollapsed";
+		Integer numBatches = 6;
+
+		Integer numIter = 10;
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
+		config.setSavePhi(true);
+		config.setPhiBurnIn(2);
+
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("Using dataset: " + dataset_fn);
+		System.out.println("Scheme: " + whichModel);
+		LoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("TestRuns");
+		config.setLoggingUtil(lu);
+
+		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
+				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+
+		LDAGibbsSampler model = new SpaliasUncollapsedParallelLDA(config);
+		System.out.println(
+				String.format("Spalias Uncollapsed Parallell LDA (%d batches).", 
+						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		model.addInstances(instances);
+
+		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+
+		// Runs the model
+		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+
+		LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
+		double [][] means = modelWithPhi.getPhiMeans();
+		
+		assertEquals(numIter - config.getPhiBurnIn(LDAConfiguration.PHI_BURN_IN_DEFAULT), ((SpaliasUncollapsedParallelLDA)model).getNoSampledPhi()); 
+		assertEquals(means.length,config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT).intValue());
+		assertEquals(means[0].length,instances.getDataAlphabet().size());
+		
+		int noNonZero = 0;
+		for (int i = 0; i < means.length; i++) {
+			for (int j = 0; j < means[i].length; j++) {
+				if(means[i][j]!=0) noNonZero++;
+			}
+		}
+		
+		assertEquals(means.length * means[0].length, noNonZero);
+	}
+	
+	@Test(expected = IllegalStateException.class)
+	public void testNoPhiMeans() throws IOException {
+		String whichModel = "spalias_uncollapsed";
+		Integer numBatches = 6;
+
+		Integer numIter = 10;
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
+		config.setSavePhi(false);
+		config.setPhiBurnIn(2);
+
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("Using dataset: " + dataset_fn);
+		System.out.println("Scheme: " + whichModel);
+		LoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("TestRuns");
+		config.setLoggingUtil(lu);
+
+		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
+				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+
+		LDAGibbsSampler model = new SpaliasUncollapsedParallelLDA(config);
+		System.out.println(
+				String.format("Spalias Uncollapsed Parallell LDA (%d batches).", 
+						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		model.addInstances(instances);
+
+		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+
+		// Runs the model
+		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+
+		LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
+		assertEquals(0, ((SpaliasUncollapsedParallelLDA)model).getNoSampledPhi()); 
+		modelWithPhi.getPhiMeans();		
+	}
 
 
 }

@@ -906,5 +906,25 @@ public class TopicMassExperiment {
 		public String getDocumentTopicMeansOutputFilename() {
 			return pc.getDocumentTopicMeansOutputFilename();
 		}
+
+		@Override
+		public String getPhiMeansOutputFilename() {
+			return null;
+		}
+
+		@Override
+		public boolean savePhiMeans() {
+			return false;
+		}
+
+		@Override
+		public int getPhiBurnIn(int phiBurnInDefault) {
+			return 0;
+		}
+
+		@Override
+		public int getPhiMeanThin(int phiMeanThinDefault) {
+			return 0;
+		}
 	}
 }

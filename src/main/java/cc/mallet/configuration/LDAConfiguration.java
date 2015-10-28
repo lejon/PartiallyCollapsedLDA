@@ -24,6 +24,8 @@ public interface LDAConfiguration {
 	public static final boolean LOG_TYPE_TOPIC_DENSITY_DEFAULT = false;
 	public static final boolean LOG_DOCUMENT_DENSITY_DEFAULT = false;
 	public static final String LOG_PHI_DENSITY_DEFAULT = null;
+	public static final int PHI_BURN_IN_DEFAULT = 0;
+	public static final int PHI_THIN_DEFAULT = 1;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -128,4 +130,12 @@ public interface LDAConfiguration {
 	public boolean saveDocumentTopicMeans();
 
 	public String getDocumentTopicMeansOutputFilename();
+
+	public String getPhiMeansOutputFilename();
+
+	public boolean savePhiMeans();
+
+	public int getPhiBurnIn(int phiBurnInDefault);
+
+	int getPhiMeanThin(int phiMeanThinDefault);
 }

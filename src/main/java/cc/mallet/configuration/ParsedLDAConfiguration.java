@@ -469,4 +469,25 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 	public String getDocumentTopicMeansOutputFilename() {
 		return getStringProperty("doc_topic_mean_filename");
 	}
+
+	@Override
+	public String getPhiMeansOutputFilename() {
+		return getStringProperty("phi_mean_filename");
+	}
+
+	@Override
+	public boolean savePhiMeans() {
+		String phiMeanFn = getPhiMeansOutputFilename();
+		return phiMeanFn != null && phiMeanFn.trim().length() > 0;
+	}
+
+	@Override
+	public int getPhiBurnIn(int phiBurnInDefault) {
+		return getInteger("phi_mean_burnin", phiBurnInDefault);
+	}
+
+	@Override
+	public int getPhiMeanThin(int phiMeanThinDefault) {
+		return getInteger("phi_mean_thin", phiMeanThinDefault);
+	}
 }
