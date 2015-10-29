@@ -109,7 +109,6 @@ public class ParallelLDA {
 
 				// Sets the frequent with which top words for each topic are printed
 				//model.setShowTopicsInterval(config.getTopicInterval(LDAConfiguration.TOPIC_INTER_DEFAULT));
-				model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
 				System.out.println("Config seed:" + config.getSeed(LDAConfiguration.SEED_DEFAULT));
 				System.out.println("Start seed: " + model.getStartSeed());
 				// Imports the data into the model
@@ -167,7 +166,7 @@ public class ParallelLDA {
 		}
 	}
 
-	static LDAGibbsSampler createModel(LDAConfiguration config, String whichModel) {
+	public static LDAGibbsSampler createModel(LDAConfiguration config, String whichModel) {
 		LDAGibbsSampler model;
 		switch(whichModel) {
 		case "adlda": {

@@ -651,8 +651,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
 				logLik = modelLogLikelihood();	
 				tw = topWords (wordsPerTopic);
-				System.out.println(tw);
 				logger.info("\n<" + iteration + "> Log Likelihood: " + logLik);
+				System.err.println(tw);
 			}
 
 			kdDensities.set(0);
