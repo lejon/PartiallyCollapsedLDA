@@ -918,7 +918,7 @@ public class TopicMassExperiment {
 		}
 
 		@Override
-		public int getPhiBurnIn(int phiBurnInDefault) {
+		public int getPhiBurnInPercent(int phiBurnInDefault) {
 			return 0;
 		}
 

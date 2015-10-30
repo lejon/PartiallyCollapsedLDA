@@ -482,7 +482,7 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 	}
 
 	@Override
-	public int getPhiBurnIn(int phiBurnInDefault) {
+	public int getPhiBurnInPercent(int phiBurnInDefault) {
 		return getInteger("phi_mean_burnin", phiBurnInDefault);
 	}
 

@@ -426,7 +426,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	
 	@Override
-	public int getPhiBurnIn(int phiBurnInDefault) {
+	public int getPhiBurnInPercent(int phiBurnInDefault) {
 		return phiBurnIn;
 	}
 	

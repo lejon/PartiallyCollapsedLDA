@@ -811,7 +811,7 @@ public class SpaliasUncollapsedTest {
 		Integer numIter = 10;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
 		config.setSavePhi(true);
-		config.setPhiBurnIn(2);
+		config.setPhiBurnIn(20);
 
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
@@ -835,15 +835,17 @@ public class SpaliasUncollapsedTest {
 		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
 		model.addInstances(instances);
 
-		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+		Integer noIterations = config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT);
+		System.out.println("Starting iterations (" + noIterations + " total).");
 
 		// Runs the model
-		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+		model.sample(noIterations);
 
 		LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
 		double [][] means = modelWithPhi.getPhiMeans();
 		
-		assertEquals(numIter - config.getPhiBurnIn(LDAConfiguration.PHI_BURN_IN_DEFAULT), ((SpaliasUncollapsedParallelLDA)model).getNoSampledPhi()); 
+		int burnInIter = (int)(((double)config.getPhiBurnInPercent(LDAConfiguration.PHI_BURN_IN_DEFAULT) / 100) * noIterations);
+		assertEquals(numIter - burnInIter, ((SpaliasUncollapsedParallelLDA)model).getNoSampledPhi()); 
 		assertEquals(means.length,config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT).intValue());
 		assertEquals(means[0].length,instances.getDataAlphabet().size());
 		
@@ -865,7 +867,7 @@ public class SpaliasUncollapsedTest {
 		Integer numIter = 10;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
 		config.setSavePhi(false);
-		config.setPhiBurnIn(2);
+		config.setPhiBurnIn(20);
 
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
@@ -889,10 +891,11 @@ public class SpaliasUncollapsedTest {
 		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
 		model.addInstances(instances);
 
-		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+		Integer noIterations = config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT);
+		System.out.println("Starting iterations (" + noIterations + " total).");
 
 		// Runs the model
-		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+		model.sample(noIterations);
 
 		LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
 		assertEquals(0, ((SpaliasUncollapsedParallelLDA)model).getNoSampledPhi()); 

@@ -135,7 +135,7 @@ public interface LDAConfiguration {
 
 	public boolean savePhiMeans();
 
-	public int getPhiBurnIn(int phiBurnInDefault);
+	public int getPhiBurnInPercent(int phiBurnInDefault);
 
 	int getPhiMeanThin(int phiMeanThinDefault);
 }

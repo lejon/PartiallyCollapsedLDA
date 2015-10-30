@@ -152,7 +152,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 		
 		savePhiMeans = config.savePhiMeans();
-		phiBurnIn    = config.getPhiBurnIn(LDAConfiguration.PHI_BURN_IN_DEFAULT);
+		phiBurnIn    = (int)(((double) config.getPhiBurnInPercent(LDAConfiguration.PHI_BURN_IN_DEFAULT) / 100)
+						             * config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT)); 
 		phiMeanThin  = config.getPhiMeanThin(LDAConfiguration.PHI_THIN_DEFAULT);
 	}
 
