@@ -19,8 +19,9 @@
 	<!-- v3.1.5: Added SimpleTokenizerLarge with a (settable) larger buffer -->
 	<!-- v3.1.6: Fixed bug in config. Doing trim on null property -->
 	<!-- v3.1.7: Added ability to save and export Phi means from model -->
-	<!-- v3.1.7: Added XValidationCreator -->
-	<version>3.1.8-SNAPSHOT</version>
+	<!-- v3.1.8: Added XValidationCreator -->
+	<!-- v3.1.9: Fixed bug in XValidationCreator which used an all zero phi to sample testset -->
+	<version>3.1.9-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
