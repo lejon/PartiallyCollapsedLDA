@@ -416,7 +416,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	}
 
 	@Override
-	public boolean savePhiMeans() {
+	public boolean savePhiMeans(boolean defaultVal) {
 		return savePhi;
 	}
 

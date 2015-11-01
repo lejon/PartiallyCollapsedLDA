@@ -476,9 +476,11 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 	}
 
 	@Override
-	public boolean savePhiMeans() {
-		String phiMeanFn = getPhiMeansOutputFilename();
-		return phiMeanFn != null && phiMeanFn.trim().length() > 0;
+	public boolean savePhiMeans(boolean defaultVal) {
+		String key = "save_phi_mean";
+		Object prop = super.getProperty(translateKey(key));
+		if(prop==null) return defaultVal;
+		return getBooleanProperty(key);
 	}
 
 	@Override

@@ -105,7 +105,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	SparseDirichlet dirichletSampler;
 	protected boolean haveTopicPriors = false;
 	protected double[][] topicPriors;
-	protected boolean savePhiMeans = false;
+	protected boolean savePhiMeans = true;
 
 	
 	public UncollapsedParallelLDA(LDAConfiguration config) {
@@ -151,7 +151,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			globalDeltaNUpdates[i] = new TIntIntHashMap();
 		}
 		
-		savePhiMeans = config.savePhiMeans();
+		savePhiMeans = config.savePhiMeans(LDAConfiguration.SAVE_PHI_MEAN_DEFAULT);
 		phiBurnIn    = (int)(((double) config.getPhiBurnInPercent(LDAConfiguration.PHI_BURN_IN_DEFAULT) / 100)
 						             * config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT)); 
 		phiMeanThin  = config.getPhiMeanThin(LDAConfiguration.PHI_THIN_DEFAULT);
@@ -1441,7 +1441,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 	/**
 	 * Return the type indices for non-zero count updates in the last iteration
-	 * @author eralljn
 	 *
 	 */
 	@Override

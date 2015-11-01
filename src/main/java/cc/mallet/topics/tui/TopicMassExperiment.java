@@ -913,7 +913,7 @@ public class TopicMassExperiment {
 		}
 
 		@Override
-		public boolean savePhiMeans() {
+		public boolean savePhiMeans(boolean defaultValue) {
 			return false;
 		}
 

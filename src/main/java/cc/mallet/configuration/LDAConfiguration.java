@@ -26,6 +26,7 @@ public interface LDAConfiguration {
 	public static final String LOG_PHI_DENSITY_DEFAULT = null;
 	public static final int PHI_BURN_IN_DEFAULT = 0;
 	public static final int PHI_THIN_DEFAULT = 1;
+	public static final boolean SAVE_PHI_MEAN_DEFAULT = true;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -133,7 +134,7 @@ public interface LDAConfiguration {
 
 	public String getPhiMeansOutputFilename();
 
-	public boolean savePhiMeans();
+	public boolean savePhiMeans(boolean defaultVal);
 
 	public int getPhiBurnInPercent(int phiBurnInDefault);
 

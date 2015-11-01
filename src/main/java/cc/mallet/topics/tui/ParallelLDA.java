@@ -134,7 +134,7 @@ public class ParallelLDA {
 
 				if(model instanceof LDASamplerWithPhi) {
 					LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
-					if(config.savePhiMeans()) {
+					if(config.savePhiMeans(LDAConfiguration.SAVE_PHI_MEAN_DEFAULT)) {
 						String docTopicMeanFn = config.getPhiMeansOutputFilename();
 						double [][] means = modelWithPhi.getPhiMeans();
 						LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
