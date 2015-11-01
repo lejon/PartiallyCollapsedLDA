@@ -136,6 +136,11 @@ public class XValidationCreator {
 		SpaliasUncollapsedParallelLDA spalias = new SpaliasUncollapsedParallelLDA(config);
 		spalias.addInstances(testInstances);
 		double [][] phiCopy = new double[phi.length][phi[0].length];
+		for (int i = 0; i < phiCopy.length; i++) {
+			for (int j = 0; j < phiCopy.length; j++) {
+				phiCopy[i][j] = phi[i][j];
+			}
+		}
 		spalias.setPhi(phiCopy,trainingInstances.getAlphabet(), trainingInstances.getTargetAlphabet());
 		spalias.sampleZGivenPhi(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
 		String docTopicMeanFn = config.getDocumentTopicMeansOutputFilename();
