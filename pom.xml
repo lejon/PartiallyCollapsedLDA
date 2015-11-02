@@ -22,7 +22,8 @@
 	<!-- v3.1.8: Added XValidationCreator -->
 	<!-- v3.1.9: Fixed bug in XValidationCreator which used an all zero phi to sample testset -->
 	<!-- v3.2.0: Saving Phi means is now default true, memory requirements went up with one extra Phi -->
-	<version>3.2.0-SNAPSHOT</version>
+	<!-- v3.2.1: Fork Join Pool should not be static -->
+	<version>3.2.1-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
