@@ -88,7 +88,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	protected int [][] topicTypeCountMapping;
 	protected Integer	noTopicBatches;
 	protected boolean	debug;
-	private static ForkJoinPool documentSamplerPool;
+	private ForkJoinPool documentSamplerPool;
 	private ExecutorService	phiSamplePool;
 	private ExecutorService	topicUpdaters;
 	Object [] topicLocks;
