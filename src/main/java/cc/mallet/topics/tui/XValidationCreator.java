@@ -137,7 +137,7 @@ public class XValidationCreator {
 		spalias.addInstances(testInstances);
 		double [][] phiCopy = new double[phi.length][phi[0].length];
 		for (int i = 0; i < phiCopy.length; i++) {
-			for (int j = 0; j < phiCopy.length; j++) {
+			for (int j = 0; j < phiCopy[i].length; j++) {
 				phiCopy[i][j] = phi[i][j];
 			}
 		}
