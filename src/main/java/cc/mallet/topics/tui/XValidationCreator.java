@@ -20,6 +20,7 @@ import cc.mallet.util.LoggingUtils;
 public class XValidationCreator {
 
 	public static void main(String[] mainargs) throws Exception {
+		// Code review by Mans Magnusson 2015-11-03
 		
 		int folds = Integer.parseInt(mainargs[mainargs.length-1]);
 		
@@ -81,6 +82,7 @@ public class XValidationCreator {
 	}
 	
 	public static void createXValidationDataset(InstanceList instances, int folds, LDAConfiguration config) throws Exception {
+		// Code review by Mans Magnusson 2015-11-03
 		Random r = new Random ();
 		int TRAINING = 0;
 		int TESTING = 1;
