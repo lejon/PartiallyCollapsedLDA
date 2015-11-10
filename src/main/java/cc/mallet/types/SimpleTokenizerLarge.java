@@ -28,6 +28,11 @@ public class SimpleTokenizerLarge extends SimpleTokenizer {
 		super(stoplist);
 	}
 	
+	@Override
+	public SimpleTokenizerLarge deepClone() {
+		return new SimpleTokenizerLarge((HashSet<String>) stoplist.clone());
+	}
+	
 	public Instance pipe(Instance instance) {
 		
 		if (instance.getData() instanceof CharSequence) {
