@@ -24,7 +24,8 @@
 	<!-- v3.2.0: Saving Phi means is now default true, memory requirements went up with one extra Phi -->
 	<!-- v3.2.1: Fork Join Pool should not be static -->
 	<!-- v3.2.2: XValidationCreator fix -->
-	<version>3.2.2-SNAPSHOT</version>
+	<!-- v3.2.3: SimpleTokenizerLarge must override deepClone. -->
+	<version>3.2.3-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
