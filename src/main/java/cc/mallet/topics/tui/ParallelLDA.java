@@ -137,7 +137,11 @@ public class ParallelLDA {
 					if(config.savePhiMeans(LDAConfiguration.SAVE_PHI_MEAN_DEFAULT)) {
 						String docTopicMeanFn = config.getPhiMeansOutputFilename();
 						double [][] means = modelWithPhi.getPhiMeans();
+						if(means!=null) {
 						LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
+						} else {
+							System.err.println("WARNING: ParallelLDA: No Phi means where sampled, not saving Phi means! This is likely due to a combination of configuration settings of phi_mean_burnin, phi_mean_thin and save_phi_mean");
+						}
 					}
 				}
 
