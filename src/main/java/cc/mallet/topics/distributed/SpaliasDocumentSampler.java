@@ -11,17 +11,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
-import akka.actor.ActorRef;
-import akka.actor.ActorSystem;
-import akka.actor.Props;
 import akka.actor.UntypedActor;
-import cc.mallet.configuration.LDACommandLineParser;
-import cc.mallet.configuration.LDARemoteConfiguration;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
-
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 
 
 public class SpaliasDocumentSampler extends UntypedActor {
@@ -36,15 +28,18 @@ public class SpaliasDocumentSampler extends UntypedActor {
 	public int resultsSize;
 	public int [] docIndices;
 	public  int myBatch;
+	public boolean sendPartials = true;
 	
 	// TODO: Would using a Set be more efficient?
 	TIntArrayList typeTopicsUpdated;
 
 	int [][] localTopicTypeUpdates;
 	
+	boolean configured = false;
+	
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
-	private ExecutorService tableBuilderExecutor;
+	private ExecutorService tableBuilderExecutor = Executors.newFixedThreadPool(10);
 
 	public static enum Msg {
 		START, EXIT, DONE, DOC_INIT, CONFIGURED;
@@ -59,13 +54,14 @@ public class SpaliasDocumentSampler extends UntypedActor {
 		} else if (msg == Msg.START) {
 			System.out.println("Actor started...");
 		} else if (msg instanceof DocumentBatch) {
-			System.out.println(Thread.currentThread().getName()  + ": Got new document batch!");
+			System.out.println(getSelf()  + ": Got new document batch!");
 			DocumentBatch rm = (DocumentBatch) msg;
 			myDocuments = rm.docTopics;
 			getSender().tell(Msg.DOC_INIT, getSelf());
 		} else if (msg instanceof PhiUpdate) {
+			if(!configured) throw new IllegalStateException(getSelf() + ": Is not configured yet!!");
 			PhiUpdate phiUpdate = (PhiUpdate) msg;
-			System.out.println("Received new Phi!");
+			System.out.println(getSelf() + ": Received new Phi: " + phiUpdate);
 			this.phi = phiUpdate.phi;
 			buildAliasTablesParallel();
 			localTopicTypeUpdates = new int[numTopics][numTypes];
@@ -80,13 +76,28 @@ public class SpaliasDocumentSampler extends UntypedActor {
 			this.myBatch = conf.batchId;
 			this.docIndices = conf.docIndices;
 			this.resultsSize = conf.resultSize;
+			this.sendPartials = conf.sendPartials;
 			aliasTables = new WalkerAliasTable[numTypes];
 			typeNorm    = new double[numTypes];
 			typeTopicsUpdated = new TIntArrayList();
+			printConfig();
 			preSample();
+			configured = true;
 			getSender().tell(Msg.CONFIGURED, getSelf());
 		}  else
 			unhandled(msg);
+	}
+	
+	void printConfig() {
+		System.out.println(getSelf() + ": I am configured: ");
+		System.out.println("this.numTopics = " + this.numTopics);
+		System.out.println("this.numTypes = " + this.numTypes);
+		System.out.println("this.alpha = " + this.alpha);
+		System.out.println("this.beta = " + this.beta);
+		System.out.println("this.myBatch = " + this.myBatch);
+		System.out.println("this.docIndices = " + this.docIndices);
+		System.out.println("this.resultsSize = " + this.resultsSize);
+
 	}
 
 	class ParallelTableBuilder implements Callable<TableBuildResult> {
@@ -125,8 +136,9 @@ public class SpaliasDocumentSampler extends UntypedActor {
 	}
 
 	protected void preSample() {
-		int poolSize = 2;
-		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
+		//int poolSize = 2;
+		//tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
+		//System.out.println("Started sampler pool: " + tableBuilderExecutor + "!");
 	}
 
 	public void buildAliasTablesParallel() {
@@ -154,16 +166,29 @@ public class SpaliasDocumentSampler extends UntypedActor {
 		tableBuilderExecutor.shutdown();
 	}
 	
+	protected boolean sendPartial() {
+		return sendPartials;
+	}
+	
 	protected void loopOverDocuments(int [][] batch, int [] docIndices, int myBatch) {
 		for (int doc = 0; doc < batch.length;) {
 			int[] tokenSequence = batch[doc++];
 			int[] topicSequence = batch[doc++];
 			sampleTopicAssignments (tokenSequence, topicSequence, myBatch);
+			if(sendPartial() && doc % resultsSize == 0) {
+				int [] updated = buildUpdateStructure();
+				// now we must reset the localTopicTypeUpdates
+				localTopicTypeUpdates = new int[numTopics][numTypes];
+				//System.out.println("Sending partial " + updated.length + " deltas...");
+				// Send a partial update, indicated by the 'false' argument
+				getSender().tell(new TypeTopicUpdates(updated,false), getSelf());
+			}
 		}
 		
 		// updated contains the index of the updated count and the actual count
 		int [] updated = buildUpdateStructure();
 		getSender().tell(new TypeTopicUpdates(updated), getSelf());
+		System.out.println("Sending final  " + updated.length + " deltas...");
 	}
 
 	int [] buildUpdateStructure() {
@@ -177,7 +202,7 @@ public class SpaliasDocumentSampler extends UntypedActor {
 			// Add the count
 			updated[uIdx++] = localTopicTypeUpdates[topic][type]; 	
 		}
-		System.out.println("Sending " + updated.length + " deltas...");
+		//System.out.println("Sending " + updated.length + " deltas...");
 		typeTopicsUpdated.resetQuick();
 				
 		return updated;
@@ -438,19 +463,5 @@ public class SpaliasDocumentSampler extends UntypedActor {
 		return cumsum.length-1;
 	}
 	
-	public static void main(String[] args) throws Exception {
-		// Reading in command line parameters		
-		LDACommandLineParser cp = new LDACommandLineParser(args);
-		LDARemoteConfiguration ldaConfig = (LDARemoteConfiguration) cc.mallet.configuration.ConfigFactory.getMainRemoteConfiguration(cp);
-		//int noWorkers = ldaConfig.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT);
-		int noWorkers = Runtime.getRuntime().availableProcessors();
-		System.out.println("Akka worker config: " + ldaConfig.getAkkaWorkerConfig());
-		//Config config = ConfigFactory.parseFile(new File("src/main/resources/SpaliasWorkerRemote.conf"));
-		Config config = ConfigFactory.parseString(ldaConfig.getAkkaWorkerConfig());
-		ActorSystem system = ActorSystem.create(SpaliasMainRemote.REMOTE_WORKER_NAME,config);
-		for (int i = 0; i < noWorkers; i++) {
-			ActorRef me = system.actorOf(Props.create(SpaliasDocumentSampler.class), "remote" + i);			
-			System.out.println("Actor is: " + me);
-		}
-	}
+	
 }

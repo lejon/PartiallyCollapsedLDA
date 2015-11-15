@@ -9,6 +9,8 @@ import org.apache.commons.configuration.ConfigurationException;
 public class ParsedRemoteLDAConfiguration extends ParsedLDAConfiguration implements Configuration, LDARemoteConfiguration {
 
 	private static final long serialVersionUID = 1L;
+	
+	protected int DEFAULT_WIRE_COMPRESSION_LEVEL = 5;
 
 	public ParsedRemoteLDAConfiguration(LDACommandLineParser cp) throws ConfigurationException {
 		super(cp);
@@ -62,20 +64,60 @@ public class ParsedRemoteLDAConfiguration extends ParsedLDAConfiguration impleme
 		Arrays.fill(defaultVal, port);
 		return getIntArrayProperty("remote_worker_ports", defaultVal);
 	}
+	
+	boolean getUseWireCompression() {
+		return getBooleanProperty("use_wire_compression");
+	}
+
+	public Boolean getSendPartials() {
+		return getBooleanPropertyOrNull("send_partials");
+	}
+
+	int getWireCompressionLevel() {
+		return getInteger("wire_compression_level", DEFAULT_WIRE_COMPRESSION_LEVEL);
+	}
+
+	@Override
+	public String getRemoteMaster() {
+		return getStringProperty("remote_master");
+	}
 
 	@Override
 	public int getRemoteWorkerPort(int defaultValue) {
 		return getInteger("remote_worker_port", defaultValue);
 	}
 
+	public int getInboxSize(int defaultValue) {
+		return getInteger("inbox_size", defaultValue);
+	}
+
 	@Override
 	public String getAkkaMasterConfig() {
+		String compression = "";
+		if(getUseWireCompression()) {			
+			compression = "			  compression-scheme = \"zlib\" # Options: \"zlib\" (lzf to come), leave out for no compression\n"
+					    + "			  zlib-compression-level = " + getWireCompressionLevel() + "  # Options: 0-9 (1 being fastest and 9 being the most compressed), default is " + DEFAULT_WIRE_COMPRESSION_LEVEL;
+			System.err.println("USING WIRE COMPRESSION: Level = "+ getWireCompressionLevel() + "!!");
+		} else {
+			System.err.println("NOT - USING WIRE COMPRESSION!!");
+		}
+
 		String config = "akka {\n"
 				+ "			  loglevel = \"INFO\"\n"
 				+ "			  actor {\n"
 				+ "			    provider = \"akka.remote.RemoteActorRefProvider\"\n"
+				+ "           # Configuration items which are used by the akka.actor.ActorDSL._ methods\n"
+				+ "           dsl {\n"
+				+ "             # Maximum queue size of the actor created by newInbox(); this protects\n"
+				+ "             # against faulty programs which use select() and consistently miss messages\n"
+				+ "             inbox-size = " + getInboxSize(1000) + "\n"
+				+ ""           
+				+ "             # Default timeout to assume for operations like Inbox.receive et al\n"
+				+ "             default-timeout = 5s\n"
+				+ "           }\n"
 				+ "			  }\n"
 				+ "			  remote {\n"
+				+             compression
 				+ "			    enabled-transports = [\"akka.remote.netty.tcp\"]\n"
 				+ "			    netty.tcp {\n"
 				+ "			      hostname = \"" + getRemoteMaster() + "\"\n"
@@ -98,12 +140,22 @@ public class ParsedRemoteLDAConfiguration extends ParsedLDAConfiguration impleme
 		} catch (UnknownHostException e) {
 			throw new IllegalStateException("Unable to determine own hostname.");
 		}
+		String compression = "";
+		if(getUseWireCompression()) {			
+			compression = "			  compression-scheme = \"zlib\" # Options: \"zlib\" (lzf to come), leave out for no compression\n"
+					    + "			  zlib-compression-level = " + getWireCompressionLevel() + "  # Options: 0-9 (1 being fastest and 9 being the most compressed), default is " + DEFAULT_WIRE_COMPRESSION_LEVEL;
+			System.err.println("USING WIRE COMPRESSION: Level = "+ getWireCompressionLevel() + "!!");
+		} else {
+			System.err.println("NOT - USING WIRE COMPRESSION!!");
+		}
+
 		String config = "akka {\n"
 				+ "			  loglevel = \"INFO\"\n"
 				+ "			  actor {\n"
 				+ "			    provider = \"akka.remote.RemoteActorRefProvider\"\n"
 				+ "			  }\n"
 				+ "			  remote {\n"
+				+             compression
 				+ "			    enabled-transports = [\"akka.remote.netty.tcp\"]\n"
 				+ "			    netty.tcp {\n"
 				+ "			      hostname = \"" + fullHostName + "\"\n"
@@ -116,10 +168,4 @@ public class ParsedRemoteLDAConfiguration extends ParsedLDAConfiguration impleme
 				+ "			}\n";
 		return config;
 	}
-
-	@Override
-	public String getRemoteMaster() {
-		return getStringProperty("remote_master");
-	}
-
 }

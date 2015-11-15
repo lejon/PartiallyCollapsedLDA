@@ -4,8 +4,11 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import scala.concurrent.duration.Duration;
 import akka.actor.ActorIdentity;
@@ -26,7 +29,6 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.LDARemoteConfiguration;
 import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.LDAUtils;
-import cc.mallet.topics.tui.ParallelLDA;
 import cc.mallet.types.InstanceList;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.Timer;
@@ -53,7 +55,8 @@ public class SpaliasMainRemote {
 		LoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setLoggingUtil(lu);
-		config.activateSubconfig("DistPLDA");
+		String activeConf = config.getSubConfigs()[0];
+		config.activateSubconfig(activeConf);
 		
 		//com.typesafe.config.Config masterConfig = com.typesafe.config.ConfigFactory.parseFile(new File("src/main/resources/SpaliasMainRemote.conf"));
 		com.typesafe.config.Config masterConfig = com.typesafe.config.ConfigFactory.parseString(config.getAkkaMasterConfig());
@@ -72,24 +75,37 @@ public class SpaliasMainRemote {
 		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
 				config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
 
-		List<ActorRef> samplers = new ArrayList<>();
+		List<ActorRef> samplerNodes = new ArrayList<>();
+		List<ActorRef> samplerCores = new ArrayList<>();
 		String [] machines = config.getRemoteWorkerMachines();
 		int[] cores = config.getRemoteWorkerCores();
 		int port = config.getRemoteWorkerPort(LDARemoteConfiguration.REMOTE_PORT_DEFAULT);
+		Map<ActorRef,Integer> nodeCoreMapping = new HashMap<ActorRef,Integer>(); 
 		for(int i = 0; i < machines.length; i++) {
 			String machine = machines[i];
+			
+			String remoteRef = "akka.tcp://" + REMOTE_WORKER_NAME + "@" + machine + ":" + port + "/user/router";
+
+			ActorRef remote = findActor(system, inbox, -1, machine, port, remoteRef);
+			System.out.println("Master added: " + remote);
+			system.actorOf(Props.create(Terminator.class, remote), "remote-terminator-" + i);
+			samplerNodes.add(remote);
+
 			int noCoresOnMachine = cores[i];
-			for (int core = 0; core < noCoresOnMachine; core++) {				
-				ActorRef a = findActor(system, inbox, core, machine, port);
+			nodeCoreMapping.put(remote, noCoresOnMachine);
+			
+			for (int core = 0; core < noCoresOnMachine; core++) {		
+				String actorRef = "akka.tcp://" + REMOTE_WORKER_NAME + "@" + machine + ":" + port + "/user/remote" + core;		
+				ActorRef a = findActor(system, inbox, core, machine, port, actorRef);
 				System.out.println("Master added: " + a);
 				system.actorOf(Props.create(Terminator.class, a), "terminator-" + i+ "-" + core);
-				samplers.add(a);
+				samplerCores.add(a);
 			}
 		}
 
-		LDAGibbsSampler model = new DistributedSpaliasUncollapsedSampler(config, samplers, inbox);
+		LDAGibbsSampler model = new DistributedSpaliasUncollapsedSampler(config, samplerNodes, samplerCores, nodeCoreMapping, inbox);
 		System.out.println(
-				String.format("ADLDA (%d batches).", 
+				String.format("DistSpalias (%d batches).", 
 						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
 
 		System.out.println(String.format("Rare word threshold: %d", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD)));
@@ -121,7 +137,7 @@ public class SpaliasMainRemote {
 		metadata.add("No. Topics: " + model.getNoTopics());
 		// Save stats for this run
 		lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
-				ParallelLDA.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
+				SpaliasMainRemote.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
 		File lgDir = lu.getLogDir();
 		PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
 		out.println(LDAUtils.formatTopWords(model.getTopWords(20)));
@@ -133,12 +149,16 @@ public class SpaliasMainRemote {
 		System.out.println("I am done!");
 	}
 
-	static ActorRef findActor(ActorSystem system, final Inbox inbox, int i, String machine, int port) {
-		String actorRef = "akka.tcp://" + REMOTE_WORKER_NAME + "@" + machine + ":" + port + "/user/remote" + i;
+	static ActorRef findActor(ActorSystem system, final Inbox inbox, int i, String machine, int port, String actorRef) {
 		ActorSelection sel = system.actorSelection(actorRef);
 		final String identifyId = "" + i;
 		sel.tell(new Identify(identifyId), inbox.getRef());
-		Object message = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
+		Object message;
+		try {
+			message = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
+		} catch (TimeoutException e) {
+			throw new IllegalArgumentException("Cound not find actor: " + actorRef + " (in time)!");
+		}
 		System.out.println("Master got reply: " + message);
 
 		ActorRef ref = null;

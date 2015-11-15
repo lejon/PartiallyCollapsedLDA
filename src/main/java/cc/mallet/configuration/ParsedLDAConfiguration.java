@@ -95,6 +95,18 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 		return (stringProperty!=null) && (stringProperty.trim().equalsIgnoreCase("true") || stringProperty.trim().equalsIgnoreCase("yes") || stringProperty.trim().equals("1"));
 	}
 
+	/**
+	 * This method returns null if the property is not set in the config file
+	 * 
+	 * @param key
+	 * @return null if not set, otherwise value from config file
+	 */
+	public Boolean getBooleanPropertyOrNull(String key) {
+		String stringProperty = getStringProperty(key);
+		if(stringProperty==null) return null;
+		return (stringProperty.trim().equalsIgnoreCase("true") || stringProperty.trim().equalsIgnoreCase("yes") || stringProperty.trim().equals("1"));
+	}
+
 	public String [] getStringArrayProperty(String key) {
 		return trimStringArray(super.getStringArray(translateKey(key)));
 	}

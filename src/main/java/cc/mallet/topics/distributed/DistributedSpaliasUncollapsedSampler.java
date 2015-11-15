@@ -12,16 +12,19 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import scala.concurrent.duration.Duration;
 import akka.actor.ActorRef;
 import akka.actor.Inbox;
 import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.configuration.LDARemoteConfiguration;
 import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.ModifiedSimpleLDA;
@@ -56,6 +59,8 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 	protected int[] batchIndexes;
 
 	boolean measureTimings = false;
+	// If remotes should send partial results. Used to even out network load
+	boolean sendPartials = true;
 
 	int [] deltaNInterval;
 	String dNOutputFn;
@@ -83,25 +88,33 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 	// Used for inefficiency calculations
 	protected int [][] topIndices = null;
 	
-	List<ActorRef> samplers;
+	List<ActorRef> samplerNodes;
+	List<ActorRef> samplerCores;
+	Map<ActorRef,Integer> nodeCoreMapping;
 	Inbox inbox;
 
-	public DistributedSpaliasUncollapsedSampler(LDAConfiguration config, List<ActorRef> samplerNodes, Inbox inbox) {		
+	public DistributedSpaliasUncollapsedSampler(LDAConfiguration config, List<ActorRef> nodes, List<ActorRef> cores, 
+			Map<ActorRef,Integer> nodeCoreMapping, Inbox inbox) {		
 		super(config);
 		
 		this.inbox = inbox;
-		samplers = samplerNodes;
-
+		this.samplerNodes = nodes;
+		this.samplerCores = cores;
+		this.nodeCoreMapping = nodeCoreMapping;
+		Boolean sp = ((LDARemoteConfiguration)config).getSendPartials();
+		// If not set, use true as default, else us value from config
+		this.sendPartials = sp == null ? true : sp;
+		
 		//noBatches = config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT);
 		// Cannot have more batches than sampler nodes
-		noTopicBatches = Math.min(samplers.size(),config.getNoTopicBatches(LDAConfiguration.NO_TOPIC_BATCHES_DEFAULT));
+		noTopicBatches = Math.min(samplerNodes.size(),config.getNoTopicBatches(LDAConfiguration.NO_TOPIC_BATCHES_DEFAULT));
 		//vocabMapping = new int [noBatches][];
 		//docVocabMapping = new int [noBatches][];
 
 		debug = config.getDebug();
 		//Cannot have more batches than sampler nodes
-		Integer noBatches = Math.min(samplers.size(),config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT));
-		if(samplers.size() < config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)) {
+		Integer noBatches = Math.min(samplerNodes.size(),config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT));
+		if(samplerNodes.size() < config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)) {
 			System.err.println("WARNING: DistributedSpaliasUncollapsedSampler(): Requested no. batches is bigger than available no. samplers. Setting no. batches to no. available samplers!");
 		}
 		this.batchIndexes = new int[noBatches];
@@ -239,8 +252,11 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 			System.out.println("Batch: " + batch + " Sumtotal:" + sumtotal);
 	}
 
-
 	public void ensureConsistentTopicTypeCounts(int [][] counts) {
+		ensureConsistentTopicTypeCounts(counts,true);
+	}
+
+	public void ensureConsistentTopicTypeCounts(int [][] counts, boolean beVerbose) {
 		int sumtotal = 0;
 		int topicIdx = 0;
 		for (int [] topic : counts ) {
@@ -255,8 +271,9 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 		if(sumtotal != corpusWordCount) {
 			throw new IllegalArgumentException("Count does not sum to nr. types! Sumtotal: " + sumtotal + " no.types: " + corpusWordCount);
 		}
-		System.out.println("Type Topic count is consistent...");
+		if(beVerbose) System.out.println("Type Topic count is consistent...");
 	}
+	
 
 	/**
 	 * Imports the training instances and initializes the LDA model internals.
@@ -321,13 +338,15 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 		topicTypeCountMapping[topic][type] += count;
 		typeTopicCounts[type][topic] += count;
 		tokensPerTopic[topic] += count;
-		if(topicTypeCountMapping[topic][type]<0) {
+		// We allow partial results in this sampler so we 
+		// ensure consistent type type-topic counts after each iteration instead
+		/*if(topicTypeCountMapping[topic][type]<0) {
 			System.out.println("Emergency print!");
 			debugPrintMMatrix();
 			throw new IllegalArgumentException("Negative count for topic: " + topic 
 					+ "! Count: " + topicTypeCountMapping[topic][type] + " type:" 
 					+ alphabet.lookupObject(type) + "(" + type + ") update:" + count);
-		}
+		}*/
 	}
 
 	private double[] calcTypeFrequencyCumSum(int[] typeFrequencyIndex,int[] typeCounts) {
@@ -481,15 +500,25 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 		int myBatch = 0;
 		for (final int [] docIndices : bb.documentBatches()) {
 			final int [][] batch = createBatch(docIndices);
-			ActorRef sampler = samplers.get(samplerIdx++);
+			ActorRef sampler = samplerCores.get(samplerIdx++);
+			System.out.println("Telling: " + sampler + " to configure!");
 			sampler.tell(new DocumentSamplerConfig(numTopics, numTypes, alpha, 
-					beta, resultsSize, myBatch++, docIndices), inbox.getRef());
-			Object reply = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
+					beta, resultsSize, myBatch++, docIndices, sendPartials), inbox.getRef());
+			Object reply;
+			try {
+				reply = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
+			} catch (TimeoutException e) {
+				throw new IllegalArgumentException("Didn't get DocumentSamplerConfig reply within 10 minutes!");
+			}
 			if(reply==SpaliasDocumentSampler.Msg.CONFIGURED) {
 				System.out.println("Sampler: " + (myBatch-1) + " has confirmed initialization...");
 			}
 			sampler.tell(new DocumentBatch(batch), inbox.getRef());
-			reply = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
+			try {
+				reply = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
+			} catch (TimeoutException e) {
+				throw new IllegalArgumentException("Didn't get DocumentBatch reply within 10 minutes!");
+			}
 			if(reply==SpaliasDocumentSampler.Msg.DOC_INIT) {
 				System.out.println("Sampler: " + (myBatch-1) + " has received document batches...");
 			}
@@ -568,21 +597,30 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 			//if((docCnt%100)==0) System.out.println("Doc cnt: " + docCnt );
 
 			// Wait until a worker sends us an update structure
-			Object reply = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
-			if(!( reply instanceof TypeTopicUpdates)) {
-				System.out.println("Reply was: " + reply);
+			Object reply;
+			try {
+				reply = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
+			} catch (TimeoutException e) {
+				throw new IllegalArgumentException("Didn't get any update in 10 minutes!");
 			}
-			TypeTopicUpdates typeTopicUpdates = (TypeTopicUpdates) reply;
-			for (int i = 0; i < typeTopicUpdates.updates.length; i++) {
-				int topic = typeTopicUpdates.updates[i] % numTopics;
-				int type  = typeTopicUpdates.updates[i] / numTopics;
-				i++;
-				int count = typeTopicUpdates.updates[i];
-				//System.out.println("Updating type:" + type + " topic: " + topic + " => " + count);
-				updateTypeTopicCount(type, topic, count);
+			if(reply instanceof TypeTopicUpdates) {
+				TypeTopicUpdates typeTopicUpdates = (TypeTopicUpdates) reply;
+				for (int i = 0; i < typeTopicUpdates.updates.length; i++) {
+					int topic = typeTopicUpdates.updates[i] % numTopics;
+					int type  = typeTopicUpdates.updates[i] / numTopics;
+					i++;
+					int count = typeTopicUpdates.updates[i];
+					//System.out.println("Updating type:" + type + " topic: " + topic + " => " + count);
+					updateTypeTopicCount(type, topic, count);
+				}
+				if(typeTopicUpdates.isFinal) {
+					workersFinished++;
+				} 
+			} else {
+				System.out.println("Unhandled Reply was: " + reply);
 			}
-			workersFinished++;
 		}		
+		ensureConsistentTopicTypeCounts(topicTypeCountMapping, false);
 
 		if(iterationInInterval(currentIteration, deltaNInterval)) {
 			flushDeltaOut();
@@ -713,9 +751,9 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 		numActiveWorkers = 0;
 		workersFinished = 0;
 
-		for (ActorRef sampler : samplers) {
+		for (ActorRef sampler : samplerNodes) {
 			sampler.tell(new PhiUpdate(phi), inbox.getRef());
-			numActiveWorkers++;
+			numActiveWorkers += nodeCoreMapping.get(sampler);
 		}
 	}
 

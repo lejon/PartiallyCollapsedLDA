@@ -19,4 +19,6 @@ public interface LDARemoteConfiguration extends LDAConfiguration {
 	
 	public String getAkkaWorkerConfig();
 	
+	public Boolean getSendPartials();
+	
 }
