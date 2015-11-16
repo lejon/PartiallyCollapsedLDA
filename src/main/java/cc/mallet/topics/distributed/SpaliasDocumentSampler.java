@@ -2,6 +2,7 @@ package cc.mallet.topics.distributed;
 
 import gnu.trove.TIntArrayList;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -12,6 +13,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import akka.actor.UntypedActor;
+import cc.mallet.topics.LDAUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 
@@ -53,6 +55,16 @@ public class SpaliasDocumentSampler extends UntypedActor {
 			getSender().tell(Msg.DONE, getSelf());
 		} else if (msg == Msg.START) {
 			System.out.println("Actor started...");
+		} else if (msg instanceof DocumentBatchLocation) {
+			System.out.println(getSelf()  + ": Got new document batch location!");
+			DocumentBatchLocation loc = (DocumentBatchLocation) msg;
+			try {
+				myDocuments = LDAUtils.readASCIIIntMatrix(loc.filename, ",");
+				System.out.println(getSelf()  + ": Successfully loaded document batch from: " + loc.filename + "!");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			getSender().tell(Msg.DOC_INIT, getSelf());
 		} else if (msg instanceof DocumentBatch) {
 			System.out.println(getSelf()  + ": Got new document batch!");
 			DocumentBatch rm = (DocumentBatch) msg;

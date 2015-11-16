@@ -92,6 +92,8 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 	List<ActorRef> samplerCores;
 	Map<ActorRef,Integer> nodeCoreMapping;
 	Inbox inbox;
+	int REMOTE_BATCH_TIMEOUT_MINUTES = 60;
+	int REMOTE_DOCUMENT_TIMEOUT_MINUTES = 60;
 
 	public DistributedSpaliasUncollapsedSampler(LDAConfiguration config, List<ActorRef> nodes, List<ActorRef> cores, 
 			Map<ActorRef,Integer> nodeCoreMapping, Inbox inbox) {		
@@ -506,18 +508,32 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 					beta, resultsSize, myBatch++, docIndices, sendPartials), inbox.getRef());
 			Object reply;
 			try {
-				reply = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
+				reply = inbox.receive(Duration.create(5, TimeUnit.MINUTES));
 			} catch (TimeoutException e) {
 				throw new IllegalArgumentException("Didn't get DocumentSamplerConfig reply within 10 minutes!");
 			}
 			if(reply==SpaliasDocumentSampler.Msg.CONFIGURED) {
 				System.out.println("Sampler: " + (myBatch-1) + " has confirmed initialization...");
 			}
-			sampler.tell(new DocumentBatch(batch), inbox.getRef());
+			if(getSendDocs()) {
+				sampler.tell(new DocumentBatch(batch), inbox.getRef());
+			} else {
+				if(!(new File("tmp/TmpBatchStorage").exists())) {
+					new File("tmp/TmpBatchStorage").mkdirs();
+				}
+				String fn = "tmp/TmpBatchStorage/batch-" + (myBatch-1) + ".csv";
+				try {
+					System.out.println("Saving batch to: "+ fn);
+					LDAUtils.writeASCIIIntMatrix(batch, fn, ",");
+				} catch (Exception e) {
+					throw new IllegalArgumentException(e);
+				} 
+				sampler.tell(new DocumentBatchLocation(fn), inbox.getRef());
+			}
 			try {
-				reply = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
+				reply = inbox.receive(Duration.create(REMOTE_DOCUMENT_TIMEOUT_MINUTES, TimeUnit.MINUTES));
 			} catch (TimeoutException e) {
-				throw new IllegalArgumentException("Didn't get DocumentBatch reply within 10 minutes!");
+				throw new IllegalArgumentException("Didn't get DocumentBatch reply within " + REMOTE_DOCUMENT_TIMEOUT_MINUTES + " minutes!");
 			}
 			if(reply==SpaliasDocumentSampler.Msg.DOC_INIT) {
 				System.out.println("Sampler: " + (myBatch-1) + " has received document batches...");
@@ -540,6 +556,10 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 			}
 		}
 		startupThreadPools();
+	}
+
+	protected boolean getSendDocs() {
+		return false;
 	}
 
 	void startupThreadPools() {
@@ -599,9 +619,9 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 			// Wait until a worker sends us an update structure
 			Object reply;
 			try {
-				reply = inbox.receive(Duration.create(10, TimeUnit.MINUTES));
+				reply = inbox.receive(Duration.create(REMOTE_BATCH_TIMEOUT_MINUTES, TimeUnit.MINUTES));
 			} catch (TimeoutException e) {
-				throw new IllegalArgumentException("Didn't get any update in 10 minutes!");
+				throw new IllegalArgumentException("Didn't get any update in " + REMOTE_BATCH_TIMEOUT_MINUTES + " minutes!", e);
 			}
 			if(reply instanceof TypeTopicUpdates) {
 				TypeTopicUpdates typeTopicUpdates = (TypeTopicUpdates) reply;

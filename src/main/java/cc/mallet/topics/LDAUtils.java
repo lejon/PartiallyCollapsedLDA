@@ -1,6 +1,7 @@
 package cc.mallet.topics;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
@@ -453,7 +454,7 @@ public class LDAUtils {
 				for (int j = 0; j < matrix[i].length; j++) {
 					pw.print(matrix[i][j] + "");
 					if((j+1)<matrix[i].length) {
-						pw.print(sep + " ");
+						pw.print(sep);
 					}
 				}
 				pw.println();
@@ -463,7 +464,31 @@ public class LDAUtils {
 					+ " is unwritable : " + e.toString());
 		}
 	}
-	
+
+	public static void writeASCIIIntMatrix(int[][] matrix, String fn, String sep) throws FileNotFoundException, IOException {
+		File file = new File(fn);
+		if (file.exists()) {
+			System.out.println("Warning : the file " + file.getName()
+					+ " already exists, overwriting...");
+		}
+		try (FileWriter fw = new FileWriter(file, false); 
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter pw  = new PrintWriter(bw)) {
+			for (int i = 0; i < matrix.length; i++) {
+				for (int j = 0; j < matrix[i].length; j++) {
+					pw.print(matrix[i][j] + "");
+					if((j+1)<matrix[i].length) {
+						pw.print(sep);
+					}
+				}
+				pw.println();
+			}
+		} catch (IOException e) {
+			throw new IllegalArgumentException("File " + file.getName()
+					+ " is unwritable : " + e.toString());
+		}
+	}
+
 	public static String formatDouble(double d, DecimalFormat mydecimalFormat) {
 		return formatDouble(d, mydecimalFormat, 4);
 	}
@@ -533,6 +558,36 @@ public class LDAUtils {
 			}
 		}
 		return matrix;
+	}
+	
+	public static int[][] readASCIIIntMatrix(String filename, String sep) throws IOException {
+		List<List<Integer>> rows = new ArrayList<List<Integer>>();
+		File file = new File(filename);
+	    FileReader fr = new FileReader(file);
+	    BufferedReader br = new BufferedReader(fr);
+	    String line;
+	    while((line = br.readLine()) != null){
+	    	List<Integer> row = new ArrayList<Integer>();
+	    	String [] ints = line.split(sep);
+	    	for (int i = 0; i < ints.length; i++) {
+				if(ints[i].trim().length()>0) {
+					row.add(Integer.parseInt(ints[i]));
+				}
+			}
+	    	rows.add(row);
+	    }
+	    br.close();
+	    fr.close();
+	    int [][] result = new int[rows.size()][];
+	    for (int i = 0; i < rows.size(); i++) {
+	    	List<Integer> row = rows.get(i);
+	    	int [] irow = new int[row.size()];
+	    	for (int j = 0; j < row.size(); j++) {
+				irow[j] = row.get(j);
+			}
+	    	result[i] = irow;
+	    }
+		return result;
 	}
 	
 	public static double[][] readBinaryDoubleMatrix(int rows, int columns, String fn) throws FileNotFoundException, IOException {
