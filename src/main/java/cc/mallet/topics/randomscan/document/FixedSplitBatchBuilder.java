@@ -7,7 +7,6 @@ import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.TopicAssignment;
 
 /**
- * @author eralljn
  * 
  * This document batch builder builds batches per iteration that are a fixed %'age of the
  * total corpus. The percentage is read from the <code>fixed_split_size_doc</code> config

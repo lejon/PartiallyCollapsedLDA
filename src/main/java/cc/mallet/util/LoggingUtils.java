@@ -338,8 +338,10 @@ public class LoggingUtils {
 		}
 
 		if( config != null) { 
-			File confsrc = new File(config.whereAmI());
-			FileUtils.copyFile(new File(config.whereAmI()), new File(logdir + "/" + confsrc.getName()));
+			File configFile = new File(config.whereAmI());
+			File confsrc = configFile;
+			File destFile = new File(logdir + "/" + confsrc.getName());
+			FileUtils.copyFile(configFile, destFile);
 		}
 
 		if(t!=null) {

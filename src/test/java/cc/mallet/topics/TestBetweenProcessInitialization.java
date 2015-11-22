@@ -15,7 +15,6 @@ import cc.mallet.util.LoggingUtils;
 import cc.mallet.utils.TestUtils;
 
 /**
- * @author eralljn
  * 
  * This test must be run manually twice since the normal since it is 
  * intended to test "between process" initialization

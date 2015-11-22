@@ -7,7 +7,6 @@ import cc.mallet.topics.LDAGibbsSampler;
  * In general batch builders are NOT thread safe, they are intended to be called only from
  * the coordinator thread!
  * 
- * @author eralljn
  *
  */
 public interface TopicBatchBuilder {

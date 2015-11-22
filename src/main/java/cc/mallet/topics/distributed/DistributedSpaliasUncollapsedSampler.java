@@ -1040,7 +1040,6 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 
 	/**
 	 * Return the type indices for non-zero count updates in the last iteration
-	 * @author eralljn
 	 *
 	 */
 	@Override
@@ -1064,7 +1063,6 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 
 	/**
 	 * This is not used yet, current random scan only looks at most frequent words
-	 * @author eralljn
 	 *
 	 */
 	class TypeChangePair implements Comparable<TypeChangePair> {

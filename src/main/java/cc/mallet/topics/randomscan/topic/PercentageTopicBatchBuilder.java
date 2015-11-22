@@ -6,7 +6,6 @@ import cc.mallet.util.IndexSampler;
 import cc.mallet.util.WithoutReplacementSampler;
 
 /**
- * @author eralljn
  * 
  * Samples X% of the ROWS (which topics) in Phi controlled by the <code>percentage_split_size_topic</code>
  * config parameter. 
