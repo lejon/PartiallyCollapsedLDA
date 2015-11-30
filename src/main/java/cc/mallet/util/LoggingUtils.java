@@ -291,6 +291,64 @@ public class LoggingUtils {
 				logfilename, heading, iterationType, iterations, metadata,
 				logdir);
 	}
+	
+	public static String doInitialLogging(LDACommandLineParser cp, Configuration config,
+			String runner, String logfilename,  List<String> metadata, String logdir)
+					throws FileNotFoundException, Exception, IOException {
+		
+		RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
+		List<String> arguments = RuntimemxBean.getInputArguments();
+
+		if(!logfilename.startsWith("/") || !logdir.endsWith("/")) {
+			logfilename = "/" + logfilename;
+		}
+		
+		PrintWriter out = new PrintWriter(logdir + logfilename + ".txt");
+		out.println("=== Setup ===");
+		out.print("Java Args:");
+		for( String arg : arguments ) {
+			out.print(arg + " ");
+		}
+		out.println();
+		if( cp != null) {
+			out.println("CommandLine: " + cp);
+			if(cp.getComment()!=null) out.println("Comment: " + cp.getComment());
+		}
+		if( config != null) { 
+			out.println("Active subconfig: " +config.getActiveSubConfig());
+			out.println("Config:Title: " + config.getStringProperty("title").trim());
+			out.println("Config:Description: " + config.getStringProperty("description").trim());
+		}
+		//out.println(iterationType + iterations);
+		out.println("Running class: " + runner);
+		out.println("=== Metadata ===");
+		
+		String implVer = getManifestInfo("Implementation-Version", "PCPLDA");
+		String buildVer = getManifestInfo("Implementation-Build","PCPLDA");
+		
+		if(implVer==null||buildVer==null) {
+			out.println("Latest Commit Info:" + getLatestCommit());						
+		} else {
+			out.println("Implementation-Version:" + implVer);
+			out.println("Implementation-Build:" + buildVer);			
+		}
+
+		if(metadata!=null) {
+			for( String meta : metadata ) {
+				out.println(meta);
+			}
+		}
+
+		if( config != null) { 
+			File confsrc = new File(config.whereAmI());
+			FileUtils.copyFile(new File(config.whereAmI()), new File(logdir + "/" + confsrc.getName()));
+		}
+		
+		out.flush();
+		out.close();
+
+		return logdir + logfilename;
+	}
 
 	private static String doLogging(Timer t,
 			LDACommandLineParser cp, Configuration config,
