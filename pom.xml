@@ -26,7 +26,9 @@
 	<!-- v3.2.2: XValidationCreator fix -->
 	<!-- v3.2.3: SimpleTokenizerLarge must override deepClone. -->
 	<!-- v3.3.3: Major rework of distributed prototype -->
-	<version>3.3.3-SNAPSHOT</version>
+	<!-- v3.4.3: Added doInitialLogging method so we can do some logging BEFORE the run starts (facilitates tracing if crash) -->
+	<!-- v3.4.4: Changed from non-daemon threads to daemon threads -->
+	<version>3.4.3-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
