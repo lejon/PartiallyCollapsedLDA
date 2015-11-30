@@ -1,6 +1,7 @@
 package cc.mallet.topics;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.Date;
@@ -859,7 +860,7 @@ public class SpaliasUncollapsedTest {
 		assertEquals(means.length * means[0].length, noNonZero);
 	}
 	
-	@Test(expected = IllegalStateException.class)
+	@Test
 	public void testNoPhiMeans() throws IOException {
 		String whichModel = "spalias_uncollapsed";
 		Integer numBatches = 6;
@@ -899,7 +900,7 @@ public class SpaliasUncollapsedTest {
 
 		LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
 		assertEquals(0, ((SpaliasUncollapsedParallelLDA)model).getNoSampledPhi()); 
-		modelWithPhi.getPhiMeans();		
+		assertTrue(modelWithPhi.getPhiMeans()==null);		
 	}
 
 
