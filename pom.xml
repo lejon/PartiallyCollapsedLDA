@@ -28,7 +28,8 @@
 	<!-- v3.3.3: Major rework of distributed prototype -->
 	<!-- v3.4.3: Added doInitialLogging method so we can do some logging BEFORE the run starts (facilitates tracing if crash) -->
 	<!-- v3.4.4: Changed from non-daemon threads to daemon threads -->
-	<version>3.4.3-SNAPSHOT</version>
+	<!-- v3.4.5: Changed BACK from daemon threads to non-daemon threads. This should be looked at later -->
+	<version>3.4.5-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 

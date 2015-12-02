@@ -24,8 +24,12 @@ public class LDAThreadFactory implements ThreadFactory {
         Thread t = new Thread(group, r,
                               namePrefix + threadNumber.getAndIncrement(),
                               0);
+        
+        if (t.isDaemon())
+            t.setDaemon(false);
         // I can't really see that we want non-daemon threads...
-        t.setDaemon(true);
+        // Seems we might get problem with daemon-threads?? Does this mess up join after invoke??
+        // t.setDaemon(true);
         if (t.getPriority() != Thread.NORM_PRIORITY)
             t.setPriority(Thread.NORM_PRIORITY);
         return t;
