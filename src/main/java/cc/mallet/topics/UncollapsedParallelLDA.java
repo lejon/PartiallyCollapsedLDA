@@ -1044,28 +1044,23 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 		@Override
 		protected void compute() {
-			try {
-				if ( (endDoc-startDoc) <= limit ) {
-					for (int docIdx = startDoc; docIdx < endDoc; docIdx++) {
-						FeatureSequence tokenSequence =
-								(FeatureSequence) data.get(docIdx).instance.getData();
-						LabelSequence topicSequence =
-								(LabelSequence) data.get(docIdx).topicSequence;
-						sampleTopicAssignmentsParallel (new UncollapsedLDADocSamplingContext(tokenSequence, topicSequence, myBatch, docIdx));
-					}
-				}
-				else {
-					int range = (endDoc-startDoc);
-					int startDoc1 = startDoc;
-					int endDoc1 = startDoc + (range / 2);
-					int startDoc2 = endDoc1+1;
-					int endDoc2 = endDoc;
-					invokeAll(new RecursiveDocumentSampler(startDoc1,endDoc1,myBatch + 1,limit),
-							new RecursiveDocumentSampler(startDoc2,endDoc2,myBatch + 2,limit));
+			if ( (endDoc-startDoc) <= limit ) {
+				for (int docIdx = startDoc; docIdx < endDoc; docIdx++) {
+					FeatureSequence tokenSequence =
+							(FeatureSequence) data.get(docIdx).instance.getData();
+					LabelSequence topicSequence =
+							(LabelSequence) data.get(docIdx).topicSequence;
+					sampleTopicAssignmentsParallel (new UncollapsedLDADocSamplingContext(tokenSequence, topicSequence, myBatch, docIdx));
 				}
 			}
-			catch ( Exception e ) {
-				e.printStackTrace();
+			else {
+				int range = (endDoc-startDoc);
+				int startDoc1 = startDoc;
+				int endDoc1 = startDoc + (range / 2);
+				int startDoc2 = endDoc1+1;
+				int endDoc2 = endDoc;
+				invokeAll(new RecursiveDocumentSampler(startDoc1,endDoc1,myBatch + 1,limit),
+						new RecursiveDocumentSampler(startDoc2,endDoc2,myBatch + 2,limit));
 			}
 		}
 	}
