@@ -30,6 +30,7 @@ import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.topics.randomscan.document.BatchBuilderFactory;
@@ -166,7 +167,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				e.printStackTrace();
 				throw new IllegalArgumentException(e);
 			}
-			System.out.println("UncollapsedParallelLDA: Set priors from: " + config.getTopicPriorFilename());
+			if(logger.getLevel()==Level.INFO) {
+				System.out.println("UncollapsedParallelLDA: Set priors from: " + config.getTopicPriorFilename());
+			}
 		} else {
 			double [][] priors = new double[numTopics][numTypes];
 			for (int i = 0; i < priors.length; i++) {			
@@ -441,7 +444,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		tbb = TopicBatchBuilderFactory.get(config, this);
 		topicIndexBuilder = TopicIndexBuilderFactory.get(config,this);
 
-		System.out.println("Loaded " + data.size() + " documents, with " + corpusWordCount + " words in total.");
+		if(logger.getLevel()==Level.INFO) {
+			System.out.println("Loaded " + data.size() + " documents, with " + corpusWordCount + " words in total.");
+		}
 	}
 
 	protected void updateTypeTopicCount(int type, int topic, int count) {
@@ -449,7 +454,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		typeTopicCounts[type][topic] += count;
 		tokensPerTopic[topic] += count;
 		if(topicTypeCountMapping[topic][type]<0) {
-			System.out.println("Emergency print!");
+			System.err.println("Emergency print!");
 			debugPrintMMatrix();
 			throw new IllegalArgumentException("Negative count for topic: " + topic 
 					+ "! Count: " + topicTypeCountMapping[topic][type] + " type:" 
@@ -564,7 +569,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			// Occasionally print more information
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
 				if(testSet != null) {
-					System.out.println("SHOULD PRINT PERPLEXITY!!!");
+					System.err.println("SHOULD PRINT PERPLEXITY!!!");
 					//double testPerplexity = LDAUtils.perplexity(config, testSet, getHashTopicTypeCounts(), phi);
 					//LDAUtils.perplexityToFile(loggingPath, iteration, testPerplexity, logger);
 				}
@@ -573,8 +578,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				tw = topWords (wordsPerTopic);
 				logState = new LogState(logLik, iteration, tw, loggingPath, logger);
 				LDAUtils.logLikelihoodToFile(logState);
-				logger.info("\n<" + iteration + "> Log Likelihood: " + logLik);
-				System.err.println(tw);
+				System.err.println("<" + iteration + "> Log Likelihood: " + logLik);
+				logger.info(tw);
 				if(logTypeTopicDensity || logDocumentDensity) {
 					density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 					docDensity = kdDensities.get() / (double) numTopics / numTypes;
@@ -652,8 +657,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
 				logLik = modelLogLikelihood();	
 				tw = topWords (wordsPerTopic);
-				logger.info("\n<" + iteration + "> Log Likelihood: " + logLik);
-				System.err.println(tw);
+				System.err.println("<" + iteration + "> Log Likelihood: " + logLik);
+				logger.info(tw);
 			}
 
 			kdDensities.set(0);
@@ -1306,7 +1311,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				logLikelihood += Dirichlet.logGammaStirling(beta + topicCounts[topic]);
 
 				if (Double.isNaN(logLikelihood)) {
-					System.out.println("NaN in log likelihood calculation: " + topicCounts[topic]);
+					System.err.println("NaN in log likelihood calculation: " + topicCounts[topic]);
 					System.exit(1);
 				} 
 				else if (Double.isInfinite(logLikelihood)) {
@@ -1423,8 +1428,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			throw new IllegalArgumentException("Count does not sum to nr. types! Sumtotal: " + sumtotal + " no.types: " + corpusWordCount);
 		}
 
-		System.out.println("loaded sumtotal: " + sumtotal + " tokens");
-
+		if(logger.getLevel()==Level.INFO) {
+			System.out.println("loaded sumtotal: " + sumtotal + " tokens");
+		}
+		
 		int [] topicIndices = new int[numTopics];
 		for (int i = 0; i < numTopics; i++) {
 			topicIndices[i] = i;
