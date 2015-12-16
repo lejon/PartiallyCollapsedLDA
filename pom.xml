@@ -30,7 +30,8 @@
 	<!-- v3.4.4: Changed from non-daemon threads to daemon threads -->
 	<!-- v3.4.5: Changed BACK from daemon threads to non-daemon threads. This should be looked at later -->
 	<!-- v3.5.0: Added classifier based on Symmetric Kullback Leibler divergence. -->
-	<version>3.5.0-SNAPSHOT</version>
+	<!-- v3.5.1: Improved Symmetric Kullback Leibler classifier better defaults, save fold data. -->
+	<version>3.5.1-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 

@@ -1,6 +1,9 @@
 package cc.mallet.classify;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -9,6 +12,7 @@ import java.util.Random;
 import cc.mallet.classify.evaluate.EnhancedConfusionMatrix;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.topics.LDASamplerWithPhi;
+import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.CrossValidationIterator;
@@ -30,6 +34,8 @@ public class KLDivergenceClassifier extends Classifier {
 	Map<String,double []> classCentroids;
 	int noClassified = 0;
 	double alpha;
+	String [] testRowIds;
+	double [][] sampledTestTopics;
 	
 	public KLDivergenceClassifier(LDAConfiguration config) {
 		this.config = config;
@@ -49,6 +55,7 @@ public class KLDivergenceClassifier extends Classifier {
 		spalias.sampleZGivenPhi(300);
 		double [][] sampledTestZBar = spalias.getZbar();
 		double[] docTopicMeans = sampledTestZBar[0];
+		sampledTestTopics[noClassified] = docTopicMeans;
 		// Normalize 
 		double sum = MatrixOps.sum(docTopicMeans);
 		for (int i = 0; i < docTopicMeans.length; i++) {
@@ -59,14 +66,10 @@ public class KLDivergenceClassifier extends Classifier {
 			//System.out.println("Doc-topic: " + arrToStr(docTopicMeans));
 			double klDivergence = calcKLDivergences(classCentroids.get(key), docTopicMeans);
 			//System.out.println("Divergence vs. " + key + "(" + targetAlphabet.lookupIndex(key) + ") is:" + klDivergence);
-			scores[targetAlphabet.lookupIndex(key)] = klDivergence;
+			// We need to transform the kl-divergencies (low is good) to scores (high is good)
+			scores[targetAlphabet.lookupIndex(key)] = 1.0 / klDivergence;
 		}
-		
-		// We need to transform the kl-divergencies (low is good) to scores (high is good)
-		for (int i = 0; i < scores.length; i++) {
-			scores[i] = 1.0 / scores[i];
-		}
-		
+				
 		//System.out.println("["  + instance.getTarget().toString() + "]: Scores are: " + arrToStr(scores));
 		
 		noClassified++;
@@ -104,7 +107,6 @@ public class KLDivergenceClassifier extends Classifier {
 		trainedSampler = new SpaliasUncollapsedParallelLDA(config);
 		trainedSampler.addInstances(trainingset);
 		trainedSampler.sample(config.getNoIterations(3000));
-		
 		
 		// Calculate class centroids
 		classCentroids = calculateCentroids(trainedSampler.getZbar(), trainingset);
@@ -209,21 +211,80 @@ public class KLDivergenceClassifier extends Classifier {
 				System.err.println("Training failed, giving up after " + tries + " tries...");
 				throw trainingException;
 			}
+			
+			sampledTestTopics = new double[cvSplit[TESTING].size()][];
 
 			System.out.println("\nTesting on: " + cvSplit[TESTING].size() + " documents...");
+			
+			testRowIds = extractRowIds(cvSplit[TESTING]);
 			trials[fold] = new Trial(this, cvSplit[TESTING]);
 			System.out.println("Trial accuracy: "  + trials[fold].getAccuracy());
 			EnhancedConfusionMatrix enhancedConfusionMatrix = new EnhancedConfusionMatrix(trials[fold]);
 			System.out.println("Trial confusion matrix: \n"  + enhancedConfusionMatrix);
 			
-			saveFoldData(fold, enhancedConfusionMatrix);
+			saveFoldData(fold, enhancedConfusionMatrix, trials[fold]);
 		}
 		
 		return trials;
 	}
+	
+	public static String [] extractRowIds(InstanceList trainingSet) {
+		String [] result = new String[trainingSet.size()];
+		int copied = 0;
+		for(Instance instance : trainingSet) {
+			result[copied++] = instance.getName().toString();
+		}
+		return result;
+	}
 
-	private void saveFoldData(int fold, EnhancedConfusionMatrix enhancedConfusionMatrix) {
+	private void saveFoldData(int fold, EnhancedConfusionMatrix enhancedConfusionMatrix, Trial trial) throws FileNotFoundException, IOException {
+		String [] allColnames = new String[config.getNoTopics(0)];
+		for (int i = 0; i < allColnames.length; i++) {
+			allColnames[i] = "Z" + i;
+		}
+		File lgDir = config.getLoggingUtil().getLogDir();
 		
+		// Save example betas
+		String foldPrefix = "fold-";
+		
+		// Save example doc-topic means if that is turned on in config
+		if(config.saveDocumentTopicMeans() && config.getDatasetFilename()!=null) {
+			String dtFn = config.getDocumentTopicMeansOutputFilename();
+			LDAUtils.writeASCIIDoubleMatrix(trainedSampler.getZbar(), lgDir.getAbsolutePath() + "/" + foldPrefix + fold + "-" + dtFn, ",");
+			LDAUtils.writeASCIIDoubleMatrix(sampledTestTopics,lgDir.getAbsolutePath() + "/" + foldPrefix + fold + "-TESTSET-" + dtFn, ",");
+		}
+		
+		PrintWriter idsOut = new PrintWriter(config.getLoggingUtil().getLogDir().getAbsolutePath() + "/test-ids-fold-" + fold + ".txt");
+		for (String id : testRowIds) {				
+			idsOut.println(id);
+		}
+		idsOut.flush();
+		idsOut.close();
+		
+		PrintWriter out = new PrintWriter(config.getLoggingUtil().getLogDir().getAbsolutePath() + "/confusion-matrix-fold-" + fold + ".txt");
+		out.println(enhancedConfusionMatrix);
+		out.flush();
+		out.close();
+		
+		PrintWriter pw = new PrintWriter(config.getLoggingUtil().getLogDir().getAbsolutePath() + "/confusion-matrix-fold-" + fold + ".csv");
+		pw.println(enhancedConfusionMatrix.toCsv(","));
+		pw.flush();
+		pw.close();
+
+		PrintWriter clssFs = new PrintWriter(config.getLoggingUtil().getLogDir().getAbsolutePath() + "/classifications-fold-" + fold + ".txt");
+		for (int j = 0; j < trial.size(); j++) {
+			Classification cl = trial.get(j);
+			cl.print(clssFs);
+		}
+		clssFs.flush();
+		clssFs.close();
+		
+		PrintWriter topOut = new PrintWriter(lgDir.getAbsolutePath() + "/fold-" + fold + "-TopWords.txt");
+		String topWords = LDAUtils.formatTopWords(trainedSampler.getTopWords(50));
+		topOut.println(topWords);
+		System.out.println("Top words are: \n" + topWords);
+		topOut.flush();
+		topOut.close();
 	}
 
 	public boolean getAbort() {
