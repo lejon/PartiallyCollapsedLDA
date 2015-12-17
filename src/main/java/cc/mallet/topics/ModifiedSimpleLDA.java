@@ -289,10 +289,25 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	}
 
 
+	/**
+	 * Returns the document topic means. Observe that a document can
+	 * have a zero mean for one topic. If you want the theta estimate use
+	 * <code>getThetaEstimate</code> instead
+	 * @return document topic means 
+	 */
 	public double [][] getZbar() {
 		return ModifiedSimpleLDA.getZbar(data,numTopics);
 	}
 
+	/**
+	 * Returns the document topic means. Observe that a document can
+	 * have a zero mean for one topic. If you want the theta estimate use
+	 * <code>getThetaEstimate</code> instead
+	 * 
+	 * @param data
+	 * @param numTopics
+	 * @return document topic means 
+	 */
 	public static double [][] getZbar(ArrayList<TopicAssignment> data, int numTopics) {
 		double [][] docTopicMeans = new double [data.size()][numTopics];
 		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
@@ -323,6 +338,100 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			}
 		}
 		return docTopicMeans;
+	}
+	
+	/**
+	 * Returns an estimate of theta
+	 * @return estimate of theta
+	 */
+	public double [][] getThetaEstimate() {
+		return ModifiedSimpleLDA.getThetaEstimate(data,numTopics,alpha);
+	}
+
+	/**
+	 * Returns an estimate of theta, this differs from <code>getZBar</code> in that it will never
+	 * contain zeros for any topic (unless it gets an abnormal alpha = 0)
+	 * 
+	 * @param data
+	 * @param numTopics
+	 * @param alpha
+	 * @return estimate of theta
+	 */
+	public static double [][] getThetaEstimate(ArrayList<TopicAssignment> data, int numTopics, double alpha) {
+		double [][] thetaEstimate = new double [data.size()][numTopics];
+		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
+			FeatureSequence tokenSequence =
+					(FeatureSequence) data.get(docIdx).instance.getData();
+			LabelSequence topicSequence =
+					(LabelSequence) data.get(docIdx).topicSequence;
+	
+			int docLength = tokenSequence.getLength();
+			int [] oneDocTopics = topicSequence.getFeatures();
+	
+			double[] localTopicCounts = new double[numTopics];
+			double normalizer = 0.0;
+	
+			for (int position = 0; position < docLength; position++) {
+				int topicInd = oneDocTopics[position];
+				localTopicCounts[topicInd]++;
+				normalizer += localTopicCounts[topicInd] + alpha;
+			}
+	
+			for (int k = 0; k < numTopics; k++) {
+				if(docLength==0) {
+					thetaEstimate[docIdx][k] = 0.0;
+				} else {					
+					thetaEstimate[docIdx][k] = (localTopicCounts[k] + alpha) / normalizer;
+				}
+				if(Double.isInfinite(thetaEstimate[docIdx][k]) || Double.isNaN(thetaEstimate[docIdx][k]) || thetaEstimate[docIdx][k] < 0) { 
+					throw new IllegalStateException("theta estimate is broken: DocIdx=" + docIdx + " Topic=" + k + " theta est=" + thetaEstimate[docIdx][k]);  
+				}
+			}
+		}
+		return thetaEstimate;
+	}
+	
+	/**
+	 * Returns an estimate of theta, this differs from <code>getZBar</code> in that it will never
+	 * contain zeros for any topic (unless it gets an abnormal alpha = 0)
+	 * 
+	 * @param data
+	 * @param numTopics
+	 * @param alpha
+	 * @return estimate of theta
+	 */
+	public static double [][] getThetaEstimate(ArrayList<TopicAssignment> data, int numTopics, double [] alpha) {
+		double [][] thetaEstimate = new double [data.size()][numTopics];
+		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
+			FeatureSequence tokenSequence =
+					(FeatureSequence) data.get(docIdx).instance.getData();
+			LabelSequence topicSequence =
+					(LabelSequence) data.get(docIdx).topicSequence;
+	
+			int docLength = tokenSequence.getLength();
+			int [] oneDocTopics = topicSequence.getFeatures();
+	
+			double[] localTopicCounts = new double[numTopics];
+			double normalizer = 0.0;
+	
+			for (int position = 0; position < docLength; position++) {
+				int topicInd = oneDocTopics[position];
+				localTopicCounts[topicInd]++;
+				normalizer += localTopicCounts[topicInd] + alpha[topicInd];
+			}
+	
+			for (int k = 0; k < numTopics; k++) {
+				if(docLength==0) {
+					thetaEstimate[docIdx][k] = 0.0;
+				} else {					
+					thetaEstimate[docIdx][k] = (localTopicCounts[k] + alpha[k]) / normalizer;
+				}
+				if(Double.isInfinite(thetaEstimate[docIdx][k]) || Double.isNaN(thetaEstimate[docIdx][k]) || thetaEstimate[docIdx][k] < 0) { 
+					throw new IllegalStateException("theta estimate is broken: DocIdx=" + docIdx + " Topic=" + k + " theta est=" + thetaEstimate[docIdx][k]);  
+				}
+			}
+		}
+		return thetaEstimate;
 	}
 
 

@@ -399,4 +399,8 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 		return ModifiedSimpleLDA.getZbar(data,numTopics);
 	}
 
+	public double [][] getThetaEstimate() {
+		return ModifiedSimpleLDA.getThetaEstimate(data,numTopics,alpha);
+	}
+
 }

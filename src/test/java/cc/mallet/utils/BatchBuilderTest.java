@@ -111,6 +111,10 @@ public class BatchBuilderTest {
 		public double[][] getZbar() {
 			return null;
 		}
+		@Override
+		public double[][] getThetaEstimate() {
+			return null;
+		}
 	}
 
 	@Test

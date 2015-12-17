@@ -18,6 +18,7 @@ public interface LDAGibbsSampler {
 	public int getCurrentIteration();
 	public int [][] getZIndicators();
 	double [][] getZbar();
+	double[][] getThetaEstimate();
 	public void setZIndicators(int[][] zIndicators);
 	public ArrayList<TopicAssignment> getDataset();
 	int[][] getDeltaStatistics();
