@@ -31,7 +31,8 @@
 	<!-- v3.4.5: Changed BACK from daemon threads to non-daemon threads. This should be looked at later -->
 	<!-- v3.5.0: Added classifier based on Symmetric Kullback Leibler divergence. -->
 	<!-- v3.5.1: Improved Symmetric Kullback Leibler classifier better defaults, save fold data. -->
-	<version>3.5.1-SNAPSHOT</version>
+	<!-- v3.5.2: In KL-Classifier, use theta estimate instead of doc-topic means that can contain 0's. -->
+	<version>3.5.2-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
