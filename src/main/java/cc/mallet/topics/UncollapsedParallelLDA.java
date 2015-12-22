@@ -195,10 +195,11 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			for (Object wordToZero : zeroOut[topic]) {
 				String word = wordToZero.toString().trim();
 				int wordIdx = alphabet.lookupIndex(word,false);
-				//if(wordIdx<0) throw new IllegalArgumentException("Word \"" + word + "\" does not exist in the dictionary!");
-				if(wordIdx<0&&!issuedWarnings.get(word)) { 
-					System.err.println("WARNING: UncollapsedParallelLDA.calculatePriors: Word \"" + word + "\" does not exist in the dictionary!");
-					issuedWarnings.put(word, Boolean.TRUE);
+				if( wordIdx < 0) {
+					if(issuedWarnings.get(word) == null || !issuedWarnings.get(word)) {
+						System.err.println("WARNING: UncollapsedParallelLDA.calculatePriors: Word \"" + word + "\" does not exist in the dictionary!");
+						issuedWarnings.put(word, Boolean.TRUE);
+					}
 					continue;
 				}
 				priors[topic][wordIdx] = 0.0;
