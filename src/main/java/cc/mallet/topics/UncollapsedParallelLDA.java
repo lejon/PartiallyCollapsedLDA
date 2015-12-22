@@ -16,7 +16,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -181,6 +183,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 	protected static double [][] calculatePriors(String topicPriorFilename, int numTopics, 
 			int numTypes, Alphabet alphabet) throws IOException {
+		Map<String,Boolean> issuedWarnings = new HashMap<String, Boolean>();
 		double [][] priors = new double[numTopics][numTypes];
 		for (int i = 0; i < priors.length; i++) {			
 			Arrays.fill(priors[i], 1.0);
@@ -193,8 +196,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				String word = wordToZero.toString().trim();
 				int wordIdx = alphabet.lookupIndex(word,false);
 				//if(wordIdx<0) throw new IllegalArgumentException("Word \"" + word + "\" does not exist in the dictionary!");
-				if(wordIdx<0) { 
+				if(wordIdx<0&&!issuedWarnings.get(word)) { 
 					System.err.println("WARNING: UncollapsedParallelLDA.calculatePriors: Word \"" + word + "\" does not exist in the dictionary!");
+					issuedWarnings.put(word, Boolean.TRUE);
 					continue;
 				}
 				priors[topic][wordIdx] = 0.0;
@@ -217,10 +221,18 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		// Each line will be in the format topic, word1, word2, word3 ...
 		for (String string : lines) {
 			// Skip comments
-			if(string.startsWith("#")) continue;
+			if(string.trim().startsWith("#")) continue;
+			// Skip empty lines
+			if(string.trim().length()==0) continue;
 			String [] spec = string.split(",");
 			// First find the topic we are specifying, it is stored first
-			int currentTopic = Integer.parseInt(spec[0]);
+			int currentTopic;
+			try {
+				currentTopic = Integer.parseInt(spec[0]);
+			} catch (NumberFormatException e) {
+				System.err.println("Cant extract topic number from: " + spec[0]);
+				throw new IllegalArgumentException(e);
+			}
 			for (int i = 1; i < spec.length; i++) {
 				String word = spec[i];
 				for (int topic = 0; topic < numTopics; topic++) {
