@@ -32,7 +32,8 @@
 	<!-- v3.5.0: Added classifier based on Symmetric Kullback Leibler divergence. -->
 	<!-- v3.5.1: Improved Symmetric Kullback Leibler classifier better defaults, save fold data. -->
 	<!-- v3.5.2: In KL-Classifier, use theta estimate instead of doc-topic means that can contain 0's. -->
-	<version>3.5.2-SNAPSHOT</version>
+	<!-- v3.5.3: In KL-Classifier select on commandline to run multi- or single corpus version. Ensure consistent priors. -->
+	<version>3.5.3-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
