@@ -205,7 +205,29 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				priors[topic][wordIdx] = 0.0;
 			}
 		}
+		ensureConsistentPriors(priors,alphabet);
 		return priors;
+	}
+
+	protected static void ensureConsistentPriors(double[][] priors, Alphabet alphabet) {
+		double [] colsum = new double[priors[0].length];
+		for (int i = 0; i < priors.length; i++) {
+			double rowsum = 0;
+			for (int j = 0; j < priors[i].length; j++) {
+				rowsum += priors[i][j];
+				colsum[j] += priors[i][j];
+			}
+			if(rowsum==0.0) throw new IllegalArgumentException("Inconsistent prior spec, one topic has all Zero priors!");
+		}
+		List<String> zeroWords = new ArrayList<String>();
+		for (int i = 0; i < colsum.length; i++) {			
+			if(colsum[i]==0.0) {
+				String word = alphabet.lookupObject(i).toString();
+				zeroWords.add(word);
+			}
+		}
+		if(zeroWords.size()>0)
+			throw new IllegalArgumentException("Inconsistent prior spec, '" + zeroWords + "' has all Zero priors!");
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
@@ -903,7 +925,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	void ensureConsistentPhi(double [][] Phi) {
 		for (int i = 0; i < Phi.length; i++) {
 			double  sum = 0.0;
-			for (int j = 0; j < Phi[0].length; j++) {
+			for (int j = 0; j < Phi[i].length; j++) {
 				sum += Phi[i][j];
 			}
 			if(sum>1.01&&sum<0.09&&sum>0) throw new IllegalArgumentException("Inconsistent Phi!");
