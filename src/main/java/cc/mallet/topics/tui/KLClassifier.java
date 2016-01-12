@@ -187,9 +187,10 @@ public class KLClassifier {
 				metadata.add("No. Topics: " + config.getNoTopics(-1));
 				metadata.add("Accuracy: " + String.format("%.0f",(xvalidationAverage*100)));
 				metadata.add("ConfusionMatrix: " + "\n" + combinedConfusionMatrix);
+				metadata.add("KLClassifier type: " + (multiCorpus ? "Multicorpus" : "Singlecorpus"));
 				// Save stats for this run
 				lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
-						this.getClass().getName(), this.getClass().getSimpleName() + "-results", "HEADING", "DOLDA", numberOfRuns, metadata);
+						this.getClass().getName(), this.getClass().getSimpleName() + "-results", "HEADING", "PCLDA", numberOfRuns, metadata);
 
 				File lgDir = lu.getLogDir();
 				
