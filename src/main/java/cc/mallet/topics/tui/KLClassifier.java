@@ -5,8 +5,10 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import cc.mallet.classify.KLDivergenceClassifier;
+import cc.mallet.classify.KLDivergenceClassifierMultiCorpus;
 import cc.mallet.classify.Trial;
 import cc.mallet.classify.evaluate.EnhancedConfusionMatrix;
 import cc.mallet.configuration.ConfigFactory;
@@ -28,7 +30,28 @@ public class KLClassifier {
 		cl.doRun(args);
 	}
 
-	public void doRun(String[] args) throws Exception {
+	public void doRun(String[] inargs) throws Exception {
+		// Use multicorpus per default
+		boolean multiCorpus = true;
+		List<String> realArgs = new ArrayList<>();
+		for (int i = 0; i < inargs.length; i++) {
+			String multicorpus = "-multicorpus";
+			String singlecorpus = "-singlecorpus";
+			if(inargs[i].trim().toLowerCase().equals(multicorpus) || inargs[i].trim().toLowerCase().equals(singlecorpus)) {
+				if(inargs[i].trim().toLowerCase().equals(multicorpus))
+					multiCorpus = true;
+				if(inargs[i].trim().toLowerCase().equals(singlecorpus))
+					multiCorpus = false;
+			} else {
+				realArgs.add(inargs[i]);
+			}
+		}
+		String [] args = new String[realArgs.size()];
+		for (int i = 0; i < args.length; i++) {
+			args[i] = realArgs.get(i);
+		}
+		System.out.println(PROGRAM_NAME + ": Using " + (multiCorpus ? "Multicorpus" : "Singlecorpus") + "...");
+		
 		if(args.length == 0) {
 			System.out.println("\n" + PROGRAM_NAME + ": No args given, you should typically call it along the lines of: \n" 
 					+ "java -cp PCPLDA-X.X.X.jar cc.mallet.topics.tui.ParallelLDA --run_cfg=src/main/resources/configuration/PLDAConfig.cfg\n" 
@@ -94,7 +117,14 @@ public class KLClassifier {
 				InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
 						config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
 
-				KLDivergenceClassifier model = new KLDivergenceClassifier(config);
+				KLDivergenceClassifierMultiCorpus mcmodel = null;
+				KLDivergenceClassifier model = null;
+				if(multiCorpus) {
+					mcmodel = new KLDivergenceClassifierMultiCorpus(config);
+				}
+				else { 
+					model = new KLDivergenceClassifier(config);
+				}
 
 				System.out.println(String.format("Rare word threshold: %d", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD)));
 
@@ -114,7 +144,13 @@ public class KLClassifier {
 				System.out.println("Starting:" + new Date());
 				Timer t = new Timer();
 				t.start();
-				Trial [] trials = model.crossValidate(instances,5);
+				Trial [] trials;
+				if(multiCorpus) {
+					trials = mcmodel.crossValidate(instances,5);
+				}
+				else {	
+					trials = model.crossValidate(instances,5);	
+				}
 				t.stop();
 
 				String trialResuls = "[";
@@ -157,13 +193,26 @@ public class KLClassifier {
 
 				File lgDir = lu.getLogDir();
 				
-				LDASamplerWithPhi sampler = model.getTrainedSampler();
-				PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
-				String topWords = LDAUtils.formatTopWords(sampler.getTopWords(50));
-				out.println(topWords);
-				System.out.println("Top words for class are: \n" + topWords);
-				out.flush();
-				out.close();
+				if(multiCorpus) {
+					Map<String, LDASamplerWithPhi> samplers = mcmodel.getTrainedSamplers();
+					PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
+					for (String key : samplers.keySet()) {
+						LDASamplerWithPhi sampler = samplers.get(key);
+						String topWords = LDAUtils.formatTopWords(sampler.getTopWords(50));
+						out.println("Top words for class "+ key +" are: \n" + topWords);
+						System.out.println("Top words for class "+ key +" are: \n" + topWords);
+					}
+					out.flush();
+					out.close();
+				} else {
+					LDASamplerWithPhi sampler = model.getTrainedSampler();
+					PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
+					String topWords = LDAUtils.formatTopWords(sampler.getTopWords(50));
+					out.println(topWords);
+					System.out.println("Top words for class are: \n" + topWords);
+					out.flush();
+					out.close();					
+				}
 
 				System.out.println("I am done!");
 			}
