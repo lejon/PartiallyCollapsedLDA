@@ -16,21 +16,14 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.LDATrainTestCommandLineParser;
 import cc.mallet.configuration.LDATrainTestConfiguration;
 import cc.mallet.configuration.ParsedLDAConfiguration;
-import cc.mallet.topics.ADLDA;
-import cc.mallet.topics.EfficientUncollapsedParallelLDA;
-import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.LDAUtils;
-import cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA;
-import cc.mallet.topics.ParanoidSpaliasUncollapsedLDA;
-import cc.mallet.topics.SerialCollapsedLDA;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
-import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.Timer;
 
-public class ParallelLDATrainTest {
+public class ParallelLDATrainTest extends ParallelLDA {
 	public static String PROGRAM_NAME = "ParallelLDATrainTest";
 	final static int TRAINING = 0;
 	final static int TESTING = 1;
@@ -89,7 +82,6 @@ public class ParallelLDATrainTest {
 			lu.checkAndCreateCurrentLogDir(logSuitePath);
 			config.setLoggingUtil(lu);
 
-			int commonSeed = config.getSeed(LDAConfiguration.SEED_DEFAULT);
 			String [] configs = config.getSubConfigs();
 			for(String conf : configs) {
 				lu.checkCreateAndSetSubLogDir(conf);
@@ -162,7 +154,7 @@ public class ParallelLDATrainTest {
 		}
 	}
 
-	private static InstanceList [] extractTrainTestInstances(InstanceList instances, List<String> testIds) {
+	public static InstanceList [] extractTrainTestInstances(InstanceList instances, List<String> testIds) {
 		InstanceList training = new InstanceList(instances.getPipe());
 		InstanceList test = new InstanceList(instances.getPipe());
 
@@ -178,65 +170,5 @@ public class ParallelLDATrainTest {
 		datasets[TRAINING] = training;
 		datasets[TESTING] = test;
 		return datasets;
-	}
-
-	public static LDAGibbsSampler createModel(LDAConfiguration config, String whichModel) {
-		LDAGibbsSampler model;
-		switch(whichModel) {
-		case "adlda": {
-			model = new ADLDA(config);
-			System.out.println(
-					String.format("ADLDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
-			break;
-		}
-		case "uncollapsed": {
-			model = new UncollapsedParallelLDA(config);
-			System.out.println(
-					String.format("Uncollapsed Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
-			break;
-		}
-		case "collapsed": {
-			model = new SerialCollapsedLDA(config);
-			System.out.println(
-					String.format("Uncollapsed Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
-			break;
-		}
-		case "efficient_uncollapsed": {
-			model = new EfficientUncollapsedParallelLDA(config);
-			System.out.println(
-					String.format("EfficientUncollapsedParallelLDA Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
-			break;
-		}
-		case "spalias": {
-			model = new SpaliasUncollapsedParallelLDA(config);
-			System.out.println(
-					String.format("SpaliasUncollapsed Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
-			break;
-		}
-		case "nzvsspalias": {
-			model = new NZVSSpaliasUncollapsedParallelLDA(config);
-			System.out.println(
-					String.format("NZVSSpaliasUncollapsedParallelLDA Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
-			break;
-		}
-		case "paranoid_parallel": {
-			model = new ParanoidSpaliasUncollapsedLDA(config);
-			System.out.println(
-					String.format("Uncollapsed Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
-			break;
-		}
-		default : {
-			System.out.println("Invalid model type. Aborting");
-			return null;
-		}
-		}
-		return model;
 	}
 }	
