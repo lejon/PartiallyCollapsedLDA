@@ -19,6 +19,14 @@ public class ConfigFactory {
 		
 		return mainConfig;
 	}
+	
+	public static Configuration getTrainTestConfiguration(LDACommandLineParser cp) throws ConfigurationException {
+		if( mainConfig == null ) {
+			mainConfig = new ParsedLDATrainTestConfiguration(cp);
+		}
+		
+		return mainConfig;
+	}
 
 	public static Configuration getMainConfiguration() {
 		return mainConfig;

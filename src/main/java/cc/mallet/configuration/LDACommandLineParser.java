@@ -9,22 +9,40 @@ import org.apache.commons.cli.PosixParser;
 
 public class LDACommandLineParser {
 	
-	String comment  = null;
-	String configFn = null;
-	String fullPath = null;
-	private Options options;
+	protected String comment  = null;
+	protected String configFn = null;
+	protected String fullPath = null;
+	protected Options options = new Options();
+	protected CommandLineParser parser = new PosixParser(); 
+	protected CommandLine parsedCommandLine;
+
+	public LDACommandLineParser() throws ParseException {
+		addOptions();
+	}
+	
+	public LDACommandLineParser(String [] args) throws ParseException {
+		addOptions();
+
+		parsedCommandLine = parseCommandLine(args);
+
+		if( parsedCommandLine.hasOption( "cm" ) ) {
+			comment = parsedCommandLine.getOptionValue( "comment" );
+		}
+		if( parsedCommandLine.hasOption( "cf" ) ) {
+			configFn = parsedCommandLine.getOptionValue( "run_cfg" );
+		}
+	}
+	
 	public Options getOptions() {
 		return options;
 	}
 
-	private CommandLineParser parser;
-	private CommandLine parsedCommandLine;
+	protected CommandLine parseCommandLine(String [] args) throws ParseException {
+		return parser.parse( options, args );
+	}
 
 	@SuppressWarnings("static-access")
-	public LDACommandLineParser(String [] args) throws ParseException {
-		parser = new PosixParser();
-
-		options = new Options();
+	protected void addOptions() {
 		options.addOption( "dbg", "debug", true, "use debugging " );
 		options.addOption( "cm", "comment", true, "a comment ot be added to the logfile " );
 		options.addOption( "ds", "dataset", true, "filename of dataset file" );
@@ -43,15 +61,6 @@ public class LDACommandLineParser {
 				.hasArg()
 				.withArgName("SIZE")
 				.create() );
-
-		parsedCommandLine = parser.parse( options, args );
-
-		if( parsedCommandLine.hasOption( "cm" ) ) {
-			comment = parsedCommandLine.getOptionValue( "comment" );
-		}
-		if( parsedCommandLine.hasOption( "cf" ) ) {
-			configFn = parsedCommandLine.getOptionValue( "run_cfg" );
-		}
 	}
 	
 	public boolean hasOption(String key) {
