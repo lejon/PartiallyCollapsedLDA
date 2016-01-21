@@ -34,7 +34,8 @@
 	<!-- v3.5.2: In KL-Classifier, use theta estimate instead of doc-topic means that can contain 0's. -->
 	<!-- v3.5.3: In KL-Classifier select on commandline to run multi- or single corpus version. Ensure consistent priors. -->
 	<!-- v3.5.4: Added ParallelLDATrainTest -->
-	<version>3.5.4-SNAPSHOT</version>
+	<!-- v3.5.5: Fixed bug in theta estimate cacl. -->
+	<version>3.5.5-SNAPSHOT</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
