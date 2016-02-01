@@ -19,6 +19,7 @@ import cc.mallet.types.CrossValidationIterator;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelVector;
+import cc.mallet.types.MatrixOps;
 
 public class KLDivergenceClassifier extends Classifier {
 	static DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0");
@@ -52,13 +53,25 @@ public class KLDivergenceClassifier extends Classifier {
 		spalias.addInstances(currentTestset);
 		spalias.setPhi(trainedSampler.getPhi(), getAlphabet(), getLabelAlphabet());
 		spalias.sampleZGivenPhi(300);
-		double [][] thetaEstimate = spalias.getThetaEstimate();
-		double[] docTheta = thetaEstimate[0];
-		sampledTestTopics[noClassified] = docTheta;
+		
+		double [][] sampledTestZBar = spalias.getZbar();
+		double[] docTopicMeans = sampledTestZBar[0];
+		sampledTestTopics[noClassified] = docTopicMeans;
+		// Normalize 
+		double sum = MatrixOps.sum(docTopicMeans);
+		for (int i = 0; i < docTopicMeans.length; i++) {
+			docTopicMeans[i] = (docTopicMeans[i]+alpha) / sum;
+		}
+
+		
+//		double [][] thetaEstimate = spalias.getThetaEstimate();
+//		double[] docTheta = thetaEstimate[0];
+//		sampledTestTopics[noClassified] = docTheta;
 			
 		for (String key : classCentroids.keySet()) {
 			//System.out.println("Doc-topic: " + arrToStr(docTopicMeans));
-			double klDivergence = calcKLDivergences(classCentroids.get(key), docTheta);
+			//double klDivergence = calcKLDivergences(classCentroids.get(key), docTheta);
+			double klDivergence = calcKLDivergences(classCentroids.get(key), docTopicMeans);
 			//System.out.println("Divergence vs. " + key + "(" + targetAlphabet.lookupIndex(key) + ") is:" + klDivergence);
 			// We need to transform the kl-divergencies (low is good) to scores (high is good)
 			scores[targetAlphabet.lookupIndex(key)] = 1.0 / klDivergence;
@@ -103,7 +116,8 @@ public class KLDivergenceClassifier extends Classifier {
 		trainedSampler.sample(config.getNoIterations(3000));
 		
 		// Calculate class centroids
-		classCentroids = calculateCentroids(trainedSampler.getThetaEstimate(), trainingset);
+		//classCentroids = calculateCentroids(trainedSampler.getThetaEstimate(), trainingset);
+		classCentroids = calculateCentroids(trainedSampler.getZbar(), trainingset);
 		System.out.println("Centroids are: ");
 
 		for (String key : classCentroids.keySet()) {
