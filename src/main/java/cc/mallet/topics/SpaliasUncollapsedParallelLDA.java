@@ -26,6 +26,8 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
 	private ExecutorService tableBuilderExecutor;
 	
+	protected TableBuilderFactory tbFactory = new PhiAlphaTableBuilderFactory();
+	
 	boolean staticPhiAliasTableIsBuild = false;
 
 	public SpaliasUncollapsedParallelLDA(LDAConfiguration config) {
@@ -47,10 +49,20 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		typeNorm    = new double[numTypes];
 		phitrans    = new double[numTypes][numTopics];
 	}
+	
+	interface TableBuilderFactory {
+		Callable<TableBuildResult> instance(int type);
+	}
+	
+	class PhiAlphaTableBuilderFactory implements TableBuilderFactory {
+		public Callable<TableBuildResult> instance(int type) {
+			return new PhiAlphaParallelTableBuilder(type);
+		}
+	}
 
-	class ParallelTableBuilder implements Callable<TableBuildResult> {
+	class PhiAlphaParallelTableBuilder implements Callable<TableBuildResult> {
 		int type;
-		public ParallelTableBuilder(int type) {
+		public PhiAlphaParallelTableBuilder(int type) {
 			this.type = type;
 		}
 		@Override
@@ -96,7 +108,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		
 		transpose(phi, phitrans);
 		
-		List<ParallelTableBuilder> builders = new ArrayList<>();
+		List<Callable<TableBuildResult>> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
 		if(topicTypeIndices!=null) {
 			// The topicIndexBuilder supports having different types per topic,
@@ -104,12 +116,12 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 			// since it will be the same for all topics
 			int [] typesToSample = topicTypeIndices[0];
 			for (int typeIdx = 0; typeIdx < typesToSample.length; typeIdx++) {
-				builders.add(new ParallelTableBuilder(typesToSample[typeIdx]));
+				builders.add(tbFactory.instance(typesToSample[typeIdx]));
 			}
 			// if the topicIndexBuilder returns null it means sample ALL types
 		} else {
 			for (int type = 0; type < numTypes; type++) {
-				builders.add(new ParallelTableBuilder(type));
+				builders.add(tbFactory.instance(type));
 			}
 		}
 		
@@ -134,7 +146,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		if(!staticPhiAliasTableIsBuild) {
 			transpose(phi, phitrans);
 
-			List<ParallelTableBuilder> builders = new ArrayList<>();
+			List<Callable<TableBuildResult>> builders = new ArrayList<>();
 			final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
 			if(topicTypeIndices!=null) {
 				// The topicIndexBuilder supports having different types per topic,
@@ -142,12 +154,12 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 				// since it will be the same for all topics
 				int [] typesToSample = topicTypeIndices[0];
 				for (int typeIdx = 0; typeIdx < typesToSample.length; typeIdx++) {
-					builders.add(new ParallelTableBuilder(typesToSample[typeIdx]));
+					builders.add(tbFactory.instance(typesToSample[typeIdx]));
 				}
 				// if the topicIndexBuilder returns null it means sample ALL types
 			} else {
 				for (int type = 0; type < numTypes; type++) {
-					builders.add(new ParallelTableBuilder(type));
+					builders.add(tbFactory.instance(type));
 				}
 			}
 

@@ -59,7 +59,7 @@ import cc.mallet.util.LoggingUtils;
 public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibbsSampler, LDASamplerWithPhi {
 
 	private static final long serialVersionUID = 1L;
-	protected double[][] phi;
+	protected double[][] phi; // phi[topic][type]
 	// This matrix will hold a cumulated sample of phi, when it is retrieved we calculate the mean by dividing with how many phi we have sampled
 	protected double[][] phiMean;
 	// How many iterations should the Phi burn in period be
