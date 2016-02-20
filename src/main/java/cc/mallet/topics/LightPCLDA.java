@@ -9,6 +9,17 @@ import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 
+/**
+ * @author Leif Jonsson
+ * 
+ * Implementation of the Light-LDA algorithm which uses Metropolis-Hastings to 
+ * sample the topic indicators. This algorithm has O(1) to sample one topic
+ * indicator no matter how many topics
+ * 
+ * From the article: "LightLDA: Big Topic Models on Modest Compute Clusters" 
+ * by Jinhui Yuan1, Fei Gao1,2, Qirong Ho3, Wei Dai4, Jinliang Wei4, Xun Zheng4,
+ *   Eric P. Xing4, Tie-Yan Liu1, Wei-Ying Ma1
+ */
 public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 
 	private static final long serialVersionUID = 1L;
@@ -43,6 +54,12 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 		}
 	}
 
+	/**
+	 * @author Leif Jonsson
+	 * 
+	 * The alias table is build only from Phi in LightPCLDA vs. phi*alpha in ordinary PCLDA
+	 *
+	 */
 	class PhiParallelTableBuilder implements Callable<TableBuildResult> {
 		int type;
 		public PhiParallelTableBuilder(int type) {
@@ -83,7 +100,7 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 		double[] localTopicCounts_i = new double[numTopics];
 		
 		// Populate topic counts
-		int nonZeroTopicCnt = 0;
+		int nonZeroTopicCnt = 0; // Only needed for statistics
 		for (int position = 0; position < docLength; position++) {
 			int topicInd = oneDocTopics[position];
 			localTopicCounts[topicInd]++;
@@ -115,14 +132,12 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			
 			double u = ThreadLocalRandom.current().nextDouble();
 			int wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
-			//System.out.println("Word topic indicator: " + wordTopicIndicatorProposal);
 			
 			double n_d_zi_i = localTopicCounts_i[oldTopic];
 			double n_d_zstar_i = localTopicCounts_i[wordTopicIndicatorProposal];
 			double pi_w = Math.min(1, (alpha + n_d_zstar_i) / (alpha + n_d_zi_i));
 			
 			double u_pi_w = ThreadLocalRandom.current().nextDouble();
-			//System.out.println("Word Acceptance ratio : " + pi_w);
 			boolean accept_pi_w = u_pi_w < pi_w;
 			
 			if(accept_pi_w) {				
@@ -131,17 +146,15 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 				
 				// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
 				// By doing this the below document proposal will be relative to the 
-				// new best proposal
+				// new best proposal so far
 				oldTopic = wordTopicIndicatorProposal;
 				//wordAccepts.incrementAndGet();
-				//System.out.println("Accepted word!");
 			} 
 			
 			// #####################################
 			// Document Topic Distribution 
 			// #####################################
 			int docTopicIndicatorProposal = oneDocTopics[rnd.nextInt(oneDocTopics.length)];
-			//System.out.println("Doc topic indicator: " + docTopicIndicatorProposal + " (old=" + oldTopic +")");
 			n_d_zi_i = localTopicCounts_i[oldTopic];
 			n_d_zstar_i = localTopicCounts_i[docTopicIndicatorProposal];
 			double n_d_zi = localTopicCounts[oldTopic];
@@ -150,10 +163,7 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			double nom = phi[docTopicIndicatorProposal][type] * (alpha + n_d_zstar_i) * n_d_zi;
 			double denom = phi[oldTopic][type] * (alpha + n_d_zi) * n_d_zstar;
 			double ratio = nom / denom;
-			//System.out.println("n_s_i = " + n_s_i + " n_t_i = " + n_t_i + " n_d_s = " + n_d_s + " n_d_t = " + n_d_t + "   " + nom + " / " + denom + " ======> " + ratio);
 			double pi_d = Math.min(1, ratio);
-			
-			//System.out.println("Doc  Acceptance ratio : " + pi_d);
 
 			double u_pi_d = ThreadLocalRandom.current().nextDouble();
 			boolean accept_pi_d = u_pi_d < pi_d;
@@ -161,13 +171,11 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			if (accept_pi_d) {
 				newTopic = docTopicIndicatorProposal;
 				//docAccepts.incrementAndGet();
-				//System.out.println("Accepted Doc!");
 			} else {
 				// We did not accept either word or document proposal 
 				// so oldTopic is still the best indicator
 				newTopic = oldTopic;
 				//oldAccepts.incrementAndGet();
-				//System.out.println("Kept OLD!");
 			}
 
 			increment(myBatch, newTopic, type);
@@ -179,13 +187,12 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 
 			// Remove one count from old topic
 			localTopicCounts[oldTopic]--;
-			// Update the word indicator
+			// Update the word topic indicator
 			oneDocTopics[position] = newTopic;
 			// Put that new topic into the counts
 			localTopicCounts[newTopic]++;
 			// Make sure the "_i" version is also up to date!
 			localTopicCounts_i[newTopic]++;
 		}
-		//System.out.println("Ratio: " + ((double)numPrior/(double)numLikelihood));
 	}	
 }
