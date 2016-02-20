@@ -158,7 +158,6 @@ public class ParallelLDA {
 				out.close();
 
 				System.out.println("Top words are: \n" + LDAUtils.formatTopWords(model.getTopWords(20)));
-
 				System.out.println("I am done!");
 			}
 			if(buildVer==null||implVer==null) {
@@ -212,7 +211,7 @@ public class ParallelLDA {
 		case "lightpclda": {
 			model = new LightPCLDA(config);
 			System.out.println(
-					String.format("SpaliasUncollapsed Parallell LDA (%d batches).", 
+					String.format("Light PC LDA (%d batches).", 
 							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
 			break;
 		}
