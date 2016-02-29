@@ -137,21 +137,25 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			if(wordTopicIndicatorProposal!=oldTopic) {
 				double n_d_zi_i = localTopicCounts_i[oldTopic];
 				double n_d_zstar_i = localTopicCounts_i[wordTopicIndicatorProposal];
-				double pi_w = Math.min(1, (alpha + n_d_zstar_i) / (alpha + n_d_zi_i));
-
-				double u_pi_w = ThreadLocalRandom.current().nextDouble();
-				boolean accept_pi_w = u_pi_w < pi_w;
-
-				if(accept_pi_w) {				
-					localTopicCounts[oldTopic]--;
-					localTopicCounts[wordTopicIndicatorProposal]++;
-
-					// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
-					// By doing this the below document proposal will be relative to the 
-					// new best proposal so far
+				double pi_w = (alpha + n_d_zstar_i) / (alpha + n_d_zi_i);
+				if(pi_w > 1){
 					oldTopic = wordTopicIndicatorProposal;
-					//wordAccepts.incrementAndGet();
-				} 
+				} else {
+					double u_pi_w = ThreadLocalRandom.current().nextDouble();
+					boolean accept_pi_w = u_pi_w < pi_w;
+
+					if(accept_pi_w) {				
+						localTopicCounts[oldTopic]--;
+						localTopicCounts[wordTopicIndicatorProposal]++;
+	
+						// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
+						// By doing this the below document proposal will be relative to the 
+						// new best proposal so far
+						oldTopic = wordTopicIndicatorProposal;
+						//wordAccepts.incrementAndGet();
+					} 
+				}
+
 			}
 			
 			// #####################################
