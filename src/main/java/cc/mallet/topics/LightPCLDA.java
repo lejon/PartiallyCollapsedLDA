@@ -172,11 +172,12 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			// If we drew a new topic indicator, do MH step for Document proposal
 			if(docTopicIndicatorProposal!=oldTopic) {
 				double n_d_zstar_i = localTopicCounts_i[docTopicIndicatorProposal];
+				double n_d_zi_i = localTopicCounts_i[oldTopic];
 				double n_d_zi = localTopicCounts[oldTopic];
 				double n_d_zstar = localTopicCounts[docTopicIndicatorProposal];
 
 				double nom = phi[docTopicIndicatorProposal][type] * (alpha + n_d_zstar_i) * (alpha + n_d_zi);
-				double denom = phi[oldTopic][type] * (alpha + n_d_zi) * (alpha + n_d_zstar);
+				double denom = phi[oldTopic][type] * (alpha + n_d_zi_i) * (alpha + n_d_zstar);
 				double ratio = nom / denom;
 				double pi_d = Math.min(1, ratio);
 
