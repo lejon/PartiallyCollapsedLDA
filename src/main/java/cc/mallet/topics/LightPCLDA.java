@@ -133,51 +133,66 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			double u = ThreadLocalRandom.current().nextDouble();
 			int wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
 			
-			double n_d_zi_i = localTopicCounts_i[oldTopic];
-			double n_d_zstar_i = localTopicCounts_i[wordTopicIndicatorProposal];
-			double pi_w = Math.min(1, (alpha + n_d_zstar_i) / (alpha + n_d_zi_i));
-			
-			double u_pi_w = ThreadLocalRandom.current().nextDouble();
-			boolean accept_pi_w = u_pi_w < pi_w;
-			
-			if(accept_pi_w) {				
-				localTopicCounts[oldTopic]--;
-				localTopicCounts[wordTopicIndicatorProposal]++;
-				
-				// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
-				// By doing this the below document proposal will be relative to the 
-				// new best proposal so far
-				oldTopic = wordTopicIndicatorProposal;
-				//wordAccepts.incrementAndGet();
-			} 
+			// If we drew a new topic indicator, do MH step for Word proposal
+			if(wordTopicIndicatorProposal!=oldTopic) {
+				double n_d_zi_i = localTopicCounts_i[oldTopic];
+				double n_d_zstar_i = localTopicCounts_i[wordTopicIndicatorProposal];
+				double pi_w = Math.min(1, (alpha + n_d_zstar_i) / (alpha + n_d_zi_i));
+
+				double u_pi_w = ThreadLocalRandom.current().nextDouble();
+				boolean accept_pi_w = u_pi_w < pi_w;
+
+				if(accept_pi_w) {				
+					localTopicCounts[oldTopic]--;
+					localTopicCounts[wordTopicIndicatorProposal]++;
+
+					// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
+					// By doing this the below document proposal will be relative to the 
+					// new best proposal so far
+					oldTopic = wordTopicIndicatorProposal;
+					//wordAccepts.incrementAndGet();
+				} 
+			}
 			
 			// #####################################
 			// Document Topic Distribution 
 			// #####################################
-			int docTopicIndicatorProposal = oneDocTopics[rnd.nextInt(oneDocTopics.length)];
-			n_d_zi_i = localTopicCounts_i[oldTopic];
-			n_d_zstar_i = localTopicCounts_i[docTopicIndicatorProposal];
-			double n_d_zi = localTopicCounts[oldTopic];
-			double n_d_zstar = localTopicCounts[docTopicIndicatorProposal];
 			
-			double nom = phi[docTopicIndicatorProposal][type] * (alpha + n_d_zstar_i) * n_d_zi;
-			double denom = phi[oldTopic][type] * (alpha + n_d_zi) * n_d_zstar;
-			double ratio = nom / denom;
-			double pi_d = Math.min(1, ratio);
-
-			double u_pi_d = ThreadLocalRandom.current().nextDouble();
-			boolean accept_pi_d = u_pi_d < pi_d;
+			// Måns hur ska u_k dras?
+			// Random.nextInt(int upper) drar ett tal mellan 0 och upper 
+			double u_k = rnd.nextInt(oneDocTopics.length + (numTopics*alpha));
 			
-			if (accept_pi_d) {
-				newTopic = docTopicIndicatorProposal;
-				//docAccepts.incrementAndGet();
+			int docTopicIndicatorProposal = -1;
+			if(u_k < oneDocTopics.length) {
+				docTopicIndicatorProposal = oneDocTopics[rnd.nextInt(oneDocTopics.length)];
 			} else {
-				// We did not accept either word or document proposal 
-				// so oldTopic is still the best indicator
-				newTopic = oldTopic;
-				//oldAccepts.incrementAndGet();
+				docTopicIndicatorProposal = rnd.nextInt(numTopics);
 			}
+			
+			// If we drew a new topic indicator, do MH step for Document proposal
+			if(docTopicIndicatorProposal!=oldTopic) {
+				double n_d_zstar_i = localTopicCounts_i[docTopicIndicatorProposal];
+				double n_d_zi = localTopicCounts[oldTopic];
+				double n_d_zstar = localTopicCounts[docTopicIndicatorProposal];
 
+				double nom = phi[docTopicIndicatorProposal][type] * (alpha + n_d_zstar_i) * (alpha + n_d_zi);
+				double denom = phi[oldTopic][type] * (alpha + n_d_zi) * (alpha + n_d_zstar);
+				double ratio = nom / denom;
+				double pi_d = Math.min(1, ratio);
+
+				double u_pi_d = ThreadLocalRandom.current().nextDouble();
+				boolean accept_pi_d = u_pi_d < pi_d;
+
+				if (accept_pi_d) {
+					newTopic = docTopicIndicatorProposal;
+					//docAccepts.incrementAndGet();
+				} else {
+					// We did not accept either word or document proposal 
+					// so oldTopic is still the best indicator
+					newTopic = oldTopic;
+					//oldAccepts.incrementAndGet();
+				}
+			}
 			increment(myBatch, newTopic, type);
 
 			// Make sure we actually sampled a valid topic
