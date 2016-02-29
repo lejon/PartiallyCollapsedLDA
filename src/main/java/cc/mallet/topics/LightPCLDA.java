@@ -160,13 +160,13 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			
 			// Måns hur ska u_k dras?
 			// Random.nextInt(int upper) drar ett tal mellan 0 och upper 
-			double u_k = rnd.nextInt(oneDocTopics.length + (numTopics*alpha));
+			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha));
 			
-			int docTopicIndicatorProposal = -1;
-			if(u_k < oneDocTopics.length) {
-				docTopicIndicatorProposal = oneDocTopics[rnd.nextInt(oneDocTopics.length)];
+			int docTopicIndicatorProposal = -1; // Why this?
+			if(u_i < oneDocTopics.length) {
+				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
 			} else {
-				docTopicIndicatorProposal = rnd.nextInt(numTopics);
+				docTopicIndicatorProposal = (int) ((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics + 1;
 			}
 			
 			// If we drew a new topic indicator, do MH step for Document proposal
