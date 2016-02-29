@@ -179,20 +179,25 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 				double nom = phi[docTopicIndicatorProposal][type] * (alpha + n_d_zstar_i) * (alpha + n_d_zi);
 				double denom = phi[oldTopic][type] * (alpha + n_d_zi_i) * (alpha + n_d_zstar);
 				double ratio = nom / denom;
-				double pi_d = Math.min(1, ratio);
-
-				double u_pi_d = ThreadLocalRandom.current().nextDouble();
-				boolean accept_pi_d = u_pi_d < pi_d;
-
-				if (accept_pi_d) {
+				// Calculate MH acceptance Min.(1,ratio) but as an if else
+				if (ratio > 1){
 					newTopic = docTopicIndicatorProposal;
-					//docAccepts.incrementAndGet();
 				} else {
-					// We did not accept either word or document proposal 
-					// so oldTopic is still the best indicator
-					newTopic = oldTopic;
-					//oldAccepts.incrementAndGet();
+					double pi_d = ratio;
+					double u_pi_d = ThreadLocalRandom.current().nextDouble();
+					boolean accept_pi_d = u_pi_d < pi_d;
+	
+					if (accept_pi_d) {
+						newTopic = docTopicIndicatorProposal;
+						//docAccepts.incrementAndGet();
+					} else {
+						// We did not accept either word or document proposal 
+						// so oldTopic is still the best indicator
+						newTopic = oldTopic;
+						//oldAccepts.incrementAndGet();
+					}	
 				}
+
 			}
 			increment(myBatch, newTopic, type);
 
