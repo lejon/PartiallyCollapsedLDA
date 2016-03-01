@@ -50,10 +50,6 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		phitrans    = new double[numTypes][numTopics];
 	}
 	
-	interface TableBuilderFactory {
-		Callable<TableBuildResult> instance(int type);
-	}
-	
 	class PhiAlphaTableBuilderFactory implements TableBuilderFactory {
 		public Callable<TableBuildResult> instance(int type) {
 			return new PhiAlphaParallelTableBuilder(type);
