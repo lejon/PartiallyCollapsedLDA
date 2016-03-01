@@ -37,7 +37,8 @@
 	<!-- v3.5.5: Fixed bug in theta estimate cacl. -->
 	<!-- v3.5.6: Back to using zBar in KLClassifier, since this gives the best prediction accuracy. Don't know why yet. -->
 	<!-- v4.0.0: Added implementation of LightPCLDA! A Metropolis Hastings version of LDA which easily handles MANY topics -->
-	<version>4.0.0</version>
+	<!-- v4.0.1: Updated implementation after derivation update -->
+	<version>4.0.1</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
