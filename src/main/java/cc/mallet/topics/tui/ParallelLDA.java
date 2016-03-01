@@ -12,6 +12,7 @@ import cc.mallet.configuration.LDACommandLineParser;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.ParsedLDAConfiguration;
 import cc.mallet.topics.ADLDA;
+import cc.mallet.topics.CollapsedLightLDA;
 import cc.mallet.topics.EfficientUncollapsedParallelLDA;
 import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.LDASamplerWithPhi;
@@ -191,6 +192,13 @@ public class ParallelLDA {
 			model = new SerialCollapsedLDA(config);
 			System.out.println(
 					String.format("Uncollapsed Parallell LDA (%d batches).", 
+							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			break;
+		}
+		case "lightcollapsed": {
+			model = new CollapsedLightLDA(config);
+			System.out.println(
+					String.format("CollapsedLightLDA Parallell LDA (%d batches).", 
 							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
 			break;
 		}
