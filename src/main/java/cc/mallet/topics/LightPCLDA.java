@@ -170,7 +170,7 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			if(u_i < oneDocTopics.length) {
 				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
 			} else {
-				docTopicIndicatorProposal = (int) ((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics + 1;
+				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics);
 			}
 			
 			// If we drew a new topic indicator, do MH step for Document proposal
