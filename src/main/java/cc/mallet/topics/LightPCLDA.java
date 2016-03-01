@@ -139,6 +139,8 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 				double n_d_zstar_i = localTopicCounts_i[wordTopicIndicatorProposal];
 				double pi_w = (alpha + n_d_zstar_i) / (alpha + n_d_zi_i);
 				if(pi_w > 1){
+					localTopicCounts[oldTopic]--;
+					localTopicCounts[wordTopicIndicatorProposal]++;
 					oldTopic = wordTopicIndicatorProposal;
 				} else {
 					double u_pi_w = ThreadLocalRandom.current().nextDouble();
