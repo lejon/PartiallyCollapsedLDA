@@ -161,12 +161,10 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			// #####################################
 			// Document Topic Distribution 
 			// #####################################
-			
-			// Måns hur ska u_k dras?
-			// Random.nextInt(int upper) drar ett tal mellan 0 och upper 
+			 
 			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha));
 			
-			int docTopicIndicatorProposal = -1; // Why this?
+			int docTopicIndicatorProposal = -1;
 			if(u_i < oneDocTopics.length) {
 				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
 			} else {
