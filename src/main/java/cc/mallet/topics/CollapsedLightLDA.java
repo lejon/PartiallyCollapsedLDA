@@ -476,12 +476,14 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 	}
 
-	// Nothing to do, hooks for subclasses
-	protected void postZ() {
+
+	@Override
+	public void postZ() {
 	}
 
 	// Nothing to do, hooks for subclasses
-	protected void preZ() {
+	@Override
+	public  void preZ() {
 	}
 
 	class TypeTopicTableBuilderFactory implements TableBuilderFactory {
@@ -555,12 +557,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 	}
 
-	// Nothing to do, hooks for subclasses
-	protected void postIteration() {
-	}
-
-
-	protected void postSample() {
+	@Override
+	public void postSample() {
 		// By now we don't need the thread pools any more
 		shutdownThreadPools();
 		tableBuilderExecutor.shutdown();
@@ -581,7 +579,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		catch (InterruptedException ex) {}
 	}
 
-	protected void preSample() {
+	@Override
+	public void preSample() {
 		int  [] defaultVal = {-1};
 		deltaNInterval = config.getIntArrayProperty("dn_diagnostic_interval", defaultVal);
 		if(deltaNInterval.length > 1) {

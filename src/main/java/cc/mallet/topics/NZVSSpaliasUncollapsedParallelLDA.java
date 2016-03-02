@@ -104,7 +104,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 	}
 
 	@Override
-	protected void preSample() {
+	public void preSample() {
 		super.preSample();
 		int poolSize = 2; // Parallel alias table pool (why 2?)
 		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
@@ -156,7 +156,8 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 	}
 
 	@Override
-	protected void prePhi() {
+	public void prePhi() {
+		super.prePhi();
 		for (int type = 0; type < numTypes; type++) {
 			zeroTypeTopicColIdxs[type].set(0);
 			Arrays.fill(zeroTypeTopicIdxs[type],0);
@@ -164,7 +165,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 	}
 
 	@Override
-	protected void postIteration() {
+	public void postIteration() {
 		//System.out.println("Used prior: " + toPrior.get() + " / " + corpusWordCount);
 		//toPrior.set(0);
 		//System.out.println("Used typeSparseness (" + config.getVariableSelectionPrior(vsPriorDefault) + "): " + usedTypeSparsness.get());
@@ -173,9 +174,9 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 	}
 
 	@Override
-	protected void postSample() {
-		super.postSample();
+	public void postSample() {
 		tableBuilderExecutor.shutdown();
+		super.postSample();
 	}
 	
 	/*

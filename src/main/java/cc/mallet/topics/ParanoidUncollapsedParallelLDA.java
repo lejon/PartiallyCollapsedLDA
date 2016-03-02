@@ -45,7 +45,7 @@ public class ParanoidUncollapsedParallelLDA extends EfficientUncollapsedParallel
 	
 
 	@Override
-	protected void postSample() {
+	public void postSample() {
 		super.postSample();
 		int updateCountSum = 0;
 		for (int batch = 0; batch < batchLocalTopicTypeUpdates.length; batch++) {

@@ -10,17 +10,17 @@ import cc.mallet.types.InstanceList;
 
 public interface LDAGibbsSampler {
 	void setConfiguration(LDAConfiguration config);
-	public void addInstances (InstanceList training);
-	public void sample (int iterations) throws IOException;
-	public void setRandomSeed(int seed);
-	public String [][] getTopWords(int noWords);
-	public int getNoTopics();
-	public int getCurrentIteration();
-	public int [][] getZIndicators();
+	void addInstances (InstanceList training);
+	void sample (int iterations) throws IOException;
+	void setRandomSeed(int seed);
+	String [][] getTopWords(int noWords);
+	int getNoTopics();
+	int getCurrentIteration();
+	int [][] getZIndicators();
 	double [][] getZbar();
 	double[][] getThetaEstimate();
-	public void setZIndicators(int[][] zIndicators);
-	public ArrayList<TopicAssignment> getDataset();
+	void setZIndicators(int[][] zIndicators);
+	ArrayList<TopicAssignment> getDataset();
 	int[][] getDeltaStatistics();
 	int[] getTopTypeFrequencyIndices();
 	int[] getTypeFrequencies();
@@ -30,4 +30,10 @@ public interface LDAGibbsSampler {
 	double[] getTypeMassCumSum();
 	int [][] getDocumentTopicMatrix();
 	int [][] getTypeTopicMatrix();
+	void preIteration();
+	void postIteration();
+	void preSample();
+	void postSample();
+	void postZ();
+	void preZ();
 }

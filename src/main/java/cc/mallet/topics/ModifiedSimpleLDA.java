@@ -452,4 +452,34 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	}
 
 
+
+	@Override
+	public void preIteration() {
+		
+	}
+
+	@Override
+	public void postIteration() {
+
+	}
+
+	@Override
+	public void preSample() {
+		
+	}
+
+	@Override
+	public void postSample() {
+		
+	}
+
+	@Override
+	public void postZ() {
+		
+	}
+
+	@Override
+	public void preZ() {
+		
+	}
 }

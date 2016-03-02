@@ -463,17 +463,8 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 		postSample();
 	}
 
-	// Nothing to do, hooks for subclasses
-	protected void preIteration() {
 
-	}
-
-	protected void postIteration() {
-
-	}
-
-
-	protected void postSample() {
+	public void postSample() {
 		// By now we don't need the thread pools any more
 		shutdownThreadPools();
 
@@ -494,7 +485,7 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 		catch (InterruptedException ex) {}
 	}
 
-	protected void preSample() {
+	public void preSample() {
 		bb.calculateBatch();
 		final int resultsSize = bb.getDocResultsSize();
 		int samplerIdx = 0;		

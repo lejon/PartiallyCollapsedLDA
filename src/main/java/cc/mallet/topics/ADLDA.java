@@ -484,4 +484,34 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 	public double [][] getThetaEstimate() {
 		return ModifiedSimpleLDA.getThetaEstimate(data, numTopics, alpha);
 	}
+
+	@Override
+	public void preIteration() {
+		
+	}
+
+	@Override
+	public void postIteration() {
+		
+	}
+
+	@Override
+	public void preSample() {
+		
+	}
+
+	@Override
+	public void postSample() {
+		
+	}
+
+	@Override
+	public void postZ() {
+		
+	}
+
+	@Override
+	public void preZ() {
+		
+	}
 }

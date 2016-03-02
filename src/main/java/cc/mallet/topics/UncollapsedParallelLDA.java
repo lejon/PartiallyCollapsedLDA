@@ -706,37 +706,24 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		postSample();
 	}
 	
-	protected void postPhi() {
+	@Override
+	public void prePhi() {
+		
+	}
+	
+	@Override
+	public void postPhi() {
 		if(savePhiMeans() && samplePhiThisIteration()) {
 			noSampledPhi++;
 		}
 	}
 
-	// Nothing to do, hooks for subclasses
-	protected void prePhi() {
-	}
 
-	// Nothing to do, hooks for subclasses
-	protected void postZ() {
-	}
-
-	// Nothing to do, hooks for subclasses
-	protected void preZ() {
-	}
-
-	// Nothing to do, hooks for subclasses
-	protected void preIteration() {
-	}
-
-	// Nothing to do, hooks for subclasses
-	protected void postIteration() {
-	}
-
-
-	protected void postSample() {
+	@Override
+	public void postSample() {
+		super.postSample();
 		// By now we don't need the thread pools any more
 		shutdownThreadPools();
-
 		flushDeltaOut();
 	}
 
@@ -760,7 +747,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		catch (InterruptedException ex) {}
 	}
 
-	protected void preSample() {
+	@Override
+	public void preSample() {
+		super.preSample();
 		int  [] defaultVal = {-1};
 		deltaNInterval = config.getIntArrayProperty("dn_diagnostic_interval", defaultVal);
 		if(deltaNInterval.length > 1) {
