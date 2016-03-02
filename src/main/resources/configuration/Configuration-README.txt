@@ -46,7 +46,7 @@ diagnostic_interval = -1
 ## Batches: How many threads to use for Z sampling, (more threads are allocated for sampling Phi and count Updates)
 batches = 4
 
-## Topic batches: How many threads for samping Phi
+## Topic batches: How many threads for sampling Phi
 topic_batches = 3
 
 ## Rare threshold: Min threshold for how many times a word must occur to be included in vocab
@@ -134,7 +134,13 @@ print_ntopwords_cnt = 500 # Print phi for the top 500 words
 
 ## Should the density of the type/topic matrix be logged true/false,
 # observe that this incurs a performance penalty since the type/topic
-# matrix is looped ove each time the density should be printed
+# matrix is looped over each time the density should be printed
 log_type_topic_density = false
 
+## Stopword file
+# filename of a file with one word per line of stopwords
+# default = stoplist.txt
+stoplist = stoplist.txt
+
 debug = 0
+
