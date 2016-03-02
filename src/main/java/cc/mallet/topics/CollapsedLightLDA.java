@@ -373,8 +373,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			binOutput = LoggingUtils.checkCreateAndCreateDir(config.getLoggingUtil().getLogDir().getAbsolutePath() + "/binaries");
 		}
 
-		int startDiagnostic = config.getStartDiagnostic(LDAConfiguration.START_DIAG_DEFAULT);
-
 		String loggingPath = config.getLoggingUtil().getLogDir().getAbsolutePath();
 
 		double logLik = modelLogLikelihood();	
@@ -474,16 +472,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 		postSample();
 
-	}
-
-
-	@Override
-	public void postZ() {
-	}
-
-	// Nothing to do, hooks for subclasses
-	@Override
-	public  void preZ() {
 	}
 
 	class TypeTopicTableBuilderFactory implements TableBuilderFactory {
@@ -702,25 +690,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}   
 	}
 	
-	/*
-	void updateTopicsSerial(int batch) {
-		for (int topic = (numTopics-1); topic >= 0; topic--) {
-			for (int type = (numTypes-1); type >= 0; type--) {	
-				if(batchLocalTopicTypeUpdates[batch][topic][type]!=0) {
-					updateTypeTopicCount(type, topic, batchLocalTopicTypeUpdates[batch][topic][type]);
-					// Now reset the count
-					batchLocalTopicTypeUpdates[batch][topic][type] = 0;		
-					// Update delta statistics
-					boolean success = globalDeltaNUpdates[topic].increment(type);
-					// We need Trove 3.0!!
-					if(!success) {
-						globalDeltaNUpdates[topic].put(type, 1);
-					}
-				}
-			}
-		}
-	}*/
-
 	void updateTopics() {
 		List<ParallelTopicUpdater> builders = new ArrayList<>();
 		for (int topic = 0; topic < numTopics; topic++) {
@@ -1230,34 +1199,5 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			topicTypeUpdates[topic] = topicUpdates.keys();
 		}
 		return topicTypeUpdates;
-	}
-
-	/**
-	 * This is not used yet, current random scan only looks at most frequent words
-	 */
-	class TypeChangePair implements Comparable<TypeChangePair> {
-		public int type;
-		public int deltaCount = 0;
-		public TypeChangePair(int type, int deltaCount) {
-			super();
-			this.type = type;
-			this.deltaCount = deltaCount;
-		}
-		@Override
-		public int compareTo(TypeChangePair o) {
-			return deltaCount - o.getDeltaCount();
-		}
-		public int getType() {
-			return type;
-		}
-		public void setType(int type) {
-			this.type = type;
-		}
-		public int getDeltaCount() {
-			return deltaCount;
-		}
-		public void setDeltaCount(int deltaCount) {
-			this.deltaCount = deltaCount;
-		}
 	}
 }
