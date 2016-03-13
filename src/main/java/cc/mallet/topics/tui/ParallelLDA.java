@@ -22,6 +22,7 @@ import cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA;
 import cc.mallet.topics.ParanoidSpaliasUncollapsedLDA;
 import cc.mallet.topics.SerialCollapsedLDA;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
+import cc.mallet.topics.SpaliasUncollapsedParallelWithPriors;
 import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.InstanceList;
 import cc.mallet.util.LoggingUtils;
@@ -213,6 +214,13 @@ public class ParallelLDA {
 			model = new SpaliasUncollapsedParallelLDA(config);
 			System.out.println(
 					String.format("SpaliasUncollapsed Parallell LDA (%d batches).", 
+							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			break;
+		}
+		case "spalias_priors": {
+			model = new SpaliasUncollapsedParallelWithPriors(config);
+			System.out.println(
+					String.format("SpaliasUncollapsed Parallell LDA with Priors(%d batches).", 
 							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
 			break;
 		}
