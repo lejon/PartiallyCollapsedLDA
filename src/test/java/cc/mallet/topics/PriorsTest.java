@@ -37,7 +37,7 @@ public class PriorsTest {
 		}
 		
 		System.out.println("Alphabet is:\n" + a);
-		Collection [] spec = UncollapsedParallelLDA.extractPriorSpec(lines, 4);
+		Collection [] spec = SpaliasUncollapsedParallelWithPriors.extractPriorSpec(lines, 4);
 		System.out.println("Zero Out");
 		for (Collection string : spec) {
 			System.out.println(string);
@@ -46,7 +46,7 @@ public class PriorsTest {
 		System.out.println();
 		
 		System.out.println("Alphabet contains: " + a.size() + " words");
-		MatrixOps.print(UncollapsedParallelLDA.calculatePriors("src/test/resources/topic_priors.txt", lines.size(), a.size(), a));
+		MatrixOps.print(SpaliasUncollapsedParallelWithPriors.calculatePriors("src/test/resources/topic_priors.txt", lines.size(), a.size(), a));
 		
 	}
 

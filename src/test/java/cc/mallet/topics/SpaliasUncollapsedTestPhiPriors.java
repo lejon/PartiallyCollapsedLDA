@@ -16,7 +16,7 @@ import cc.mallet.types.InstanceList;
 import cc.mallet.types.ParallelDirichlet;
 import cc.mallet.util.LoggingUtils;
 
-public class SpaliasUncollapsedTest {
+public class SpaliasUncollapsedTestPhiPriors {
 	
 	
 	SimpleLDAConfiguration getStdCfg(String whichModel, Integer numIter, Integer numBatches) {
@@ -132,6 +132,294 @@ public class SpaliasUncollapsedTest {
 			result[i] = arr1[i].clone();
 		}
 		return result;
+	}
+	
+	@Test
+	public void testSetPriorsNoPriors() throws IOException {	
+		String whichModel = "spalias_uncollapsed";
+		Integer numBatches = 6;
+
+		Integer numIter = 100;
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,numBatches);
+		config.setDatasetFilename("src/main/resources/datasets/SmallTexts.txt");
+		config.setNoTopics(4);
+
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("Using dataset: " + dataset_fn);
+		System.out.println("Scheme: " + whichModel);
+		LoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("TestRuns");
+		config.setLoggingUtil(lu);
+
+		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
+				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+
+		SpaliasUncollapsedParallelWithPriors model = new SpaliasUncollapsedParallelWithPriors(config);
+		System.out.println(
+				String.format("Spalias Uncollapsed Parallell LDA (%d batches).", 
+						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		model.addInstances(instances);
+		
+		// Assert that ALL priors == 1.0
+		double [][] topicPriors = model.getTopicPriors();
+		//MatrixOps.print(topicPriors);
+		for (int i = 0; i < topicPriors.length; i++) {
+			for (int j = 0; j < topicPriors[i].length; j++) {
+				assertEquals(1.0, topicPriors[i][j], 0.0000000001);
+			}
+		}
+		
+		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+		System.out.println("_____________________________\n");
+
+		// Runs the model
+		System.out.println("Starting:" + new Date());
+		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+		System.out.println("Finished:" + new Date());
+
+		System.out.println("I am done!");
+	}
+	
+	@Test
+	public void testSetPriorsNoWordsIsInDictionary() throws IOException {	
+		String whichModel = "spalias_uncollapsed";
+		Integer numBatches = 6;
+
+		Integer numIter = 100;
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,numBatches);
+		config.setDatasetFilename("src/main/resources/datasets/SmallTexts.txt");
+		config.setNoTopics(4);
+		config.setTopicPriorFilename("src/test/resources/topic_priors.txt");
+
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("Using dataset: " + dataset_fn);
+		System.out.println("Scheme: " + whichModel);
+		LoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("TestRuns");
+		config.setLoggingUtil(lu);
+
+		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
+				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+
+		SpaliasUncollapsedParallelWithPriors model = new SpaliasUncollapsedParallelWithPriors(config);
+		System.out.println(
+				String.format("Spalias Uncollapsed Parallell LDA (%d batches).", 
+						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		model.addInstances(instances);
+		
+		// Assert that ALL priors == 1.0
+		double [][] topicPriors = model.getTopicPriors();
+		//MatrixOps.print(topicPriors);
+		for (int i = 0; i < topicPriors.length; i++) {
+			for (int j = 0; j < topicPriors[i].length; j++) {
+				assertEquals(1.0, topicPriors[i][j], 0.0000000001);
+			}
+		}
+		
+		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+		System.out.println("_____________________________\n");
+
+		// Runs the model
+		System.out.println("Starting:" + new Date());
+		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+		System.out.println("Finished:" + new Date());
+
+		System.out.println("I am done!");
+	}
+	
+	@Test
+	public void testSetPriors() throws IOException {	
+		String whichModel = "spalias_uncollapsed";
+		Integer numBatches = 6;
+
+		Integer numIter = 100;
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,numBatches);
+		config.setDatasetFilename("src/main/resources/datasets/SmallTexts.txt");
+		config.setNoTopics(4);
+		config.setTopicPriorFilename("src/test/resources/topic_priors_SmallTexts.txt");
+
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("Using dataset: " + dataset_fn);
+		System.out.println("Scheme: " + whichModel);
+		LoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("TestRuns");
+		config.setLoggingUtil(lu);
+
+		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
+				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+
+		SpaliasUncollapsedParallelWithPriors model = new SpaliasUncollapsedParallelWithPriors(config);
+		System.out.println(
+				String.format("Spalias Uncollapsed Parallell LDA (%d batches).", 
+						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		model.addInstances(instances);
+		
+		System.out.println("Alphabet is: " + model.getAlphabet());
+		
+		// Assert that ALL priors == 1.0
+		double [][] topicPriors = model.getTopicPriors();
+		//MatrixOps.print(topicPriors);
+		
+		assertEquals(1.0, topicPriors[0][model.getAlphabet().lookupIndex("mother",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[1][model.getAlphabet().lookupIndex("mother",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[2][model.getAlphabet().lookupIndex("mother",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[3][model.getAlphabet().lookupIndex("mother",false)], 0.0000000001);
+
+		assertEquals(1.0, topicPriors[0][model.getAlphabet().lookupIndex("slip",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[1][model.getAlphabet().lookupIndex("slip",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[2][model.getAlphabet().lookupIndex("slip",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[3][model.getAlphabet().lookupIndex("slip",false)], 0.0000000001);
+
+		assertEquals(1.0, topicPriors[3][model.getAlphabet().lookupIndex("disk",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[1][model.getAlphabet().lookupIndex("disk",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[2][model.getAlphabet().lookupIndex("disk",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[0][model.getAlphabet().lookupIndex("disk",false)], 0.0000000001);
+
+		assertEquals(1.0, topicPriors[3][model.getAlphabet().lookupIndex("drive",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[1][model.getAlphabet().lookupIndex("drive",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[2][model.getAlphabet().lookupIndex("drive",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[0][model.getAlphabet().lookupIndex("drive",false)], 0.0000000001);
+		
+		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+		System.out.println("_____________________________\n");
+
+		// Runs the model
+		System.out.println("Starting:" + new Date());
+		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+		
+		// Assert that ALL priors == 1.0
+		double [][] topicPosteriors = model.getPhi();
+		//System.out.println("Posterior Phi is: ");
+		//MatrixOps.print(topicPosteriors);
+		//System.out.println("Alphabet is: " + model.getAlphabet());
+		
+		// Ensure that the posterior is still 0
+		assertEquals(0.0, topicPosteriors[1][model.getAlphabet().lookupIndex("mother",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[2][model.getAlphabet().lookupIndex("mother",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[3][model.getAlphabet().lookupIndex("mother",false)], 0.0000000001);
+
+		assertEquals(0.0, topicPosteriors[1][model.getAlphabet().lookupIndex("slip",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[2][model.getAlphabet().lookupIndex("slip",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[3][model.getAlphabet().lookupIndex("slip",false)], 0.0000000001);
+
+		assertEquals(0.0, topicPosteriors[1][model.getAlphabet().lookupIndex("disk",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[2][model.getAlphabet().lookupIndex("disk",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[0][model.getAlphabet().lookupIndex("disk",false)], 0.0000000001);
+
+		assertEquals(0.0, topicPosteriors[1][model.getAlphabet().lookupIndex("drive",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[2][model.getAlphabet().lookupIndex("drive",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[0][model.getAlphabet().lookupIndex("drive",false)], 0.0000000001);
+		
+		System.out.println("Finished:" + new Date());
+
+		System.out.println("I am done!");
+	}
+	
+	@Test
+	public void testSetPriorsNips() throws IOException {	
+		String whichModel = "spalias_uncollapsed";
+		Integer numBatches = 6;
+
+		Integer numIter = 500;
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,numBatches);
+		config.setDatasetFilename("src/main/resources/datasets/nips.txt");
+		config.setNoTopics(20);
+		config.setTopicPriorFilename("src/main/resources/topic_priors.txt");
+
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("Using dataset: " + dataset_fn);
+		System.out.println("Scheme: " + whichModel);
+		LoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("TestRuns");
+		config.setLoggingUtil(lu);
+
+		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
+				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+
+		SpaliasUncollapsedParallelWithPriors model = new SpaliasUncollapsedParallelWithPriors(config);
+		System.out.println(
+				String.format("Spalias Uncollapsed Parallell LDA (%d batches).", 
+						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		model.addInstances(instances);
+		
+		// Assert that ALL priors == 1.0
+		double [][] topicPriors = model.getTopicPriors();
+		//MatrixOps.print(topicPriors);
+		
+		assertEquals(1.0, topicPriors[0][model.getAlphabet().lookupIndex("cell",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[1][model.getAlphabet().lookupIndex("cell",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[2][model.getAlphabet().lookupIndex("cell",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[3][model.getAlphabet().lookupIndex("cell",false)], 0.0000000001);
+
+		assertEquals(1.0, topicPriors[0][model.getAlphabet().lookupIndex("stimulus",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[1][model.getAlphabet().lookupIndex("stimulus",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[2][model.getAlphabet().lookupIndex("stimulus",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[3][model.getAlphabet().lookupIndex("stimulus",false)], 0.0000000001);
+
+		assertEquals(1.0, topicPriors[19][model.getAlphabet().lookupIndex("image",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[1][model.getAlphabet().lookupIndex("image",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[2][model.getAlphabet().lookupIndex("image",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[0][model.getAlphabet().lookupIndex("image",false)], 0.0000000001);
+
+		assertEquals(1.0, topicPriors[19][model.getAlphabet().lookupIndex("pixel",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[1][model.getAlphabet().lookupIndex("pixel",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[2][model.getAlphabet().lookupIndex("pixel",false)], 0.0000000001);
+		assertEquals(0.0, topicPriors[0][model.getAlphabet().lookupIndex("pixel",false)], 0.0000000001);
+		
+		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+		System.out.println("_____________________________\n");
+
+		// Runs the model
+		System.out.println("Starting:" + new Date());
+		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+		
+		// Assert that ALL priors == 1.0
+		double [][] topicPosteriors = model.getPhi();
+		
+		// Ensure that the posterior is still 0
+		assertEquals(0.0, topicPosteriors[1][model.getAlphabet().lookupIndex("cell",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[2][model.getAlphabet().lookupIndex("cell",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[3][model.getAlphabet().lookupIndex("cell",false)], 0.0000000001);
+
+		assertEquals(0.0, topicPosteriors[1][model.getAlphabet().lookupIndex("stimulus",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[2][model.getAlphabet().lookupIndex("stimulus",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[3][model.getAlphabet().lookupIndex("stimulus",false)], 0.0000000001);
+
+		assertEquals(0.0, topicPosteriors[1][model.getAlphabet().lookupIndex("image",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[2][model.getAlphabet().lookupIndex("image",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[0][model.getAlphabet().lookupIndex("image",false)], 0.0000000001);
+
+		assertEquals(0.0, topicPosteriors[1][model.getAlphabet().lookupIndex("pixel",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[2][model.getAlphabet().lookupIndex("pixel",false)], 0.0000000001);
+		assertEquals(0.0, topicPosteriors[0][model.getAlphabet().lookupIndex("pixel",false)], 0.0000000001);
+		
+		System.out.println("Finished:" + new Date());
+
+		System.out.println("I am done!");
 	}
 
 	@Test(expected = IllegalArgumentException.class)

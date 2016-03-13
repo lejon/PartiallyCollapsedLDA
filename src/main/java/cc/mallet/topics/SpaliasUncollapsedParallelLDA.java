@@ -257,7 +257,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 			int topicIdx = 1;
 			while ( topicIdx < nonZeroTopicCnt ) {
 				topic = nonZeroTopics[topicIdx];
-				score = localTopicCounts[topic] * phiType[topic] * topicPriors[topic][type];
+				score = localTopicCounts[topic] * phiType[topic];
 				cumsum[topicIdx] = score + cumsum[topicIdx-1];
 				topicIdx++;
 			}
