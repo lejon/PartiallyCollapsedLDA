@@ -4,7 +4,7 @@ import gnu.trove.TIntArrayList;
 import cc.mallet.util.ParallelRandoms;
 import cc.mallet.util.Randoms;
 import static java.lang.Math.exp;
-import org.apache.commons.math3.special.Gamma;
+import static org.apache.commons.math3.special.Gamma.logGamma;
 
 public class VSDirichlet implements VariableSelectionDirichlet {
 	double beta = 0;
