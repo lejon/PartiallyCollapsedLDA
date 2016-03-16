@@ -881,10 +881,17 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			localTopicCounts_i[oldTopic]--;
 			
 			// Draw topic proposal t
-			double u = ThreadLocalRandom.current().nextDouble();
-			// TODO: This needs to be fixed using sparse Alias tables
-			int wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
-			
+			// TODO: I cant find an array that contain the number of tokens per word type? I set this to be called typeTokens, need to be fixed.
+			double u_w = ThreadLocalRandom.current().nextDouble() * (typeTokens[type] + (numTopics*beta)); // (n_w + K*beta) * u where u ~ U(0,1)
+
+			int wordTopicIndicatorProposal = -1;
+			if(u_w < typeTokens[type]) {
+				// TODO: Assuming that the Alias table is returning an index to use in backmapping
+				wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u_w)];
+			} else {
+				wordTopicIndicatorProposal = (int) (((u_w - typeTokens[type]) / (numTopics*beta)) * numTopics); // assume symmetric beta, just draws one topic
+			}
+						
 			// Make sure we actually sampled a valid topic
 			if (wordTopicIndicatorProposal < 0 || wordTopicIndicatorProposal > numTopics) {
 				throw new IllegalStateException ("Collapsed Light-LDA: New valid topic not sampled (" + newTopic + ").");
