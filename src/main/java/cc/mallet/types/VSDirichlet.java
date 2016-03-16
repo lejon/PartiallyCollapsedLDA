@@ -9,8 +9,8 @@ import org.apache.commons.math3.special.Gamma;
 public class VSDirichlet implements VariableSelectionDirichlet {
 	double beta = 0;
 	Randoms random = new ParallelRandoms();
-	boolean useNonZero = true;
 	double vsPrior; // pi_k
+	boolean useNonZero = true; // What is this?
 
 	public VSDirichlet(double beta, double vsPrior) {
 		this(beta, vsPrior, true);
@@ -39,7 +39,7 @@ public class VSDirichlet implements VariableSelectionDirichlet {
 		TIntArrayList resultingZeroIdxs = new TIntArrayList();
 		for (int i = 0; i < counts.length; i++) {
 			n_k += counts[i];
-			if(previousPhi[i]==0.0) zeroPhi++;
+			if(previousPhi[i]==0.0) zeroPhi++; // Is this working, it is a double set to 0.0, can we use == or will rounding error destroy it for us?
 		}
 		
 		double sum_phi = 0;
@@ -48,7 +48,7 @@ public class VSDirichlet implements VariableSelectionDirichlet {
 			// If counts != 0, we draw Phi as usual
 			if(counts[i]!=0) {
 				phi[i] = random.nextGamma(counts[i]+beta, 1);
-				if(useNonZero) resultingZeroIdxs.add(i);
+				if(useNonZero) resultingZeroIdxs.add(i); // What is this? Should it not be resultingZeroIdxs.remove(i) or not called at all?
 			} else {
 				//System.out.println("Count was zero...");
 				double U = random.nextDouble();
@@ -75,7 +75,7 @@ public class VSDirichlet implements VariableSelectionDirichlet {
 					if (phi[i] < 0) {
 						throw new IllegalStateException("Drew negative gamma");
 					} 
-					if(useNonZero) resultingZeroIdxs.add(i);
+					if(useNonZero) resultingZeroIdxs.add(i); // What is this? Should it not be resultingZeroIdxs.remove(i) or not called at all?
 				}
 			}	
 			sum_phi += phi[i];
