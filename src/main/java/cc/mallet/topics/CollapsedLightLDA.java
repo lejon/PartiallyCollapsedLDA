@@ -863,7 +863,12 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			double u = ThreadLocalRandom.current().nextDouble();
 			int wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
 			
-			// If we drew a new topic indicator, do MH step for Word proposal
+			// Make sure we actually sampled a valid topic
+			if (wordTopicIndicatorProposal < 0 || wordTopicIndicatorProposal > numTopics) {
+				throw new IllegalStateException ("Collapsed Light-LDA: New valid topic not sampled (" + newTopic + ").");
+			}
+			
+			
 			if(wordTopicIndicatorProposal!=oldTopic) {
 				double n_d_zi_i = localTopicCounts_i[oldTopic];
 				double n_d_zstar_i = localTopicCounts_i[wordTopicIndicatorProposal];
