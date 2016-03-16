@@ -850,13 +850,16 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			decrement(myBatch, oldTopic, type);
 
 			// #####################################
-			// Word Topic Distribution 
+			// Word-Topic Proposal 
 			// #####################################
 			
 			// N_{d,Z_i} => # counts of topic Z_i in document d
+			// s = old state
+			// t = proposed state
 			
 			localTopicCounts_i[oldTopic]--;
 			
+			// Draw topic proposal t
 			double u = ThreadLocalRandom.current().nextDouble();
 			int wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
 			
@@ -888,7 +891,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			}
 			
 			// #####################################
-			// Document Topic Distribution 
+			// Document-Topic Proposal  
 			// #####################################
 			 
 			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha));
