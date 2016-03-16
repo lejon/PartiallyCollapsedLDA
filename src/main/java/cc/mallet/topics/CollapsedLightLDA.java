@@ -838,7 +838,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		kdDensities.addAndGet(nonZeroTopicCnt);
 		
 		// Cashed values
-		// TODO: Is this the correct way 
+		// TODO: Is this the correct way?
 		double beta_bar = beta * typeTopicCounts.length; // beta * V (beta_bar in article)
 		
 		//	Iterate over the words in the document
@@ -877,16 +877,16 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			if(wordTopicIndicatorProposal!=oldTopic) {
 				// If we drew a new topic indicator, do MH step for Word proposal
 				
-				double n_d_s_i = localTopicCounts_i[oldTopic]; // TODO: Change to int?
-				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal]; // TODO: Change to int?
+				double n_d_s_i = localTopicCounts_i[oldTopic];
+				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
 				double n_w_s = typeTopicCounts[type][oldTopic];
 				double n_w_t = typeTopicCounts[type][wordTopicIndicatorProposal];					
 				double n_w_s_i = typeTopicCounts[type][oldTopic] - 1.0;
 				double n_w_t_i = n_w_t; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
-				double n_t = globalTopicCounts[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
-				double n_s = globalTopicCounts[oldTopic]; 
+				double n_t = tokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
+				double n_s = tokensPerTopic[oldTopic]; 
 				double n_t_i = n_t; 
-				double n_s_i = n_s_i - 1.0; 
+				double n_s_i = n_s - 1.0; 
 				
 				// Calculate rejection rate
 				// TODO: Is this a correct way of calculate a large product?
@@ -944,8 +944,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
 				double n_w_s_i = typeTopicCounts[type][oldTopic] - 1.0;
 				double n_w_t_i = typeTopicCounts[type][wordTopicIndicatorProposal]; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
-				double n_t_i = globalTopicCounts[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
-				double n_s_i = globalTopicCounts[oldTopic] - 1.0; 
+				double n_t_i = tokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
+				double n_s_i = tokensPerTopic[oldTopic] - 1.0; 
 				
 				// Calculate rejection rate
 				// TODO: Is this a correct way of calculate a large product?
