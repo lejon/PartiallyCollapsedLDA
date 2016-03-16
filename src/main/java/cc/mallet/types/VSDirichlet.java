@@ -8,8 +8,8 @@ import static java.lang.Math.exp;
 public class VSDirichlet implements VariableSelectionDirichlet {
 	double beta = 0;
 	Randoms random = new ParallelRandoms();
-	double vsPrior;
 	boolean useNonZero = true;
+	double vsPrior; // pi_k
 
 	public VSDirichlet(double beta, double vsPrior) {
 		this(beta, vsPrior, true);
@@ -34,7 +34,7 @@ public class VSDirichlet implements VariableSelectionDirichlet {
 	public VariableSelectionResult nextDistribution(int[] counts, double [] previousPhi) {
 		int n_k = 0; // Finally, let n_k be the total number of tokens associated with the kth topic. 
 		int zeroPhi = 0; // Number of 0 entries in this topic
-		double [] phi = new double[previousPhi.length];
+		double [] phi = new double[previousPhi.length]; // The sampled phi
 		TIntArrayList resultingZeroIdxs = new TIntArrayList();
 		for (int i = 0; i < counts.length; i++) {
 			n_k += counts[i];
@@ -88,7 +88,18 @@ public class VSDirichlet implements VariableSelectionDirichlet {
 		return new VSResult(phi, resultingZeroIdxs.toNativeArray());
 	}
 	
-	protected double drawIndicatorProb(int zeroPhi, int n_k, double beta) {
+	
+	/*
+	 * Calculate p(I_{k,v} == 1) 
+	 * 
+	 * @param zeroPhi Number of indicators set to 0
+	 * @param n_k Number of tokens in topic k
+	 * @param beta The prior beta_{k,v}
+	 * 
+	 * @return p(I_{k,v} == 1) 
+	 * 
+	 */
+	protected double calculateIndicatorProbIsOne(int zeroPhi, int n_k, double beta) {
 		// Use log and subtract instead...
 		double piReciprocal = 1.0-vsPrior;  
 		double gammaBeta = Dirichlet.logGammaStirling( beta );
