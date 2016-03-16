@@ -4,7 +4,6 @@ import gnu.trove.TIntArrayList;
 import cc.mallet.util.ParallelRandoms;
 import cc.mallet.util.Randoms;
 import static java.lang.Math.exp;
-import static org.apache.commons.math3.special.Gamma.logGamma;
 
 public class VSDirichlet implements VariableSelectionDirichlet {
 	double beta = 0;
@@ -104,10 +103,10 @@ public class VSDirichlet implements VariableSelectionDirichlet {
 		// Use log and subtract instead...
 				
 		double sum_beta_not_j = zeroPhi * beta;
-		double lgamma_sum_beta_not_j = logGamma(sum_beta_not_j);   // a
-		double lgamma_sum_beta_j = logGamma(sum_beta_not_j + beta);  // a + b 
-		double lgamma_sum_n_beta_not_j = logGamma(sum_beta_not_j + n_k);  // a + \tilde{n}
-		double lgamma_sum_n_beta_j = logGamma(sum_beta_not_j + beta + n_k);  // a + b + \tilde{n}
+		double lgamma_sum_beta_not_j = Dirichlet.logGammaStirling(sum_beta_not_j);   // a
+		double lgamma_sum_beta_j = Dirichlet.logGammaStirling(sum_beta_not_j + beta);  // a + b 
+		double lgamma_sum_n_beta_not_j = Dirichlet.logGammaStirling(sum_beta_not_j + n_k);  // a + \tilde{n}
+		double lgamma_sum_n_beta_j = Dirichlet.logGammaStirling(sum_beta_not_j + beta + n_k);  // a + b + \tilde{n}
 		double r = exp(lgamma_sum_beta_j + lgamma_sum_n_beta_not_j - lgamma_sum_n_beta_j - lgamma_sum_beta_not_j) * (vsPrior / (1 - vsPrior)); 
 		double prob_I_kv_is_1 = r / (1 + r);
 		// double piReciprocal = 1.0-vsPrior;  

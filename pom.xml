@@ -40,7 +40,8 @@
 	<!-- v4.0.1: Updated implementation after derivation update -->
 	<!-- v4.1.0: Extracted and pushed down implementatiion of type priors to reduce mem and improve cache in std versions -->
 	<!-- v4.1.1: Updated variable selection -->
-	<version>4.1.1</version>
+	<!-- v4.1.2: Small corrections in types/VSDirichlet.java  -->
+	<version>4.1.2</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
