@@ -274,7 +274,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 				// INTERSECTION SHOULD IMPROVE perf since we use result both in cunmsum and sample topic
 				// Intersection needs to b O(k) for it to improve perf, but unless we add more memory 
 				// requirements it becomes O(k log(k))
-				nonZeroTopicsAdjusted = zeroTypeTopicIdxs[type];
+				nonZeroTopicsAdjusted = zeroTypeTopicIdxs[type]; // Is it zero or nonzero, its confusing?
 				nonZeroTopicCntAdjusted = nonZeroTypeCnt;
 				//usedTypeSparsness.incrementAndGet();
 			} else {
@@ -284,7 +284,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 			
 			double u = ThreadLocalRandom.current().nextDouble();
 			
-			// Document and type sparsity removed all topics, just use the prior contribution
+			// Document and type sparsity removed all (but one?) topics, just use the prior contribution
 			if(nonZeroTopicCntAdjusted==0) {
 				//toPrior.incrementAndGet();
 				newTopic = aliasTables[type].generateSample(u); // uniform (0,1)
