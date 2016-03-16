@@ -487,25 +487,42 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 		@Override
 		public TableBuildResult call() {
-			double [] probs = new double[numTopics];
-			int [] myTypeTopicCounts = typeTopicCounts[type];
+			// TODO: I dont know to fix this, nonZeroTypeTopicCnt should be a variable that is reached.
+			double [] probs = new double[nonZeroTypeTopicCnt[type]];
+			// int [] myTypeTopicCounts = typeTopicCounts[type];
+			int [] myNonZeroTypeTopics = nonZeroTypeTopics[type];
 			
+			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
+			// 	  topicMass += myTypeTopicCounts[i];
+			//}
+			
+			// Iterate over nonzero topic indicators
 			int topicMass = 0;
-			for (int i = 0; i < myTypeTopicCounts.length; i++) {
-				topicMass += myTypeTopicCounts[i];
+			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
+			 	  topicMass += typeTopicCounts[type][myNonZeroTypeTopics[i]];
 			}
 
+			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
+			// 	typeMass += probs[i] = myTypeTopicCounts[i] / (double) topicMass;
+			// }
+			
 			double typeMass = 0; // Type prior mass
-			for (int i = 0; i < myTypeTopicCounts.length; i++) {
-				typeMass += probs[i] = myTypeTopicCounts[i] / (double) topicMass;
+			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
+				typeMass += probs[i] = typeTopicCounts[type][myNonZeroTypeTopics[i]] / (double) topicMass;
 			}
-						
+
+			/*
 			if(aliasTables[type]==null) {
 				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
 			} else {
 				aliasTables[type].reGenerateAliasTable(probs, typeMass);
 			}
-				
+			*/
+			
+			// TODO: New tables in all iterations (different sizes)?
+			// TODO: I now assume that the aliasTable return the position in prob.
+			aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
+			
 			return new TableBuildResult(type, aliasTables[type], typeMass);
 		}   
 	}
