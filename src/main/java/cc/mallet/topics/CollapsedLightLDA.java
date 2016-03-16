@@ -991,6 +991,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	}
 
 	protected void increment(int myBatch, int newTopic, int type) {
+		//TODO: Is tokensPerTopic updated as well? This is now used in the sampler.
 		//batchLocalTopicTypeUpdates[myBatch][newTopic][type] += 1;
 		batchLocalTopicTypeUpdates[newTopic][type].incrementAndGet();
 		//System.out.println("(Batch=" + myBatch + ") Incremented: topic=" + newTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][newTopic][type]);		
