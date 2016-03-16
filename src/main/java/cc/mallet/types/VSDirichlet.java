@@ -4,12 +4,13 @@ import gnu.trove.TIntArrayList;
 import cc.mallet.util.ParallelRandoms;
 import cc.mallet.util.Randoms;
 import static java.lang.Math.exp;
+import static org.apache.commons.math3.special.Gamma.logGamma;
 
 public class VSDirichlet implements VariableSelectionDirichlet {
 	double beta = 0;
 	Randoms random = new ParallelRandoms();
-	double vsPrior;
-	boolean useNonZero = true;
+	double vsPrior; // pi_k
+	boolean useNonZero = true; // What is this?
 
 	public VSDirichlet(double beta, double vsPrior) {
 		this(beta, vsPrior, true);
@@ -34,11 +35,11 @@ public class VSDirichlet implements VariableSelectionDirichlet {
 	public VariableSelectionResult nextDistribution(int[] counts, double [] previousPhi) {
 		int n_k = 0; // Finally, let n_k be the total number of tokens associated with the kth topic. 
 		int zeroPhi = 0; // Number of 0 entries in this topic
-		double [] phi = new double[previousPhi.length];
+		double [] phi = new double[previousPhi.length]; // The sampled phi
 		TIntArrayList resultingZeroIdxs = new TIntArrayList();
 		for (int i = 0; i < counts.length; i++) {
 			n_k += counts[i];
-			if(previousPhi[i]==0.0) zeroPhi++;
+			if(previousPhi[i]==0.0) zeroPhi++; // Is this working, it is a double set to 0.0, can we use == or will rounding error destroy it for us?
 		}
 		
 		double sum_phi = 0;
@@ -47,14 +48,14 @@ public class VSDirichlet implements VariableSelectionDirichlet {
 			// If counts != 0, we draw Phi as usual
 			if(counts[i]!=0) {
 				phi[i] = random.nextGamma(counts[i]+beta, 1);
-				if(useNonZero) resultingZeroIdxs.add(i);
+				if(useNonZero) resultingZeroIdxs.add(i); // What is this? Should it not be resultingZeroIdxs.remove(i) or not called at all?
 			} else {
 				//System.out.println("Count was zero...");
 				double U = random.nextDouble();
-				double indicatorProb = drawIndicatorProb(zeroPhi, n_k, beta);
-				if(indicatorProb>1 && indicatorProb < 0) throw new IllegalStateException("Inconsistent Indicator probability");
+				double prob_I_kv_is_1 = calculateIndicatorProbIsOne(zeroPhi, n_k, beta);
+				if(prob_I_kv_is_1>1 || prob_I_kv_is_1 < 0) throw new IllegalStateException("Inconsistent Indicator probability");
 				// Else, if we drew an indicator I == 0, and set Phi == 0
-				if( U < indicatorProb )	{
+				if( U > prob_I_kv_is_1 )	{
 					// It this slot was previously non-zero we now have another Zero 
 					// phi for this topic, increase zeroPhi
 					if(previousPhi[i]!=0.0) {
@@ -74,7 +75,7 @@ public class VSDirichlet implements VariableSelectionDirichlet {
 					if (phi[i] < 0) {
 						throw new IllegalStateException("Drew negative gamma");
 					} 
-					if(useNonZero) resultingZeroIdxs.add(i);
+					if(useNonZero) resultingZeroIdxs.add(i); // What is this? Should it not be resultingZeroIdxs.remove(i) or not called at all?
 				}
 			}	
 			sum_phi += phi[i];
@@ -88,14 +89,33 @@ public class VSDirichlet implements VariableSelectionDirichlet {
 		return new VSResult(phi, resultingZeroIdxs.toNativeArray());
 	}
 	
-	protected double drawIndicatorProb(int zeroPhi, int n_k, double beta) {
+	
+	/*
+	 * Calculate p(I_{k,v} == 1) 
+	 * 
+	 * @param zeroPhi Number of indicators set to 0
+	 * @param n_k Number of tokens in topic k
+	 * @param beta The prior beta_{k,v}
+	 * 
+	 * @return p(I_{k,v} == 1) 
+	 * 
+	 */
+	protected double calculateIndicatorProbIsOne(int zeroPhi, int n_k, double beta) {
 		// Use log and subtract instead...
-		double piReciprocal = 1.0-vsPrior;  
-		double gammaBeta = Dirichlet.logGammaStirling( beta );
-		double denom1 = Dirichlet.logGammaStirling( n_k + (zeroPhi * beta) + beta );
-		double denom2 = Dirichlet.logGammaStirling( n_k + (zeroPhi * beta));
-		double quot = piReciprocal / ( piReciprocal + (exp(gammaBeta - denom1 + denom2 ) * vsPrior));
-		//System.out.println("Di:" + m_k + " Nz: " + zeroPhi  + " alpha: " + alpha + " ga: " + gammaAlpha + " denom: " + denom1 + " quot: " + quot);
-		return quot;
+				
+		double sum_beta_not_j = zeroPhi * beta;
+		double lgamma_sum_beta_not_j = logGamma(sum_beta_not_j);   // a
+		double lgamma_sum_beta_j = logGamma(sum_beta_not_j + beta);  // a + b 
+		double lgamma_sum_n_beta_not_j = logGamma(sum_beta_not_j + n_k);  // a + \tilde{n}
+		double lgamma_sum_n_beta_j = logGamma(sum_beta_not_j + beta + n_k);  // a + b + \tilde{n}
+		double r = exp(lgamma_sum_beta_j + lgamma_sum_n_beta_not_j - lgamma_sum_n_beta_j - lgamma_sum_beta_not_j) * (vsPrior / (1 - vsPrior)); 
+		double prob_I_kv_is_1 = r / (1 + r);
+		// double piReciprocal = 1.0-vsPrior;  
+		// double gammaBeta = Dirichlet.logGammaStirling( beta );
+		// double denom1 = Dirichlet.logGammaStirling( n_k + (zeroPhi * beta) + beta );
+		// double denom2 = Dirichlet.logGammaStirling( n_k + (zeroPhi * beta));
+		// double quot = piReciprocal / ( piReciprocal + (exp(gammaBeta - denom1 + denom2 ) * vsPrior));
+		// System.out.println("Di:" + m_k + " Nz: " + zeroPhi  + " alpha: " + alpha + " ga: " + gammaAlpha + " denom: " + denom1 + " quot: " + quot);
+		return prob_I_kv_is_1;
 	}
 }

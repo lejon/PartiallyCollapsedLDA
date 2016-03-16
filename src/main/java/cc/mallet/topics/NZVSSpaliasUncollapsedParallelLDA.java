@@ -274,7 +274,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 				// INTERSECTION SHOULD IMPROVE perf since we use result both in cunmsum and sample topic
 				// Intersection needs to b O(k) for it to improve perf, but unless we add more memory 
 				// requirements it becomes O(k log(k))
-				nonZeroTopicsAdjusted = zeroTypeTopicIdxs[type];
+				nonZeroTopicsAdjusted = zeroTypeTopicIdxs[type]; // Is it zero or nonzero, its confusing?
 				nonZeroTopicCntAdjusted = nonZeroTypeCnt;
 				//usedTypeSparsness.incrementAndGet();
 			} else {
@@ -284,7 +284,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 			
 			double u = ThreadLocalRandom.current().nextDouble();
 			
-			// Document and type sparsity removed all topics, just use the prior contribution
+			// Document and type sparsity removed all (but one?) topics, just use the prior contribution
 			if(nonZeroTopicCntAdjusted==0) {
 				//toPrior.incrementAndGet();
 				newTopic = aliasTables[type].generateSample(u); // uniform (0,1)
@@ -403,6 +403,20 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 		return sum;
 	}
 
+	/*
+	 * Sample a topic indicator
+	 * 
+	 * @param type Type of the current token to sample
+	 * @param nonZeroTopics Indices of the topics with p(z=k|.) > 0
+	 * @param nonZeroTopicCnt Number of indicies in nonZeroTopics
+	 * @param sum The sum of Sum_{nonzero_topic} localTopicCounts[topic] * phiType[topic] (also cumsum[nonZeroTopicCnt-1])
+	 * @param cumsum The cumulative sum over Sum_{nonzero_topic} localTopicCounts[topic] * phiType[topic]
+	 * @param u Uniform value within (0,1)
+	 * @param u_sigma Same uniform value within (0,(typeNorm[type] + sum))
+	 * 
+	 * @return 
+	 * 
+	 */
 	int sampleNewTopic(int type, int[] nonZeroTopics, int nonZeroTopicCnt, double sum, double[] cumsum, double u,
 			double u_sigma) {
 		int newTopic;
