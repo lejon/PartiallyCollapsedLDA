@@ -992,12 +992,15 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 	protected void increment(int myBatch, int newTopic, int type) {
 		//TODO: Is tokensPerTopic updated as well? This is now used in the sampler.
+		//TODO: This should update nonZeroTypeTopics nonZeroTypeTopicsBackMapping as well.
 		//batchLocalTopicTypeUpdates[myBatch][newTopic][type] += 1;
 		batchLocalTopicTypeUpdates[newTopic][type].incrementAndGet();
 		//System.out.println("(Batch=" + myBatch + ") Incremented: topic=" + newTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][newTopic][type]);		
 	}
 
 	protected void decrement(int myBatch, int oldTopic, int type) {
+		//TODO: Is tokensPerTopic updated as well? This is now used in the sampler.
+		//TODO: This should update nonZeroTypeTopics nonZeroTypeTopicsBackMapping as well.
 		//batchLocalTopicTypeUpdates[myBatch][oldTopic][type] -= 1;
 		batchLocalTopicTypeUpdates[oldTopic][type].addAndGet(-1);
 		//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
@@ -1238,5 +1241,35 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			topicTypeUpdates[topic] = topicUpdates.keys();
 		}
 		return topicTypeUpdates;
+	}
+	
+	protected void sparseTypeTopicCounts() {
+		// TODO: This is a global matrix that should be updated globally when typeTopicCounts is updated
+		// TODO: This should probably be moved somewhere else.
+		
+		// This 2D-array contains the indices of the topics with non-zero entries.
+		// It has to be numTopics long since the non-zero topics come and go...
+		int [][] nonZeroTypeTopics = new int[numTypes][numTopics];
+
+		// So we can map back from a topic to where it is in nonZeroTopics vector
+		int [][] nonZeroTypeTopicsBackMapping = new int[numTypes][numTopics];
+
+		// Populate sparse global topic counts
+		int[] nonZeroTypeTopicCnt = new int[numTypes];
+		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
+			for (int topicidx = 0; topicidx < numTopics; topicidx++) {
+			if(typeTopicCounts[typeidx][topicidx] > 0){
+				nonZeroTypeTopicCnt[typeidx] = insert(topicidx, nonZeroTypeTopics[typeidx], nonZeroTypeTopicsBackMapping[typeidx], nonZeroTypeTopicCnt[typeidx]);
+				}
+			}
+		}
+	}
+	
+	protected static int insert(int newTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
+		// TODO: This is a identical to insert in NZVSSpaliasUncollapsed
+		//// We have a new non-zero topic put it in the last empty slot and increase the count
+		nonZeroTopics[nonZeroTopicCnt] = newTopic;
+		nonZeroTopicsBackMapping[newTopic] = nonZeroTopicCnt;
+		return ++nonZeroTopicCnt;
 	}
 }
