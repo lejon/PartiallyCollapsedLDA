@@ -24,7 +24,7 @@ import cc.mallet.util.Timing;
 public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 
 	private static final long serialVersionUID = -3423504261653103647L;
-	private static Logger logger = MalletLogger.getLogger(ParallelTopicModel.class.getName());
+	private static Logger logger = MalletLogger.getLogger(ADLDA.class.getName());
 	transient LDAConfiguration config;
 	int currentIteration;
 	private int startSeed;
@@ -57,6 +57,27 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 		numIterations = iterations;
 		estimate();
 	}
+	
+	MyWorkerRunnable getWorkersSingle(int docsPerThread, int offset, Randoms random) {
+		return new MyWorkerRunnable(numTopics,
+				alpha, alphaSum, beta,
+				random, data,
+				typeTopicCounts, tokensPerTopic,
+				offset, docsPerThread);
+	}
+
+	MyWorkerRunnable getWorkers(int docsPerThread, int offset, int[] runnableTotals, int[][] runnableCounts,
+			Randoms random) {
+		return new MyWorkerRunnable(numTopics,
+				alpha, alphaSum, beta,
+				random, data,
+				runnableCounts, runnableTotals,
+				offset, docsPerThread);
+	}
+
+	MyWorkerRunnable[] getInitialWorkers(int numThreads) {
+		return new MyWorkerRunnable[numThreads];
+	}
 
 	@Override
 	public void estimate () throws IOException {
@@ -86,7 +107,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 		setNumThreads(numThreads);
 		long startTime = System.currentTimeMillis();
 
-		MyWorkerRunnable[] runnables = new MyWorkerRunnable[numThreads];
+		MyWorkerRunnable[] runnables = getInitialWorkers(numThreads);
 
 		int docsPerThread = data.size() / numThreads;
 		int offset = 0;
@@ -117,11 +138,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 					random = new Randoms(randomSeed);
 				}
 
-				runnables[thread] = new MyWorkerRunnable(numTopics,
-						alpha, alphaSum, beta,
-						random, data,
-						runnableCounts, runnableTotals,
-						offset, docsPerThread);
+				runnables[thread] = getWorkers(docsPerThread, offset, runnableTotals, runnableCounts, random);
 
 				runnables[thread].initializeAlphaStatistics(docLengthCounts.length);
 
@@ -142,11 +159,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 				random = new Randoms(randomSeed);
 			}
 
-			runnables[0] = new MyWorkerRunnable(numTopics,
-					alpha, alphaSum, beta,
-					random, data,
-					typeTopicCounts, tokensPerTopic,
-					offset, docsPerThread);
+			runnables[0] = getWorkersSingle(docsPerThread, offset, random);
 
 			runnables[0].initializeAlphaStatistics(docLengthCounts.length);
 
@@ -161,6 +174,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 
 		for (int iteration = 1; iteration <= numIterations; iteration++) {
 			currentIteration = iteration;
+			preIteration();
 
 			if (saveStateInterval != 0 && iteration % saveStateInterval == 0) {
 				this.printState(new File(stateFilename + '.' + iteration));
@@ -307,6 +321,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 				runnables[i].setKdDensity(0);
 			}
 
+			postIteration();
 		}
 
 		executor.shutdownNow();
