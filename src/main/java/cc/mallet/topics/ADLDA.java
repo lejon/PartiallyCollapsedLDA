@@ -58,7 +58,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 		estimate();
 	}
 	
-	MyWorkerRunnable getWorkersSingle(int docsPerThread, int offset, Randoms random) {
+	MyWorkerRunnable getWorkerSingle(int docsPerThread, int offset, Randoms random) {
 		return new MyWorkerRunnable(numTopics,
 				alpha, alphaSum, beta,
 				random, data,
@@ -66,7 +66,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 				offset, docsPerThread);
 	}
 
-	MyWorkerRunnable getWorkers(int docsPerThread, int offset, int[] runnableTotals, int[][] runnableCounts,
+	MyWorkerRunnable getWorker(int docsPerThread, int offset, int[] runnableTotals, int[][] runnableCounts,
 			Randoms random) {
 		return new MyWorkerRunnable(numTopics,
 				alpha, alphaSum, beta,
@@ -138,7 +138,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 					random = new Randoms(randomSeed);
 				}
 
-				runnables[thread] = getWorkers(docsPerThread, offset, runnableTotals, runnableCounts, random);
+				runnables[thread] = getWorker(docsPerThread, offset, runnableTotals, runnableCounts, random);
 
 				runnables[thread].initializeAlphaStatistics(docLengthCounts.length);
 
@@ -159,7 +159,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 				random = new Randoms(randomSeed);
 			}
 
-			runnables[0] = getWorkersSingle(docsPerThread, offset, random);
+			runnables[0] = getWorkerSingle(docsPerThread, offset, random);
 
 			runnables[0].initializeAlphaStatistics(docLengthCounts.length);
 

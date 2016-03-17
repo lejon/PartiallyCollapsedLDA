@@ -6,31 +6,21 @@ import java.util.concurrent.ThreadLocalRandom;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.util.Randoms;
+import cc.mallet.util.WalkerAliasTable;
 
-public class LightLDAWorkerRunnable extends WorkerRunnable {
+public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 	
-	double kdDensity  = 0.0;
-
-	public double getKdDensity() {
-		return kdDensity;
-	}
-
-	public void setKdDensity(double kdDensity) {
-		this.kdDensity = kdDensity;
-	}
+	WalkerAliasTable [] aliasTables; 
 
 	public LightLDAWorkerRunnable(int numTopics, double[] alpha, double alphaSum,
 			double beta, Randoms random, ArrayList<TopicAssignment> data,
 			int[][] typeTopicCounts, int[] tokensPerTopic, int startDoc,
-			int numDocs) {
+			int numDocs, WalkerAliasTable [] aliasTables) {
 		super(numTopics, alpha, alphaSum, beta, random, data, typeTopicCounts,
 				tokensPerTopic, startDoc, numDocs);
+		this.aliasTables = aliasTables;
 	}
-	
-	public boolean isFinished() {
-		return isFinished;
-	}
-	
+		
 	protected void sampleTopicsForOneDoc (FeatureSequence tokenSequence,
 			  FeatureSequence topicSequence,
 			  boolean readjustTopicsAndStats /* currently ignored */) {
@@ -433,6 +423,10 @@ public class LightLDAWorkerRunnable extends WorkerRunnable {
 			if(localTopicCounts[topicInd]==1) nonZeroTopicCnt++;
 		}
 		
+		// Cashed values
+		// TODO: Is this the correct way?
+		double beta_bar = beta * typeTopicCounts.length; // beta * V (beta_bar in article)
+		
 		//	Iterate over the words in the document
 		for (int position = 0; position < docLength; position++) {
 			int type = tokenSequence[position];
@@ -444,21 +438,55 @@ public class LightLDAWorkerRunnable extends WorkerRunnable {
 						+ oldTopic + " is: " + localTopicCounts[oldTopic]);
 
 			// #####################################
-			// Word Topic Distribution 
+			// Word-Topic Proposal 
 			// #####################################
 			
 			// N_{d,Z_i} => # counts of topic Z_i in document d
+			// s = old state
+			// t = proposed state
 			
 			localTopicCounts_i[oldTopic]--;
 			
-			double u = ThreadLocalRandom.current().nextDouble();
-			int wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
+			// Draw topic proposal t
+			// TODO: I cant find an array that contain the number of tokens per word type? I set this to be called typeTokens, need to be fixed.
+			double u_w = ThreadLocalRandom.current().nextDouble() * (typeTokens[type] + (numTopics*beta)); // (n_w + K*beta) * u where u ~ U(0,1)
+
+			int wordTopicIndicatorProposal = -1;
+			if(u_w < typeTokens[type]) {
+				// TODO: Assuming that the Alias table is returning an index to use in backmapping
+				wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u_w)];
+			} else {
+				wordTopicIndicatorProposal = (int) (((u_w - typeTokens[type]) / (numTopics*beta)) * numTopics); // assume symmetric beta, just draws one topic
+			}
+						
+			// Make sure we actually sampled a valid topic
+			if (wordTopicIndicatorProposal < 0 || wordTopicIndicatorProposal > numTopics) {
+				throw new IllegalStateException ("Collapsed Light-LDA: New valid topic not sampled (" + newTopic + ").");
+			}
 			
-			// If we drew a new topic indicator, do MH step for Word proposal
+			
 			if(wordTopicIndicatorProposal!=oldTopic) {
-				double n_d_zi_i = localTopicCounts_i[oldTopic];
-				double n_d_zstar_i = localTopicCounts_i[wordTopicIndicatorProposal];
-				double pi_w = (alpha + n_d_zstar_i) / (alpha + n_d_zi_i);
+				// If we drew a new topic indicator, do MH step for Word proposal
+				
+				double n_d_s_i = localTopicCounts_i[oldTopic];
+				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
+				double n_w_s = typeTopicCounts[type][oldTopic];
+				double n_w_t = typeTopicCounts[type][wordTopicIndicatorProposal];					
+				double n_w_s_i = typeTopicCounts[type][oldTopic] - 1.0;
+				double n_w_t_i = n_w_t; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
+				double n_t = tokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
+				double n_s = tokensPerTopic[oldTopic]; 
+				double n_t_i = n_t; 
+				double n_s_i = n_s - 1.0; 
+				
+				// Calculate rejection rate
+				// TODO: Is this a correct way of calculate a large product?
+				double pi_w = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
+				pi_w *= ((beta + n_w_t_i) / (beta + n_w_s_i));
+				pi_w *= ((beta_bar + n_s_i) / (beta_bar + n_t_i));
+				pi_w *= ((beta + n_w_s) / (beta + n_w_t));
+				pi_w *= ((beta + n_t) / (beta + n_s));
+				
 				if(pi_w > 1){
 					localTopicCounts[oldTopic]--;
 					localTopicCounts[wordTopicIndicatorProposal]++;
@@ -482,38 +510,45 @@ public class LightLDAWorkerRunnable extends WorkerRunnable {
 			}
 			
 			// #####################################
-			// Document Topic Distribution 
+			// Document-Topic Proposal  
 			// #####################################
 			 
-			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha));
-			
+			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha)); // (n_d + K*alpha) * u where u ~ U(0,1)
+
 			int docTopicIndicatorProposal = -1;
 			if(u_i < oneDocTopics.length) {
 				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
 			} else {
-				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics);
+				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics); // assume symmetric alpha, just draws one alpha
 			}
 			
 			// Make sure we actually sampled a valid topic
 			if (docTopicIndicatorProposal < 0 || docTopicIndicatorProposal > numTopics) {
-				throw new IllegalStateException ("Collapsed LightPC-LDA: New valid topic not sampled (" + newTopic + ").");
+				throw new IllegalStateException ("Collapsed Light-LDA: New valid topic not sampled (" + newTopic + ").");
 			}
 
 			// If we drew a new topic indicator, do MH step for Document proposal
 			if(docTopicIndicatorProposal!=oldTopic) {
-				double n_d_zstar_i = localTopicCounts_i[docTopicIndicatorProposal];
-				double n_d_zi_i = localTopicCounts_i[oldTopic];
-				double n_d_zi = localTopicCounts[oldTopic];
-				double n_d_zstar = localTopicCounts[docTopicIndicatorProposal];
-
-				double nom = typeTopicCounts[type][docTopicIndicatorProposal] * (alpha + n_d_zstar_i) * (alpha + n_d_zi);
-				double denom = typeTopicCounts[type][oldTopic] * (alpha + n_d_zi_i) * (alpha + n_d_zstar);
-				double ratio = nom / denom;
+				double n_d_s = localTopicCounts[oldTopic];
+				double n_d_t = localTopicCounts[wordTopicIndicatorProposal];
+				double n_d_s_i = localTopicCounts_i[oldTopic];
+				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
+				double n_w_s_i = typeTopicCounts[type][oldTopic] - 1.0;
+				double n_w_t_i = typeTopicCounts[type][wordTopicIndicatorProposal]; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
+				double n_t_i = tokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
+				double n_s_i = tokensPerTopic[oldTopic] - 1.0; 
+				
+				// Calculate rejection rate
+				// TODO: Is this a correct way of calculate a large product?
+				double pi_d = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
+				pi_d *= ((beta + n_w_t_i) / (beta + n_w_s_i));
+				pi_d *= ((beta_bar + n_s_i) / (beta_bar + n_t_i));
+				pi_d *= ((alpha + n_d_s) / (alpha + n_d_t));
+				
 				// Calculate MH acceptance Min.(1,ratio) but as an if else
-				if (ratio > 1){
+				if (pi_d > 1){
 					newTopic = docTopicIndicatorProposal;
 				} else {
-					double pi_d = ratio;
 					double u_pi_d = ThreadLocalRandom.current().nextDouble();
 					boolean accept_pi_d = u_pi_d < pi_d;
 	
@@ -531,7 +566,7 @@ public class LightLDAWorkerRunnable extends WorkerRunnable {
 
 			// Make sure we actually sampled a valid topic
 			if (newTopic < 0 || newTopic > numTopics) {
-				throw new IllegalStateException ("LightPC-LDA: New valid topic not sampled (" + newTopic + ").");
+				throw new IllegalStateException ("Collapsed Light-LDA: New valid topic not sampled (" + newTopic + ").");
 			}
 
 			// Remove one count from old topic

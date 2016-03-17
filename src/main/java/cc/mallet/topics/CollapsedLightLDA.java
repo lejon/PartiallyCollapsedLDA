@@ -24,6 +24,7 @@ import cc.mallet.types.InstanceList;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.OptimizedGentleAliasMethod;
+import cc.mallet.util.Randoms;
 import cc.mallet.util.WalkerAliasTable;
 
 
@@ -49,7 +50,7 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 	long [] countTimings;
 	
 	private ExecutorService tableBuilderExecutor;
-	protected TableBuilderFactory tbFactory = new TypeTopicTableBuilderFactory();
+	protected TableBuilderFactory tbFactory = new LightLDATableBuilderFactory();
 	
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; 
@@ -84,6 +85,27 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 			globalDeltaNUpdates[i] = new TIntIntHashMap();
 		}
 	}
+	
+	MyWorkerRunnable getWorkerSingle(int docsPerThread, int offset, Randoms random) {
+		return new LightLDAWorkerRunnable(numTopics,
+				alpha, alphaSum, beta,
+				random, data,
+				typeTopicCounts, tokensPerTopic,
+				offset, docsPerThread, aliasTables);
+	}
+
+	MyWorkerRunnable getWorker(int docsPerThread, int offset, int[] runnableTotals, int[][] runnableCounts,
+			Randoms random) {
+		return new LightLDAWorkerRunnable(numTopics,
+				alpha, alphaSum, beta,
+				random, data,
+				runnableCounts, runnableTotals,
+				offset, docsPerThread, aliasTables);
+	}
+
+	MyWorkerRunnable[] getInitialWorkers(int numThreads) {
+		return new LightLDAWorkerRunnable[numThreads];
+	}
 
 	/**
 	 * Imports the training instances and initializes the LDA model internals.
@@ -97,38 +119,55 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 		}
 	}
 
-	class TypeTopicTableBuilderFactory implements TableBuilderFactory {
+	class LightLDATableBuilderFactory implements TableBuilderFactory {
 		public Callable<TableBuildResult> instance(int type) {
-			return new TypeTopicParallelTableBuilder(type);
+			return new LightLDAParallelTableBuilder(type);
 		}
 	}
 
-	class TypeTopicParallelTableBuilder implements Callable<TableBuildResult> {
+	class LightLDAParallelTableBuilder implements Callable<TableBuildResult> {
 		int type;
-		public TypeTopicParallelTableBuilder(int type) {
+		public LightLDAParallelTableBuilder(int type) {
 			this.type = type;
 		}
 		@Override
 		public TableBuildResult call() {
-			double [] probs = new double[numTopics];
-			int [] myTypeTopicCounts = typeTopicCounts[type];
+			// TODO: I dont know to fix this, nonZeroTypeTopicCnt should be a variable that is reached.
+			double [] probs = new double[nonZeroTypeTopicCnt[type]];
+			// int [] myTypeTopicCounts = typeTopicCounts[type];
+			int [] myNonZeroTypeTopics = nonZeroTypeTopics[type];
 			
+			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
+			// 	  topicMass += myTypeTopicCounts[i];
+			//}
+			
+			// Iterate over nonzero topic indicators
 			int topicMass = 0;
-			for (int i = 0; i < myTypeTopicCounts.length; i++) {
-				topicMass += myTypeTopicCounts[i];
+			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
+			 	  topicMass += typeTopicCounts[type][myNonZeroTypeTopics[i]];
 			}
 
+			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
+			// 	typeMass += probs[i] = myTypeTopicCounts[i] / (double) topicMass;
+			// }
+			
 			double typeMass = 0; // Type prior mass
-			for (int i = 0; i < myTypeTopicCounts.length; i++) {
-				typeMass += probs[i] = myTypeTopicCounts[i] / (double) topicMass;
+			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
+				typeMass += probs[i] = typeTopicCounts[type][myNonZeroTypeTopics[i]] / (double) topicMass;
 			}
-						
+
+			/*
 			if(aliasTables[type]==null) {
 				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
 			} else {
 				aliasTables[type].reGenerateAliasTable(probs, typeMass);
 			}
-				
+			*/
+			
+			// TODO: New tables in all iterations (different sizes)?
+			// TODO: I now assume that the aliasTable return the position in prob.
+			aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
+			
 			return new TableBuildResult(type, aliasTables[type], typeMass);
 		}   
 	}
