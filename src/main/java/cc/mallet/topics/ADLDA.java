@@ -55,7 +55,9 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 	@Override
 	public void sample(int iterations) throws IOException {
 		numIterations = iterations;
+		preSample();
 		estimate();
+		postSample();
 	}
 	
 	MyWorkerRunnable getWorkerSingle(int docsPerThread, int offset, Randoms random) {

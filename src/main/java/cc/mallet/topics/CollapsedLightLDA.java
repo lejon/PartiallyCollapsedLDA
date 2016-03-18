@@ -90,7 +90,7 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 		return new LightLDAWorkerRunnable(numTopics,
 				alpha, alphaSum, beta,
 				random, data,
-				typeTopicCounts, tokensPerTopic,
+				typeTopicCounts, tokensPerTopic, typeTotals,
 				offset, docsPerThread, aliasTables);
 	}
 
@@ -99,7 +99,7 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 		return new LightLDAWorkerRunnable(numTopics,
 				alpha, alphaSum, beta,
 				random, data,
-				runnableCounts, runnableTotals,
+				runnableCounts, runnableTotals, typeTotals,
 				offset, docsPerThread, aliasTables);
 	}
 
@@ -114,6 +114,7 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 	public void addInstances (InstanceList training) {		
 		super.addInstances(training);
 		aliasTables = new WalkerAliasTable[numTypes];
+		typeNorm    = new double[numTypes];
 		if(logger.getLevel()==Level.INFO) {
 			System.out.println("Loaded " + data.size() + " documents, with " + corpusWordCount + " words in total.");
 		}
@@ -133,9 +134,10 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 		@Override
 		public TableBuildResult call() {
 			// TODO: I dont know to fix this, nonZeroTypeTopicCnt should be a variable that is reached.
-			double [] probs = new double[nonZeroTypeTopicCnt[type]];
+			//double [] probs = new double[nonZeroTypeTopicCnt[type]];
+			double [] probs = new double[typeTopicCounts[type].length];
 			// int [] myTypeTopicCounts = typeTopicCounts[type];
-			int [] myNonZeroTypeTopics = nonZeroTypeTopics[type];
+			//int [] myNonZeroTypeTopics = nonZeroTypeTopics[type];
 			
 			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
 			// 	  topicMass += myTypeTopicCounts[i];
@@ -143,8 +145,11 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 			
 			// Iterate over nonzero topic indicators
 			int topicMass = 0;
-			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
-			 	  topicMass += typeTopicCounts[type][myNonZeroTypeTopics[i]];
+//			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
+//			 	  topicMass += typeTopicCounts[type][myNonZeroTypeTopics[i]];
+//			}
+			for (int i = 0; i < typeTopicCounts[type].length; i++) {
+			 	  topicMass += typeTopicCounts[type][i];
 			}
 
 			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
@@ -152,22 +157,21 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 			// }
 			
 			double typeMass = 0; // Type prior mass
-			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
-				typeMass += probs[i] = typeTopicCounts[type][myNonZeroTypeTopics[i]] / (double) topicMass;
+//			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
+//				typeMass += probs[i] = typeTopicCounts[type][myNonZeroTypeTopics[i]] / (double) topicMass;
+//			}
+			for (int i = 0; i < typeTopicCounts[type].length; i++) {
+				typeMass += probs[i] = typeTopicCounts[type][i] / (double) topicMass;
 			}
 
-			/*
+			// TODO: New tables in all iterations (different sizes)?
+			// TODO: I now assume that the aliasTable return the position in prob.
 			if(aliasTables[type]==null) {
 				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
 			} else {
 				aliasTables[type].reGenerateAliasTable(probs, typeMass);
 			}
-			*/
-			
-			// TODO: New tables in all iterations (different sizes)?
-			// TODO: I now assume that the aliasTable return the position in prob.
-			aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
-			
+						
 			return new TableBuildResult(type, aliasTables[type], typeMass);
 		}   
 	}

@@ -10,18 +10,20 @@ import cc.mallet.util.WalkerAliasTable;
 
 public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 	
-	WalkerAliasTable [] aliasTables; 
+	protected WalkerAliasTable [] aliasTables; 
+	protected int[] tokensPerType;
 
 	public LightLDAWorkerRunnable(int numTopics, double[] alpha, double alphaSum,
 			double beta, Randoms random, ArrayList<TopicAssignment> data,
-			int[][] typeTopicCounts, int[] tokensPerTopic, int startDoc,
+			int[][] typeTopicCounts, int[] tokensPerTopic, int[] tokensPerType, int startDoc,
 			int numDocs, WalkerAliasTable [] aliasTables) {
 		super(numTopics, alpha, alphaSum, beta, random, data, typeTopicCounts,
 				tokensPerTopic, startDoc, numDocs);
 		this.aliasTables = aliasTables;
+		this.tokensPerType = tokensPerType;
 	}
 		
-	protected void sampleTopicsForOneDoc (FeatureSequence tokenSequence,
+	protected void sampleTopicsForOneDocOLD (FeatureSequence tokenSequence,
 			  FeatureSequence topicSequence,
 			  boolean readjustTopicsAndStats /* currently ignored */) {
 		int[] oneDocTopics = topicSequence.getFeatures();
@@ -400,10 +402,9 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 		}
 	}
 	
-	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
-		FeatureSequence tokens = ctx.getTokens();
-		LabelSequence topics = ctx.getTopics();
-		int myBatch = ctx.getMyBatch();
+	protected void sampleTopicsForOneDoc(FeatureSequence tokens,
+			  FeatureSequence topics,
+			  boolean readjustTopicsAndStats /* currently ignored */) {
 
 		final int docLength = tokens.getLength();
 		if(docLength==0) return;
@@ -449,14 +450,15 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 			
 			// Draw topic proposal t
 			// TODO: I cant find an array that contain the number of tokens per word type? I set this to be called typeTokens, need to be fixed.
-			double u_w = ThreadLocalRandom.current().nextDouble() * (typeTokens[type] + (numTopics*beta)); // (n_w + K*beta) * u where u ~ U(0,1)
+			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + (numTopics*beta)); // (n_w + K*beta) * u where u ~ U(0,1)
 
 			int wordTopicIndicatorProposal = -1;
-			if(u_w < typeTokens[type]) {
+			if(u_w < tokensPerType[type]) {
 				// TODO: Assuming that the Alias table is returning an index to use in backmapping
-				wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u_w)];
+				//wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u_w)];
+				wordTopicIndicatorProposal = aliasTables[type].generateSample(u_w);
 			} else {
-				wordTopicIndicatorProposal = (int) (((u_w - typeTokens[type]) / (numTopics*beta)) * numTopics); // assume symmetric beta, just draws one topic
+				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (numTopics*beta)) * numTopics); // assume symmetric beta, just draws one topic
 			}
 						
 			// Make sure we actually sampled a valid topic
@@ -481,7 +483,7 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 				
 				// Calculate rejection rate
 				// TODO: Is this a correct way of calculate a large product?
-				double pi_w = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
+				double pi_w = ((alpha[wordTopicIndicatorProposal] + n_d_t_i) / (alpha[wordTopicIndicatorProposal] + n_d_s_i));
 				pi_w *= ((beta + n_w_t_i) / (beta + n_w_s_i));
 				pi_w *= ((beta_bar + n_s_i) / (beta_bar + n_t_i));
 				pi_w *= ((beta + n_w_s) / (beta + n_w_t));
@@ -513,13 +515,13 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 			// Document-Topic Proposal  
 			// #####################################
 			 
-			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha)); // (n_d + K*alpha) * u where u ~ U(0,1)
+			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha[oldTopic])); // (n_d + K*alpha) * u where u ~ U(0,1)
 
 			int docTopicIndicatorProposal = -1;
 			if(u_i < oneDocTopics.length) {
 				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
 			} else {
-				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics); // assume symmetric alpha, just draws one alpha
+				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha[docTopicIndicatorProposal])) * numTopics); // assume symmetric alpha, just draws one alpha
 			}
 			
 			// Make sure we actually sampled a valid topic
@@ -540,10 +542,10 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 				
 				// Calculate rejection rate
 				// TODO: Is this a correct way of calculate a large product?
-				double pi_d = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
+				double pi_d = ((alpha[docTopicIndicatorProposal] + n_d_t_i) / (alpha[docTopicIndicatorProposal] + n_d_s_i));
 				pi_d *= ((beta + n_w_t_i) / (beta + n_w_s_i));
 				pi_d *= ((beta_bar + n_s_i) / (beta_bar + n_t_i));
-				pi_d *= ((alpha + n_d_s) / (alpha + n_d_t));
+				pi_d *= ((alpha[docTopicIndicatorProposal] + n_d_s) / (alpha[docTopicIndicatorProposal] + n_d_t));
 				
 				// Calculate MH acceptance Min.(1,ratio) but as an if else
 				if (pi_d > 1){
