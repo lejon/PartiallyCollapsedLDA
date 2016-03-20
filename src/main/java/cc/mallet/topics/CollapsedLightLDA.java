@@ -231,6 +231,9 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 		}
 		int poolSize = 2;
 		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
+		
+		// Build a sparse structure of typeTopicCounts
+		initNonZeroTypeTopic();
 	}
 
 	void flushDeltaOut() {
