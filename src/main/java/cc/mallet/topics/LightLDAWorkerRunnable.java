@@ -426,6 +426,10 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 		
 		// Cashed values
 		double beta_bar = beta * typeTopicCounts.length; // beta * V (beta_bar in article)
+		double alpha_bar = 0; // \sum^K alpha
+		for (int idx = 0; idx < alpha.length; idx++) {
+			alpha_bar += alpha[idx];
+		}
 		
 		//	Iterate over the words in the document
 		for (int position = 0; position < docLength; position++) {
@@ -457,7 +461,8 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 				double u = u_w / (double) tokensPerType[type];
 				wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
 			} else {
-				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (numTopics*beta)) * numTopics); // assume symmetric beta, just draws one topic
+				// Assume symmetric beta - just draws one topic at random
+				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (numTopics*beta)) * numTopics); 
 			}
 						
 			// Make sure we actually sampled a valid topic
@@ -481,8 +486,7 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 				double n_s_i = n_s - 1.0; 
 				
 				// Calculate rejection rate
-				// TODO: Is this a correct way of calculate a large product?
-				double pi_w = ((alpha[wordTopicIndicatorProposal] + n_d_t_i) / (alpha[wordTopicIndicatorProposal] + n_d_s_i));
+				double pi_w = ((alpha[wordTopicIndicatorProposal] + n_d_t_i) / (alpha[oldTopic] + n_d_s_i));
 				pi_w *= ((beta + n_w_t_i) / (beta + n_w_s_i));
 				pi_w *= ((beta_bar + n_s_i) / (beta_bar + n_t_i));
 				pi_w *= ((beta + n_w_s) / (beta + n_w_t));
@@ -491,6 +495,8 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 				if(pi_w > 1){
 					localTopicCounts[oldTopic]--;
 					localTopicCounts[wordTopicIndicatorProposal]++;
+					typeTopicCounts[type][oldTopic]--;
+					typeTopicCounts[type][wordTopicIndicatorProposal]++;
 					oldTopic = wordTopicIndicatorProposal;
 				} else {
 					double u_pi_w = ThreadLocalRandom.current().nextDouble();
@@ -499,7 +505,8 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 					if(accept_pi_w) {				
 						localTopicCounts[oldTopic]--;
 						localTopicCounts[wordTopicIndicatorProposal]++;
-	
+						typeTopicCounts[type][oldTopic]--;
+						typeTopicCounts[type][wordTopicIndicatorProposal]++;
 						// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
 						// By doing this the below document proposal will be relative to the 
 						// new best proposal so far
@@ -514,13 +521,13 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 			// Document-Topic Proposal  
 			// #####################################
 			 
-			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha[oldTopic])); // (n_d + K*alpha) * u where u ~ U(0,1)
+			double u_d = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + alpha_bar); // (n_d + \sum^K alpha_k) * u where u ~ U(0,1)
 
 			int docTopicIndicatorProposal = -1;
-			if(u_i < oneDocTopics.length) {
-				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
+			if(u_d < oneDocTopics.length) {
+				docTopicIndicatorProposal = oneDocTopics[(int) u_d];
 			} else {
-				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha[docTopicIndicatorProposal])) * numTopics); // assume symmetric alpha, just draws one alpha
+				docTopicIndicatorProposal = (int) ((u_d - oneDocTopics.length) / alpha_bar); // assume symmetric alpha, just draws one alpha
 			}
 			
 			// Make sure we actually sampled a valid topic
@@ -541,12 +548,12 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 				
 				// Calculate rejection rate
 				// TODO: Is this a correct way of calculate a large product?
-				double pi_d = ((alpha[docTopicIndicatorProposal] + n_d_t_i) / (alpha[docTopicIndicatorProposal] + n_d_s_i));
+				double pi_d = ((alpha[docTopicIndicatorProposal] + n_d_t_i) / (alpha[oldTopic] + n_d_s_i));
 				pi_d *= ((beta + n_w_t_i) / (beta + n_w_s_i));
 				pi_d *= ((beta_bar + n_s_i) / (beta_bar + n_t_i));
-				pi_d *= ((alpha[docTopicIndicatorProposal] + n_d_s) / (alpha[docTopicIndicatorProposal] + n_d_t));
+				pi_d *= ((alpha[oldTopic] + n_d_s) / (alpha[docTopicIndicatorProposal] + n_d_t));
 				
-				// Calculate MH acceptance Min.(1,ratio) but as an if else
+				// Calculate MH acceptance Min(1, pi_d) but as an if else
 				if (pi_d > 1){
 					newTopic = docTopicIndicatorProposal;
 				} else {
@@ -572,12 +579,14 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 
 			// Remove one count from old topic
 			localTopicCounts[oldTopic]--;
+			typeTopicCounts[type][oldTopic]--;
 			// Update the word topic indicator
 			oneDocTopics[position] = newTopic;
 			// Put that new topic into the counts
+			typeTopicCounts[type][newTopic]++;
 			localTopicCounts[newTopic]++;
 			// Make sure the "_i" version is also up to date!
-			localTopicCounts_i[newTopic]++;
+			localTopicCounts_i[newTopic]++;			
 		}
 	}
 
