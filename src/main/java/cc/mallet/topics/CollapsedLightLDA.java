@@ -55,6 +55,15 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; 
 	
+	// Sparse matrix structure
+	// This 2D-array contains the indices of the topics with non-zero entries.
+	// It has to be numTopics long since the non-zero topics come and go...
+	int [][] nonZeroTypeTopics = new int[numTypes][numTopics];
+	// So we can map back from a topic to where it is in nonZeroTopics vector
+	int [][] nonZeroTypeTopicsBackMapping = new int[numTypes][numTopics];
+	// Populate sparse global topic counts
+	int[] nonZeroTypeTopicCnt = new int[numTypes];	
+	
 	public CollapsedLightLDA(LDAConfiguration config) {
 		super(config);
 		
@@ -235,4 +244,36 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 			}
 		}
 	}
+	
+	protected void initNonZeroTypeTopic() {		
+		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
+			for (int topicidx = 0; topicidx < numTopics; topicidx++) {
+			if(typeTopicCounts[typeidx][topicidx] > 0){
+				nonZeroTypeTopicCnt[typeidx] = insertNonZeroTopicTypes(topicidx, nonZeroTypeTopics[typeidx], nonZeroTypeTopicsBackMapping[typeidx], nonZeroTypeTopicCnt[typeidx]);
+				}
+			}
+		}
+	}
+	
+	protected static int insertNonZeroTopicTypes(int topic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
+		// This function should only be called when the element typeTopicCounts[type][topic] increases from 0 to > 0.
+		// We have a new non-zero topic put it in the last empty slot and increase the count
+		nonZeroTopics[nonZeroTopicCnt] = topic;
+		nonZeroTopicsBackMapping[topic] = nonZeroTopicCnt;
+		return ++nonZeroTopicCnt;
+	}
+	
+	protected static int removeNonZeroTopicTypes(int topic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
+		// This function should only be called when the element typeTopicCounts[type][topic] decreases from > 0 to 0.
+		// We remove the actual topic from the array and put the last element there instead.
+		// Update the backmapping.
+		int idx_nzt = nonZeroTopicsBackMapping[topic]; 
+		nonZeroTopics[idx_nzt] = nonZeroTopics[nonZeroTopicCnt];
+		nonZeroTopicsBackMapping[nonZeroTopics[nonZeroTopicCnt]] = idx_nzt;
+		nonZeroTopicsBackMapping[topic] = -1;
+		nonZeroTopics[nonZeroTopicCnt] = -1;
+		return --nonZeroTopicCnt;
+	}
+
+	
 }
