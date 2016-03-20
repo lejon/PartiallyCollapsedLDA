@@ -459,7 +459,7 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 				//wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u_w)];
 				// TODO: I guess this fixed the problem with breakdown when drawing from the Alias table?
 				double u = u_w / (double) tokensPerType[type];
-				wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
+				wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u)];
 			} else {
 				// Assume symmetric beta - just draws one topic at random
 				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (numTopics*beta)) * numTopics); 

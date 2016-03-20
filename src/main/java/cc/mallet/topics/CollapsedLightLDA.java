@@ -143,8 +143,8 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 		@Override
 		public TableBuildResult call() {
 			// TODO: I dont know to fix this, nonZeroTypeTopicCnt should be a variable that is reached.
-			//double [] probs = new double[nonZeroTypeTopicCnt[type]];
-			double [] probs = new double[typeTopicCounts[type].length];
+			double [] probs = new double[nonZeroTypeTopicCnt[type]];
+			// double [] probs = new double[typeTopicCounts[type].length];
 			// int [] myTypeTopicCounts = typeTopicCounts[type];
 			//int [] myNonZeroTypeTopics = nonZeroTypeTopics[type];
 			
@@ -154,24 +154,24 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 			
 			// Iterate over nonzero topic indicators
 			int topicMass = 0;
-//			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
-//			 	  topicMass += typeTopicCounts[type][myNonZeroTypeTopics[i]];
-//			}
-			for (int i = 0; i < typeTopicCounts[type].length; i++) {
-			 	  topicMass += typeTopicCounts[type][i];
+			for (int i = 0; i < nonZeroTypeTopics[type].length; i++) {
+			 	  topicMass += typeTopicCounts[type][nonZeroTypeTopics[type][i]];
 			}
+//			for (int i = 0; i < typeTopicCounts[type].length; i++) {
+//			 	  topicMass += typeTopicCounts[type][i];
+//			}
 
 			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
 			// 	typeMass += probs[i] = myTypeTopicCounts[i] / (double) topicMass;
 			// }
 			
 			double typeMass = 0; // Type prior mass
-//			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
-//				typeMass += probs[i] = typeTopicCounts[type][myNonZeroTypeTopics[i]] / (double) topicMass;
-//			}
-			for (int i = 0; i < typeTopicCounts[type].length; i++) {
-				typeMass += probs[i] = typeTopicCounts[type][i] / (double) topicMass;
+			for (int i = 0; i < nonZeroTypeTopics[type].length; i++) {
+				typeMass += probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]] / (double) topicMass;
 			}
+//			for (int i = 0; i < typeTopicCounts[type].length; i++) {
+//				typeMass += probs[i] = typeTopicCounts[type][i] / (double) topicMass;
+//			}
 
 			// TODO: New tables in all iterations (different sizes)?
 			// TODO: I now assume that the aliasTable return the position in prob.
