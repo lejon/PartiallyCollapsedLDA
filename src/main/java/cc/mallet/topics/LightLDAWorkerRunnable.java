@@ -425,7 +425,6 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 		}
 		
 		// Cashed values
-		// TODO: Is this the correct way?
 		double beta_bar = beta * typeTopicCounts.length; // beta * V (beta_bar in article)
 		
 		//	Iterate over the words in the document
@@ -435,28 +434,28 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 			int newTopic = oldTopic;
 			
 			if(localTopicCounts[oldTopic]<0) 
-				throw new IllegalStateException("LightPC-LDA: Counts cannot be negative! Count for topic:" 
+				throw new IllegalStateException("Light-AD-LDA: Counts cannot be negative! Count for topic:" 
 						+ oldTopic + " is: " + localTopicCounts[oldTopic]);
 
 			// #####################################
 			// Word-Topic Proposal 
 			// #####################################
 			
-			// N_{d,Z_i} => # counts of topic Z_i in document d
 			// s = old state
 			// t = proposed state
 			
 			localTopicCounts_i[oldTopic]--;
 			
 			// Draw topic proposal t
-			// TODO: I cant find an array that contain the number of tokens per word type? I set this to be called typeTokens, need to be fixed.
 			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + (numTopics*beta)); // (n_w + K*beta) * u where u ~ U(0,1)
 
 			int wordTopicIndicatorProposal = -1;
 			if(u_w < tokensPerType[type]) {
 				// TODO: Assuming that the Alias table is returning an index to use in backmapping
 				//wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u_w)];
-				wordTopicIndicatorProposal = aliasTables[type].generateSample(u_w);
+				// TODO: I guess this fixed the problem with breakdown when drawing from the Alias table?
+				double u = u_w / (double) tokensPerType[type];
+				wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
 			} else {
 				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (numTopics*beta)) * numTopics); // assume symmetric beta, just draws one topic
 			}
