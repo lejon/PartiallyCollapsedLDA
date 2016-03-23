@@ -908,14 +908,15 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			
 			// Draw topic proposal t
 			// TODO: I cant find an array that contain the number of tokens per word type? I set this to be called typeTokens, need to be fixed.
-			double u_w = ThreadLocalRandom.current().nextDouble() * (typeTokens[type] + (numTopics*beta)); // (n_w + K*beta) * u where u ~ U(0,1)
+			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + betaSum); // (n_w + V*beta) * u where u ~ U(0,1)
 
 			int wordTopicIndicatorProposal = -1;
-			if(u_w < typeTokens[type]) {
+			if(u_w < tokensPerType[type]) {
 				// TODO: Assuming that the Alias table is returning an index to use in backmapping
+				double u = u_w / (double) tokensPerType[type];
 				wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u_w)];
 			} else {
-				wordTopicIndicatorProposal = (int) (((u_w - typeTokens[type]) / (numTopics*beta)) * numTopics); // assume symmetric beta, just draws one topic
+				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / betaSum) * numTopics); // assume symmetric beta, just draws one topic
 			}
 						
 			// Make sure we actually sampled a valid topic
@@ -929,12 +930,12 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				
 				double n_d_s_i = localTopicCounts_i[oldTopic];
 				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
-				double n_w_s = typeTopicCounts[type][oldTopic];
-				double n_w_t = typeTopicCounts[type][wordTopicIndicatorProposal];					
-				double n_w_s_i = typeTopicCounts[type][oldTopic] - 1.0;
+				double n_w_s = localTypeTopicCounts[type][oldTopic];
+				double n_w_t = localTypeTopicCounts[type][wordTopicIndicatorProposal];					
+				double n_w_s_i = localTypeTopicCounts[type][oldTopic] - 1.0;
 				double n_w_t_i = n_w_t; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
-				double n_t = tokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
-				double n_s = tokensPerTopic[oldTopic]; 
+				double n_t = localTokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
+				double n_s = localTokensPerTopic[oldTopic]; 
 				double n_t_i = n_t; 
 				double n_s_i = n_s - 1.0; 
 				
@@ -949,6 +950,11 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				if(pi_w > 1){
 					localTopicCounts[oldTopic]--;
 					localTopicCounts[wordTopicIndicatorProposal]++;
+					localTypeTopicCounts[type][oldTopic]--;
+					localTypeTopicCounts[type][wordTopicIndicatorProposal]++;
+					localTokensPerTopic[oldTopic]--;
+					localTokensPerTopic[wordTopicIndicatorProposal]++;
+					
 					oldTopic = wordTopicIndicatorProposal;
 				} else {
 					double u_pi_w = ThreadLocalRandom.current().nextDouble();
@@ -957,6 +963,10 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 					if(accept_pi_w) {				
 						localTopicCounts[oldTopic]--;
 						localTopicCounts[wordTopicIndicatorProposal]++;
+						localTypeTopicCounts[type][oldTopic]--;
+						localTypeTopicCounts[type][wordTopicIndicatorProposal]++;
+						localTokensPerTopic[oldTopic]--;
+						localTokensPerTopic[wordTopicIndicatorProposal]++;
 	
 						// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
 						// By doing this the below document proposal will be relative to the 
@@ -989,16 +999,16 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			// If we drew a new topic indicator, do MH step for Document proposal
 			if(docTopicIndicatorProposal!=oldTopic) {
 				double n_d_s = localTopicCounts[oldTopic];
-				double n_d_t = localTopicCounts[wordTopicIndicatorProposal];
+				double n_d_t = localTopicCounts[docTopicIndicatorProposal];
 				double n_d_s_i = localTopicCounts_i[oldTopic];
-				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
-				double n_w_s_i = typeTopicCounts[type][oldTopic] - 1.0;
-				double n_w_t_i = typeTopicCounts[type][wordTopicIndicatorProposal]; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
-				double n_t_i = tokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
-				double n_s_i = tokensPerTopic[oldTopic] - 1.0; 
+				double n_d_t_i = localTopicCounts_i[docTopicIndicatorProposal];
+				double n_w_s_i = localTypeTopicCounts[type][oldTopic] - 1.0;
+				double n_w_t_i = localTypeTopicCounts[type][docTopicIndicatorProposal]; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
+				double n_t_i = localTokensPerTopic[docTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
+				double n_s_i = localTokensPerTopic[oldTopic] - 1.0; 
+								
 				
 				// Calculate rejection rate
-				// TODO: Is this a correct way of calculate a large product?
 				double pi_d = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
 				pi_d *= ((beta + n_w_t_i) / (beta + n_w_s_i));
 				pi_d *= ((beta_bar + n_s_i) / (beta_bar + n_t_i));
@@ -1013,7 +1023,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	
 					if (accept_pi_d) {
 						newTopic = docTopicIndicatorProposal;
-						//docAccepts.incrementAndGet();
 					} else {
 						// We did not accept either word or document proposal 
 						// so oldTopic is still the best indicator
@@ -1037,6 +1046,13 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			localTopicCounts[newTopic]++;
 			// Make sure the "_i" version is also up to date!
 			localTopicCounts_i[newTopic]++;
+			
+			// Update local versions of typeTopicCounts and tokensPerTopic 
+			localTypeTopicCounts[type][oldTopic]--;
+			localTypeTopicCounts[type][newTopic]++;
+			localTokensPerTopic[oldTopic]--;
+			localTokensPerTopic[newTopic]++;
+			
 		}
 	}
 
