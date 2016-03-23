@@ -456,9 +456,7 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 
 			int wordTopicIndicatorProposal = -1;
 			if(u_w < tokensPerType[type]) {
-				// TODO: Assuming that the Alias table is returning an index to use in backmapping
-				//wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u_w)];
-				// TODO: I guess this fixed the problem with breakdown when drawing from the Alias table?
+				// TODO: Create backmapping/using the alias table
 				double u = u_w / (double) tokensPerType[type];
 				wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
 			} else {
@@ -477,10 +475,12 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 				
 				double n_d_s_i = localTopicCounts_i[oldTopic];
 				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
+				// TODO: Fix bitflippin
 				double n_w_s = typeTopicCounts[type][oldTopic];
 				double n_w_t = typeTopicCounts[type][wordTopicIndicatorProposal];					
 				double n_w_s_i = typeTopicCounts[type][oldTopic] - 1.0;
 				double n_w_t_i = n_w_t; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
+				// TODO: Fix bitflippin
 				double n_t = tokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
 				double n_s = tokensPerTopic[oldTopic]; 
 				double n_t_i = n_t; 
@@ -496,6 +496,7 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 				if(pi_w > 1){
 					localTopicCounts[oldTopic]--;
 					localTopicCounts[wordTopicIndicatorProposal]++;
+					// TODO: Fix bitflippin
 					typeTopicCounts[type][oldTopic]--;
 					typeTopicCounts[type][wordTopicIndicatorProposal]++;
 					oldTopic = wordTopicIndicatorProposal;
@@ -506,6 +507,7 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 					if(accept_pi_w) {				
 						localTopicCounts[oldTopic]--;
 						localTopicCounts[wordTopicIndicatorProposal]++;
+						// TODO: Fix bitflippin
 						typeTopicCounts[type][oldTopic]--;
 						typeTopicCounts[type][wordTopicIndicatorProposal]++;
 						// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
@@ -542,6 +544,7 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 				double n_d_t = localTopicCounts[wordTopicIndicatorProposal];
 				double n_d_s_i = localTopicCounts_i[oldTopic];
 				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
+				// TODO: Fix bitflippin
 				double n_w_s_i = typeTopicCounts[type][oldTopic] - 1.0;
 				double n_w_t_i = typeTopicCounts[type][wordTopicIndicatorProposal]; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
 				double n_t_i = tokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
@@ -578,10 +581,12 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 
 			// Remove one count from old topic
 			localTopicCounts[oldTopic]--;
+			// TODO: Fix bitflippin
 			typeTopicCounts[type][oldTopic]--;
 			// Update the word topic indicator
 			oneDocTopics[position] = newTopic;
 			// Put that new topic into the counts
+			// TODO: Fix bitflippin
 			typeTopicCounts[type][newTopic]++;
 			localTopicCounts[newTopic]++;
 			// Make sure the "_i" version is also up to date!

@@ -133,8 +133,10 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 		}
 		@Override
 		public TableBuildResult call() {
-			// TODO: I dont know to fix this, nonZeroTypeTopicCnt should be a variable that is reached.
+			// TODO: Check that this uses bubble typeTopicCounts
 			//double [] probs = new double[nonZeroTypeTopicCnt[type]];
+			// TODO: Create a backtable to link from alias draw to a topic?
+			// TODO: Check that this uses bubble typeTopicCounts
 			double [] probs = new double[typeTopicCounts[type].length];
 			// int [] myTypeTopicCounts = typeTopicCounts[type];
 			//int [] myNonZeroTypeTopics = nonZeroTypeTopics[type];
