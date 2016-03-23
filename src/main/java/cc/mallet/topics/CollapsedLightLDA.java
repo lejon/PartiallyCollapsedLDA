@@ -91,16 +91,14 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; 
 
-	// Sparse matrix structure
-	// This 2D-array contains the indices of the topics with non-zero entries.
-	// It has to be numTopics long since the non-zero topics come and go...
+	// Sparse matrix structure (Global)
+	// Only used in generating sparse Alias tables 
+	// TODO: Is nonZeroTypeTopics really needed?
 	int [][] nonZeroTypeTopics = new int[numTypes][numTopics];
 	// So we can map back from a topic to where it is in nonZeroTopics vector
-	int [][] nonZeroTypeTopicsBackMapping = new int[numTypes][numTopics];
-	// Populate sparse global topic counts
+	int [][] sparseAliasBackMapping = new int[numTypes][numTopics];
+	// Sparse global topic counts used to identify positions in nonZeroTypeTopics
 	int[] nonZeroTypeTopicCnt = new int[numTypes];
-	
-	
 	
 	public CollapsedLightLDA(LDAConfiguration config) {
 		super(config);
