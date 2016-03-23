@@ -57,7 +57,13 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 	
 	// Alias Table Backmapping
 	int [][] aliasBackMapping = new int[numTypes][numTopics];
-
+	// typeTopic Backmapping to access given topics in O(1)
+	// The matrix is of size types*topics with the position [type][k] indicating the
+	// index for topic k in typeTopicCounts so typeTopicCounts[type][typeTopicCountsBackmapping[k]] 
+	// will access the true counts.
+	// TODO: Leif we need this to sample in O(1) right?
+	// TODO: This needs to be copied to each worker that will edit it.
+	int [][] typeTopicCountsBackmapping = new int[numTypes][numTopics];
 	
 	public CollapsedLightLDA(LDAConfiguration config) {
 		super(config);

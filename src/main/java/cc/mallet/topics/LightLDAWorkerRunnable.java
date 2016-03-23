@@ -473,14 +473,17 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 			if(wordTopicIndicatorProposal!=oldTopic) {
 				// If we drew a new topic indicator, do MH step for Word proposal
 				
+				// Get topic counts
+				int index = 0;				
 				double n_d_s_i = localTopicCounts_i[oldTopic];
 				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
-				// TODO: Fix bitflippin
-				double n_w_s = typeTopicCounts[type][oldTopic];
-				double n_w_t = typeTopicCounts[type][wordTopicIndicatorProposal];					
-				double n_w_s_i = typeTopicCounts[type][oldTopic] - 1.0;
+				// TODO: Fix bitflippin/typeTopicCountsBackmapping
+				double n_w_s = typeTopicCounts[type][typeTopicCountsBackmapping[oldTopic]];
+				double n_w_t = typeTopicCounts[type][typeTopicCountsBackmapping[wordTopicIndicatorProposal]];					
+				double n_w_s_i = typeTopicCounts[type][typeTopicCountsBackmapping[oldTopic]] - 1.0;
 				double n_w_t_i = n_w_t; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
 				// TODO: Fix bitflippin
+				// TODO: Leif? Is this also bitflippin?
 				double n_t = tokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
 				double n_s = tokensPerTopic[oldTopic]; 
 				double n_t_i = n_t; 
@@ -541,13 +544,14 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 			// If we drew a new topic indicator, do MH step for Document proposal
 			if(docTopicIndicatorProposal!=oldTopic) {
 				double n_d_s = localTopicCounts[oldTopic];
-				double n_d_t = localTopicCounts[wordTopicIndicatorProposal];
+				double n_d_t = localTopicCounts[docTopicIndicatorProposal];
 				double n_d_s_i = localTopicCounts_i[oldTopic];
-				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
+				double n_d_t_i = localTopicCounts_i[docTopicIndicatorProposal];
 				// TODO: Fix bitflippin
-				double n_w_s_i = typeTopicCounts[type][oldTopic] - 1.0;
-				double n_w_t_i = typeTopicCounts[type][wordTopicIndicatorProposal]; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
-				double n_t_i = tokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
+				double n_w_s_i = typeTopicCounts[type][typeTopicCountsBackmapping[oldTopic]] - 1.0;
+				double n_w_t_i = typeTopicCounts[type][typeTopicCountsBackmapping[docTopicIndicatorProposal]]; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
+				// TODO: Do this need bitflippin?
+				double n_t_i = tokensPerTopic[docTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
 				double n_s_i = tokensPerTopic[oldTopic] - 1.0; 
 				
 				// Calculate rejection rate
@@ -593,5 +597,85 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 			localTopicCounts_i[newTopic]++;			
 		}
 	}
+	
+	
+	/*
+	 *  Modularization of increasing and decreasing the sparse typeTopicMatrix
+	 *  
+	 */
+	protected void typeTopicCountsChange (int type, int topic, int counts){
+		// If there is no change just skip the function
+		if(counts == 0) return;
+		
+		int i;
+		int typeTopicIndex = typeTopicCountsBackmapping[topic];
+		int currentCount = typeTopicCounts[type][typeTopicIndex] >> topicBits;
+		// Positive change
+		if(counts > 0){
+			// Identify position to change
+			// If counts is zero identify the first zero element i typeTopicCounts should be used
+			if(currentCount == 0){
+				i = 0;
+				while (typeTopicCounts[type][i] > 0){ 
+					i++;
+				}
+			} else {
+				i = typeTopicIndex;
+			}
+			typeTopicCounts[type][i] = ((currentCount + counts) << topicBits) + topic;
+			
+			// Bubble the new value up, if necessary
+			while (i > 0 && typeTopicCounts[type][i] > typeTopicCounts[type][i - 1]) {
+				// Bubble typeTopicCounts
+				int temp = typeTopicCounts[type][i]; // Value to bubble down
+				typeTopicCounts[type][i] = typeTopicCounts[type][i - 1]; // Bubble up 
+				typeTopicCounts[type][i - 1] = temp; // Set bubbled down value 
+				// Update typeTopicCountsBackMapping
+				int bubbledTopic = typeTopicCounts[type][i] & topicMask;
+				typeTopicCountsBackMapping[type][topic] = i - 1;
+				typeTopicCountsBackMapping[type][bubbledTopic] = i;
+				i--;
+			}
+		} else { // Negative change
+			currentCount = typeTopicCounts[type][typeTopicIndex] >> topicBits;
+			currentCount =+ counts; // Counts is negative  
+			
+			if (currentCount == 0) {
+				typeTopicCounts[type][typeTopicIndex] = 0;
+				// Set it to the last element since it will always be zero if one position is zero
+				typeTopicCountsBackMapping[type][topic] = typeTopicCounts[type].length - 1; 
+			} else if (currentCount > 0) {
+				// TODO: Continue from here.
+			} else {
+				// Cast ERROR.
+				currentTypeTopicCounts[index] =
+					(currentValue << topicBits) + oldTopic;
+			}
+			
+			// Shift the reduced value to the right, if necessary.
 
+			int subIndex = index;
+			while (subIndex < currentTypeTopicCounts.length - 1 && 
+				   currentTypeTopicCounts[subIndex] < currentTypeTopicCounts[subIndex + 1]) {
+				int temp = currentTypeTopicCounts[subIndex];
+				currentTypeTopicCounts[subIndex] = currentTypeTopicCounts[subIndex + 1];
+				currentTypeTopicCounts[subIndex + 1] = temp;
+				
+				subIndex++;
+			}
+			
+		}
+
+
+
+		
+	}
+	// TODO: Leif is this correct?
+	protected void typeTopicCountsDecrease (int type, int topic){
+		typeTopicCountsChange(type, topic, -1);		
+	}
+	
+	protected void typeTopicCountsIncrease (int type, int topic){
+		typeTopicCountsChange(type, topic, 1);		
+	}
 }
