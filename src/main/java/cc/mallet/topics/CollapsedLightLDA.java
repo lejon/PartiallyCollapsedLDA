@@ -96,7 +96,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	// TODO: Is nonZeroTypeTopics really needed?
 	int [][] nonZeroTypeTopics = new int[numTypes][numTopics];
 	// So we can map back from a topic to where it is in nonZeroTopics vector
-	int [][] sparseAliasBackMapping = new int[numTypes][numTopics];
+	int [][] nonZeroTypeTopicsBackMapping = new int[numTypes][numTopics];
 	// Sparse global topic counts used to identify positions in nonZeroTypeTopics
 	int[] nonZeroTypeTopicCnt = new int[numTypes];
 	// Number of tokens in each type
