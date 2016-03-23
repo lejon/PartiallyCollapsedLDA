@@ -99,11 +99,18 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	int [][] sparseAliasBackMapping = new int[numTypes][numTopics];
 	// Sparse global topic counts used to identify positions in nonZeroTypeTopics
 	int[] nonZeroTypeTopicCnt = new int[numTypes];
+	// Number of tokens in each type
+	int[] tokensPerType = new int[numTypes];
 	
 	public CollapsedLightLDA(LDAConfiguration config) {
 		super(config);
 
 		documentSamplerPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
+		
+		// Initialize globals
+		// TODO: IS this correctly put here?
+		initNonZeroTypeTopic();
+		initTokensPerType(); // TODO: This assume populated typeTopicCounts. Does this exist here?		
 		
 		// With job stealing we can only have one global z / counts timing
 		zTimings = new long[1];
@@ -136,6 +143,17 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		for (int i = 0; i < globalDeltaNUpdates.length; i++) {
 			globalDeltaNUpdates[i] = new TIntIntHashMap();
 		}
+	}
+
+	protected void initTokensPerType() {
+		// Initialize tokensPerType
+		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
+			for (int topicidx = 0; topicidx < numTopics; topicidx++) {
+				tokensPerType[typeidx] =+ typeTopicCounts[typeidx][topicidx];
+			}
+		}
+		
+		
 	}
 
 	public int[][] getTopIndices() {
