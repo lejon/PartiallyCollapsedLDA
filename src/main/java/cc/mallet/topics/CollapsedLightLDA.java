@@ -538,6 +538,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			}
 
 			/*
+			// TODO: Now alias tables with changing sizes need to create a new alias table each time.
 			if(aliasTables[type]==null) {
 				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
 			} else {
@@ -863,6 +864,11 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		final int docLength = tokens.getLength();
 		if(docLength==0) return;
 		
+		// TODO: LEIF NEEDS TO FIX THIS ----
+		int[][] localTypeTopicCounts = new int[numTypes][numTopics];
+		int[] localTokensPerTopic = new int[numTopics];
+		// ----
+		
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
 
@@ -881,8 +887,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		kdDensities.addAndGet(nonZeroTopicCnt);
 		
 		// Cashed values
-		// TODO: Is this the correct way?
-		double beta_bar = beta * typeTopicCounts.length; // beta * V (beta_bar in article)
+		// TODO: Change beta_bar into betaSum
+		double beta_bar = betaSum; // beta * V (beta_bar in article)
 		
 		//	Iterate over the words in the document
 		for (int position = 0; position < docLength; position++) {
@@ -1320,7 +1326,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	}
 	
 	protected static int insertNonZeroTopicTypes(int newTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		// TODO: This is a identical to insert in NZVSSpaliasUncollapsed
 		//// We have a new non-zero topic put it in the last empty slot and increase the count
 		nonZeroTopics[nonZeroTopicCnt] = newTopic;
 		nonZeroTopicsBackMapping[newTopic] = nonZeroTopicCnt;
