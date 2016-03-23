@@ -55,6 +55,10 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; 
 	
+	// Alias Table Backmapping
+	int [][] aliasBackMapping = new int[numTypes][numTopics];
+
+	
 	public CollapsedLightLDA(LDAConfiguration config) {
 		super(config);
 		
@@ -131,43 +135,35 @@ public class CollapsedLightLDA extends ADLDA implements LDAGibbsSampler {
 		public LightLDAParallelTableBuilder(int type) {
 			this.type = type;
 		}
+		
+
 		@Override
 		public TableBuildResult call() {
 			// TODO: Check that this uses bubble typeTopicCounts
-			//double [] probs = new double[nonZeroTypeTopicCnt[type]];
-			// TODO: Create a backtable to link from alias draw to a topic?
-			// TODO: Check that this uses bubble typeTopicCounts
-			double [] probs = new double[typeTopicCounts[type].length];
-			// int [] myTypeTopicCounts = typeTopicCounts[type];
-			//int [] myNonZeroTypeTopics = nonZeroTypeTopics[type];
+			// TODO: Go through with Leif.
 			
-			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
-			// 	  topicMass += myTypeTopicCounts[i];
-			//}
-			
-			// Iterate over nonzero topic indicators
-			int topicMass = 0;
-//			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
-//			 	  topicMass += typeTopicCounts[type][myNonZeroTypeTopics[i]];
-//			}
-			for (int i = 0; i < typeTopicCounts[type].length; i++) {
-			 	  topicMass += typeTopicCounts[type][i];
+			// Loop over nonzero topic counts to identify no of nonzero 
+			// topics and calculate normalization.
+			int first_zero_idx = 0;
+			double topicMass = 0;
+	        while (typeTopicCounts[type][first_zero_idx] > 0) {
+	        	// Add the topic counts
+	        	topicMass =+ typeTopicCounts[type][first_zero_idx] >> topicBits;
+	            first_zero_idx++;
+	        }
+	        // Create probabilities to use in Alias table
+			double [] probs = new double[first_zero_idx - 1];
+
+			// TODO: Check with Leif, is this alpha in alpha*phi?
+			double typeMass = 1.0; // Type prior mass set to 1.0 in this situation.
+
+			for (int i = 0; i < first_zero_idx; i++) {
+				probs[i] = typeTopicCounts[type][i] / (double) topicMass;
+				// Set the backmapping table with the topic (from Alias table to topic)
+				aliasBackMapping[type][i] = typeTopicCounts[type][i] & topicMask;
 			}
 
-			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
-			// 	typeMass += probs[i] = myTypeTopicCounts[i] / (double) topicMass;
-			// }
-			
-			double typeMass = 0; // Type prior mass
-//			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
-//				typeMass += probs[i] = typeTopicCounts[type][myNonZeroTypeTopics[i]] / (double) topicMass;
-//			}
-			for (int i = 0; i < typeTopicCounts[type].length; i++) {
-				typeMass += probs[i] = typeTopicCounts[type][i] / (double) topicMass;
-			}
-
-			// TODO: New tables in all iterations (different sizes)?
-			// TODO: I now assume that the aliasTable return the position in prob.
+			// TODO: Check: I now assume that the aliasTable return the position in prob.
 			if(aliasTables[type]==null) {
 				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
 			} else {

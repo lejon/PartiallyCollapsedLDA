@@ -456,9 +456,9 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 
 			int wordTopicIndicatorProposal = -1;
 			if(u_w < tokensPerType[type]) {
-				// TODO: Create backmapping/using the alias table
 				double u = u_w / (double) tokensPerType[type];
-				wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
+				// TODO: How to set this in the constructor?
+				wordTopicIndicatorProposal = aliasBackMapping[type][aliasTables[type].generateSample(u)];
 			} else {
 				// Assume symmetric beta - just draws one topic at random
 				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (numTopics*beta)) * numTopics); 
