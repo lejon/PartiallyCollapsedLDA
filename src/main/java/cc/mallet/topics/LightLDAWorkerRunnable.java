@@ -425,11 +425,12 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 		}
 		
 		// Cashed values
-		double beta_bar = beta * typeTopicCounts.length; // beta * V (beta_bar in article)
-		double alpha_bar = 0; // \sum^K alpha
-		for (int idx = 0; idx < alpha.length; idx++) {
-			alpha_bar += alpha[idx];
-		}
+		double beta_bar = betaSum; // beta * V (beta_bar in article)
+		double alpha_bar = alphaSum; // TODO: Doublecheck with Leif that this is \sum^K alpha
+		//double alpha_bar = 0; //  \sum^K alpha
+		//for (int idx = 0; idx < alpha.length; idx++) {
+		//	alpha_bar += alpha[idx];
+		//}
 		
 		//	Iterate over the words in the document
 		for (int position = 0; position < docLength; position++) {
@@ -562,12 +563,10 @@ public class LightLDAWorkerRunnable extends MyWorkerRunnable {
 	
 					if (accept_pi_d) {
 						newTopic = docTopicIndicatorProposal;
-						//docAccepts.incrementAndGet();
 					} else {
 						// We did not accept either word or document proposal 
 						// so oldTopic is still the best indicator
 						newTopic = oldTopic;
-						//oldAccepts.incrementAndGet();
 					}	
 				}
 			}
