@@ -92,12 +92,12 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	double [] typeNorm; 
 
 	// Sparse matrix structure (Global)
-	// Only used in generating sparse Alias tables 
-	// TODO: Is nonZeroTypeTopics really needed?
-	int [][] nonZeroTypeTopics = new int[numTypes][numTopics];
+	// Contains a array with nonzero topics as elements per type
+	int[][] nonZeroTypeTopics = new int[numTypes][numTopics];
 	// So we can map back from a topic to where it is in nonZeroTopics vector
 	int [][] nonZeroTypeTopicsBackMapping = new int[numTypes][numTopics];
 	// Sparse global topic counts used to identify positions in nonZeroTypeTopics
+	// nonZeroTypeTopicCnt indicates how many non-zero topics there are per type.
 	int[] nonZeroTypeTopicCnt = new int[numTypes];
 	// Number of tokens in each type
 	int[] tokensPerType = new int[numTypes];
