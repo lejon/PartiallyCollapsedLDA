@@ -146,6 +146,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 	}
 
+	// TODO: Leif: Is this the smartest way?
 	protected void initTokensPerType() {
 		// Initialize tokensPerType
 		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
@@ -557,7 +558,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			// TODO: Leif: Now alias tables with changing sizes need to create a new alias table each time. Should I implement a preallocated Alias table?
 			aliasTables[type] = new OptimizedGentleAliasMethod(probs);
 			
-			// TODO: Leif: Normconstant is not used (it is setting typeNorm thgt is not used in collapsed light.
+			// TODO: Leif: Normconstant is not used (it is setting typeNorm that is not used in collapsed light.
 			return new TableBuildResult(type, aliasTables[type], -1);
 		}   
 	}
@@ -917,7 +918,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			localTopicCounts_i[oldTopic]--;
 			
 			// Draw topic proposal t
-			// TODO: I cant find an array that contain the number of tokens per word type? I set this to be called typeTokens, need to be fixed.
 			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + betaSum); // (n_w + V*beta) * u where u ~ U(0,1)
 
 			int wordTopicIndicatorProposal = -1;
@@ -1317,7 +1317,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		return topicTypeUpdates;
 	}
 	
-
+	// TODO: Leif: Is this initialization correct?
 	protected void initNonZeroTypeTopic() {		
 		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
 			// TODO: Leif: Is this needed? 
@@ -1330,6 +1330,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 	}
 	
+	// TODO: Leif: Does this seem correct?
 	protected void insertNonZeroTopicTypes(int topic, int type) {
 		//// We have a new non-zero topic put it in the last empty and update the others
 		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = topic;
@@ -1337,6 +1338,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		nonZeroTypeTopicCnt[type]++;
 	}
 	
+	// TODO: Leif: Does this seem correct?	
 	protected void removeNonZeroTopicTypes(int topic, int type) {
 		//// Remove the topic by copying the last element to it
 		int topicIndex = nonZeroTypeTopicsBackMapping[type][topic];
