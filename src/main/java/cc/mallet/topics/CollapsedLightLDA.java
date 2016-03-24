@@ -89,7 +89,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	protected TableBuilderFactory tbFactory = new TypeTopicTableBuilderFactory();
 	
 	WalkerAliasTable [] aliasTables; 
-	double [] typeNorm; 
+	// double [] typeNorm; 
 
 	// Sparse matrix structure (Global)
 	// Contains a array with nonzero topics as elements per type
@@ -295,7 +295,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		targetAlphabet = training.getTargetAlphabet();
 		numTypes = alphabet.size();
 		aliasTables = new WalkerAliasTable[numTypes];
-		typeNorm    = new double[numTypes];
+		// typeNorm    = new double[numTypes];
 		typeCounts = new int[numTypes];
 		batchLocalTopicTypeUpdates = new AtomicInteger[numTopics][numTypes];
 		for (int i = 0; i < batchLocalTopicTypeUpdates.length; i++) {
@@ -555,7 +555,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			aliasTables[type] = new OptimizedGentleAliasMethod(probs);
 			
 			// TODO: Check Spalias that typeNorm is correct (and not normalized).
-			// TODO: Ta bort typeNorm i Collapsedklassen kolla där den accessas
 			return new TableBuildResult(type, aliasTables[type], -1);
 		}   
 	}
@@ -584,7 +583,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			results = tableBuilderExecutor.invokeAll(builders);
 			for (Future<TableBuildResult> result : results) {
 				aliasTables[result.get().type] = result.get().table;
-				typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
+				// typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
