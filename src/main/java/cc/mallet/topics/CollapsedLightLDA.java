@@ -356,9 +356,20 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	}
 
 	protected void updateTypeTopicCount(int type, int topic, int count) {
+		// TODO: Leif: Is this the way to do this?
+		if(typeTopicCounts[type][topic] == 0 && count > 0){
+			insertNonZeroTopicTypes(topic, type);
+		}
+		
 		topicTypeCountMapping[topic][type] += count;
 		typeTopicCounts[type][topic] += count;
 		tokensPerTopic[topic] += count;
+		
+		// TODO: Leif: Is this the way to do this?
+		if(typeTopicCounts[type][topic] == 0 && count < 0){
+			removeNonZeroTopicTypes(topic, type);
+		}
+		
 		if(topicTypeCountMapping[topic][type]<0) {
 			System.err.println("Emergency print!");
 			debugPrintMMatrix();
@@ -1315,20 +1326,32 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		return topicTypeUpdates;
 	}
 	
+
 	protected void initNonZeroTypeTopic() {		
 		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
+			// TODO: Leif: Is this needed? 
+			nonZeroTypeTopicCnt[typeidx] = 0; 
 			for (int topicidx = 0; topicidx < numTopics; topicidx++) {
 			if(typeTopicCounts[typeidx][topicidx] > 0){
-				nonZeroTypeTopicCnt[typeidx] = insertNonZeroTopicTypes(topicidx, nonZeroTypeTopics[typeidx], nonZeroTypeTopicsBackMapping[typeidx], nonZeroTypeTopicCnt[typeidx]);
+				insertNonZeroTopicTypes(topicidx, typeidx);
 				}
 			}
 		}
 	}
 	
-	protected static int insertNonZeroTopicTypes(int newTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		//// We have a new non-zero topic put it in the last empty slot and increase the count
-		nonZeroTopics[nonZeroTopicCnt] = newTopic;
-		nonZeroTopicsBackMapping[newTopic] = nonZeroTopicCnt;
-		return ++nonZeroTopicCnt;
+	protected void insertNonZeroTopicTypes(int topic, int type) {
+		//// We have a new non-zero topic put it in the last empty and update the others
+		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = topic;
+		nonZeroTypeTopicsBackMapping[type][topic] = nonZeroTypeTopicCnt[type];
+		nonZeroTypeTopicCnt[type]++;
+	}
+	
+	protected void removeNonZeroTopicTypes(int topic, int type) {
+		//// Remove the topic by copying the last element to it
+		int topicIndex = nonZeroTypeTopicsBackMapping[type][topic];
+		nonZeroTypeTopics[type][topicIndex] = nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]];
+		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = -1; // Fail fast!
+		nonZeroTypeTopicsBackMapping[type][topic] = -1; // Fail fast!
+		nonZeroTypeTopicCnt[type]--;
 	}
 }
