@@ -525,28 +525,24 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 		@Override
 		public TableBuildResult call() {
-			// TODO: I dont know to fix this, nonZeroTypeTopicCnt should be a variable that is reached.
+			// TODO: Leif: Now we need to create a new table each time. Should I fix the table or is this an effect of light-LDA?
+
 			double [] probs = new double[nonZeroTypeTopicCnt[type]];
-			// int [] myTypeTopicCounts = typeTopicCounts[type];
-			int [] myNonZeroTypeTopics = nonZeroTypeTopics[type];
-			
-			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
-			// 	  topicMass += myTypeTopicCounts[i];
-			//}
-			
+
 			// Iterate over nonzero topic indicators
-			int topicMass = 0;
-			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
-			 	  topicMass += typeTopicCounts[type][myNonZeroTypeTopics[i]];
+			int normConstant = 0;
+			for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
+				normConstant += typeTopicCounts[type][nonZeroTypeTopics[type][i]];
 			}
 
 			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
 			// 	typeMass += probs[i] = myTypeTopicCounts[i] / (double) topicMass;
 			// }
 			
-			double typeMass = 0; // Type prior mass
-			for (int i = 0; i < myNonZeroTypeTopics.length; i++) {
-				typeMass += probs[i] = typeTopicCounts[type][myNonZeroTypeTopics[i]] / (double) topicMass;
+			// Normalize probabilities
+			// TODO: Leif: Should this work? See above is there a thought with a normalizing close to 1?
+			for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
+				probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]] / (double) normConstant;
 			}
 
 			/*
@@ -557,11 +553,12 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			}
 			*/
 			
-			// TODO: New tables in all iterations (different sizes)?
-			// TODO: I now assume that the aliasTable return the position in prob.
-			aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
+			// TODO: Leif: I now assume that the aliasTable return the position in prob. It looks like it in code.
+			// TODO: Leif: Now alias tables with changing sizes need to create a new alias table each time. Should I implement a preallocated Alias table?
+			aliasTables[type] = new OptimizedGentleAliasMethod(probs);
 			
-			return new TableBuildResult(type, aliasTables[type], typeMass);
+			// TODO: Leif: Normconstant is not used (it is setting typeNorm thgt is not used in collapsed light.
+			return new TableBuildResult(type, aliasTables[type], -1);
 		}   
 	}
 	
