@@ -893,11 +893,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 		
 		kdDensities.addAndGet(nonZeroTopicCnt);
-		
-		// Cashed values
-		// TODO: Change beta_bar into betaSum
-		double beta_bar = betaSum; // beta * V (beta_bar in article)
-		
+				
 		//	Iterate over the words in the document
 		for (int position = 0; position < docLength; position++) {
 			int type = tokenSequence[position];
@@ -955,7 +951,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				// Calculate rejection rate
 				double pi_w = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
 				pi_w *= ((beta + n_w_t_i) / (beta + n_w_s_i));
-				pi_w *= ((beta_bar + n_s_i) / (beta_bar + n_t_i));
+				pi_w *= ((betaSum + n_s_i) / (betaSum + n_t_i));
 				pi_w *= ((beta + n_w_s) / (beta + n_w_t));
 				pi_w *= ((beta + n_t) / (beta + n_s));
 				
@@ -994,13 +990,13 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			// Document-Topic Proposal  
 			// #####################################
 			 
-			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha)); // (n_d + K*alpha) * u where u ~ U(0,1)
+			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + alphaSum); // (n_d + K*alpha) * u where u ~ U(0,1)
 
 			int docTopicIndicatorProposal = -1;
 			if(u_i < oneDocTopics.length) {
 				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
 			} else {
-				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics); // assume symmetric alpha, just draws one alpha
+				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / alphaSum) * numTopics); // assume symmetric alpha, just draws one alpha
 			}
 			
 			// Make sure we actually sampled a valid topic
@@ -1023,7 +1019,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				// Calculate rejection rate
 				double pi_d = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
 				pi_d *= ((beta + n_w_t_i) / (beta + n_w_s_i));
-				pi_d *= ((beta_bar + n_s_i) / (beta_bar + n_t_i));
+				pi_d *= ((betaSum + n_s_i) / (betaSum + n_t_i));
 				pi_d *= ((alpha + n_d_s) / (alpha + n_d_t));
 				
 				// Calculate MH acceptance Min.(1,ratio) but as an if else
