@@ -923,7 +923,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			int wordTopicIndicatorProposal = -1;
 			if(u_w < tokensPerType[type]) {
 				double u = u_w / (double) tokensPerType[type];
-				wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u_w)];
+				wordTopicIndicatorProposal = nonZeroTypeTopics[type][aliasTables[type].generateSample(u)];
 			} else {
 				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / betaSum) * numTopics); // assume symmetric beta, just draws one topic
 			}
