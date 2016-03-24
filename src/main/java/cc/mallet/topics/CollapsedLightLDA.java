@@ -108,9 +108,9 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		documentSamplerPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
 		
 		// Initialize globals
-		// TODO: Leif: Is this correctly put here?
+		// TODO: Move to last in addInstances 
 		initNonZeroTypeTopic();
-		// TODO: Leif: This assume populated typeTopicCounts. Does this exist here? It should since super(config)?		
+		
 		initTokensPerType(); 
 		
 		// With job stealing we can only have one global z / counts timing
@@ -146,7 +146,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 	}
 
-	// TODO: Leif: Is this the smartest way?
+	
 	protected void initTokensPerType() {
 		// Initialize tokensPerType
 		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
@@ -358,7 +358,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	}
 
 	protected void updateTypeTopicCount(int type, int topic, int count) {
-		// TODO: Leif: Is this the way to do this?
+
 		if(typeTopicCounts[type][topic] == 0 && count > 0){
 			insertNonZeroTopicTypes(topic, type);
 		}
@@ -367,7 +367,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		typeTopicCounts[type][topic] += count;
 		tokensPerTopic[topic] += count;
 		
-		// TODO: Leif: Is this the way to do this?
+
 		if(typeTopicCounts[type][topic] == 0 && count < 0){
 			removeNonZeroTopicTypes(topic, type);
 		}
@@ -526,7 +526,9 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 		@Override
 		public TableBuildResult call() {
-			// TODO: Leif: Now we need to create a new table each time. Should I fix the table or is this an effect of light-LDA?
+			// TODO: Fix a constant memory allocated Alias table. Subclass Optimized gentle alias method. 
+			// Create a new class called sparse gentle extends Optimized gentle alias. Put in utils.
+			// Call it dynamic, max size.
 
 			double [] probs = new double[nonZeroTypeTopicCnt[type]];
 
@@ -541,7 +543,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			// }
 			
 			// Normalize probabilities
-			// TODO: Leif: Should this work? See above is there a thought with a normalizing close to 1?
 			for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
 				probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]] / (double) normConstant;
 			}
@@ -553,12 +554,10 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				aliasTables[type].reGenerateAliasTable(probs, typeMass);
 			}
 			*/
-			
-			// TODO: Leif: I now assume that the aliasTable return the position in prob. It looks like it in code.
-			// TODO: Leif: Now alias tables with changing sizes need to create a new alias table each time. Should I implement a preallocated Alias table?
 			aliasTables[type] = new OptimizedGentleAliasMethod(probs);
 			
-			// TODO: Leif: Normconstant is not used (it is setting typeNorm that is not used in collapsed light.
+			// TODO: Check Spalias that typeNorm is correct (and not normalized).
+			// TODO: Ta bort typeNorm i Collapsedklassen kolla där den accessas
 			return new TableBuildResult(type, aliasTables[type], -1);
 		}   
 	}
@@ -1065,16 +1064,12 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	}
 
 	protected void increment(int myBatch, int newTopic, int type) {
-		//TODO: Leif: Is tokensPerTopic updated as well? This is now used in the sampler.
-		//TODO: This should update nonZeroTypeTopics nonZeroTypeTopicsBackMapping as well.
 		//batchLocalTopicTypeUpdates[myBatch][newTopic][type] += 1;
 		batchLocalTopicTypeUpdates[newTopic][type].incrementAndGet();
 		//System.out.println("(Batch=" + myBatch + ") Incremented: topic=" + newTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][newTopic][type]);		
 	}
 
 	protected void decrement(int myBatch, int oldTopic, int type) {
-		//TODO: Is tokensPerTopic updated as well? This is now used in the sampler.
-		//TODO: This should update nonZeroTypeTopics nonZeroTypeTopicsBackMapping as well.
 		//batchLocalTopicTypeUpdates[myBatch][oldTopic][type] -= 1;
 		batchLocalTopicTypeUpdates[oldTopic][type].addAndGet(-1);
 		//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
@@ -1317,11 +1312,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		return topicTypeUpdates;
 	}
 	
-	// TODO: Leif: Is this initialization correct?
 	protected void initNonZeroTypeTopic() {		
 		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
-			// TODO: Leif: Is this needed? 
-			nonZeroTypeTopicCnt[typeidx] = 0; 
 			for (int topicidx = 0; topicidx < numTopics; topicidx++) {
 			if(typeTopicCounts[typeidx][topicidx] > 0){
 				insertNonZeroTopicTypes(topicidx, typeidx);
@@ -1330,7 +1322,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 	}
 	
-	// TODO: Leif: Does this seem correct?
 	protected void insertNonZeroTopicTypes(int topic, int type) {
 		//// We have a new non-zero topic put it in the last empty and update the others
 		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = topic;
@@ -1338,12 +1329,13 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		nonZeroTypeTopicCnt[type]++;
 	}
 	
-	// TODO: Leif: Does this seem correct?	
+
 	protected void removeNonZeroTopicTypes(int topic, int type) {
 		//// Remove the topic by copying the last element to it
+		// TODO: Compare with spaliasUncollapsed remove and insert
 		int topicIndex = nonZeroTypeTopicsBackMapping[type][topic];
-		nonZeroTypeTopics[type][topicIndex] = nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]];
-		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = -1; // Fail fast!
+		nonZeroTypeTopics[type][topicIndex] = nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type] - 1];
+		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type] - 1] = -1; // Fail fast!
 		nonZeroTypeTopicsBackMapping[type][topic] = -1; // Fail fast!
 		nonZeroTypeTopicCnt[type]--;
 	}
