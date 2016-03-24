@@ -106,13 +106,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		super(config);
 
 		documentSamplerPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
-		
-		// Initialize globals
-		// TODO: Move to last in addInstances 
-		initNonZeroTypeTopic();
-		
-		initTokensPerType(); 
-		
+				
 		// With job stealing we can only have one global z / counts timing
 		zTimings = new long[1];
 		countTimings = new long[1];
@@ -352,6 +346,10 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		bb.calculateBatch();
 		topicIndexBuilder = TopicIndexBuilderFactory.get(config,this);
 
+		// Initializing global sparse structure and tokensPerType
+		initNonZeroTypeTopic();
+		initTokensPerType(); 
+		
 		if(logger.getLevel()==Level.INFO) {
 			System.out.println("Loaded " + data.size() + " documents, with " + corpusWordCount + " words in total.");
 		}
