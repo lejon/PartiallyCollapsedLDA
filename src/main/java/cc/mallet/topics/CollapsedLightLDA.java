@@ -108,9 +108,10 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		documentSamplerPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
 		
 		// Initialize globals
-		// TODO: IS this correctly put here?
+		// TODO: Leif: Is this correctly put here?
 		initNonZeroTypeTopic();
-		initTokensPerType(); // TODO: This assume populated typeTopicCounts. Does this exist here?		
+		// TODO: Leif: This assume populated typeTopicCounts. Does this exist here? It should since super(config)?		
+		initTokensPerType(); 
 		
 		// With job stealing we can only have one global z / counts timing
 		zTimings = new long[1];
@@ -549,7 +550,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			}
 
 			/*
-			// TODO: Now alias tables with changing sizes need to create a new alias table each time.
 			if(aliasTables[type]==null) {
 				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
 			} else {
@@ -929,7 +929,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 			int wordTopicIndicatorProposal = -1;
 			if(u_w < tokensPerType[type]) {
-				// TODO: Assuming that the Alias table is returning an index to use in backmapping
 				double u = u_w / (double) tokensPerType[type];
 				wordTopicIndicatorProposal = nonZeroTypeTopicsBackMapping[type][aliasTables[type].generateSample(u_w)];
 			} else {
@@ -957,7 +956,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				double n_s_i = n_s - 1.0; 
 				
 				// Calculate rejection rate
-				// TODO: Is this a correct way of calculate a large product?
 				double pi_w = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
 				pi_w *= ((beta + n_w_t_i) / (beta + n_w_s_i));
 				pi_w *= ((beta_bar + n_s_i) / (beta_bar + n_t_i));
@@ -1057,7 +1055,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 			// Remove one count from old topic
 			localTopicCounts[oldTopic]--;
-			// Update the word topic indicator
+			// Update the word topic indicator in document
 			oneDocTopics[position] = newTopic;
 			// Put that new topic into the counts
 			localTopicCounts[newTopic]++;
@@ -1074,7 +1072,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	}
 
 	protected void increment(int myBatch, int newTopic, int type) {
-		//TODO: Is tokensPerTopic updated as well? This is now used in the sampler.
+		//TODO: Leif: Is tokensPerTopic updated as well? This is now used in the sampler.
 		//TODO: This should update nonZeroTypeTopics nonZeroTypeTopicsBackMapping as well.
 		//batchLocalTopicTypeUpdates[myBatch][newTopic][type] += 1;
 		batchLocalTopicTypeUpdates[newTopic][type].incrementAndGet();
