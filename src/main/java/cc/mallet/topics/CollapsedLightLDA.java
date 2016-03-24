@@ -1329,11 +1329,12 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 	protected void removeNonZeroTopicTypes(int topic, int type) {
 		//// Remove the topic by copying the last element to it
-		// TODO: Compare with spaliasUncollapsed remove and insert
+		if (nonZeroTypeTopicCnt[type] < 1) {
+			throw new IllegalArgumentException ("CollapsedLightLDA: Cannot remove, count is less than 1 => " + nonZeroTypeTopicCnt[type]);
+		}
 		int topicIndex = nonZeroTypeTopicsBackMapping[type][topic];
-		nonZeroTypeTopics[type][topicIndex] = nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type] - 1];
-		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type] - 1] = -1; // Fail fast!
-		nonZeroTypeTopicsBackMapping[type][topic] = -1; // Fail fast!
 		nonZeroTypeTopicCnt[type]--;
+		nonZeroTypeTopics[type][topicIndex] = nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]];
+		nonZeroTypeTopicsBackMapping[type][nonZeroTypeTopics[type][topicIndex]] = topicIndex;
 	}
 }
