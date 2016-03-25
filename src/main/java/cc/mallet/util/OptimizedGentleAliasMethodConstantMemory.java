@@ -80,6 +80,14 @@ public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAli
 			a[l] = h;
 			ps[l] = 1.0 + ((double) k) * c;
 		}
+		/* DEBUG
+		System.out.println("Create memory allocation:");
+		System.out.println("tableSize: " + tableSize + " k:" + k + "bs size:" + bs.length);
+		for (int i = 0; i < tableSize; i++) {
+			System.out.println("a[i] (i="+i+ "):" +a[i]);
+		}
+		*/
+		
 	}
 	
 	public void generateAliasTable(double [] pi) {		
@@ -88,7 +96,7 @@ public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAli
 	
 	public String toString() {
 		String res = "PSes: ";
-		for (int psi = 0; psi < ps.length; psi++) {
+		for (int psi = 0; psi < k; psi++) {
 			res += ps[psi] + ", ";
 		}
 		return res;
@@ -112,8 +120,8 @@ public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAli
 	
 	public static void main(String [] args) {
 		double [] pi = {0.3, 0.05, 0.2, 0.4, 0.05};
-		OptimizedGentleAliasMethodConstantMemory ga = new OptimizedGentleAliasMethodConstantMemory(pi);
-		ga.generateAliasTable(pi, pi.length);
+		int arraySize = 10;
+		OptimizedGentleAliasMethodConstantMemory ga = new OptimizedGentleAliasMethodConstantMemory(pi, arraySize);
 		int [] counts = new int[pi.length];
 		int noSamples = 10_000_000;
 		for(int i = 0; i<noSamples; i++) {
@@ -123,6 +131,20 @@ public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAli
 		for (int i = 0; i < counts.length; i++) {
 			System.out.println(((double)counts[i])/((double)noSamples));
 		}
+		
+		// Regenerate with different size
+		double [] pi2 = {0.3, 0.05, 0.2, 0.3, 0.05, 0.05, 0.05};
+		ga.reGenerateAliasTable(pi2, 1.0);
+		int [] counts2 = new int[pi2.length];
+		int noSamples2 = 10_000_000;
+		for(int i = 0; i<noSamples2; i++) {
+			counts2[ga.generateSample()]++;
+		}
+		System.out.println("Ratios are:");
+		for (int i = 0; i < counts2.length; i++) {
+			System.out.println(((double)counts2[i])/((double)noSamples2));
+		}
+		
 	}
 	
 }
