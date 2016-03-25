@@ -1,11 +1,14 @@
 package cc.mallet.utils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.apache.commons.math3.stat.inference.ChiSquareTest;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +18,7 @@ import org.junit.runners.Parameterized.Parameters;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.util.GentleAliasMethod;
 import cc.mallet.util.OptimizedGentleAliasMethod;
+import cc.mallet.util.OptimizedGentleAliasMethodDynamicSize;
 import cc.mallet.util.WalkerAliasTable;
 
 @RunWith(value = Parameterized.class)
@@ -31,7 +35,7 @@ public class WalkerAliasTableTest {
 
 	@Parameters
 	public static List<Object[]> data() {
-		Object[][] impls = new Object[][] { { GentleAliasMethod.class }, { OptimizedGentleAliasMethod.class } };
+		Object[][] impls = new Object[][] { { GentleAliasMethod.class }, { OptimizedGentleAliasMethod.class }, { OptimizedGentleAliasMethodDynamicSize.class } };
 		return Arrays.asList(impls);
 	}
 
@@ -187,6 +191,30 @@ public class WalkerAliasTableTest {
 	}
 
 	@Test
+	public void testChiSq() {
+		double [] probs = {2.0/15.0,7.0/15.0,6.0/15.0};
+		walker.initTableNormalizedProbabilities(probs);
+		int noSamples = 1_000_000;
+		int [] samples = new int[noSamples];
+		for (int i = 0; i < samples.length; i++) {
+			samples[i] = walker.generateSample();
+		}
+		long [] cnts = new long[probs.length];
+		for (int i = 0; i < samples.length; i++) {
+			cnts[samples[i]]++;
+		}
+
+		ChiSquareTest cs = new ChiSquareTest();
+		
+		if(cs.chiSquareTest(probs, cnts, 0.01)) {
+			fail();
+		} else {
+			System.out.println("Probs: " + Arrays.toString(probs) + " ARE equal to " +  Arrays.toString(probs));
+		}
+
+	}
+	
+	@Test
 	public void testCompareMultinomialSampling() {
 		int dirichletDim = 1000;
 		Dirichlet distgen = new Dirichlet(dirichletDim);
@@ -194,27 +222,25 @@ public class WalkerAliasTableTest {
 		walker.initTableNormalizedProbabilities(probs);
 		int noSamples = 1000000;
 		int [] samples = new int[noSamples];
+		
+		// Generate samples from Alias table
 		long tstart = System.currentTimeMillis();
 		for (int i = 0; i < noSamples; i++) {
 			samples[i] = walker.generateSample();
 		}
 		long tend = System.currentTimeMillis();
+		
 		int [] cnts = new int[probs.length];
 		for (int i = 0; i < samples.length; i++) {
 			cnts[samples[i]]++;
 		}
-		int [] multinomialSamples = new int[noSamples];
+		
+		// Generate samples from plain multinomial sampler
 		long mstart = System.currentTimeMillis();
-		for (int i = 0; i < noSamples; i++) {
-			double U = ThreadLocalRandom.current().nextDouble();
-			int theSample = -1;
-			while (U > 0.0) {
-				theSample++;
-				U -= probs[theSample];
-			} 
-			multinomialSamples[i] = theSample;
-		}	
+		multinomialSampler(probs, noSamples);	
 		long mend = System.currentTimeMillis();
+		
+		
 		int [] multiCnts = new int[probs.length];
 		for (int i = 0; i < samples.length; i++) {
 			multiCnts[samples[i]]++;
@@ -232,6 +258,20 @@ public class WalkerAliasTableTest {
 		System.out.println("Alias Table sampling took: " + (tend-tstart) + " milliseconds");
 		System.out.println("Multinomial sampling took: " + (mend-mstart) + " milliseconds");
 		System.out.println("For " + noSamples + " samples and a " + dirichletDim + " dimensional Dirichlet...");
+	}
+
+	int [] multinomialSampler(double[] probs, int noSamples) {
+		int[] multinomialSamples = new int[noSamples];
+		for (int i = 0; i < noSamples; i++) {
+			double U = ThreadLocalRandom.current().nextDouble();
+			int theSample = -1;
+			while (U > 0.0) {
+				theSample++;
+				U -= probs[theSample];
+			} 
+			multinomialSamples[i] = theSample;
+		}
+		return multinomialSamples;
 	}
 
 }
