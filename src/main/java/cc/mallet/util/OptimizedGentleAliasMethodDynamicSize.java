@@ -37,7 +37,7 @@ public class OptimizedGentleAliasMethodDynamicSize extends OptimizedGentleAliasM
 	
 	@Override
 	public void initTable(double[] probabilities, double normalizer) {
-		generateAliasTable(probabilities,normalizer);
+		generateAliasTable(probabilities,normalizer, probabilities.length);
 		
 	}
 	
