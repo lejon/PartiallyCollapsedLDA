@@ -43,6 +43,7 @@ import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LDAThreadFactory;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
+import cc.mallet.util.OptimizedGentleAliasMethodDynamicSize;
 import cc.mallet.util.WalkerAliasTable;
 
 
@@ -524,16 +525,13 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 		@Override
 		public TableBuildResult call() {
-			// TODO: Fix a constant memory allocated Alias table. Subclass Optimized gentle alias method. 
-			// Create a new class called sparse gentle extends Optimized gentle alias. Put in utils.
-			// Call it dynamic, max size.
-
+			
 			double [] probs = new double[nonZeroTypeTopicCnt[type]];
 
 			// Iterate over nonzero topic indicators
 			int normConstant = 0;
 			for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
-				normConstant += typeTopicCounts[type][nonZeroTypeTopics[type][i]];
+				normConstant += probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]];
 			}
 
 			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
@@ -541,18 +539,16 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			// }
 			
 			// Normalize probabilities
-			for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
-				probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]] / (double) normConstant;
-			}
+			// for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
+			//	  probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]] / (double) normConstant;
+			// }
 
-			/*
 			if(aliasTables[type]==null) {
-				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
+				// It should be possible to save memory with max(tokensPerType[type], numTopics) as sizeMax
+				aliasTables[type] = new OptimizedGentleAliasMethodDynamicSize(probs, normConstant, numTopics);
 			} else {
-				aliasTables[type].reGenerateAliasTable(probs, typeMass);
+				aliasTables[type].reGenerateAliasTable(probs, normConstant);
 			}
-			*/
-			aliasTables[type] = new OptimizedGentleAliasMethod(probs);
 			
 			// TODO: Check Spalias that typeNorm is correct (and not normalized).
 			return new TableBuildResult(type, aliasTables[type], -1);
