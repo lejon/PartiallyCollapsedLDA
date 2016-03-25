@@ -2,7 +2,7 @@ package cc.mallet.util;
 
 import java.util.concurrent.ThreadLocalRandom;
 
-public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAliasMethod {
+public class OptimizedGentleAliasMethodDynamicSize extends OptimizedGentleAliasMethod {
 	/*
 	Random random = new Random();
 	int k;
@@ -15,18 +15,18 @@ public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAli
 	
 	int tableSize;
 	
-	public OptimizedGentleAliasMethodConstantMemory() {
+	public OptimizedGentleAliasMethodDynamicSize() {
 		
 	}
-	public OptimizedGentleAliasMethodConstantMemory(double [] pis, double normalizer, int maxSize) {
+	public OptimizedGentleAliasMethodDynamicSize(double [] pis, double normalizer, int maxSize) {
 		generateAliasTable(pis, normalizer, maxSize);
 	}
 	
-	public OptimizedGentleAliasMethodConstantMemory(double [] pis, int maxSize) {
+	public OptimizedGentleAliasMethodDynamicSize(double [] pis, int maxSize) {
 		generateAliasTable(pis, 1.0, maxSize);
 	}
 
-	public OptimizedGentleAliasMethodConstantMemory(double [] pis) {
+	public OptimizedGentleAliasMethodDynamicSize(double [] pis) {
 		generateAliasTable(pis, 1.0, pis.length);
 	}
 
@@ -120,8 +120,8 @@ public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAli
 	
 	public static void main(String [] args) {
 		double [] pi = {0.3, 0.05, 0.2, 0.4, 0.05};
-		int arraySize = 10;
-		OptimizedGentleAliasMethodConstantMemory ga = new OptimizedGentleAliasMethodConstantMemory(pi, arraySize);
+		int arrayMaxSize = 10;
+		OptimizedGentleAliasMethodDynamicSize ga = new OptimizedGentleAliasMethodDynamicSize(pi, arrayMaxSize);
 		int [] counts = new int[pi.length];
 		int noSamples = 10_000_000;
 		for(int i = 0; i<noSamples; i++) {
@@ -145,6 +145,8 @@ public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAli
 			System.out.println(((double)counts2[i])/((double)noSamples2));
 		}
 		
+		double [] pi3 = {0.3, 0.05, 0.2, 0.3, 0.05, 0.05, 0.01, 0.01, 0.01, 0.01, 0.01};
+		ga.reGenerateAliasTable(pi3, 1.0);
 	}
 	
 }
