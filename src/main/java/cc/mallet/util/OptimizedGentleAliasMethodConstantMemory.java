@@ -1,27 +1,29 @@
 package cc.mallet.util;
 
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class OptimizedGentleAliasMethodConstantMemory implements WalkerAliasTable {
+public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAliasMethod {
+	/*
 	Random random = new Random();
-	
 	int k;
 	double [] ps;
 	int [] a;
 	double [] bs;
 	int [] lows;
 	int [] highs;
+	*/
+	
+	int tableSize;
 	
 	public OptimizedGentleAliasMethodConstantMemory() {
 		
 	}
-	public OptimizedGentleAliasMethodConstantMemory(double [] pis, double normalizer) {
-		generateAliasTable(pis,normalizer);
+	public OptimizedGentleAliasMethodConstantMemory(double [] pis, double normalizer, int maxSize) {
+		generateAliasTable(pis, normalizer, maxSize);
 	}
 	
-	public OptimizedGentleAliasMethodConstantMemory(double [] pis) {
-		generateAliasTable(pis);
+	public OptimizedGentleAliasMethodConstantMemory(double [] pis, int maxSize) {
+		generateAliasTable(pis, 1.0, maxSize);
 	}
 
 	@Override
@@ -35,19 +37,20 @@ public class OptimizedGentleAliasMethodConstantMemory implements WalkerAliasTabl
 		
 	}
 	
-	public void generateAliasTable(double [] pi, double normalizer) {
-		k = pi.length;
-		lows  = new int[k];
-		highs = new int[k];
-		ps    = new double[k];
-		bs    = new double[k];
-		a     = new int [k];
+	public void generateAliasTable(double [] pi, double normalizer, int maxSize) {
+		lows  = new int[maxSize];
+		highs = new int[maxSize];
+		ps    = new double[maxSize];
+		bs    = new double[maxSize];
+		a     = new int [maxSize];
+		tableSize = maxSize;
 		
 		reGenerateAliasTable(pi, normalizer);
 	}
 	
 	public void reGenerateAliasTable(double[] pi, double normalizer) {
-		if(pi.length!=k) throw new IllegalArgumentException("Cannot call reGenerate with different length probabilities!");
+		k = pi.length;
+		if(k > tableSize) throw new IllegalArgumentException("Cannot call reGenerate with more prob than table size!");
 		int lowCnt = 0;
 		int highCnt = 0;
 		double k1 = 1.0/k;
@@ -75,8 +78,8 @@ public class OptimizedGentleAliasMethodConstantMemory implements WalkerAliasTabl
 		}
 	}
 	
-	public void generateAliasTable(double [] pi) {
-		generateAliasTable(pi,1.0);
+	public void generateAliasTable(double [] pi) {		
+		generateAliasTable(pi, 1.0, pi.length);
 	}
 	
 	public String toString() {
@@ -106,7 +109,8 @@ public class OptimizedGentleAliasMethodConstantMemory implements WalkerAliasTabl
 	public static void main(String [] args) {
 		OptimizedGentleAliasMethodConstantMemory ga = new OptimizedGentleAliasMethodConstantMemory();
 		double [] pi = {0.3, 0.05, 0.2, 0.4, 0.05};
-		ga.generateAliasTable(pi);
+		int arraySize = 20;
+		ga.generateAliasTable(pi, arraySize);
 		int [] counts = new int[pi.length];
 		int noSamples = 10_000_000;
 		for(int i = 0; i<noSamples; i++) {
