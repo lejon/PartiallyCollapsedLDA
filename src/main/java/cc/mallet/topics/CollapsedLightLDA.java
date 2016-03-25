@@ -544,8 +544,13 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			// }
 
 			if(aliasTables[type]==null) {
-				// It should be possible to save memory with max(tokensPerType[type], numTopics) as sizeMax
-				aliasTables[type] = new OptimizedGentleAliasMethodDynamicSize(probs, normConstant, numTopics);
+				int aliasSize;
+				if(tokensPerType[type] > numTopics){
+					aliasSize = numTopics;
+				} else {
+					aliasSize = tokensPerType[type];
+				}
+				aliasTables[type] = new OptimizedGentleAliasMethodDynamicSize(probs, normConstant, aliasSize);
 			} else {
 				aliasTables[type].reGenerateAliasTable(probs, normConstant);
 			}
