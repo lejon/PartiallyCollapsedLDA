@@ -26,6 +26,10 @@ public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAli
 		generateAliasTable(pis, 1.0, maxSize);
 	}
 
+	public OptimizedGentleAliasMethodConstantMemory(double [] pis) {
+		generateAliasTable(pis, 1.0, pis.length);
+	}
+
 	@Override
 	public void initTableNormalizedProbabilities(double[] probabilities) {
 		generateAliasTable(probabilities);
@@ -107,10 +111,9 @@ public class OptimizedGentleAliasMethodConstantMemory extends OptimizedGentleAli
 	}
 	
 	public static void main(String [] args) {
-		OptimizedGentleAliasMethodConstantMemory ga = new OptimizedGentleAliasMethodConstantMemory();
 		double [] pi = {0.3, 0.05, 0.2, 0.4, 0.05};
-		int arraySize = 20;
-		ga.generateAliasTable(pi, arraySize);
+		OptimizedGentleAliasMethodConstantMemory ga = new OptimizedGentleAliasMethodConstantMemory(pi);
+		ga.generateAliasTable(pi, pi.length);
 		int [] counts = new int[pi.length];
 		int noSamples = 10_000_000;
 		for(int i = 0; i<noSamples; i++) {
