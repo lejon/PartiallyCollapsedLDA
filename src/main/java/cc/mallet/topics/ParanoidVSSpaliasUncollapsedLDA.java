@@ -17,7 +17,7 @@ public class ParanoidVSSpaliasUncollapsedLDA extends NZVSSpaliasUncollapsedParal
 	protected void samplePhi() {
 		super.samplePhi();
 		ensureConsistentPhi(phi);
-		ensureConsistentTopicTypeCounts(topicTypeCountMapping);
+		ensureConsistentTopicTypeCounts(topicTypeCountMapping, typeTopicCounts, tokensPerTopic);
 		if(!silent) System.out.println("Phi is consistent after sampling!");
 		if(!silent) System.out.println("Topic count is consistent after sampling!");
 		debugPrintMMatrix();
@@ -28,7 +28,7 @@ public class ParanoidVSSpaliasUncollapsedLDA extends NZVSSpaliasUncollapsedParal
 		super.addInstances(training);
 		//ensureConsistentTopicTypeCounts(topicTypeCounts);
 		ensureConsistentPhi(phi);
-		ensureConsistentTopicTypeCounts(topicTypeCountMapping);
+		ensureConsistentTopicTypeCounts(topicTypeCountMapping, typeTopicCounts, tokensPerTopic);
 		if(!silent) System.out.println("Phi is consistent after add instances!");
 		if(!silent) System.out.println("Topic count is consistent after add instances!");
 		debugPrintMMatrix();
@@ -39,7 +39,7 @@ public class ParanoidVSSpaliasUncollapsedLDA extends NZVSSpaliasUncollapsedParal
 		super.updateCounts();
 		ensureConsistentPhi(phi);
 		if(!silent) System.out.println("Phi is consistent after count update!");
-		ensureConsistentTopicTypeCounts(topicTypeCountMapping);
+		ensureConsistentTopicTypeCounts(topicTypeCountMapping, typeTopicCounts, tokensPerTopic);
 		if(!silent) System.out.println("Topic count is consistent after count update!");
 		debugPrintMMatrix();
 	}

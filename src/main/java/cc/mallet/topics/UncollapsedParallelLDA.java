@@ -253,22 +253,46 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	}
 
 
-	public void ensureConsistentTopicTypeCounts(int [][] counts) {
-		int sumtotal = 0;
-		int topicIdx = 0;
-		for (int [] topic : counts ) {
-			for (int type = 0; type < topic.length; type++ ) { 
-				int count = topic[type];
-				if(count<0) throw new IllegalArgumentException("Negative topic count! Topic: " 
-						+ topicIdx + " has negative count for type: " + type + " count=" + count);
-				sumtotal += count;
+	public void ensureConsistentTopicTypeCounts(int [][] topicTypeCounts, int[][] typeTopicCounts, int[] tokensPerTopic) {
+		int sumtotalTypeTopic = 0;
+		int [] typeTopicTTCount = new int [numTopics]; 
+
+		int sumtotalTopicType = 0;
+		int [] topicTypeTTCount = new int [numTopics]; 
+		
+		for (int topic = 0; topic < topicTypeCounts.length; topic++ ) {
+			for (int type = 0; type < topicTypeCounts[topic].length; type++ ) { 
+				{
+					int count = topicTypeCounts[topic][type];
+					if(count<0) throw new IllegalArgumentException("TopicTypeCounts: Negative topic count! Topic: " 
+							+ topic + " has negative count for type: " + type + " count=" + count);
+					sumtotalTopicType += count;
+					topicTypeTTCount[topic] += count;
+				}
+				{
+					int countTypeTopic = typeTopicCounts[type][topic];
+					if(countTypeTopic<0) throw new IllegalArgumentException("TypeTopicCounts: Negative topic count! Topic: " 
+							+ topic + " has negative count for type: " + type + " count=" + countTypeTopic);
+					sumtotalTypeTopic += countTypeTopic;
+					typeTopicTTCount[topic] += countTypeTopic;
+				}
 			}
-			topicIdx++;
 		}
-		if(sumtotal != corpusWordCount) {
-			throw new IllegalArgumentException("Count does not sum to nr. types! Sumtotal: " + sumtotal + " no.types: " + corpusWordCount);
+		if(sumtotalTypeTopic != corpusWordCount) {
+			throw new IllegalArgumentException("TypeTopicCounts does not sum to nr. types! Sumtotal: " + sumtotalTypeTopic + " no.types: " + corpusWordCount);
 		}
-		System.out.println("Type Topic count is consistent...");
+		if(sumtotalTopicType != corpusWordCount) {
+			throw new IllegalArgumentException("TopicTypeCounts does not sum to nr. types! Sumtotal: " + sumtotalTopicType + " no.types: " + corpusWordCount);
+		}
+		for (int i = 0; i < tokensPerTopic.length; i++) {
+			if(tokensPerTopic[i]!=topicTypeTTCount[i]) {
+				throw new IllegalArgumentException("topicTypeTTCount[" + i + "] does not match global tokensPerTopic[" + i + "]");
+			}
+			if(tokensPerTopic[i]!=typeTopicTTCount[i]) {
+				throw new IllegalArgumentException("typeTopicTTCount[" + i + "] does not match global tokensPerTopic[" + i + "]");
+			}
+		}
+		System.out.println("TypeTopic and TopicType and TokensPerTopic count is consistent...");
 	}
 
 	public void ensureTTEquals() {
