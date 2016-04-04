@@ -1,7 +1,10 @@
 package cc.mallet.util;
 
+import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+
+import org.apache.commons.math3.stat.inference.ChiSquareTest;
 
 public class OptimizedGentleAliasMethod implements WalkerAliasTable {
 	Random random = new Random();
@@ -104,17 +107,29 @@ public class OptimizedGentleAliasMethod implements WalkerAliasTable {
 	}
 	
 	public static void main(String [] args) {
-		OptimizedGentleAliasMethod ga = new OptimizedGentleAliasMethod();
-		double [] pi = {0.3, 0.05, 0.2, 0.4, 0.05};
-		ga.generateAliasTable(pi);
-		int [] counts = new int[pi.length];
-		int noSamples = 10_000_000;
-		for(int i = 0; i<noSamples; i++) {
-			counts[ga.generateSample()]++;
+		double [] pi = {2.0/15.0,7.0/15.0,6.0/15.0};
+		OptimizedGentleAliasMethod ga = new OptimizedGentleAliasMethod(pi);		
+		
+		int noSamples = 1_000_000;
+		int [] samples = new int[noSamples];
+		for (int i = 0; i < samples.length; i++) {
+			samples[i] = ga.generateSample();
 		}
-		System.out.println("Ratios are:");
-		for (int i = 0; i < counts.length; i++) {
-			System.out.println(((double)counts[i])/((double)noSamples));
+		long [] cnts = new long[pi.length];
+		for (int i = 0; i < samples.length; i++) {
+			cnts[samples[i]]++;
+		}
+		
+		double [] obsFreq = new double[cnts.length];
+		for (int i = 0; i < obsFreq.length; i++) {
+			obsFreq[i] = cnts[i] / (double) noSamples;
+		}
+
+		ChiSquareTest cs = new ChiSquareTest();
+		if(cs.chiSquareTest(pi, cnts, 0.05)) {
+			System.out.println("Probs: " + Arrays.toString(pi) + " are NOT equal to " +  Arrays.toString(obsFreq));
+		} else {
+			System.out.println("Probs: " + Arrays.toString(pi) + " ARE equal to " +  Arrays.toString(obsFreq));
 		}
 	}
 	
