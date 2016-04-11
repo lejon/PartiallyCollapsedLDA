@@ -368,7 +368,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		topicIndexBuilder = TopicIndexBuilderFactory.get(config,this);
 
 		// Initializing global sparse structure and tokensPerType
-		initNonZeroTypeTopic();
 		initTokensPerType(); 
 		
 		if(logger.getLevel()==Level.INFO) {
@@ -1359,17 +1358,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 		return topicTypeUpdates;
 	}
-	
-	protected void initNonZeroTypeTopic() {		
-		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
-			for (int topicidx = 0; topicidx < numTopics; topicidx++) {
-				if(typeTopicCounts[typeidx][topicidx] > 0){
-					insertNonZeroTopicTypes(topicidx, typeidx);
-				}
-			}
-		}
-	}
-	
+		
 	protected void insertNonZeroTopicTypes(int topic, int type) {
 		//// We have a new non-zero topic put it in the last empty and update the others
 		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = topic;
