@@ -956,7 +956,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				int range = (endDoc-startDoc);
 				int startDoc1 = startDoc;
 				int endDoc1 = startDoc + (range / 2);
-				int startDoc2 = endDoc1+1;
+				int startDoc2 = endDoc1;
 				int endDoc2 = endDoc;
 				invokeAll(new RecursiveDocumentSampler(startDoc1,endDoc1,myBatch + 1,limit),
 						new RecursiveDocumentSampler(startDoc2,endDoc2,myBatch + 2,limit));
