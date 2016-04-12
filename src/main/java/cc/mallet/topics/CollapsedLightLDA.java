@@ -71,6 +71,9 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 
 	int corpusWordCount = 0;
+	
+	// TODO DEBUG CHECK TYPE (IF -1 ignored)
+	int debugType = 0;//= 749;
 
 	// Matrix M of topic-token assignments
 	// We keep this since we often want fast access to a whole topic
@@ -376,11 +379,11 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	}
 
 	protected void updateTypeTopicCount(int type, int topic, int count) {
-
+		if(type == debugType) System.out.println("start: v: " + type + " k: " + topic + " count: " + count + " n_kv: " + typeTopicCounts[type][topic]);
 		if(typeTopicCounts[type][topic] == 0 && count > 0){
 			insertNonZeroTopicTypes(topic, type);
 		}
-		
+		// if(count < 0) System.out.println("Neg count");
 		topicTypeCountMapping[topic][type] += count;
 		typeTopicCounts[type][topic] += count;
 		threadLocalTypeTopicCounts[type][topic].addAndGet(count);
@@ -398,6 +401,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 					+ "! Count: " + topicTypeCountMapping[topic][type] + " type:" 
 					+ alphabet.lookupObject(type) + "(" + type + ") update:" + count);
 		}
+		if(type == debugType) System.out.println("end: v: " + type + " k: " + topic + " count: " + count + " n_kv: " + typeTopicCounts[type][topic]);
 	}
 
 
@@ -1359,17 +1363,32 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 		return topicTypeUpdates;
 	}
-		
+		// TODO Hypotes - there is one oboe error here. when all K is used then array gets bigger than 100
 	protected void insertNonZeroTopicTypes(int topic, int type) {
 		//// We have a new non-zero topic put it in the last empty and update the others
+		if(type == debugType) {
+			System.out.println("insert start: k: " + topic + " v: " + type + " n_kv: " + typeTopicCounts[type][topic] +  " nz_k: " + nonZeroTypeTopicCnt[type]);
+			printNonZeroTopicTypes(type);
+		}
+		
+		// TODO Here is the bug it: nonZeroTypeTopicCnt[type] can be 100
+		if(nonZeroTypeTopicCnt[type] == nonZeroTypeTopics[type].length) throw new IllegalArgumentException ("CollapsedLightLDA: nonZeroTypeTopicCnt[" + type + "] = " + nonZeroTypeTopicCnt[type]);
 		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = topic;
 		nonZeroTypeTopicsBackMapping[type][topic] = nonZeroTypeTopicCnt[type];
 		nonZeroTypeTopicCnt[type]++;
+		if(type == debugType) {
+			System.out.println("insert end: k: " + topic + " v: " + type + " n_kv: " + typeTopicCounts[type][topic] +  " nz_k: " + nonZeroTypeTopicCnt[type]);
+			printNonZeroTopicTypes(type);
+		}
 	}
 	
 
 	protected void removeNonZeroTopicTypes(int topic, int type) {
 		//// Remove the topic by copying the last element to it
+		if(type == debugType) {
+			System.out.println("remove start: k: " + topic + " v: " + type + " n_kv: " + typeTopicCounts[type][topic] +  " nz_k: " + nonZeroTypeTopicCnt[type]);
+			printNonZeroTopicTypes(type);
+		}
 		if (nonZeroTypeTopicCnt[type] < 1) {
 			throw new IllegalArgumentException ("CollapsedLightLDA: Cannot remove, count is less than 1 => " + nonZeroTypeTopicCnt[type]);
 		}
@@ -1377,5 +1396,18 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		nonZeroTypeTopicCnt[type]--;
 		nonZeroTypeTopics[type][topicIndex] = nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]];
 		nonZeroTypeTopicsBackMapping[type][nonZeroTypeTopics[type][topicIndex]] = topicIndex;
+		if(type == debugType) {
+			System.out.println("remove end: k: " + topic + " v: " + type + " n_kv: " + typeTopicCounts[type][topic] +  " nz_k: " + nonZeroTypeTopicCnt[type]);
+			printNonZeroTopicTypes(type);
+		}
+	}
+	
+	protected void printNonZeroTopicTypes(int type){
+		System.out.print("{");
+		for (int i = 0; i < numTopics; i++) {
+			System.out.print(nonZeroTypeTopics[type][i] + ", ");
+		}
+		System.out.println("}");
+		
 	}
 }
