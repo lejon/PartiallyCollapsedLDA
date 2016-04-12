@@ -54,7 +54,7 @@ public class OptimizedGentleAliasMethodDynamicSize extends OptimizedGentleAliasM
 	
 	public void reGenerateAliasTable(double[] pi, double normalizer) {
 		k = pi.length;
-		if(k > tableSize) throw new IllegalArgumentException("Cannot call reGenerate with more prob than table size!");
+		if(k > tableSize) throw new IllegalArgumentException("Cannot call reGenerate with more prob than table size! k:" + k + "tableSize" + tableSize);
 		int lowCnt = 0;
 		int highCnt = 0;
 		double k1 = 1.0/k;
