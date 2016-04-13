@@ -566,7 +566,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 			if(aliasTables[type]==null) {
 				int aliasSize;
-				// TODO Fix so that Alias tables uses a minimum of memory by maximizing the Alias tables to 
+				// TODO Fix so that Alias tables uses a minimum of memory by maximizing the Alias tables size to the number of tokens per type
 				//if(tokensPerType[type] > numTopics){
 					aliasSize = numTopics;
 				//} else {
@@ -1360,15 +1360,22 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		return topicTypeUpdates;
 	}
 		
-	protected void insertNonZeroTopicTypes(int topic, int type) {
+	/*
+	 * removeNonZeroTopicTypes() and insertNonZeroTopicTypes() needs to be synchronized
+	 * to remove the risk of updating the same type in nonZeroTypeTopicCnt
+	 */
+	protected synchronized void insertNonZeroTopicTypes(int topic, int type) {
 		//// We have a new non-zero topic put it in the last empty and update the others
 		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = topic;
 		nonZeroTypeTopicsBackMapping[type][topic] = nonZeroTypeTopicCnt[type];
 		nonZeroTypeTopicCnt[type]++;
 	}
 	
-
-	protected void removeNonZeroTopicTypes(int topic, int type) {
+	/*
+	 * removeNonZeroTopicTypes() and insertNonZeroTopicTypes() needs to be synchronized
+	 * to remove the risk of updating the same type in nonZeroTypeTopicCnt
+	 */
+	protected synchronized void removeNonZeroTopicTypes(int topic, int type) {
 		//// Remove the topic by copying the last element to it
 		if (nonZeroTypeTopicCnt[type] < 1) {
 			throw new IllegalArgumentException ("CollapsedLightLDA: Cannot remove, count is less than 1 => " + nonZeroTypeTopicCnt[type]);
