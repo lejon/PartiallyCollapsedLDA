@@ -1364,13 +1364,15 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		return topicTypeUpdates;
 	}
 		// TODO Hypotes - there is one oboe error here. when all K is used then array gets bigger than 100
-	protected void insertNonZeroTopicTypes(int topic, int type) {
+	protected synchronized void insertNonZeroTopicTypes(int topic, int type) {
 		//// We have a new non-zero topic put it in the last empty and update the others
 		if(type == debugType) {
 			System.out.println("insert start: k: " + topic + " v: " + type + " n_kv: " + typeTopicCounts[type][topic] +  " nz_k: " + nonZeroTypeTopicCnt[type]);
 			printNonZeroTopicTypes(type);
 		}
 		
+		// if(nonZeroTypeTopicCnt[type] > 95 && false) System.out.println("Add k: " + topic + " v: " + type + " n_kv: " + typeTopicCounts[type][topic] +  " nzk: " + nonZeroTypeTopicCnt[type]); 
+		//System.out.println("Error: k: " + topic + " v: " + type + " n_kv: " + typeTopicCounts[type][topic] +  " nz_k: " + nonZeroTypeTopicCnt[type]);
 		// TODO Here is the bug it: nonZeroTypeTopicCnt[type] can be 100
 		if(nonZeroTypeTopicCnt[type] == nonZeroTypeTopics[type].length) throw new IllegalArgumentException ("CollapsedLightLDA: nonZeroTypeTopicCnt[" + type + "] = " + nonZeroTypeTopicCnt[type]);
 		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = topic;
@@ -1381,14 +1383,15 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			printNonZeroTopicTypes(type);
 		}
 	}
-	
 
-	protected void removeNonZeroTopicTypes(int topic, int type) {
+
+	protected synchronized void removeNonZeroTopicTypes(int topic, int type) {
 		//// Remove the topic by copying the last element to it
 		if(type == debugType) {
 			System.out.println("remove start: k: " + topic + " v: " + type + " n_kv: " + typeTopicCounts[type][topic] +  " nz_k: " + nonZeroTypeTopicCnt[type]);
 			printNonZeroTopicTypes(type);
 		}
+		// if(nonZeroTypeTopicCnt[type] > 95 && false) System.out.println("Remove k: " + topic + " v: " + type + " n_kv: " + typeTopicCounts[type][topic] +  " nzk: " + nonZeroTypeTopicCnt[type]); 
 		if (nonZeroTypeTopicCnt[type] < 1) {
 			throw new IllegalArgumentException ("CollapsedLightLDA: Cannot remove, count is less than 1 => " + nonZeroTypeTopicCnt[type]);
 		}
