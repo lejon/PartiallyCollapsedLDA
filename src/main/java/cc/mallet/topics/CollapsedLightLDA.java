@@ -43,6 +43,7 @@ import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LDAThreadFactory;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
+import cc.mallet.util.OptimizedGentleAliasMethodDynamicSize;
 import cc.mallet.util.WalkerAliasTable;
 
 
@@ -64,6 +65,10 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	TIntIntHashMap [] globalDeltaNUpdates;
 
 	AtomicInteger [][] batchLocalTopicTypeUpdates;
+	
+	AtomicInteger [][] threadLocalTypeTopicCounts;
+	AtomicInteger [] threadLocalTokensPerTopic;
+
 
 	int corpusWordCount = 0;
 
@@ -89,14 +94,24 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	protected TableBuilderFactory tbFactory = new TypeTopicTableBuilderFactory();
 	
 	WalkerAliasTable [] aliasTables; 
-	double [] typeNorm; 
+	// double [] typeNorm; 
 
+	// Sparse matrix structure (Global)
+	// Contains a array with nonzero topics as elements per type
+	int[][] nonZeroTypeTopics;
+	// So we can map back from a topic to where it is in nonZeroTopics vector
+	int [][] nonZeroTypeTopicsBackMapping;
+	// Sparse global topic counts used to identify positions in nonZeroTypeTopics
+	// nonZeroTypeTopicCnt indicates how many non-zero topics there are per type.
+	int[] nonZeroTypeTopicCnt;
+	// Number of tokens in each type
+	int[] tokensPerType;
 	
 	public CollapsedLightLDA(LDAConfiguration config) {
 		super(config);
 
 		documentSamplerPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors());
-		
+				
 		// With job stealing we can only have one global z / counts timing
 		zTimings = new long[1];
 		countTimings = new long[1];
@@ -128,6 +143,18 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		for (int i = 0; i < globalDeltaNUpdates.length; i++) {
 			globalDeltaNUpdates[i] = new TIntIntHashMap();
 		}
+	}
+
+	
+	protected void initTokensPerType() {
+		// Initialize tokensPerType
+		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
+			for (int topicidx = 0; topicidx < numTopics; topicidx++) {
+				tokensPerType[typeidx] =+ typeTopicCounts[typeidx][topicidx];
+			}
+		}
+		
+		
 	}
 
 	public int[][] getTopIndices() {
@@ -273,7 +300,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		targetAlphabet = training.getTargetAlphabet();
 		numTypes = alphabet.size();
 		aliasTables = new WalkerAliasTable[numTypes];
-		typeNorm    = new double[numTypes];
+		// typeNorm    = new double[numTypes];
 		typeCounts = new int[numTypes];
 		batchLocalTopicTypeUpdates = new AtomicInteger[numTopics][numTypes];
 		for (int i = 0; i < batchLocalTopicTypeUpdates.length; i++) {
@@ -283,10 +310,26 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 		dirichletSampler = new SparseDirichlet(numTypes,beta);
 
+		nonZeroTypeTopics = new int[numTypes][numTopics];
+		nonZeroTypeTopicsBackMapping = new int[numTypes][numTopics];
+		nonZeroTypeTopicCnt = new int[numTypes];
+		tokensPerType = new int[numTypes];
+		
 		betaSum = beta * numTypes;
 		topicTypeCountMapping = new int [numTopics][numTypes];
+		threadLocalTypeTopicCounts = new AtomicInteger[numTypes][numTopics];
+		for (int i = 0; i < threadLocalTypeTopicCounts.length; i++) {
+			for (int j = 0; j < threadLocalTypeTopicCounts[i].length; j++) {
+				threadLocalTypeTopicCounts[i][j]= new AtomicInteger();
+			}
+		}
+		
 		// Transpose of the above
 		typeTopicCounts       = new int [numTypes][numTopics];
+		threadLocalTokensPerTopic = new AtomicInteger[numTopics];
+		for (int i = 0; i < threadLocalTokensPerTopic.length; i++) {
+			threadLocalTokensPerTopic[i] = new AtomicInteger();
+		}
 
 		// Looping over the new instances to initialize the topic assignment randomly
 		for (Instance instance : training) {
@@ -324,15 +367,30 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		bb.calculateBatch();
 		topicIndexBuilder = TopicIndexBuilderFactory.get(config,this);
 
+		// Initializing global sparse structure and tokensPerType
+		initTokensPerType(); 
+		
 		if(logger.getLevel()==Level.INFO) {
 			System.out.println("Loaded " + data.size() + " documents, with " + corpusWordCount + " words in total.");
 		}
 	}
 
 	protected void updateTypeTopicCount(int type, int topic, int count) {
+
+		if(typeTopicCounts[type][topic] == 0 && count > 0){
+			insertNonZeroTopicTypes(topic, type);
+		}
+		
 		topicTypeCountMapping[topic][type] += count;
 		typeTopicCounts[type][topic] += count;
+		threadLocalTypeTopicCounts[type][topic].addAndGet(count);
 		tokensPerTopic[topic] += count;
+		threadLocalTokensPerTopic[topic].addAndGet(count);
+
+		if(typeTopicCounts[type][topic] == 0 && count < 0){
+			removeNonZeroTopicTypes(topic, type);
+		}
+		
 		if(topicTypeCountMapping[topic][type]<0) {
 			System.err.println("Emergency print!");
 			debugPrintMMatrix();
@@ -411,6 +469,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			long beforeSync = System.currentTimeMillis();
 			try {
 				updateCounts();
+				
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -487,26 +546,39 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 		@Override
 		public TableBuildResult call() {
-			double [] probs = new double[numTopics];
-			int [] myTypeTopicCounts = typeTopicCounts[type];
 			
-			int topicMass = 0;
-			for (int i = 0; i < myTypeTopicCounts.length; i++) {
-				topicMass += myTypeTopicCounts[i];
+			double [] probs = new double[nonZeroTypeTopicCnt[type]];
+
+			// Iterate over nonzero topic indicators
+			int normConstant = 0;
+			for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
+				normConstant += probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]];
 			}
 
-			double typeMass = 0; // Type prior mass
-			for (int i = 0; i < myTypeTopicCounts.length; i++) {
-				typeMass += probs[i] = myTypeTopicCounts[i] / (double) topicMass;
-			}
-						
+			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
+			// 	typeMass += probs[i] = myTypeTopicCounts[i] / (double) topicMass;
+			// }
+			
+			// Normalize probabilities
+			// for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
+			//	  probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]] / (double) normConstant;
+			// }
+
 			if(aliasTables[type]==null) {
-				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
+				int aliasSize;
+				// TODO Fix so that Alias tables uses a minimum of memory by maximizing the Alias tables size to the number of tokens per type
+				//if(tokensPerType[type] > numTopics){
+					aliasSize = numTopics;
+				//} else {
+				//	aliasSize = tokensPerType[type];
+				//}
+				aliasTables[type] = new OptimizedGentleAliasMethodDynamicSize(probs, normConstant, aliasSize);
 			} else {
-				aliasTables[type].reGenerateAliasTable(probs, typeMass);
+				aliasTables[type].reGenerateAliasTable(probs, normConstant);
 			}
-				
-			return new TableBuildResult(type, aliasTables[type], typeMass);
+			
+			// TODO: Check Spalias that typeNorm is correct (and not normalized).
+			return new TableBuildResult(type, aliasTables[type], -1);
 		}   
 	}
 	
@@ -534,7 +606,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			results = tableBuilderExecutor.invokeAll(builders);
 			for (Future<TableBuildResult> result : results) {
 				aliasTables[result.get().type] = result.get().table;
-				typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
+				// typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -709,6 +781,36 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			System.exit(-1);
 		}
 	}
+	
+	class LightLDADocSamplingContext extends UncollapsedLDADocSamplingContext {
+
+		AtomicInteger [][] myTypeTopicCounts;
+		AtomicInteger [] myTokensPerTopic;
+		
+		public LightLDADocSamplingContext(FeatureSequence tokens, LabelSequence topics, int myBatch, int docId, 
+				AtomicInteger [][] myTypeTopicCounts, AtomicInteger [] myTokensPerTopic ) {
+			super(tokens, topics, myBatch, docId);
+			this.myTypeTopicCounts = myTypeTopicCounts;
+			this.myTokensPerTopic = myTokensPerTopic;
+		}
+		
+		public AtomicInteger[][] getMyTypeTopicCounts() {
+			return myTypeTopicCounts;
+		}
+
+		public void setMyTypeTopicCounts(AtomicInteger[][] myTypeTopicCounts) {
+			this.myTypeTopicCounts = myTypeTopicCounts;
+		}
+		
+		public AtomicInteger[] getMyTokensPerTopic() {
+			return myTokensPerTopic;
+		}
+
+		public void setMyTokensPerType(AtomicInteger[] myTokensPerType) {
+			this.myTokensPerTopic = myTokensPerType;
+		}
+
+	}
 
 	class RecursiveDocumentSampler extends RecursiveAction {
 		final static long serialVersionUID = 1L;
@@ -731,11 +833,10 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		protected void compute() {
 			if ( (endDoc-startDoc) <= limit ) {
 				for (int docIdx = startDoc; docIdx < endDoc; docIdx++) {
-					FeatureSequence tokenSequence =
-							(FeatureSequence) data.get(docIdx).instance.getData();
-					LabelSequence topicSequence =
-							(LabelSequence) data.get(docIdx).topicSequence;
-					sampleTopicAssignmentsParallel (new UncollapsedLDADocSamplingContext(tokenSequence, topicSequence, myBatch, docIdx));
+					FeatureSequence tokenSequence =	(FeatureSequence) data.get(docIdx).instance.getData();
+					LabelSequence topicSequence =	(LabelSequence) data.get(docIdx).topicSequence;
+					sampleTopicAssignmentsParallel(new LightLDADocSamplingContext(tokenSequence, topicSequence, myBatch, docIdx, 
+							threadLocalTypeTopicCounts, threadLocalTokensPerTopic));
 				}
 			}
 			else {
@@ -812,7 +913,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		System.out.println();System.out.println();
 	}
 
-	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctxIn) {
+		LightLDADocSamplingContext ctx = (LightLDADocSamplingContext) ctxIn;
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
@@ -820,62 +922,106 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		final int docLength = tokens.getLength();
 		if(docLength==0) return;
 		
+		AtomicInteger[][] localTypeTopicCounts = ctx.getMyTypeTopicCounts();
+		AtomicInteger[] localTokensPerTopic = ctx.getMyTokensPerTopic();
+		
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
 
-		double[] localTopicCounts = new double[numTopics];
-		double[] localTopicCounts_i = new double[numTopics];
+		double[] documentLocalTopicCounts = new double[numTopics];
+		double[] documentLocalTopicCounts_i = new double[numTopics];
 		
 		// Populate topic counts
 		int nonZeroTopicCnt = 0; // Only needed for statistics
 		for (int position = 0; position < docLength; position++) {
 			int topicInd = oneDocTopics[position];
-			localTopicCounts[topicInd]++;
-			localTopicCounts_i[topicInd]++;
-			if(localTopicCounts[topicInd]==1) nonZeroTopicCnt++;
+			documentLocalTopicCounts[topicInd]++;
+			documentLocalTopicCounts_i[topicInd]++;
+			if(documentLocalTopicCounts[topicInd]==1) nonZeroTopicCnt++;
 		}
 		
 		kdDensities.addAndGet(nonZeroTopicCnt);
-		
+				
 		//	Iterate over the words in the document
 		for (int position = 0; position < docLength; position++) {
 			int type = tokenSequence[position];
 			int oldTopic = oneDocTopics[position]; // z_position
 			int newTopic = oldTopic;
 			
-			if(localTopicCounts[oldTopic]<0) 
+			if(documentLocalTopicCounts[oldTopic]<0) 
 				throw new IllegalStateException("LightPC-LDA: Counts cannot be negative! Count for topic:" 
-						+ oldTopic + " is: " + localTopicCounts[oldTopic]);
+						+ oldTopic + " is: " + documentLocalTopicCounts[oldTopic]);
 
 			decrement(myBatch, oldTopic, type);
 
 			// #####################################
-			// Word Topic Distribution 
+			// Word-Topic Proposal 
 			// #####################################
 			
 			// N_{d,Z_i} => # counts of topic Z_i in document d
+			// s = old state
+			// t = proposed state
 			
-			localTopicCounts_i[oldTopic]--;
+			documentLocalTopicCounts_i[oldTopic]--;
 			
-			double u = ThreadLocalRandom.current().nextDouble();
-			int wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
+			// Draw topic proposal t
+			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + betaSum); // (n_w + V*beta) * u where u ~ U(0,1)
+
+			int wordTopicIndicatorProposal = -1;
+			if(u_w < tokensPerType[type]) {
+				double u = u_w / (double) tokensPerType[type];
+				wordTopicIndicatorProposal = nonZeroTypeTopics[type][aliasTables[type].generateSample(u)];
+			} else {
+				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / betaSum) * numTopics); // assume symmetric beta, just draws one topic
+			}
+						
+			// Make sure we actually sampled a valid topic
+			if (wordTopicIndicatorProposal < 0 || wordTopicIndicatorProposal > numTopics) {
+				throw new IllegalStateException ("Collapsed Light-LDA: New valid topic not sampled (" + newTopic + ").");
+			}
 			
-			// If we drew a new topic indicator, do MH step for Word proposal
+			
 			if(wordTopicIndicatorProposal!=oldTopic) {
-				double n_d_zi_i = localTopicCounts_i[oldTopic];
-				double n_d_zstar_i = localTopicCounts_i[wordTopicIndicatorProposal];
-				double pi_w = (alpha + n_d_zstar_i) / (alpha + n_d_zi_i);
+				// If we drew a new topic indicator, do MH step for Word proposal
+				
+				double n_d_s_i = documentLocalTopicCounts_i[oldTopic];
+				double n_d_t_i = documentLocalTopicCounts_i[wordTopicIndicatorProposal];
+				double n_w_s = localTypeTopicCounts[type][oldTopic].get();
+				double n_w_t = localTypeTopicCounts[type][wordTopicIndicatorProposal].get();				
+				double n_w_s_i = localTypeTopicCounts[type][oldTopic].get() - 1.0;
+				double n_w_t_i = n_w_t; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
+				double n_t = localTokensPerTopic[wordTopicIndicatorProposal].get(); // Global counts of the number of topic indicators in each topic
+				double n_s = localTokensPerTopic[oldTopic].get();
+				double n_t_i = n_t; 
+				double n_s_i = n_s - 1.0; 
+				
+				// Calculate rejection rate
+				double pi_w = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
+				pi_w *= ((beta + n_w_t_i) / (beta + n_w_s_i));
+				pi_w *= ((betaSum + n_s_i) / (betaSum + n_t_i));
+				pi_w *= ((beta + n_w_s) / (beta + n_w_t));
+				pi_w *= ((beta + n_t) / (beta + n_s));
+				
 				if(pi_w > 1){
-					localTopicCounts[oldTopic]--;
-					localTopicCounts[wordTopicIndicatorProposal]++;
+					documentLocalTopicCounts[oldTopic]--;
+					documentLocalTopicCounts[wordTopicIndicatorProposal]++;
+					localTypeTopicCounts[type][oldTopic].decrementAndGet();
+					localTypeTopicCounts[type][wordTopicIndicatorProposal].incrementAndGet();
+					localTokensPerTopic[oldTopic].decrementAndGet();
+					localTokensPerTopic[wordTopicIndicatorProposal].incrementAndGet();
+					
 					oldTopic = wordTopicIndicatorProposal;
 				} else {
 					double u_pi_w = ThreadLocalRandom.current().nextDouble();
 					boolean accept_pi_w = u_pi_w < pi_w;
 
 					if(accept_pi_w) {				
-						localTopicCounts[oldTopic]--;
-						localTopicCounts[wordTopicIndicatorProposal]++;
+						documentLocalTopicCounts[oldTopic]--;
+						documentLocalTopicCounts[wordTopicIndicatorProposal]++;
+						localTypeTopicCounts[type][oldTopic].decrementAndGet();
+						localTypeTopicCounts[type][wordTopicIndicatorProposal].incrementAndGet();
+						localTokensPerTopic[oldTopic].decrementAndGet();
+						localTokensPerTopic[wordTopicIndicatorProposal].incrementAndGet();
 	
 						// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
 						// By doing this the below document proposal will be relative to the 
@@ -888,44 +1034,50 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			}
 			
 			// #####################################
-			// Document Topic Distribution 
+			// Document-Topic Proposal  
 			// #####################################
 			 
-			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha));
-			
+			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + alphaSum); // (n_d + K*alpha) * u where u ~ U(0,1)
+
 			int docTopicIndicatorProposal = -1;
 			if(u_i < oneDocTopics.length) {
 				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
 			} else {
-				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics);
+				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / alphaSum) * numTopics); // assume symmetric alpha, just draws one alpha
 			}
 			
 			// Make sure we actually sampled a valid topic
 			if (docTopicIndicatorProposal < 0 || docTopicIndicatorProposal > numTopics) {
-				throw new IllegalStateException ("Collapsed LightPC-LDA: New valid topic not sampled (" + newTopic + ").");
+				throw new IllegalStateException ("Collapsed Light-LDA: New valid topic not sampled (" + newTopic + ").");
 			}
 
 			// If we drew a new topic indicator, do MH step for Document proposal
 			if(docTopicIndicatorProposal!=oldTopic) {
-				double n_d_zstar_i = localTopicCounts_i[docTopicIndicatorProposal];
-				double n_d_zi_i = localTopicCounts_i[oldTopic];
-				double n_d_zi = localTopicCounts[oldTopic];
-				double n_d_zstar = localTopicCounts[docTopicIndicatorProposal];
-
-				double nom = typeTopicCounts[type][docTopicIndicatorProposal] * (alpha + n_d_zstar_i) * (alpha + n_d_zi);
-				double denom = typeTopicCounts[type][oldTopic] * (alpha + n_d_zi_i) * (alpha + n_d_zstar);
-				double ratio = nom / denom;
+				double n_d_s = documentLocalTopicCounts[oldTopic];
+				double n_d_t = documentLocalTopicCounts[docTopicIndicatorProposal];
+				double n_d_s_i = documentLocalTopicCounts_i[oldTopic];
+				double n_d_t_i = documentLocalTopicCounts_i[docTopicIndicatorProposal];
+				double n_w_s_i = localTypeTopicCounts[type][oldTopic].get() - 1.0;
+				double n_w_t_i = localTypeTopicCounts[type][docTopicIndicatorProposal].get(); // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
+				double n_t_i = localTokensPerTopic[docTopicIndicatorProposal].get(); // Global counts of the number of topic indicators in each topic
+				double n_s_i = localTokensPerTopic[oldTopic].get() - 1.0; 
+								
+				
+				// Calculate rejection rate
+				double pi_d = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
+				pi_d *= ((beta + n_w_t_i) / (beta + n_w_s_i));
+				pi_d *= ((betaSum + n_s_i) / (betaSum + n_t_i));
+				pi_d *= ((alpha + n_d_s) / (alpha + n_d_t));
+				
 				// Calculate MH acceptance Min.(1,ratio) but as an if else
-				if (ratio > 1){
+				if (pi_d > 1){
 					newTopic = docTopicIndicatorProposal;
 				} else {
-					double pi_d = ratio;
 					double u_pi_d = ThreadLocalRandom.current().nextDouble();
 					boolean accept_pi_d = u_pi_d < pi_d;
 	
 					if (accept_pi_d) {
 						newTopic = docTopicIndicatorProposal;
-						//docAccepts.incrementAndGet();
 					} else {
 						// We did not accept either word or document proposal 
 						// so oldTopic is still the best indicator
@@ -942,13 +1094,20 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			}
 
 			// Remove one count from old topic
-			localTopicCounts[oldTopic]--;
-			// Update the word topic indicator
+			documentLocalTopicCounts[oldTopic]--;
+			// Update the word topic indicator in document
 			oneDocTopics[position] = newTopic;
 			// Put that new topic into the counts
-			localTopicCounts[newTopic]++;
+			documentLocalTopicCounts[newTopic]++;
 			// Make sure the "_i" version is also up to date!
-			localTopicCounts_i[newTopic]++;
+			documentLocalTopicCounts_i[newTopic]++;
+			
+			// Update local versions of typeTopicCounts and tokensPerTopic 
+			localTypeTopicCounts[type][oldTopic].decrementAndGet();
+			localTypeTopicCounts[type][newTopic].incrementAndGet();
+			localTokensPerTopic[oldTopic].decrementAndGet();
+			localTokensPerTopic[newTopic].incrementAndGet();
+			
 		}
 	}
 
@@ -1199,5 +1358,31 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			topicTypeUpdates[topic] = topicUpdates.keys();
 		}
 		return topicTypeUpdates;
+	}
+		
+	/*
+	 * removeNonZeroTopicTypes() and insertNonZeroTopicTypes() needs to be synchronized
+	 * to remove the risk of updating the same type in nonZeroTypeTopicCnt
+	 */
+	protected synchronized void insertNonZeroTopicTypes(int topic, int type) {
+		//// We have a new non-zero topic put it in the last empty and update the others
+		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = topic;
+		nonZeroTypeTopicsBackMapping[type][topic] = nonZeroTypeTopicCnt[type];
+		nonZeroTypeTopicCnt[type]++;
+	}
+	
+	/*
+	 * removeNonZeroTopicTypes() and insertNonZeroTopicTypes() needs to be synchronized
+	 * to remove the risk of updating the same type in nonZeroTypeTopicCnt
+	 */
+	protected synchronized void removeNonZeroTopicTypes(int topic, int type) {
+		//// Remove the topic by copying the last element to it
+		if (nonZeroTypeTopicCnt[type] < 1) {
+			throw new IllegalArgumentException ("CollapsedLightLDA: Cannot remove, count is less than 1 => " + nonZeroTypeTopicCnt[type]);
+		}
+		int topicIndex = nonZeroTypeTopicsBackMapping[type][topic];
+		nonZeroTypeTopicCnt[type]--;
+		nonZeroTypeTopics[type][topicIndex] = nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]];
+		nonZeroTypeTopicsBackMapping[type][nonZeroTypeTopics[type][topicIndex]] = topicIndex;
 	}
 }
