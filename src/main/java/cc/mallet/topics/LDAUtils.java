@@ -1029,4 +1029,54 @@ public class LDAUtils {
 		}
 		return numZero / (rows*cols);
 	}
+
+	public static List<String> loadDatasetAsString(String inputFile) throws FileNotFoundException {
+		SimpleTokenizerLarge tokenizer = new SimpleTokenizerLarge(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
+		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
+		int dataGroup = 3;
+		int labelGroup = 2;
+		int nameGroup = 1; // data, label, name fields
+		List<String> files = new ArrayList<>(); 
+
+		CsvIterator reader = new CsvIterator(
+				new FileReader(inputFile),
+				lineRegex,
+				dataGroup,
+				labelGroup,
+				nameGroup);
+
+		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
+		Alphabet alphabet = new Alphabet();
+
+		//StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
+
+		Target2Label ttl = new Target2Label ();
+		
+		pipes.add(tokenizer);
+		//pipes.add(sl2fs);
+		pipes.add(ttl);
+
+		Pipe serialPipe = new SerialPipes(pipes);
+
+		InstanceList instances = new InstanceList(serialPipe);
+		instances.addThruPipe(reader);
+		for (Instance instance : instances) {
+			//FeatureSequence features = (FeatureSequence) instance.getData();
+			List<String> text = (List<String>) instance.getData();
+			String result = "";
+			for (String string : text) {
+				result += string + " ";
+			}
+//			for (int i = 0; i < features.size(); i++) {
+//				result += alphabet.lookupObject(features.getIndexAtPosition(i)) + " ";
+//			}
+			files.add(result);
+		}
+		return files;	
+		}
+
+	public static String instanceLabelToString(Instance instance, LabelAlphabet labelAlphabet) {
+		String label  = instance.getLabeling().getBestLabel().toString();
+		return label;
+	}
 }
