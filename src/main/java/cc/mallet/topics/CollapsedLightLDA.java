@@ -42,7 +42,6 @@ import cc.mallet.types.SparseDirichlet;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LDAThreadFactory;
 import cc.mallet.util.LoggingUtils;
-import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.OptimizedGentleAliasMethodDynamicSize;
 import cc.mallet.util.WalkerAliasTable;
 
@@ -843,7 +842,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				int range = (endDoc-startDoc);
 				int startDoc1 = startDoc;
 				int endDoc1 = startDoc + (range / 2);
-				int startDoc2 = endDoc1+1;
+				int startDoc2 = endDoc1;
 				int endDoc2 = endDoc;
 				invokeAll(new RecursiveDocumentSampler(startDoc1,endDoc1,myBatch + 1,limit),
 						new RecursiveDocumentSampler(startDoc2,endDoc2,myBatch + 2,limit));
