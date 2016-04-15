@@ -30,6 +30,8 @@ public class SystematicSamplingTest {
 				samples[indices[j]] += 1;
 			}
 		}
+		// Shouldn't get here
+		fail();
 	}
 
 	@Test(expected=IllegalArgumentException.class)
@@ -47,6 +49,8 @@ public class SystematicSamplingTest {
 				samples[indices[j]] += 1;
 			}
 		}
+		// Shouldn't get here
+		fail();
 	}
 
 	@Test(expected=IllegalArgumentException.class)
@@ -64,6 +68,8 @@ public class SystematicSamplingTest {
 				samples[indices[j]] += 1;
 			}
 		}
+		// Shouldn't get here
+		fail();
 	}
 
 	@Test
