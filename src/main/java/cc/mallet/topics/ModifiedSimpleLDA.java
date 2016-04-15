@@ -3,6 +3,8 @@ package cc.mallet.topics;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -10,7 +12,9 @@ import org.apache.commons.lang.NotImplementedException;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.Alphabet;
+import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
+import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.util.MalletLogger;
@@ -44,6 +48,17 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	// The cumulative sum of the token mass, (0-1)
 	protected double [] typeFrequencyCumSum;
 	
+	// for dirichlet estimation
+	public int[] docLengthCounts; // histogram of document sizes
+	public int[][] topicDocCounts; // histogram of document/topic counts, indexed by <topic index, sequence position index>
+	public int totalTokens;
+	boolean usingSymmetricAlpha = true;
+	// The number of times each type appears in the corpus
+	int[] typeTotals;
+	// The max over typeTotals, used for beta optimization
+	int maxTypeCount;
+	private boolean histogramsInitialized; 
+	
 	public ModifiedSimpleLDA(LDAConfiguration conf) {
 		super(conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), 
 				conf.getAlpha(LDAConfiguration.ALPHA_DEFAULT)*conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), 
@@ -56,8 +71,6 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		logger.info("Simple LDA: " + numTopics + " topics");
 		logger.setLevel(Level.FINE);
 	}
-	
-	
 
 	@Override
 	public void setRandomSeed(int seed) {
@@ -481,5 +494,156 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	@Override
 	public void preZ() {
 		
+	}
+	
+	/** 
+	 *  Gather statistics on the size of documents 
+	 *  and create histograms for use in Dirichlet hyperparameter
+	 *  optimization.
+	 */
+	protected void initializeHistograms() {
+		int maxTokens = 0;
+		totalTokens = 0;
+		int seqLen;
+
+		Map<Integer,Integer> docLenCnts = new java.util.HashMap<Integer, Integer>();
+		for (int doc = 0; doc < data.size(); doc++) {
+			FeatureSequence tokens = (FeatureSequence) data.get(doc).instance.getData();
+			seqLen = tokens.getLength();
+			if (seqLen > maxTokens)
+				maxTokens = seqLen;
+			totalTokens += seqLen;
+			
+			if(docLenCnts.get(seqLen) == null) {
+				docLenCnts.put(seqLen,0); 
+			}
+			docLenCnts.put(seqLen,docLenCnts.get(seqLen) + 1);
+			
+			for (int position = 0; position < tokens.getLength(); position++) {
+				int type = tokens.getIndexAtPosition(position);
+				typeTotals[ type ]++;
+			}
+		}
+		
+		for (int type = 0; type < numTypes; type++) {
+			if (typeTotals[type] > maxTypeCount) { maxTypeCount = typeTotals[type]; }
+		}
+
+		logger.info("max tokens: " + maxTokens);
+		logger.info("total tokens: " + totalTokens);
+
+		docLengthCounts = new int[maxTokens + 1];
+		for (int i = 0; i < docLengthCounts.length; i++) {
+			if(docLenCnts.get(i)!=null)
+				docLengthCounts[i] = docLenCnts.get(i);
+		}
+		topicDocCounts = new int[numTopics][maxTokens + 1];
+		
+		betaSum = beta * numTypes;
+		histogramsInitialized = true;
+	}
+	
+	public void optimizeAlpha(WorkerRunnable[] runnables) {
+		if(!histogramsInitialized) throw new IllegalStateException("initializeHistograms has not been called beefore calling optimizeAlpha!");
+		// First clear the sufficient statistic histograms
+
+		Arrays.fill(docLengthCounts, 0);
+		for (int topic = 0; topic < topicDocCounts.length; topic++) {
+			Arrays.fill(topicDocCounts[topic], 0);
+		}
+
+		
+		for (int thread = 0; thread < runnables.length; thread++) {
+			int[][] sourceTopicCounts = runnables[thread].getTopicDocCounts();
+
+			for (int topic=0; topic < numTopics; topic++) {
+
+				if (! usingSymmetricAlpha) {
+					for (int count=0; count < sourceTopicCounts[topic].length; count++) {
+						if (sourceTopicCounts[topic][count] > 0) {
+							topicDocCounts[topic][count] += sourceTopicCounts[topic][count];
+							sourceTopicCounts[topic][count] = 0;
+						}
+					}
+				}
+				else {
+					// For the symmetric version, we only need one 
+					//  count array, which I'm putting in the same 
+					//  data structure, but for topic 0. All other
+					//  topic histograms will be empty.
+					// I'm duplicating this for loop, which 
+					//  isn't the best thing, but it means only checking
+					//  whether we are symmetric or not numTopics times, 
+					//  instead of numTopics * longest document length.
+					for (int count=0; count < sourceTopicCounts[topic].length; count++) {
+						if (sourceTopicCounts[topic][count] > 0) {
+							topicDocCounts[0][count] += sourceTopicCounts[topic][count];
+							//			 ^ the only change
+							sourceTopicCounts[topic][count] = 0;
+						}
+					}
+				}
+			}
+		}
+
+		if (usingSymmetricAlpha) {
+			alphaSum = Dirichlet.learnSymmetricConcentration(topicDocCounts[0],
+															 docLengthCounts,
+															 numTopics,
+															 alphaSum);
+			//for (int topic = 0; topic < numTopics; topic++) {
+				//alpha[topic] = alphaSum / numTopics;
+				alpha = alphaSum / numTopics;
+			//}
+		}
+		else {
+			throw new UnsupportedOperationException("Assymetric alpha not implemented yet!");
+			//alphaSum = Dirichlet.learnParameters(alpha, topicDocCounts, docLengthCounts, 1.001, 1.0, 1);
+		}
+	}
+
+	public void optimizeBeta(WorkerRunnable[] runnables) {
+		if(!histogramsInitialized) throw new IllegalStateException("initializeHistograms has not been called beefore calling optimizeBeta!");
+		// The histogram starts at count 0, so if all of the
+		//  tokens of the most frequent type were assigned to one topic,
+		//  we would need to store a maxTypeCount + 1 count.
+		int[] countHistogram = new int[maxTypeCount + 1];
+		
+		// Now count the number of type/topic pairs that have
+		//  each number of tokens.
+
+		int index;
+		for (int type = 0; type < numTypes; type++) {
+			int[] counts = typeTopicCounts[type];
+			index = 0;
+			while (index < counts.length) {
+				countHistogram[counts[index]]++;
+				index++;
+			}
+		}
+			
+		// Figure out how large we need to make the "observation lengths"
+		//  histogram.
+		int maxTopicSize = 0;
+		for (int topic = 0; topic < numTopics; topic++) {
+			if (tokensPerTopic[topic] > maxTopicSize) {
+				maxTopicSize = tokensPerTopic[topic];
+			}
+		}
+
+		// Now allocate it and populate it.
+		int[] topicSizeHistogram = new int[maxTopicSize + 1];
+		for (int topic = 0; topic < numTopics; topic++) {
+			topicSizeHistogram[ tokensPerTopic[topic] ]++;
+		}
+
+		betaSum = Dirichlet.learnSymmetricConcentration(countHistogram,
+														topicSizeHistogram,
+														numTypes,
+														betaSum);
+		beta = betaSum / numTypes;
+		
+
+		logger.info("[beta: " + formatter.format(beta) + "] ");		
 	}
 }
