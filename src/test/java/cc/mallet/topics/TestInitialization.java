@@ -67,6 +67,10 @@ public class TestInitialization {
 		collapsed.setConfiguration(config);
 		collapsed.addInstances(instances);
 
+		SpaliasUncollapsedParallelLDA spalias = new SpaliasUncollapsedParallelLDA(config);
+		spalias.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		spalias.addInstances(instances);
+		
 		UncollapsedParallelLDA uncollapsed = new UncollapsedParallelLDA(config);
 		uncollapsed.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
 		uncollapsed.addInstances(instances);
@@ -75,63 +79,120 @@ public class TestInitialization {
 		adlda.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
 		adlda.addInstances(instances);
 
+		LightPCLDA lightpclda = new LightPCLDA(config);
+		lightpclda.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		lightpclda.addInstances(instances);
+
+		CollapsedLightLDA collapsedlight = new CollapsedLightLDA(config);
+		collapsedlight.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		collapsedlight.addInstances(instances);
+		
+		int [][] spaliasTopicIndicators     = spalias.getTypeTopicCounts();
 		int [][] collapsedTopicIndicators   = collapsed.getTypeTopicCounts();
 		int [][] uncollapsedTopicIndicators = uncollapsed.getTypeTopicCounts();
 		int [][] adldaTopicIndicators       = adlda.getTypeTopicCounts();
+		int [][] lightPcLdaTopicIndicators  = lightpclda.getTypeTopicCounts();
+		int [][] collapsedlightTopicIndicators  = collapsedlight.getTypeTopicCounts();
 
 		for (int i = 0; i < uncollapsedTopicIndicators.length; i++) {
 			for (int j = 0; j < uncollapsedTopicIndicators[0].length; j++) {
+				assertEquals("Collapsed and Spalias are not the same: " 
+						+ collapsedTopicIndicators[i][j] + "!=" + spaliasTopicIndicators[i][j], 
+						collapsedTopicIndicators[i][j], spaliasTopicIndicators[i][j]);
 				assertEquals("Collapsed and UnCollapsed are not the same: " 
 						+ collapsedTopicIndicators[i][j] + "!=" + uncollapsedTopicIndicators[i][j], 
 						collapsedTopicIndicators[i][j], uncollapsedTopicIndicators[i][j]);
 				assertEquals("Collapsed and ADLDA are not the same: " 
 						+ collapsedTopicIndicators[i][j] + "!=" + adldaTopicIndicators[i][j], 
 						collapsedTopicIndicators[i][j], adldaTopicIndicators[i][j]);
+				assertEquals("Collapsed and LightPCLDA are not the same: " 
+						+ collapsedTopicIndicators[i][j] + "!=" + lightPcLdaTopicIndicators[i][j], 
+						collapsedTopicIndicators[i][j], lightPcLdaTopicIndicators[i][j]);
+				assertEquals("Collapsed and CollapsedLight are not the same: " 
+						+ collapsedTopicIndicators[i][j] + "!=" + collapsedlightTopicIndicators[i][j], 
+						collapsedTopicIndicators[i][j], collapsedlightTopicIndicators[i][j]);
 			}
 		}
 
+		int [] spaliasTokensPerTopic   = spalias.getTopicTotals();
 		int [] collapsedTokensPerTopic   = collapsed.getTopicTotals();
 		int [] uncollapsedTokensPerTopic = uncollapsed.getTopicTotals();
-		int [] adldaTokensPerTopic      = adlda.getTopicTotals();
+		int [] adldaTokensPerTopic       = adlda.getTopicTotals();
+		int [] lightPcLdaTokensPerTopic  = lightpclda.getTopicTotals();
+		int [] collapsedlightTokensPerTopic  = collapsedlight.getTopicTotals();
 
 		for (int i = 0; i < collapsedTokensPerTopic.length; i++) {
 			assertEquals("Collapsed and ADLA token counts are not the same: " 
 					+ collapsedTokensPerTopic[i] + "!=" + adldaTokensPerTopic[i], 
 					collapsedTokensPerTopic[i], adldaTokensPerTopic[i]);
+			assertEquals("Collapsed and Spalias token counts are not the same: " 
+					+ collapsedTokensPerTopic[i] + "!=" + spaliasTokensPerTopic[i], 
+					collapsedTokensPerTopic[i], spaliasTokensPerTopic[i]);
 			assertEquals("Collapsed and UnCollapsed token counts are not the same: " 
 					+ collapsedTokensPerTopic[i] + "!=" + uncollapsedTokensPerTopic[i], 
 					collapsedTokensPerTopic[i], uncollapsedTokensPerTopic[i]);
+			assertEquals("Collapsed and LightPCLDA token counts are not the same: " 
+					+ collapsedTokensPerTopic[i] + "!=" + lightPcLdaTokensPerTopic[i], 
+					collapsedTokensPerTopic[i], lightPcLdaTokensPerTopic[i]);
+			assertEquals("Collapsed and CollapsedLight token counts are not the same: " 
+					+ collapsedTokensPerTopic[i] + "!=" + collapsedlightTokensPerTopic[i], 
+					collapsedTokensPerTopic[i], collapsedlightTokensPerTopic[i]);
 		}
 
+		double spaliasModelLogLikelihood   = spalias.modelLogLikelihood();
 		double collapsedModelLogLikelihood   = collapsed.modelLogLikelihood();
 		double uncollapsedModelLogLikelihood = uncollapsed.modelLogLikelihood();
 		double adldaModelLogLikelihood       = adlda.modelLogLikelihood();
+		double lightpcldaModelLogLikelihood  = lightpclda.modelLogLikelihood();
+		double collapsedlightModelLogLikelihood  = collapsedlight.modelLogLikelihood();
 		
 		assertEquals("ADLDA and Collapsed LogLikelihoods are not the same: " 
 				+ adldaModelLogLikelihood + " != " + collapsedModelLogLikelihood 
 				+ " Diff: " + (adldaModelLogLikelihood-collapsedModelLogLikelihood) ,
 				adldaModelLogLikelihood,	collapsedModelLogLikelihood, epsilon);
-
+		assertEquals("Spalias and Collapsed LogLikelihoods are not the same: " 
+				+ spaliasModelLogLikelihood + " != " + collapsedModelLogLikelihood 
+				+ " Diff: " + (spaliasModelLogLikelihood-collapsedModelLogLikelihood) ,
+				spaliasModelLogLikelihood,	collapsedModelLogLikelihood, epsilon);
 		assertEquals("Collapsed and UnCollapsed LogLikelihoods are not the same: " 
 				+ collapsedModelLogLikelihood + " != " + uncollapsedModelLogLikelihood 
 				+ " Diff: " + (collapsedModelLogLikelihood-uncollapsedModelLogLikelihood) ,
 				collapsedModelLogLikelihood,	uncollapsedModelLogLikelihood, epsilon);
-		
+		assertEquals("Collapsed and LightPCLDA LogLikelihoods are not the same: " 
+				+ collapsedModelLogLikelihood + " != " + lightpcldaModelLogLikelihood 
+				+ " Diff: " + (collapsedModelLogLikelihood-lightpcldaModelLogLikelihood) ,
+				collapsedModelLogLikelihood, lightpcldaModelLogLikelihood, epsilon);
+		assertEquals("Collapsed and CollapsedLight LogLikelihoods are not the same: " 
+				+ collapsedModelLogLikelihood + " != " + collapsedlightModelLogLikelihood 
+				+ " Diff: " + (collapsedModelLogLikelihood-collapsedlightModelLogLikelihood) ,
+				collapsedModelLogLikelihood, collapsedlightModelLogLikelihood, epsilon);
+
 		TestUtils.assertEqualArrays(collapsed.getTypeTopicCounts(), uncollapsed.getTypeTopicCounts());
-		
-		
+	
+		int [][] spaliasZIndicators   = spalias.getZIndicators();
 		int [][] collapsedZIndicators   = collapsed.getZIndicators();
 		int [][] uncollapsedZIndicators = uncollapsed.getZIndicators();
 		int [][] adldaZIndicators       = adlda.getZIndicators();
+		int [][] lightPcLdaZIndicators  = lightpclda.getZIndicators();
+		int [][] collapsedlightZIndicators  = collapsedlight.getZIndicators();
 		
 		for (int i = 0; i < collapsedZIndicators.length; i++) {
 			for (int j = 0; j < collapsedZIndicators[i].length; j++) {
-				assertEquals("Collapsed and UnCollapsed are not the same: " 
+				assertEquals("Collapsed and UnCollapsed ZIndicators are not the same: " 
 						+ collapsedZIndicators[i][j] + "!=" + uncollapsedZIndicators[i][j], 
 						collapsedZIndicators[i][j], uncollapsedZIndicators[i][j]);
-				assertEquals("Collapsed and ADLDA are not the same: " 
+				assertEquals("Collapsed and Spalias ZIndicators are not the same: " 
+						+ collapsedZIndicators[i][j] + "!=" + spaliasZIndicators[i][j], 
+						collapsedZIndicators[i][j], spaliasZIndicators[i][j]);
+				assertEquals("Collapsed and ADLDA ZIndicators are not the same: " 
 						+ collapsedZIndicators[i][j] + "!=" + adldaZIndicators[i][j], 
 						collapsedZIndicators[i][j], adldaZIndicators[i][j]);
+				assertEquals("Collapsed and LightPCLDA ZIndicators are not the same: " 
+						+ collapsedZIndicators[i][j] + "!=" + lightPcLdaZIndicators[i][j], 
+						collapsedZIndicators[i][j], lightPcLdaZIndicators[i][j]);
+				assertEquals("Collapsed and LightPCLDA ZIndicators are not the same: " 
+						+ collapsedZIndicators[i][j] + "!=" + collapsedlightZIndicators[i][j], 
+						collapsedZIndicators[i][j], collapsedlightZIndicators[i][j]);
 			}
 		}
 	}
