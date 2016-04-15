@@ -4,14 +4,18 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 public class IndexSorter {
-
-	public IndexSorter() {
-	}
 	
-	public static int [] getSortedIndices(double [] probabilities) {
-		double [][] pairs = new double[probabilities.length][];
+	/**
+	 * Returns an array of indices into the <code>values</code> array, where the first entry is the index
+	 * of the largest value in <code>values</code>
+	 * 
+	 * @param values Values to be index sorted
+	 * @return Array of indexes, with the index of the biggest entry in <code>values</code> comes first
+	 */
+	public static int [] getSortedIndices(double [] values) {
+		double [][] pairs = new double[values.length][];
 		int i = 0;
-		for(double p : probabilities)
+		for(double p : values)
 			pairs[i] = new double[] { p, i++ };
 	
 		pairs = sortPairs(pairs);
@@ -31,12 +35,20 @@ public class IndexSorter {
 				if(o1 == null && o2 == null) return 0;
 				if(o1 == null)      		 return 1;
 				if(o2 == null)				 return -1;
-				return ((double[])o1)[0] < ((double[])o2)[0] ? 1 : -1;
+				return ((double[])o1)[0] < ((double[])o2)[0] ? 1 :
+					((((double[])o1)[0] == ((double[])o2)[0]) ? 0 : -1);
 			}
 		});
 		return pairs;
 	}
 
+	/**
+	 * Returns an array of indices into the <code>values</code> array, where the first entry is the index
+	 * of the largest value in <code>values</code>
+	 * 
+	 * @param values Values to be index sorted
+	 * @return Array of indexes, with the index of the biggest entry in <code>values</code> comes first
+	 */
 	public static int [] getSortedIndices(int [] values) {
 		int [][] pairs = new int[values.length][];
 		int i = 0;
