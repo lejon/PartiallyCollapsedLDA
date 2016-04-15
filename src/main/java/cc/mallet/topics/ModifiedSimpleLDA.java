@@ -320,7 +320,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	 * @return document topic means 
 	 */
 	public static double [][] getZbar(ArrayList<TopicAssignment> data, int numTopics) {
-		double [][] docTopicMeans = new double [data.size()][numTopics];
+		double [][] docTopicMeans = new double [data.size()][];
 		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
 			FeatureSequence tokenSequence =
 					(FeatureSequence) data.get(docIdx).instance.getData();
@@ -330,13 +330,14 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			int docLength = tokenSequence.getLength();
 			int [] oneDocTopics = topicSequence.getFeatures();
 	
-			calcZBar(numTopics, docTopicMeans, docIdx, docLength, oneDocTopics);
+			docTopicMeans[docIdx] = calcZBar(numTopics, docLength, oneDocTopics);
 		}
 		return docTopicMeans;
 	}
 
 
-	static void calcZBar(int numTopics, double[][] docTopicMeans, int docIdx, int docLength, int[] oneDocTopics) {
+	static double[] calcZBar(int numTopics, int docLength, int[] oneDocTopics) {
+		double[] docTopicMeans = new double[numTopics];
 		double[] localTopicCounts = new double[numTopics];
 
 		for (int position = 0; position < docLength; position++) {
@@ -346,14 +347,15 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 
 		for (int k = 0; k < numTopics; k++) {
 			if(docLength==0) {
-				docTopicMeans[docIdx][k] = 0.0;
+				docTopicMeans[k] = 0.0;
 			} else {					
-				docTopicMeans[docIdx][k] = localTopicCounts[k] / docLength;
+				docTopicMeans[k] = localTopicCounts[k] / docLength;
 			}
-			if(Double.isInfinite(docTopicMeans[docIdx][k]) || Double.isNaN(docTopicMeans[docIdx][k]) || docTopicMeans[docIdx][k] < 0) { 
-				throw new IllegalStateException("docTopicMeans is broken: DocIdx=" + docIdx + " Topic=" + k + " mean=" + docTopicMeans[docIdx][k]);  
+			if(Double.isInfinite(docTopicMeans[k]) || Double.isNaN(docTopicMeans[k]) || docTopicMeans[k] < 0) { 
+				throw new IllegalStateException("docTopicMeans is broken: " +  " Topic=" + k + " mean=" + docTopicMeans[k]);  
 			}
 		}
+		return docTopicMeans;
 	}
 	
 	/**
@@ -374,7 +376,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	 * @return estimate of theta
 	 */
 	public static double [][] getThetaEstimate(ArrayList<TopicAssignment> data, int numTopics, double alpha) {
-		double [][] thetaEstimate = new double [data.size()][numTopics];
+		double [][] thetaEstimate = new double[data.size()][];
 		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
 			FeatureSequence tokenSequence =
 					(FeatureSequence) data.get(docIdx).instance.getData();
@@ -384,37 +386,47 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			int docLength = tokenSequence.getLength();
 			int [] oneDocTopics = topicSequence.getFeatures();
 	
-			calcThetaEstimate(numTopics, alpha, thetaEstimate, docIdx, docLength, oneDocTopics);
+			thetaEstimate[docIdx] = calcThetaEstimate(numTopics, alpha, docLength, oneDocTopics);
 		}
 		return thetaEstimate;
 	}
 
+	public static double [] getThetaEstimate(Instance instance, int numTopics, double alpha, int[] oneDocTopics) {
+		FeatureSequence tokenSequence =	(FeatureSequence) instance.getData();
+		int docLength = tokenSequence.getLength();
 
-	static void calcThetaEstimate(int numTopics, double alpha, double[][] thetaEstimate, 
-			int docIdx, int docLength, 	int[] oneDocTopics) {
+		return calcThetaEstimate(numTopics, alpha, docLength, oneDocTopics);
+	}
+
+	static double [] calcThetaEstimate(int numTopics, double [] alpha, int docLength, 	int[] oneDocTopics) {
+		double [] thetaEstimate = new double[numTopics];
 		double[] localTopicCounts = new double[numTopics];
 
 		for (int position = 0; position < docLength; position++) {
 			int topicInd = oneDocTopics[position];
 			localTopicCounts[topicInd]++;
 		}
-		
-		double normalizer = alpha * numTopics + docLength;
-		
+
+		double normalizer = 0.0;
+		for (int k = 0; k < numTopics; k++) {
+			normalizer += localTopicCounts[k] + alpha[k];
+		}
+
 		for (int k = 0; k < numTopics; k++) {
 			if(docLength==0) {
-				thetaEstimate[docIdx][k] = 0.0;
+				thetaEstimate[k] = 0.0;
 			} else {					
-				thetaEstimate[docIdx][k] = (localTopicCounts[k] + alpha) / normalizer;
+				thetaEstimate[k] = (localTopicCounts[k] + alpha[k]) / normalizer;
 			}
-			if(Double.isInfinite(thetaEstimate[docIdx][k]) || Double.isNaN(thetaEstimate[docIdx][k]) || thetaEstimate[docIdx][k] < 0) { 
-				throw new IllegalStateException("theta estimate is broken: DocIdx=" + docIdx + " Topic=" + k + " theta est=" + thetaEstimate[docIdx][k]);  
+			if(Double.isInfinite(thetaEstimate[k]) || Double.isNaN(thetaEstimate[k]) || thetaEstimate[k] < 0) { 
+				throw new IllegalStateException("theta estimate is broken: " + " Topic=" + k + " theta est=" + thetaEstimate[k]);  
 			}
 		}
+		return thetaEstimate;
 	}
 	
-	static void calcThetaEstimate(int numTopics, double [] alpha, double[][] thetaEstimate, 
-			int docIdx, int docLength, 	int[] oneDocTopics) {
+	static double [] calcThetaEstimate(int numTopics, double alpha, int docLength, int[] oneDocTopics) {
+		double [] thetaEstimate = new double[numTopics];
 		double[] localTopicCounts = new double[numTopics];
 
 		for (int position = 0; position < docLength; position++) {
@@ -422,21 +434,22 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			localTopicCounts[topicInd]++;
 		}
 		
-		double normalizer = docLength;
+		double normalizer = 0.0;
 		for (int k = 0; k < numTopics; k++) {
-			normalizer += alpha[k];
+			normalizer += localTopicCounts[k] + alpha;
 		}
-		
+
 		for (int k = 0; k < numTopics; k++) {
 			if(docLength==0) {
-				thetaEstimate[docIdx][k] = 0.0;
+				thetaEstimate[k] = 0.0;
 			} else {					
-				thetaEstimate[docIdx][k] = (localTopicCounts[k] + alpha[k]) / normalizer;
+				thetaEstimate[k] = (localTopicCounts[k] + alpha) / normalizer;
 			}
-			if(Double.isInfinite(thetaEstimate[docIdx][k]) || Double.isNaN(thetaEstimate[docIdx][k]) || thetaEstimate[docIdx][k] < 0) { 
-				throw new IllegalStateException("theta estimate is broken: DocIdx=" + docIdx + " Topic=" + k + " theta est=" + thetaEstimate[docIdx][k]);  
+			if(Double.isInfinite(thetaEstimate[k]) || Double.isNaN(thetaEstimate[k]) || thetaEstimate[k] < 0) { 
+				throw new IllegalStateException("theta estimate is broken:" + " Topic=" + k + " theta est=" + thetaEstimate[k]);  
 			}
 		}
+		return thetaEstimate;
 	}
 	
 	/**
@@ -459,7 +472,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			int docLength = tokenSequence.getLength();
 			int [] oneDocTopics = topicSequence.getFeatures();
 	
-			calcThetaEstimate(numTopics, alpha, thetaEstimate, docIdx, docLength, oneDocTopics);
+			thetaEstimate[docIdx] = calcThetaEstimate(numTopics, alpha, docLength, oneDocTopics);
 		}
 		return thetaEstimate;
 	}
