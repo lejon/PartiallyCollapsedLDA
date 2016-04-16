@@ -69,7 +69,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		printLogLikelihood = false;
 		showTopicsInterval = conf.getTopicInterval(LDAConfiguration.TOPIC_INTER_DEFAULT);
 		logger.info("Simple LDA: " + numTopics + " topics");
-		logger.setLevel(Level.FINE);
+		logger.setLevel(Level.INFO);
 	}
 
 	@Override

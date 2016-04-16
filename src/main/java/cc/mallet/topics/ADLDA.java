@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang.NotImplementedException;
@@ -24,7 +25,7 @@ import cc.mallet.util.Timing;
 public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 
 	private static final long serialVersionUID = -3423504261653103647L;
-	private static Logger logger = MalletLogger.getLogger(ParallelTopicModel.class.getName());
+	private static Logger logger = MalletLogger.getLogger(ADLDA.class.getName());
 	transient LDAConfiguration config;
 	int currentIteration;
 	private int startSeed;
@@ -38,6 +39,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 				config.getBeta(LDAConfiguration.BETA_DEFAULT));
 		printLogLikelihood = false;
 		showTopicsInterval = config.getTopicInterval(LDAConfiguration.TOPIC_INTER_DEFAULT);
+		logger.setLevel(Level.INFO);
 		setConfiguration(config);
 		setOptimizeInterval(0);
 	}
@@ -265,6 +267,8 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 				String wt = displayTopWords (wordsPerTopic, false);
 				logState = new LogState(logLik, iteration, wt, loggingPath, logger);
 				LDAUtils.logLikelihoodToFile(logState);
+				logger.info("<" + iteration + "> Log Likelihood: " + logLik);
+				logger.fine(tw);
 				
 				if(logTypeTopicDensity || logDocumentDensity) {
 					density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
@@ -293,14 +297,14 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 				logger.fine("[O " + (System.currentTimeMillis() - iterationStart) + "] ");
 			}
 
-			if (iteration % 10 == 0) {
-				if (printLogLikelihood) {
-					logger.info ("<" + iteration + "> LL/token: " + formatter.format(modelLogLikelihood() / totalTokens));
-				}
-				else {
-					logger.info ("<" + iteration + ">");
-				}
-			}
+//			if (iteration % 10 == 0) {
+//				if (printLogLikelihood) {
+//					logger.info ("<" + iteration + "> LL/token: " + formatter.format(modelLogLikelihood() / totalTokens));
+//				}
+//				else {
+//					logger.info ("<" + iteration + ">");
+//				}
+//			}
 			
 			// Reset densities
 			for (int i = 0; i < runnables.length; i++) {
