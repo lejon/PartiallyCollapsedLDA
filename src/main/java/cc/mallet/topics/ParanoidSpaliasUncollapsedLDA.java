@@ -7,7 +7,7 @@ public class ParanoidSpaliasUncollapsedLDA extends SpaliasUncollapsedParallelLDA
 
 	private static final long	serialVersionUID	= 6948198361119397002L;
 
-	boolean silent = false;
+	boolean silent = true;
 	
 	public ParanoidSpaliasUncollapsedLDA(LDAConfiguration config) {
 		super(config);

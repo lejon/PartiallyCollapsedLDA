@@ -7,7 +7,7 @@ public class ParanoidVSSpaliasUncollapsedLDA extends NZVSSpaliasUncollapsedParal
 
 	private static final long	serialVersionUID	= 6948198361119397002L;
 
-	boolean silent = false;
+	boolean silent = true;
 	
 	public ParanoidVSSpaliasUncollapsedLDA(LDAConfiguration config) {
 		super(config);

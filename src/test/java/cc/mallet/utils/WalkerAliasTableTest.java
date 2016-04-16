@@ -139,12 +139,12 @@ public class WalkerAliasTableTest {
 				double stdi = Math.sqrt((probs[i]*(1-probs[i]))/noSamples);
 				double sigmas = Math.abs(meanDiff) / stdi;
 				if(sigmas<6) {
-					System.out.println("Sigmas = " + sigmas);
-					System.out.print("Probs: [");
-					for (int k = 0; k < probs.length; k++) {
-						System.out.print(probs[i] + ", ");
-					}
-					System.out.println("]");
+					// System.out.println("Sigmas = " + sigmas);
+					// System.out.print("Probs: [");
+					// for (int k = 0; k < probs.length; k++) {
+					// 	System.out.print(probs[i] + ", ");
+					// }
+					// System.out.println("]");
 				}
 				assertTrue(sigmas<6);
 				//assertEquals(probs[i], ((double)cnts[i])/noSamples, epsilon);
@@ -246,14 +246,14 @@ public class WalkerAliasTableTest {
 			multiCnts[samples[i]]++;
 		}
 
-		System.out.println("Counts: ");
+		// System.out.println("Counts: ");
 		for (int i = 0; i < probs.length; i++) {			
-			System.out.print(samples[i] + " (" + ((double)samples[i])/noSamples + "),");
+			// System.out.print(samples[i] + " (" + ((double)samples[i])/noSamples + "),");
 			assertEquals(probs[i], ((double)cnts[i])/noSamples, epsilon);
 			assertEquals(probs[i], ((double)multiCnts[i])/noSamples, epsilon);
 			assertEquals(multiCnts[i],cnts[i]);
 		}
-		System.out.println();
+		// System.out.println();
 
 		System.out.println("Alias Table sampling took: " + (tend-tstart) + " milliseconds");
 		System.out.println("Multinomial sampling took: " + (mend-mstart) + " milliseconds");
