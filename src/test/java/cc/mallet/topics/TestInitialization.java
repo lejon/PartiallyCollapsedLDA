@@ -95,7 +95,7 @@ public class TestInitialization {
 		int [][] collapsedlightTopicIndicators  = collapsedlight.getTypeTopicCounts();
 
 		for (int i = 0; i < uncollapsedTopicIndicators.length; i++) {
-			for (int j = 0; j < uncollapsedTopicIndicators[0].length; j++) {
+			for (int j = 0; j < uncollapsedTopicIndicators[i].length; j++) {
 				assertEquals("Collapsed and Spalias are not the same: " 
 						+ collapsedTopicIndicators[i][j] + "!=" + spaliasTopicIndicators[i][j], 
 						collapsedTopicIndicators[i][j], spaliasTopicIndicators[i][j]);
