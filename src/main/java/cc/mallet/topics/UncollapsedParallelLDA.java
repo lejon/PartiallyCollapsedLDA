@@ -292,7 +292,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				throw new IllegalArgumentException("typeTopicTTCount[" + i + "] does not match global tokensPerTopic[" + i + "]");
 			}
 		}
-		System.out.println("TypeTopic and TopicType and TokensPerTopic count is consistent...");
+		// System.out.println("TypeTopic and TopicType and TokensPerTopic count is consistent...");
 	}
 
 	public void ensureTTEquals() {

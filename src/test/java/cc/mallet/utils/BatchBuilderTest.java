@@ -286,7 +286,7 @@ public class BatchBuilderTest {
 				// System.out.println();
 				sumdocs += docIndicies.length;
 			}
-			System.out.println();
+			// System.out.println();
 		}
 	}
 	
@@ -496,7 +496,7 @@ public class BatchBuilderTest {
 			
 			mockSampler.sample(1);
 			percentageSplitPointer = (percentageSplitPointer+1) % percentageSplits.length;
-			System.out.println("Lap " + i);
+			// System.out.println("Lap " + i);
 		}
 	}
 	
