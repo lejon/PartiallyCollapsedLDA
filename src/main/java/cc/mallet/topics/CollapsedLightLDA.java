@@ -148,8 +148,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				tokensPerType[typeidx] =+ typeTopicCounts[typeidx][topicidx];
 			}
 		}
-		
-		
 	}
 
 	public int[][] getTopIndices() {
