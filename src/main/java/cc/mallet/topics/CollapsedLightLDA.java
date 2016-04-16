@@ -457,7 +457,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			postZ();
 			long endTypeTopicUpdate = System.currentTimeMillis();
 			long zSamplingTokenUpdateTime = endTypeTopicUpdate - iterationStart;
-			logger.fine("Time for updating type-topic counts: " + 
+			logger.finer("Time for updating type-topic counts: " + 
 					(endTypeTopicUpdate - beforeSync) + "ms\t");
 
 			long elapsedMillis = System.currentTimeMillis();
@@ -467,8 +467,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				LDAUtils.writeBinaryIntMatrix(LDAUtils.getDocumentTopicCounts(data, numTopics), iteration, data.size(), numTopics, binOutput.getAbsolutePath() + "/M");
 			}
 
-			logger.fine("\nIteration " + iteration + "\tTotal time: " + elapsedMillis + "ms\t");
-			logger.fine("--------------------");
+			logger.finer("\nIteration " + iteration + "\tTotal time: " + elapsedMillis + "ms\t");
+			logger.finer("--------------------");
 
 			// Occasionally print more information
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
@@ -480,8 +480,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				tw = topWords (wordsPerTopic);
 				logState = new LogState(logLik, iteration, tw, loggingPath, logger);
 				LDAUtils.logLikelihoodToFile(logState);
-				System.err.println("<" + iteration + "> Log Likelihood: " + logLik);
-				logger.info(tw);
+				logger.info("<" + iteration + "> Log Likelihood: " + logLik);
+				logger.fine(tw);
 				if(logTypeTopicDensity || logDocumentDensity) {
 					density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 					docDensity = kdDensities.get() / (double) numTopics / numTypes;

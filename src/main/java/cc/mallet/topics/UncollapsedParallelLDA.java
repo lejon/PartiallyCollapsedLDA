@@ -472,7 +472,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			postZ();
 			long endTypeTopicUpdate = System.currentTimeMillis();
 			long zSamplingTokenUpdateTime = endTypeTopicUpdate - iterationStart;
-			logger.fine("Time for updating type-topic counts: " + 
+			logger.finer("Time for updating type-topic counts: " + 
 					(endTypeTopicUpdate - beforeSync) + "ms\t");
 
 			//long beforeSamplePhi = System.currentTimeMillis();
@@ -483,7 +483,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			long elapsedMillis = System.currentTimeMillis();
 			long phiSamplingTime = elapsedMillis - endTypeTopicUpdate;
 
-			logger.fine("Time for sampling phi: " + phiSamplingTime + "ms\t");
+			logger.finer("Time for sampling phi: " + phiSamplingTime + "ms\t");
 
 			if (startDiagnostic > 0 && iteration >= startDiagnostic && printPhi) {
 				LDAUtils.writeBinaryDoubleMatrix(phi, iteration, numTopics, numTypes, loggingPath + "/phi");	
@@ -494,8 +494,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				LDAUtils.writeBinaryIntMatrix(LDAUtils.getDocumentTopicCounts(data, numTopics), iteration, data.size(), numTopics, binOutput.getAbsolutePath() + "/M");
 			}
 
-			logger.fine("\nIteration " + iteration + "\tTotal time: " + elapsedMillis + "ms\t");
-			logger.fine("--------------------");
+			logger.finer("\nIteration " + iteration + "\tTotal time: " + elapsedMillis + "ms\t");
+			logger.finer("--------------------");
 
 			// Occasionally print more information
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
@@ -510,7 +510,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				logState = new LogState(logLik, iteration, tw, loggingPath, logger);
 				LDAUtils.logLikelihoodToFile(logState);
 				logger.info("<" + iteration + "> Log Likelihood: " + logLik);
-				logger.info(tw);
+				logger.fine(tw);
 				if(logTypeTopicDensity || logDocumentDensity) {
 					density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 					docDensity = kdDensities.get() / (double) numTopics / numTypes;
@@ -578,18 +578,18 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			}
 			postZ();
 			long endTypeTopicUpdate = System.currentTimeMillis();
-			logger.fine("Time for updating type-topic counts: " + 
+			logger.finer("Time for updating type-topic counts: " + 
 					(endTypeTopicUpdate - beforeSync) + "ms\t");
 
-			logger.fine("\nIteration " + iteration);
-			logger.fine("--------------------");
+			logger.finer("\nIteration " + iteration);
+			logger.finer("--------------------");
 
 			// Occasionally print more information
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
 				logLik = modelLogLikelihood();	
 				tw = topWords (wordsPerTopic);
-				System.err.println("<" + iteration + "> Log Likelihood: " + logLik);
-				logger.info(tw);
+				logger.info("<" + iteration + "> Log Likelihood: " + logLik);
+				logger.fine(tw);
 			}
 
 			kdDensities.set(0);
@@ -832,7 +832,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					try {
 						long beforeThreads = System.currentTimeMillis();
 						loopOverTopics(topicIndices, topicTypeIndices, phi);
-						logger.fine("Time of Thread: " + 
+						logger.finer("Time of Thread: " + 
 								(System.currentTimeMillis() - beforeThreads) + "ms\t");
 						phiSamplings.put(new Object());
 					} catch (Exception ex) {
