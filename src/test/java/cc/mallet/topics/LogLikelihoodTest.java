@@ -3,6 +3,8 @@ package cc.mallet.topics;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
 
 import org.junit.Test;
 
@@ -83,9 +85,17 @@ public class LogLikelihoodTest {
 
 		// sample 100 iterations just for the sake of doing getting to a
 		// something other than the start state 
+		
+		MemoryUsage heapMemoryUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+		System.out.println("Memory used: " + heapMemoryUsage.getUsed());
+		
 		collapsed.sample(50);
 		
+		System.out.println("Memory used: " + heapMemoryUsage.getUsed());
+		
 		System.out.println("Finished sampling!");
+		
+		
 
 		int[][] collapsedZas = collapsed.getZIndicators();
 		uncollapsed.setZIndicators(collapsedZas);
