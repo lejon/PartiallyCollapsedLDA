@@ -85,11 +85,11 @@ public class ParallelLDA {
 			lu.checkAndCreateCurrentLogDir(logSuitePath);
 			config.setLoggingUtil(lu);
 
-			int commonSeed = config.getSeed(LDAConfiguration.SEED_DEFAULT);
 			String [] configs = config.getSubConfigs();
 			for(String conf : configs) {
 				lu.checkCreateAndSetSubLogDir(conf);
 				config.activateSubconfig(conf);
+				int commonSeed = config.getSeed(LDAConfiguration.SEED_DEFAULT);
 
 				System.out.println("Using Config: " + config.whereAmI());
 				System.out.println("Runnin subconfig: " + conf);
