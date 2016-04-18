@@ -116,6 +116,8 @@ public class ParallelLDA {
 				System.out.println("Start seed: " + model.getStartSeed());
 				// Imports the data into the model
 				model.addInstances(instances);
+			
+				System.out.println("Loaded " + model.getDataset().size() + " documents, with " + model.getCorpusSize() + " words in total.");
 
 				System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
 				System.out.println("_____________________________\n");

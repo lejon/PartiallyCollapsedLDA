@@ -374,10 +374,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		bb.calculateBatch();
 		tbb = TopicBatchBuilderFactory.get(config, this);
 		topicIndexBuilder = TopicIndexBuilderFactory.get(config,this);
-
-		if(logger.getLevel()==Level.INFO) {
-			System.out.println("Loaded " + data.size() + " documents, with " + corpusWordCount + " words in total.");
-		}
 	}
 
 	protected void updateTypeTopicCount(int type, int topic, int count) {
