@@ -30,19 +30,19 @@ public class LightPCLDAw2 extends LightPCLDA {
 				topicCountBetaHat[topic] += typeTopicCounts[type][topic] + beta;
 			}
 		}
-		tbFactory = new PhiTableBuilderFactory();
+		tbFactory = new TTTableBuilderFactory();
 		
 	}
 	
-	class PhiTableBuilderFactory implements TableBuilderFactory {
+	class TTTableBuilderFactory implements TableBuilderFactory {
 		public Callable<TableBuildResult> instance(int type) {
-			return new PhiParallelTableBuilder(type);
+			return new TTParallelTableBuilder(type);
 		}
 	}
 
-	class PhiParallelTableBuilder implements Callable<TableBuildResult> {
+	class TTParallelTableBuilder implements Callable<TableBuildResult> {
 		int type;
-		public PhiParallelTableBuilder(int type) {
+		public TTParallelTableBuilder(int type) {
 			this.type = type;
 		}
 		@Override
@@ -64,6 +64,12 @@ public class LightPCLDAw2 extends LightPCLDA {
 			return new TableBuildResult(type, aliasTables[type], typeMass);
 		}   
 	}
+	
+	@Override
+	public void preIteration() {
+		super.preIteration();
+		
+	};
 
 	@Override
 	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
