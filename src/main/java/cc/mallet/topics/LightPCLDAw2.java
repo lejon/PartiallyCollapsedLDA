@@ -24,12 +24,6 @@ public class LightPCLDAw2 extends LightPCLDA {
 	
 	public LightPCLDAw2(LDAConfiguration config) {
 		super(config);
-		// TODO: Leif, should this be here?
-		for (int topic = 0; topic < numTopics; topic++) {
-			for (int type = 0; type < numTypes; type++) {
-				topicCountBetaHat[topic] += typeTopicCounts[type][topic] + beta;
-			}
-		}
 		tbFactory = new TTTableBuilderFactory();
 		
 	}
@@ -68,6 +62,12 @@ public class LightPCLDAw2 extends LightPCLDA {
 	@Override
 	public void preIteration() {
 		super.preIteration();
+		// TODO: Leif, should this be here?
+		for (int topic = 0; topic < numTopics; topic++) {
+			for (int type = 0; type < numTypes; type++) {
+				topicCountBetaHat[topic] += typeTopicCounts[type][topic] + beta;
+			}
+		}
 		
 	};
 
