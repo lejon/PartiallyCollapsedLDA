@@ -46,7 +46,8 @@
 	<!-- v4.2.1: Fixed OBOE introduced in v2.0.0 in LightCollapsed. Improved test suite  -->
 	<!-- v4.2.2: Fixed common seed  -->
 	<!-- v4.3.0: First Collapsed Light version with thread local (AD-LDA) behaviour -->
-	<version>4.3.0</version>
+	<!-- v4.4.0: Word, instead of Phi, proposal version of Light PCLDA -->
+	<version>4.4.0</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
