@@ -12,13 +12,10 @@ import cc.mallet.util.OptimizedGentleAliasMethod;
 /**
  * @author Leif Jonsson
  * 
- * Implementation of the Light-LDA algorithm which uses Metropolis-Hastings to 
+ * Implementation of the Light-PC-LDA algorithm which uses Metropolis-Hastings to 
  * sample the topic indicators. This algorithm has O(1) to sample one topic
  * indicator no matter how many topics
  * 
- * From the article: "LightLDA: Big Topic Models on Modest Compute Clusters" 
- * by Jinhui Yuan1, Fei Gao1,2, Qirong Ho3, Wei Dai4, Jinliang Wei4, Xun Zheng4,
- *   Eric P. Xing4, Tie-Yan Liu1, Wei-Ying Ma1
  */
 public class LightPCLDAw2 extends LightPCLDA {
 
@@ -33,19 +30,19 @@ public class LightPCLDAw2 extends LightPCLDA {
 				topicCountBetaHat[topic] += typeTopicCounts[type][topic] + beta;
 			}
 		}
-		tbFactory = new NwTableBuilderFactory();
+		tbFactory = new PhiTableBuilderFactory();
 		
 	}
 	
-	class NwTableBuilderFactory implements TableBuilderFactory {
+	class PhiTableBuilderFactory implements TableBuilderFactory {
 		public Callable<TableBuildResult> instance(int type) {
-			return new NwParallelTableBuilder(type);
+			return new PhiParallelTableBuilder(type);
 		}
 	}
 
-	class NwParallelTableBuilder implements Callable<TableBuildResult> {
+	class PhiParallelTableBuilder implements Callable<TableBuildResult> {
 		int type;
-		public NwParallelTableBuilder(int type) {
+		public PhiParallelTableBuilder(int type) {
 			this.type = type;
 		}
 		@Override
