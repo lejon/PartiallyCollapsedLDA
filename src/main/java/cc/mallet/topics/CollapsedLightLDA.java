@@ -352,10 +352,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 		// Initializing global sparse structure and tokensPerType
 		initTokensPerType(); 
-		
-		if(logger.getLevel()==Level.INFO) {
-			System.out.println("Loaded " + data.size() + " documents, with " + corpusWordCount + " words in total.");
-		}
 	}
 
 	protected void updateTypeTopicCount(int type, int topic, int count) {
