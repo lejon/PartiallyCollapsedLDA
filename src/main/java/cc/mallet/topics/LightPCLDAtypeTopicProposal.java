@@ -17,12 +17,12 @@ import cc.mallet.util.OptimizedGentleAliasMethod;
  * indicator no matter how many topics
  * 
  */
-public class LightPCLDAw2 extends LightPCLDA {
+public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 
 	// TODO: Leif, should this be here?
 	double [] topicCountBetaHat = new double[numTopics];
 	
-	public LightPCLDAw2(LDAConfiguration config) {
+	public LightPCLDAtypeTopicProposal(LDAConfiguration config) {
 		super(config);
 		tbFactory = new TTTableBuilderFactory();
 		

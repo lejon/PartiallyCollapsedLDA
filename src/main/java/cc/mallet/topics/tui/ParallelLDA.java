@@ -18,7 +18,7 @@ import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.LDASamplerWithPhi;
 import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.LightPCLDA;
-import cc.mallet.topics.LightPCLDAw2;
+import cc.mallet.topics.LightPCLDAtypeTopicProposal;
 import cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA;
 import cc.mallet.topics.ParanoidSpaliasUncollapsedLDA;
 import cc.mallet.topics.SerialCollapsedLDA;
@@ -235,7 +235,7 @@ public class ParallelLDA {
 			break;
 		}
 		case "lightpcldaw2": {
-			model = new LightPCLDAw2(config);
+			model = new LightPCLDAtypeTopicProposal(config);
 			System.out.println(
 					String.format("Light PC LDA with proposal 2 (%d batches).", 
 							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
