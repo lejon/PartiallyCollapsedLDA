@@ -1,6 +1,5 @@
 package cc.mallet.topics;
 
-import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -19,7 +18,8 @@ import cc.mallet.util.OptimizedGentleAliasMethod;
  */
 public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 
-	// TODO: Leif, should this be here?
+	private static final long serialVersionUID = 1L;
+
 	double [] topicCountBetaHat = new double[numTopics];
 	
 	public LightPCLDAtypeTopicProposal(LDAConfiguration config) {
@@ -44,7 +44,6 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			double [] probs = new double[numTopics];
 			double typeMass = 0; // Type prior mass
 			for (int topic = 0; topic < numTopics; topic++) {
-				// TODO: Leif, can we read typeTopicCounts like this?
 				// TODO: If this works we can use a sparse version instead
 				typeMass += probs[topic] = (typeTopicCounts[type][topic] + beta) / topicCountBetaHat[topic];
 			}
@@ -62,7 +61,6 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	@Override
 	public void preIteration() {
 		super.preIteration();
-		// TODO: Leif, should this be here?
 		for (int topic = 0; topic < numTopics; topic++) {
 			for (int type = 0; type < numTypes; type++) {
 				topicCountBetaHat[topic] += typeTopicCounts[type][topic] + beta;
@@ -118,7 +116,6 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			localTopicCounts_not_i[oldTopic]--;
 			
 			double u = ThreadLocalRandom.current().nextDouble();
-			// TODO: Leif, do this works?
 			int wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
 			
 			// If we drew a new topic indicator, do MH step for Word proposal
