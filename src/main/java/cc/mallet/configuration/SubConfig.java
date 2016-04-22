@@ -2,7 +2,6 @@ package cc.mallet.configuration;
 
 import java.util.List;
 
-import org.apache.commons.cli.CommandLine;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
 
@@ -190,6 +189,11 @@ public class SubConfig extends HierarchicalINIConfiguration {
 		return (stringProperty.trim().equalsIgnoreCase("true") || stringProperty.trim().equalsIgnoreCase("yes") || stringProperty.trim().equals("1"));
 	}
 	
+	public boolean hasBooleanProperty(String key) {
+		String stringProperty = getStringProperty(key);
+		return (stringProperty!=null) && (stringProperty.trim().equalsIgnoreCase("true") || stringProperty.trim().equalsIgnoreCase("yes") || stringProperty.trim().equals("1"));
+	}
+
 	public boolean getBooleanProperty(String key) {
 		String stringProperty = getStringProperty(key);
 		return (stringProperty!=null) && (stringProperty.trim().equalsIgnoreCase("true") || stringProperty.trim().equalsIgnoreCase("yes") || stringProperty.trim().equals("1"));
