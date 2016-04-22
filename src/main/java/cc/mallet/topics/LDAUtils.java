@@ -1046,10 +1046,6 @@ public class LDAUtils {
 				nameGroup);
 
 		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
-		Alphabet alphabet = new Alphabet();
-
-		//StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
-
 		Target2Label ttl = new Target2Label ();
 		
 		pipes.add(tokenizer);
@@ -1062,6 +1058,7 @@ public class LDAUtils {
 		instances.addThruPipe(reader);
 		for (Instance instance : instances) {
 			//FeatureSequence features = (FeatureSequence) instance.getData();
+			@SuppressWarnings("unchecked")
 			List<String> text = (List<String>) instance.getData();
 			String result = "";
 			for (String string : text) {
