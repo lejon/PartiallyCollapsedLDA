@@ -1,18 +1,13 @@
 package cc.mallet.configuration;
 
-import java.util.List;
-
 import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.HierarchicalINIConfiguration;
 
 import cc.mallet.util.LoggingUtils;
 
-public class ParsedLDAConfiguration extends HierarchicalINIConfiguration implements Configuration, LDAConfiguration {
+public class ParsedLDAConfiguration extends SubConfig implements Configuration, LDAConfiguration {
 
 	private static final long serialVersionUID = 1L;
 
-	String subConfName = null;
-	LDACommandLineParser commandlineParser = null;
 	String whereAmI;
 	LoggingUtils logger;
 	int noTopics = -1;
@@ -34,10 +29,6 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 		this.logger = logger;
 	}
 
-	public ParsedLDAConfiguration() {
-
-	}
-
 	public ParsedLDAConfiguration(LDACommandLineParser cp) throws ConfigurationException {
 		super(cp.getConfigFn());
 		setDefaultListDelimiter(',');
@@ -50,173 +41,7 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 		whereAmI = path;
 		setDefaultListDelimiter(',');
 	}
-
-	/* (non-Javadoc)
-	 * @see configuration.LDAConfiguration#activateSubconfig(java.lang.String)
-	 */
-	@Override
-	public void activateSubconfig(String subConfName) {
-		boolean foundIt = false;
-		String [] configs = super.getStringArray("configs");
-		for( String cfg : configs ) {
-			cfg = cfg.trim();
-			if( subConfName.equals(cfg) ) {
-				foundIt = true;
-			}
-		}
-		if( !foundIt ) {
-			throw new IllegalArgumentException("No such configuration: " + subConfName);
-		}
-		this.subConfName = subConfName; 
-	}
-
-	/* (non-Javadoc)
-	 * @see configuration.LDAConfiguration#forceActivateSubconfig(java.lang.String)
-	 */
-	@Override
-	public void forceActivateSubconfig(String subConfName) {
-		this.subConfName = subConfName; 
-	}
-
-	/* (non-Javadoc)
-	 * @see configuration.LDAConfiguration#getActiveSubConfig()
-	 */
-	@Override
-	public String getActiveSubConfig() {
-		return subConfName;
-	}
-
-	private String translateKey(String key) {
-		return (subConfName == null ? "" : subConfName + ".") + key ;
-	}
-
-	public boolean getBooleanProperty(String key) {
-		String stringProperty = getStringProperty(key);
-		return (stringProperty!=null) && (stringProperty.trim().equalsIgnoreCase("true") || stringProperty.trim().equalsIgnoreCase("yes") || stringProperty.trim().equals("1"));
-	}
-
-	/**
-	 * This method returns null if the property is not set in the config file
-	 * 
-	 * @param key
-	 * @return null if not set, otherwise value from config file
-	 */
-	public Boolean getBooleanPropertyOrNull(String key) {
-		String stringProperty = getStringProperty(key);
-		if(stringProperty==null) return null;
-		return (stringProperty.trim().equalsIgnoreCase("true") || stringProperty.trim().equalsIgnoreCase("yes") || stringProperty.trim().equals("1"));
-	}
-
-	public String [] getStringArrayProperty(String key) {
-		return trimStringArray(super.getStringArray(translateKey(key)));
-	}
-
-	public int [] getIntArrayProperty(String key, int [] defaultValues) {
-		String [] ints = super.getStringArray(translateKey(key));
-		if(ints==null || ints.length==0) {
-			//throw new IllegalArgumentException("Could not find any int array for key:" + translateKey(key));
-			return defaultValues;
-		}
-		int [] result = new int[ints.length];
-		for (int i = 0; i < ints.length; i++) {
-			result[i] = Integer.parseInt(ints[i].trim());
-		}
-		return result;
-	}
-	
-	public double [] getDoubleArrayProperty(String key) {
-		String [] ints = super.getStringArray(translateKey(key));
-		if(ints==null || ints.length==0) { 
-			throw new IllegalArgumentException("Could not find any double array for key:" 
-					+ translateKey(key)); 
-		}
-		double [] result = new double[ints.length];
-		for (int i = 0; i < ints.length; i++) {
-			result[i] = Double.parseDouble(ints[i].trim());
-		}
-		return result;
-	}
-
-
-	protected String [] trimStringArray(String [] toTrim) {
-		for (int i = 0; i < toTrim.length; i++) {
-			toTrim[i] = toTrim[i].trim();
-		}
-		return toTrim;
-	}
-
-	@Override
-	public String getStringProperty(String key) {
-		if(commandlineParser.hasOption(key) && commandlineParser.getOption(key)!=null) {
-			return commandlineParser.getOption(key);
-		} else {
-			// This hack lets us have "," in strings
-			String strProp = "";
-			Object prop = super.getProperty(translateKey(key));
-			if(prop instanceof java.util.List) {
-				@SuppressWarnings("unchecked")
-				List<String> propParts = (List<String>) prop;
-				for (String string : propParts) {
-					strProp += string + ",";
-				}
-				strProp = strProp.substring(0, strProp.length()-1);
-			} else {
-				strProp = (String) prop;
-			}
-			return strProp;
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see configuration.LDAConfiguration#getConfProperty(java.lang.String)
-	 */
-	@Override
-	public Object getConfProperty(String key) {
-		return super.getProperty(translateKey(key));
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.apache.commons.configuration.AbstractHierarchicalFileConfiguration#setProperty(java.lang.String, java.lang.Object)
-	 */
-	@Override
-	public void setProperty(String key, Object value) {
-		super.setProperty(translateKey(key), value);
-	}
-
-	/* (non-Javadoc)
-	 * @see configuration.LDAConfiguration#getSubConfigs()
-	 */
-	@Override
-	public String[] getSubConfigs() {
-		return trimStringArray(super.getStringArray("configs"));
-	}
-
-	@Override
-	public Integer getInteger(String key, Integer defaultValue) {
-		if(commandlineParser.hasOption(key) && commandlineParser.getOption(key)!=null) {
-			return Integer.parseInt(commandlineParser.getOption(key.trim()));
-		} else {
-			return super.getInteger(translateKey(key),defaultValue);
-		}
-	}
-
-	@Override
-	public Double getDouble(String key, Double defaultValue) {
-		if(commandlineParser.hasOption(key) && commandlineParser.getOption(key)!=null) {
-			return Double.parseDouble(commandlineParser.getOption(key.trim()));
-		} else {
-			return super.getDouble(translateKey(key),defaultValue);
-		}
-	}
-
-	/* (non-Javadoc)
-	 * @see configuration.LDAConfiguration#whereAmI()
-	 */
-	@Override
-	public String whereAmI() {
-		return whereAmI;
-	}
-	
+		
 	/* (non-Javadoc)
 	 * @see configuration.LDAConfiguration#getDatasetFilename()
 	 */
@@ -367,7 +192,6 @@ public class ParsedLDAConfiguration extends HierarchicalINIConfiguration impleme
 	public String getTopicIndexBuildingScheme(String topicIndexBuildSchemeDefault) {
 		String configProperty = getStringProperty("topic_index_building_scheme");
 		return (configProperty == null) ? topicIndexBuildSchemeDefault : configProperty;
-
 	}
 
 	@Override
