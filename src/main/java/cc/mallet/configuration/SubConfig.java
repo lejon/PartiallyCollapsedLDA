@@ -16,6 +16,7 @@ public class SubConfig extends HierarchicalINIConfiguration {
 
 	public SubConfig(String configFn) throws ConfigurationException {
 		super(configFn);
+		whereAmI = configFn;
 	}
 
 	public void activateSubconfig(String subConfName) {

@@ -8,7 +8,6 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 
 	private static final long serialVersionUID = 1L;
 
-	String whereAmI;
 	LoggingUtils logger;
 	int noTopics = -1;
 
