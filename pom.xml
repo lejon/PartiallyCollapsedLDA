@@ -47,7 +47,8 @@
 	<!-- v4.2.2: Fixed common seed  -->
 	<!-- v4.3.0: First Collapsed Light version with thread local (AD-LDA) behaviour -->
 	<!-- v4.4.0: Word, instead of Phi, proposal version of Light PCLDA -->
-	<version>4.4.0</version>
+	<!-- v4.4.1: Improved config by moving SubConfig to PCLDA from DOLDA -->
+	<version>4.4.1</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
