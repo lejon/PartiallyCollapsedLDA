@@ -43,6 +43,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 
 	@Override
 	public void addInstances (InstanceList training) {
+		numTypes = training.getDataAlphabet().size();
 		nonZeroTypeTopics = new int[numTypes][numTopics];
 		nonZeroTypeTopicsBackMapping = new int[numTypes][numTopics];
 		nonZeroTypeTopicCnt = new int[numTypes];
