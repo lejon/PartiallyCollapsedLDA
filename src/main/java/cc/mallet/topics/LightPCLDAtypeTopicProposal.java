@@ -7,6 +7,7 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.util.OptimizedGentleAliasMethod;
+import cc.mallet.util.OptimizedGentleAliasMethodDynamicSize;
 
 /**
  * @author Leif Jonsson
@@ -49,7 +50,9 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			}
 			
 			if(aliasTables[type]==null) {
-				aliasTables[type] = new OptimizedGentleAliasMethod(probs, typeMass);
+				int aliasSize = numTopics;
+				// TODO Fix so that Alias tables uses a minimum of memory by maximizing the Alias tables size to the number of tokens per type
+				aliasTables[type] = new OptimizedGentleAliasMethodDynamicSize(probs, typeMass, aliasSize);
 			} else {
 				aliasTables[type].reGenerateAliasTable(probs, typeMass);
 			}
