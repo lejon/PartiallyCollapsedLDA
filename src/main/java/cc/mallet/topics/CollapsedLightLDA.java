@@ -73,6 +73,9 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	int noBatches = 1;
 	private ExecutorService	topicUpdaters;
 
+	// To keep track of BetaHats used in Alias tables
+	double [] topicCountBetaHat = new double[numTopics];
+	
 	protected TopicIndexBuilder topicIndexBuilder;
 
 	// Used for inefficiency calculations
@@ -529,7 +532,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			// Iterate over nonzero topic indicators
 			int normConstant = 0;
 			for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
-				normConstant += probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]];
+				normConstant += probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]] / topicCountBetaHat[nonZeroTypeTopics[type][i]];
 			}
 
 			// for (int i = 0; i < myTypeTopicCounts.length; i++) {
@@ -560,6 +563,15 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	}
 	
 	public void preIteration() {
+				
+		// Compute topicCountBetaHat
+		// TODO: Make this more efficient later on, just updating topicCountBetaHat
+		// when updating matrix. Do this in PCLDA as well
+		for (int topic = 0; topic < numTopics; topic++) {
+			for (int type = 0; type < numTypes; type++) {
+				topicCountBetaHat[topic] += typeTopicCounts[type][topic] + beta;
+			}
+		}
 		
 		List<Callable<TableBuildResult>> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
