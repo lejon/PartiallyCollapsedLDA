@@ -5,8 +5,8 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.FeatureSequence;
+import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
-import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.OptimizedGentleAliasMethodDynamicSize;
 
 /**
@@ -23,11 +23,49 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 
 	double [] topicCountBetaHat = new double[numTopics];
 	
+	// Sparse matrix structure (Global)
+	// Contains a array with nonzero topics as elements per type
+	int[][] nonZeroTypeTopics;
+	// So we can map back from a topic to where it is in nonZeroTopics vector
+	int [][] nonZeroTypeTopicsBackMapping;
+	// Sparse global topic counts used to identify positions in nonZeroTypeTopics
+	// nonZeroTypeTopicCnt indicates how many non-zero topics there are per type.
+	int[] nonZeroTypeTopicCnt;
+	// Number of tokens in each type
+	int[] tokensPerType;
+	
 	public LightPCLDAtypeTopicProposal(LDAConfiguration config) {
 		super(config);
 		tbFactory = new TTTableBuilderFactory();
 		
 	}
+	
+
+	@Override
+	public void addInstances (InstanceList training) {
+		nonZeroTypeTopics = new int[numTypes][numTopics];
+		nonZeroTypeTopicsBackMapping = new int[numTypes][numTopics];
+		nonZeroTypeTopicCnt = new int[numTypes];
+		tokensPerType = new int[numTypes];
+		
+		super.addInstances(training);
+	}
+	
+	@Override
+	protected void updateTypeTopicCount(int type, int topic, int count) {
+		
+		if(typeTopicCounts[type][topic] == 0 && count > 0){
+			insertNonZeroTopicTypes(topic, type);
+		}
+		
+		super.updateTypeTopicCount(type, topic, count);
+		
+		if(typeTopicCounts[type][topic] == 0 && count < 0){
+			removeNonZeroTopicTypes(topic, type);
+		}
+		
+	}
+	
 	
 	class TTTableBuilderFactory implements TableBuilderFactory {
 		public Callable<TableBuildResult> instance(int type) {
@@ -42,11 +80,20 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 		}
 		@Override
 		public TableBuildResult call() {
+			/* Nonsparse solution
 			double [] probs = new double[numTopics];
 			double typeMass = 0; // Type prior mass
 			for (int topic = 0; topic < numTopics; topic++) {
 				// TODO: If this works we can use a sparse version instead
 				typeMass += probs[topic] = (typeTopicCounts[type][topic] + beta) / topicCountBetaHat[topic];
+			}
+			*/
+			
+			double [] probs = new double[nonZeroTypeTopicCnt[type]];
+			// Iterate over nonzero topic indicators
+			int typeMass = 0;
+			for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
+				typeMass += probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]] / topicCountBetaHat[nonZeroTypeTopics[type][i]];
 			}
 			
 			if(aliasTables[type]==null) {
@@ -118,8 +165,14 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			// Create n_d^{-i}, decrease document topic count with z_i
 			localTopicCounts_not_i[oldTopic]--;
 			
-			double u = ThreadLocalRandom.current().nextDouble();
-			int wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
+			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + betaSum); // (n_w + V*beta) * u where u ~ U(0,1)
+			int wordTopicIndicatorProposal = -1;
+			if(u_w < tokensPerType[type]) {
+				double u = u_w / (double) tokensPerType[type];
+				wordTopicIndicatorProposal = nonZeroTypeTopics[type][aliasTables[type].generateSample(u)];
+			} else {
+				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / betaSum) * numTopics); // assume symmetric beta, just draws one topic
+			}
 			
 			// If we drew a new topic indicator, do MH step for Word proposal
 			if(wordTopicIndicatorProposal!=oldTopic) {
@@ -215,4 +268,27 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			localTopicCounts_not_i[newTopic]++;
 		}
 	}	
+	
+	// TODO: Code is copied from CollapsedLightLDA
+	protected synchronized void insertNonZeroTopicTypes(int topic, int type) {
+		//// We have a new non-zero topic put it in the last empty and update the others
+		nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]] = topic;
+		nonZeroTypeTopicsBackMapping[type][topic] = nonZeroTypeTopicCnt[type];
+		nonZeroTypeTopicCnt[type]++;
+	}
+	
+	/*
+	 * removeNonZeroTopicTypes() and insertNonZeroTopicTypes() needs to be synchronized
+	 * to remove the risk of updating the same type in nonZeroTypeTopicCnt
+	 */
+	protected synchronized void removeNonZeroTopicTypes(int topic, int type) {
+		//// Remove the topic by copying the last element to it
+		if (nonZeroTypeTopicCnt[type] < 1) {
+			throw new IllegalArgumentException ("CollapsedLightLDA: Cannot remove, count is less than 1 => " + nonZeroTypeTopicCnt[type]);
+		}
+		int topicIndex = nonZeroTypeTopicsBackMapping[type][topic];
+		nonZeroTypeTopicCnt[type]--;
+		nonZeroTypeTopics[type][topicIndex] = nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]];
+		nonZeroTypeTopicsBackMapping[type][nonZeroTypeTopics[type][topicIndex]] = topicIndex;
+	}
 }
