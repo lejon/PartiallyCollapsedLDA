@@ -114,13 +114,20 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	@Override
 	public void preIteration() {
 		super.preIteration();
-		for (int topic = 0; topic < numTopics; topic++) {
-			for (int type = 0; type < numTypes; type++) {
-				topicCountBetaHat[topic] += typeTopicCounts[type][topic] + beta;
-			}
-		}
+		
+		calcTopicCountBetaHat();
 		
 	};
+	
+	protected void calcTopicCountBetaHat(){
+		for (int topic = 0; topic < numTopics; topic++) {
+			topicCountBetaHat[topic] = 0;
+			for (int type = 0; type < numTypes; type++) {
+				topicCountBetaHat[topic] += typeTopicCounts[type][topic];
+			}
+			topicCountBetaHat[topic] += betaSum;
+		}
+	}
 
 	@Override
 	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
