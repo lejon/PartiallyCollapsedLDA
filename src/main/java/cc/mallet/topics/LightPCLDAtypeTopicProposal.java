@@ -50,6 +50,8 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 		tokensPerType = new int[numTypes];
 		
 		super.addInstances(training);
+		
+		initTokensPerType(); 
 	}
 	
 	@Override
@@ -269,6 +271,16 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			localTopicCounts_not_i[newTopic]++;
 		}
 	}	
+	
+	protected void initTokensPerType() {
+		// Initialize tokensPerType
+		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
+			for (int topicidx = 0; topicidx < numTopics; topicidx++) {
+				tokensPerType[typeidx] += typeTopicCounts[typeidx][topicidx];
+			}
+		}
+		// System.out.println("Tokens for type 0: " + tokensPerType[0] + " and BetaSums: " + betaSum);
+	}
 	
 	// TODO: Code is copied from CollapsedLightLDA
 	protected synchronized void insertNonZeroTopicTypes(int topic, int type) {

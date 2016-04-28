@@ -148,7 +148,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		// Initialize tokensPerType
 		for (int typeidx = 0; typeidx < numTypes; typeidx++) {
 			for (int topicidx = 0; topicidx < numTopics; topicidx++) {
-				tokensPerType[typeidx] =+ typeTopicCounts[typeidx][topicidx];
+				tokensPerType[typeidx] += typeTopicCounts[typeidx][topicidx];
 			}
 		}
 	}
