@@ -115,11 +115,13 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	public void preIteration() {
 		super.preIteration();
 		
-		calcTopicCountBetaHat();
+		initTopicCountBetaHat();
 		
 	};
 	
-	protected void calcTopicCountBetaHat(){
+	// TODO: Make this more efficient later on, just updating topicCountBetaHat
+	// in updateTypeTopicCounts, then the sampler will be truly O(1)
+	protected void initTopicCountBetaHat(){
 		for (int topic = 0; topic < numTopics; topic++) {
 			topicCountBetaHat[topic] = 0;
 			for (int type = 0; type < numTypes; type++) {
@@ -175,14 +177,19 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			// Create n_d^{-i}, decrease document topic count with z_i
 			localTopicCounts_not_i[oldTopic]--;
 			
-			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + betaSum); // (n_w + V*beta) * u where u ~ U(0,1)
 			int wordTopicIndicatorProposal = -1;
+			double u1 = ThreadLocalRandom.current().nextDouble() ; // (n_w + V*beta) * u where u ~ U(0,1)
+			// wordTopicIndicatorProposal = aliasTables[type].generateSample(u1);
+			
+			double u_w = u1 * (tokensPerType[type] + beta * numTopics); // (n_w + V*beta) * u where u ~ U(0,1)
 			if(u_w < tokensPerType[type]) {
 				double u = u_w / (double) tokensPerType[type];
-				wordTopicIndicatorProposal = nonZeroTypeTopics[type][aliasTables[type].generateSample(u)];
+				wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
+				// int wordTopicIndicatorProposal = nonZeroTypeTopics[type][aliasTables[type].generateSample(u)];
 			} else {
-				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / betaSum) * numTopics); // assume symmetric beta, just draws one topic
+				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (beta * numTopics)) * numTopics); // assume symmetric beta, just draws one topic
 			}
+			// System.out.println("uw: " + u_w + " tokptype " +  tokensPerType[type] + " beta * K " + beta * numTopics);			
 			
 			// If we drew a new topic indicator, do MH step for Word proposal
 			if(wordTopicIndicatorProposal!=oldTopic) {

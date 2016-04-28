@@ -562,16 +562,20 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}   
 	}
 	
-	public void preIteration() {
-				
-		// Compute topicCountBetaHat
-		// TODO: Make this more efficient later on, just updating topicCountBetaHat
-		// when updating matrix. Do this in PCLDA as well
+	// TODO: This has been copied from LightPCLDAtypeTopicProposal.
+	protected void initTopicCountBetaHat(){
 		for (int topic = 0; topic < numTopics; topic++) {
+			topicCountBetaHat[topic] = 0;
 			for (int type = 0; type < numTypes; type++) {
-				topicCountBetaHat[topic] += typeTopicCounts[type][topic] + beta;
+				topicCountBetaHat[topic] += typeTopicCounts[type][topic];
 			}
+			topicCountBetaHat[topic] += betaSum;
 		}
+	}
+	
+	public void preIteration() {
+		
+		initTopicCountBetaHat();		
 		
 		List<Callable<TableBuildResult>> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
