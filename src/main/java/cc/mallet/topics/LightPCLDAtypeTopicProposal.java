@@ -94,7 +94,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			
 			double [] probs = new double[nonZeroTypeTopicCnt[type]];
 			// Iterate over nonzero topic indicators
-			int typeMass = 0;
+			double typeMass = 0.0;
 			for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
 				typeMass += probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]] / topicCountBetaHat[nonZeroTypeTopics[type][i]];
 			}
@@ -113,9 +113,8 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	
 	@Override
 	public void preIteration() {
-		super.preIteration();
-		
 		initTopicCountBetaHat();
+		super.preIteration();
 		
 	};
 	
@@ -184,8 +183,8 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			double u_w = u1 * (tokensPerType[type] + beta * numTopics); // (n_w + V*beta) * u where u ~ U(0,1)
 			if(u_w < tokensPerType[type]) {
 				double u = u_w / (double) tokensPerType[type];
-				wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
-				// int wordTopicIndicatorProposal = nonZeroTypeTopics[type][aliasTables[type].generateSample(u)];
+				// wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
+				wordTopicIndicatorProposal = nonZeroTypeTopics[type][aliasTables[type].generateSample(u)];
 			} else {
 				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (beta * numTopics)) * numTopics); // assume symmetric beta, just draws one topic
 			}
