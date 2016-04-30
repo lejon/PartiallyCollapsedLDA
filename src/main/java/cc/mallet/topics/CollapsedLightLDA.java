@@ -994,14 +994,14 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			documentLocalTopicCounts_i[oldTopic]--;
 			
 			// Draw topic proposal t
-			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + betaSum); // (n_w + V*beta) * u where u ~ U(0,1)
+			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + beta * numTopics); // (n_wk + K * beta) * u where u ~ U(0,1)
 
 			int wordTopicIndicatorProposal = -1;
 			if(u_w < tokensPerType[type]) {
 				double u = u_w / (double) tokensPerType[type];
 				wordTopicIndicatorProposal = nonZeroTypeTopics[type][aliasTables[type].generateSample(u)];
 			} else {
-				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / betaSum) * numTopics); // assume symmetric beta, just draws one topic
+				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (beta * numTopics)) * numTopics); // assume symmetric beta, just draws one topic
 			}
 						
 			// Make sure we actually sampled a valid topic
