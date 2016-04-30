@@ -38,7 +38,7 @@ public class SpaliasUncollapsedTest {
 	@Test
 	public void smokeTest() throws IOException {	
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		Integer numIter = 100;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
@@ -79,7 +79,7 @@ public class SpaliasUncollapsedTest {
 	@Test
 	public void sampleZGivenPhi() throws IOException {	
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		Integer numIter = 100;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
@@ -519,7 +519,7 @@ public class SpaliasUncollapsedTest {
 	@Test
 	public void testGetPhiMeans() throws IOException {
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		Integer numIter = 10;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
@@ -575,7 +575,7 @@ public class SpaliasUncollapsedTest {
 	@Test
 	public void testNoPhiMeans() throws IOException {
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		Integer numIter = 10;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);

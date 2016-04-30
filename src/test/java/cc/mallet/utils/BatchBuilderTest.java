@@ -151,7 +151,7 @@ public class BatchBuilderTest {
 	public void testEvenSplit() throws UnsupportedEncodingException, FileNotFoundException {
 		String whichModel = "uncollapsed";
 		Integer numIter = 1000;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 				
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 
@@ -203,7 +203,7 @@ public class BatchBuilderTest {
 	public void testPercentageSplit() throws UnsupportedEncodingException, FileNotFoundException {
 		String whichModel = "uncollapsed";
 		Integer numIter = 1000;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 				
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 
@@ -294,7 +294,7 @@ public class BatchBuilderTest {
 	public void testAdaptive() throws IOException {
 		String whichModel = "uncollapsed";
 		Integer numIter = 1000;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 
@@ -399,7 +399,7 @@ public class BatchBuilderTest {
 	public void testFixedSplit() throws IOException {
 		String whichModel = "uncollapsed";
 		Integer numIter = 1000;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 
@@ -506,7 +506,7 @@ public class BatchBuilderTest {
 	public void testProportionalTopicIndexBuilderDefault() throws IOException {
 		String whichModel = "uncollapsed";
 		Integer numIter = 1000;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 
@@ -549,7 +549,7 @@ public class BatchBuilderTest {
 	public void testProportionalTopicIndexBuilderN200() throws IOException {
 		String whichModel = "uncollapsed";
 		Integer numIter = 1000;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 		

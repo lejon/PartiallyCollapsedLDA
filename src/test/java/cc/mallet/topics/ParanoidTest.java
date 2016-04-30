@@ -37,7 +37,7 @@ public class ParanoidTest {
 	@Test
 	public void testParanoid() throws IOException {	
 		String whichModel = "uncollapsed_paranoid";
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		Integer numIter = 100;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
@@ -78,7 +78,7 @@ public class ParanoidTest {
 	@Test
 	public void testParanoidSpalias() throws IOException {	
 		String whichModel = "uncollapsed_paranoid";
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		Integer numIter = 100;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
@@ -120,7 +120,7 @@ public class ParanoidTest {
 	@Test
 	public void testParanoidVSSpalias() throws IOException {	
 		String whichModel = "uncollapsed_paranoid";
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		Integer numIter = 100;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
@@ -163,7 +163,7 @@ public class ParanoidTest {
 	public void testParanoidWPercentageSplit() throws IOException {	
 		String whichModel = "uncollapsed_paranoid";
 		Integer numIter = 100;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
 				numBatches);
@@ -208,7 +208,7 @@ public class ParanoidTest {
 	public void testParanoidWAdaptiveSplit() throws IOException {	
 		String whichModel = "uncollapsed_paranoid";
 		Integer numIter = 100;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
 				numBatches);
@@ -254,7 +254,7 @@ public class ParanoidTest {
 	public void testParanoidWFixedSplit() throws IOException {	
 		String whichModel = "uncollapsed_paranoid";
 		Integer numIter = 100;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
 				numBatches);

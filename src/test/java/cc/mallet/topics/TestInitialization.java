@@ -37,7 +37,7 @@ public class TestInitialization {
 		Double alpha = 0.1; 
 		Double beta = 0.01;
 		Integer numIter = 1000;
-		Integer numBatches = 4;
+		Integer numBatches = 2;
 		Integer rareWordThreshold = 10;
 		Integer showTopicsInterval = 50;
 		Integer startDiagnosticOutput = 500;
@@ -329,7 +329,7 @@ public class TestInitialization {
 		Double alphaSum = 1.0; 
 		Double beta = 0.01;
 		Integer numIter = 1000;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 		Integer rareWordThreshold = 0;
 		Integer showTopicsInterval = 50;
 		Integer startDiagnosticOutput = 500;
@@ -373,7 +373,7 @@ public class TestInitialization {
 		Double alphaSum = 1.0; 
 		Double beta = 0.01;
 		Integer numIter = 1000;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 		Integer rareWordThreshold = 0;
 		Integer showTopicsInterval = 50;
 		Integer startDiagnosticOutput = 500;
@@ -432,7 +432,7 @@ public class TestInitialization {
 		Double alphaSum = 1.0; 
 		Double beta = 0.01;
 		Integer numIter = 1000;
-		Integer numBatches = 6;
+		Integer numBatches = 2;
 		Integer rareWordThreshold = 0;
 		Integer showTopicsInterval = 50;
 		Integer startDiagnosticOutput = 500;
