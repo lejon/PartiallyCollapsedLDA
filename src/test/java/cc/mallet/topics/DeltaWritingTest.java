@@ -29,7 +29,7 @@ public class DeltaWritingTest {
 		Double alphaSum = 1.0; 
 		Double beta = 0.01;
 		Integer numIter = 1000;
-		Integer numBatches = 2;
+		Integer numBatches = 6;
 		Integer rareWordThreshold = 0;
 		Integer showTopicsInterval = 50;
 		Integer startDiagnosticOutput = 500;

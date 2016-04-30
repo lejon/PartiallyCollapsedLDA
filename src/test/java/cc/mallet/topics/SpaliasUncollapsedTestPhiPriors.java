@@ -38,7 +38,7 @@ public class SpaliasUncollapsedTestPhiPriors {
 	@Test
 	public void smokeTest() throws IOException {	
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 2;
+		Integer numBatches = 6;
 
 		Integer numIter = 100;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
@@ -79,7 +79,7 @@ public class SpaliasUncollapsedTestPhiPriors {
 	@Test
 	public void sampleZGivenPhi() throws IOException {	
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 2;
+		Integer numBatches = 6;
 
 		Integer numIter = 100;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
@@ -137,7 +137,7 @@ public class SpaliasUncollapsedTestPhiPriors {
 	@Test
 	public void testSetPriorsNoPriors() throws IOException {	
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 2;
+		Integer numBatches = 6;
 
 		Integer numIter = 100;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,numBatches);
@@ -189,7 +189,7 @@ public class SpaliasUncollapsedTestPhiPriors {
 	@Test
 	public void testSetPriorsNoWordsIsInDictionary() throws IOException {	
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 2;
+		Integer numBatches = 6;
 
 		Integer numIter = 100;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,numBatches);
@@ -242,7 +242,7 @@ public class SpaliasUncollapsedTestPhiPriors {
 	@Test
 	public void testSetPriors() throws IOException {	
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 2;
+		Integer numBatches = 6;
 
 		Integer numIter = 100;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,numBatches);
@@ -336,7 +336,7 @@ public class SpaliasUncollapsedTestPhiPriors {
 	@Test
 	public void testSetPriorsNips() throws IOException {	
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 2;
+		Integer numBatches = 6;
 
 		Integer numIter = 500;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,numBatches);
@@ -807,7 +807,7 @@ public class SpaliasUncollapsedTestPhiPriors {
 	@Test
 	public void testGetPhiMeans() throws IOException {
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 2;
+		Integer numBatches = 6;
 
 		Integer numIter = 10;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
@@ -863,7 +863,7 @@ public class SpaliasUncollapsedTestPhiPriors {
 	@Test
 	public void testNoPhiMeans() throws IOException {
 		String whichModel = "spalias_uncollapsed";
-		Integer numBatches = 2;
+		Integer numBatches = 6;
 
 		Integer numIter = 10;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);

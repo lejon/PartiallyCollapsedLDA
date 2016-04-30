@@ -115,7 +115,7 @@ public class TestPerplexityDatasetBuilder {
 		String dataset_fn = "src/main/resources/datasets/nips.txt";
 		
 		String whichModel = "uncollapsed_paranoid";
-		Integer numBatches = 2;
+		Integer numBatches = 6;
 		Integer numIter = 100;
 
 		LDAConfiguration config = getStdCfg(whichModel, numIter, numBatches);
