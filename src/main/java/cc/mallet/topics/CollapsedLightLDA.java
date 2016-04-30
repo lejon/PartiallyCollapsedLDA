@@ -353,8 +353,9 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		bb.calculateBatch();
 		topicIndexBuilder = TopicIndexBuilderFactory.get(config,this);
 
-		// Initializing global sparse structure and tokensPerType
+		// Initializing global sparse structure and tokensPerType and topicCountBetaHat()
 		initTokensPerType(); 
+		initTopicCountBetaHat();
 	}
 
 	protected void updateTypeTopicCount(int type, int topic, int count) {
@@ -366,6 +367,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		topicTypeCountMapping[topic][type] += count;
 		typeTopicCounts[type][topic] += count;
 		tokensPerTopic[topic] += count;
+		updateTopicCountBetaHat(topic, count);
 		
 		if(typeTopicCounts[type][topic] == 0 && count < 0){
 			removeNonZeroTopicTypes(topic, type);
@@ -573,9 +575,12 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 	}
 	
+	protected void updateTopicCountBetaHat(int topic, int count){
+		topicCountBetaHat[topic] += count;
+	}
+	
 	public void preIteration() {
 		
-		initTopicCountBetaHat();		
 		
 		List<Callable<TableBuildResult>> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();

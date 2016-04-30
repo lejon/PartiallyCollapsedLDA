@@ -52,6 +52,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 		super.addInstances(training);
 		
 		initTokensPerType(); 
+		initTopicCountBetaHat();
 	}
 	
 	@Override
@@ -62,6 +63,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 		}
 		
 		super.updateTypeTopicCount(type, topic, count);
+		updateTopicCountBetaHat(topic, count);
 		
 		if(typeTopicCounts[type][topic] == 0 && count < 0){
 			removeNonZeroTopicTypes(topic, type);
@@ -113,13 +115,10 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	
 	@Override
 	public void preIteration() {
-		initTopicCountBetaHat();
 		super.preIteration();
 		
 	};
 	
-	// TODO: Make this more efficient later on, just updating topicCountBetaHat
-	// in updateTypeTopicCounts, then the sampler will be truly O(1)
 	protected void initTopicCountBetaHat(){
 		for (int topic = 0; topic < numTopics; topic++) {
 			topicCountBetaHat[topic] = 0;
@@ -129,6 +128,11 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			topicCountBetaHat[topic] += betaSum;
 		}
 	}
+	
+	protected void updateTopicCountBetaHat(int topic, int count){
+		topicCountBetaHat[topic] += count;
+	}
+	
 
 	@Override
 	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
