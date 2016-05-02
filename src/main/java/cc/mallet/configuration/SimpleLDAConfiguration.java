@@ -251,7 +251,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public String getTopicBatchBuildingScheme(String batchBuildSchemeDefault) {
-		return topic_batch_building_scheme == null ? batchBuildSchemeDefault : null;
+		return topic_batch_building_scheme == null ? batchBuildSchemeDefault : topic_batch_building_scheme;
 	}
 
 	@Override
@@ -320,7 +320,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	
 	@Override
 	public double topTokensToSample(double defaultValue) {
-		return topTokensToSample == null ? defaultValue : null;
+		return topTokensToSample == null ? defaultValue : topTokensToSample.doubleValue();
 	}
 
 	@Override

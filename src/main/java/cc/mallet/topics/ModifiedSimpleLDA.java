@@ -509,6 +509,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	}
 	
 	/** 
+	 * THIS IS WORK IN PROGRESS, NOT FINISHED IMPLEMENTED, DO NOT USE!
 	 *  Gather statistics on the size of documents 
 	 *  and create histograms for use in Dirichlet hyperparameter
 	 *  optimization.

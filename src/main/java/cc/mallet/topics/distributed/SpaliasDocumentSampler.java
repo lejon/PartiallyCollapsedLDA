@@ -4,6 +4,7 @@ import gnu.trove.TIntArrayList;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -107,7 +108,7 @@ public class SpaliasDocumentSampler extends UntypedActor {
 		System.out.println("this.alpha = " + this.alpha);
 		System.out.println("this.beta = " + this.beta);
 		System.out.println("this.myBatch = " + this.myBatch);
-		System.out.println("this.docIndices = " + this.docIndices);
+		System.out.println("this.docIndices = " + Arrays.toString(docIndices));
 		System.out.println("this.resultsSize = " + this.resultsSize);
 
 	}

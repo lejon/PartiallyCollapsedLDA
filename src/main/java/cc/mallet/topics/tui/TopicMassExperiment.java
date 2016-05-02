@@ -237,10 +237,6 @@ public class TopicMassExperiment {
 			return pc.getStringProperty(key);
 		}
 
-		public boolean equals(Object obj) {
-			return pc.equals(obj);
-		}
-
 		public void addConfigurationListener(ConfigurationListener l) {
 			pc.addConfigurationListener(l);
 		}
@@ -831,10 +827,6 @@ public class TopicMassExperiment {
 
 		public int getMaxIndex(String key) {
 			return pc.getMaxIndex(key);
-		}
-
-		public Object clone() {
-			return pc.clone();
 		}
 
 		public Configuration interpolatedConfiguration() {
