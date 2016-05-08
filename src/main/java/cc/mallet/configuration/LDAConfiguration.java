@@ -27,6 +27,7 @@ public interface LDAConfiguration {
 	public static final int PHI_BURN_IN_DEFAULT = 0;
 	public static final int PHI_THIN_DEFAULT = 1;
 	public static final boolean SAVE_PHI_MEAN_DEFAULT = true;
+	public static final int TF_IDF_VOCAB_SIZE_DEFAULT = -1;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -61,6 +62,8 @@ public interface LDAConfiguration {
 	public Integer getNoTopicBatches(int defaultValue);
 
 	public Integer getRareThreshold(int defaultValue);
+	
+	public Integer getTfIdfVocabSize(int defaultValue);
 
 	public Integer getTopicInterval(int defaultValue);
 

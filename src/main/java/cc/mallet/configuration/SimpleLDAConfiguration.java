@@ -14,6 +14,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private Integer noBatches;
 	private Integer noTopicBatches;
 	private Integer rareThreshold;
+	private Integer tfIdfThreshold;
 	private Integer topicInterval;
 	private Integer startDiagnostic;
 	private Integer seed = 0;
@@ -437,5 +438,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	public void setSavePhi(boolean savePhi) {
 		this.savePhi = savePhi;
+	}
+	
+	@Override
+	public Integer getTfIdfVocabSize(int defaultValue) {
+		return tfIdfThreshold == null ? defaultValue : tfIdfThreshold;
 	}
 }

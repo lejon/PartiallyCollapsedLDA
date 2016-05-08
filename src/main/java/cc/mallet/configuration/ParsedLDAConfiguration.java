@@ -327,4 +327,10 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public int getPhiMeanThin(int phiMeanThinDefault) {
 		return getInteger("phi_mean_thin", phiMeanThinDefault);
 	}
+	
+	@Override
+	public Integer getTfIdfVocabSize(int defaultValue) {
+		return getInteger("tfidf_vocab_size",defaultValue);
+	}
+
 }

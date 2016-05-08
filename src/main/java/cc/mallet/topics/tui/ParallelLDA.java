@@ -99,13 +99,23 @@ public class ParallelLDA {
 				String whichModel = config.getScheme();
 				System.out.println("Scheme: " + whichModel);
 
-				InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
-						config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
+				InstanceList instances;
+				if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
+					instances = LDAUtils.loadInstancesKeep(dataset_fn, 
+							config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers());					
+				} else {					
+					instances = LDAUtils.loadInstancesPrune(dataset_fn, 
+							config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
+				}
 
 				LDAGibbsSampler model = createModel(config, whichModel);
 				
 				model.setRandomSeed(commonSeed);
-				System.out.println(String.format("Rare word threshold: %d", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD)));
+				if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
+					System.out.println(String.format("Top TF-IDF threshold: %d", config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)));
+				} else {
+					System.out.println(String.format("Rare word threshold: %d", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD)));
+				}
 
 				System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
 				System.out.println("Instance list is: " + instances.size());

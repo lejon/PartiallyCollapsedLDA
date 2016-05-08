@@ -114,8 +114,14 @@ public class KLClassifier {
 				String dataset_fn = config.getDatasetFilename();
 				System.out.println("Using dataset: " + dataset_fn);
 
-				InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
-						config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
+				InstanceList instances;
+				if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
+					instances = LDAUtils.loadInstancesKeep(dataset_fn, 
+							config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers());					
+				} else {					
+					instances = LDAUtils.loadInstancesPrune(dataset_fn, 
+							config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
+				}
 
 				KLDivergenceClassifierMultiCorpus mcmodel = null;
 				KLDivergenceClassifier model = null;

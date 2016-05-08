@@ -918,5 +918,10 @@ public class TopicMassExperiment {
 		public int getPhiMeanThin(int phiMeanThinDefault) {
 			return 0;
 		}
+
+		@Override
+		public Integer getTfIdfVocabSize(int defaultValue) {
+			return pc.getTfIdfVocabSize(defaultValue);
+		}
 	}
 }

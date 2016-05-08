@@ -94,8 +94,14 @@ public class ParallelLDATrainTest extends ParallelLDA {
 				String whichModel = config.getScheme();
 				System.out.println("Scheme: " + whichModel);
 
-				InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
-						config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
+				InstanceList instances;
+				if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
+					instances = LDAUtils.loadInstancesKeep(dataset_fn, 
+							config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers());					
+				} else {					
+					instances = LDAUtils.loadInstancesPrune(dataset_fn, 
+							config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
+				}
 
 				System.out.println(String.format("Rare word threshold: %d", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD)));
 
