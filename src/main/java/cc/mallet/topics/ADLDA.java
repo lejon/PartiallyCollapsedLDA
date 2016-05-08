@@ -453,7 +453,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 
 	@Override
 	public int getCorpusSize() {
-		throw new NotImplementedException("getCorpusSize is not implemented yet! :(");
+		return totalTokens;
 	}
 	
 	@Override
