@@ -50,7 +50,8 @@
 	<!-- v4.4.1: Improved config by moving SubConfig to PCLDA from DOLDA -->
 	<!-- v4.4.2: Fixed bugs in Light PC-LDA and Light LDA -->
 	<!-- v4.4.3: Added implementation if getCorpusSize to ADLDA -->
-	<version>4.4.3</version>
+	<!-- v4.5.0: Added support for TF-IDF pruning of vocabulary -->
+	<version>4.5.0</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
