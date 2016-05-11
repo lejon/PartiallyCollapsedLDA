@@ -1,0 +1,2 @@
+docno:1	X	this is a sample 
+docno:2	X	this is a another another example example example
