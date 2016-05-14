@@ -14,7 +14,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import akka.actor.UntypedActor;
-import cc.mallet.topics.LDAUtils;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 

@@ -13,7 +13,6 @@ import org.junit.Test;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
 import cc.mallet.topics.LDAGibbsSampler;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.topics.randomscan.document.AdaptiveBatchBuilder;
@@ -23,6 +22,7 @@ import cc.mallet.topics.randomscan.document.FixedSplitBatchBuilder;
 import cc.mallet.topics.randomscan.topic.ProportionalTopicIndexBuilder;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
 public class BatchBuilderTest {

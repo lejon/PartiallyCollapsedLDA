@@ -18,8 +18,10 @@ import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.IDSorter;
 import cc.mallet.types.LabelSequence;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;
+import cc.mallet.util.Stats;
 import cc.mallet.util.Timing;
 
 public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {

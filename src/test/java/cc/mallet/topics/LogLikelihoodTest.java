@@ -8,10 +8,10 @@ import org.junit.Test;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.SerialCollapsedLDA;
 import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.utils.TestUtils;
 

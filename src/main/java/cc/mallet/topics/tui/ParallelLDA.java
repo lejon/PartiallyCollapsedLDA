@@ -16,7 +16,6 @@ import cc.mallet.topics.CollapsedLightLDA;
 import cc.mallet.topics.EfficientUncollapsedParallelLDA;
 import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.LDASamplerWithPhi;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.LightPCLDA;
 import cc.mallet.topics.LightPCLDAtypeTopicProposal;
 import cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA;
@@ -26,6 +25,7 @@ import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.topics.SpaliasUncollapsedParallelWithPriors;
 import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.Timer;
 
@@ -38,7 +38,7 @@ public class ParallelLDA {
 			System.out.println("\n" + PROGRAM_NAME + ": No args given, you should typically call it along the lines of: \n" 
 					+ "java -cp PCPLDA-X.X.X.jar cc.mallet.topics.tui.ParallelLDA --run_cfg=src/main/resources/configuration/PLDAConfig.cfg\n" 
 					+ "or\n" 
-					+ "java -jar PCPLDA-X.X.X.jar —run_cfg=src/main/resources/configuration/PLDAConfig.cfg\n");
+					+ "java -jar PCPLDA-X.X.X.jar -run_cfg=src/main/resources/configuration/PLDAConfig.cfg\n");
 			System.exit(-1);
 		}
 

@@ -14,6 +14,7 @@ import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.LabelSequence;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;

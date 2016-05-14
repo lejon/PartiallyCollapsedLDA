@@ -12,7 +12,6 @@ import java.util.Random;
 import cc.mallet.classify.evaluate.EnhancedConfusionMatrix;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.topics.LDASamplerWithPhi;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.CrossValidationIterator;
@@ -20,6 +19,7 @@ import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelVector;
 import cc.mallet.types.MatrixOps;
+import cc.mallet.util.LDAUtils;
 
 public class KLDivergenceClassifier extends Classifier {
 	static DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0");

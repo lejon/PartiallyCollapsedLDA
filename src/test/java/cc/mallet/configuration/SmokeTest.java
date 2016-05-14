@@ -20,13 +20,13 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.topics.ADLDA;
 import cc.mallet.topics.EfficientUncollapsedParallelLDA;
 import cc.mallet.topics.LDAGibbsSampler;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.ModifiedSimpleLDA;
 import cc.mallet.topics.ParanoidUncollapsedParallelLDA;
 import cc.mallet.topics.SerialCollapsedLDA;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
 import com.google.common.collect.Sets;

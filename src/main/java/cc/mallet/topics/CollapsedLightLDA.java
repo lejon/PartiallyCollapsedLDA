@@ -39,8 +39,10 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LDAThreadFactory;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethodDynamicSize;
+import cc.mallet.util.Stats;
 import cc.mallet.util.WalkerAliasTable;
 
 

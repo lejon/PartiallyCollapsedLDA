@@ -1,4 +1,4 @@
-package cc.mallet.topics;
+package cc.mallet.util;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -33,6 +33,9 @@ import cc.mallet.pipe.StringList2FeatureSequence;
 import cc.mallet.pipe.Target2Label;
 import cc.mallet.pipe.TfIdfPipe;
 import cc.mallet.pipe.iterator.CsvIterator;
+import cc.mallet.topics.LogState;
+import cc.mallet.topics.TopicAssignment;
+import cc.mallet.topics.TopicInferencer;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
@@ -42,7 +45,6 @@ import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.SimpleTokenizerLarge;
-import cc.mallet.util.NumericAlsoTokenizer;
 import cc.mallet.util.Randoms;
 
 public class LDAUtils {
@@ -518,7 +520,7 @@ public class LDAUtils {
 		writeBinaryDoubleMatrix(matrix, rows, columns, fn);
 	}
 
-	static void writeBinaryDoubleMatrix(double[][] matrix, int rows, int columns, String fn) throws IOException, FileNotFoundException {
+	public static void writeBinaryDoubleMatrix(double[][] matrix, int rows, int columns, String fn) throws IOException, FileNotFoundException {
 		try(RandomAccessFile outputPhiFile = new RandomAccessFile(fn, "rw")) {
 			FileChannel phiChannel = outputPhiFile.getChannel();
 			final int bufferSize = 8*columns*rows;
@@ -720,188 +722,11 @@ public class LDAUtils {
 		return matrix;
 	}
 
-
-	public static void sampleTopicAssignments (LDAConfiguration conf, double [][] phi,
-			FeatureSequence tokenSequence, FeatureSequence topicSequence) {
-		/**
-		 * Samples the topic assignments z for each token in a document, given
-		 * the other topic assignments and the topic distribution phi for 
-		 * the document.
-		 */
-
-		double alpha = conf.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
-		int[] oneDocTopics = topicSequence.getFeatures();
-
-		int type, oldTopic, newTopic;
-		int numTopics = conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT);
-		int docLength = tokenSequence.getLength();
-
-		int[] localTopicCounts = new int[numTopics];
-
-		// Populate topic counts
-		for (int position = 0; position < docLength; position++) {
-			localTopicCounts[oneDocTopics[position]]++;
-		}
-
-		double score, sum;
-		double[] topicTermScores = new double[numTopics];
-
-		//	Iterate over the words in the document
-		for (int position = 0; position < docLength; position++) {
-			type = tokenSequence.getIndexAtPosition(position);
-			oldTopic = oneDocTopics[position];
-
-			// @Mans: I understand this is the -1 in your paper
-			localTopicCounts[oldTopic]--;
-
-			// Now calculate and add up the scores for each topic for this word
-			sum = 0.0;
-
-			// As explained in your paper, I am using phi_k * (M_k + alpha_k), 
-			// where M_k is the number of times that topic was assigned in the document
-			// and alpha_k is the prior
-			for (int topic = 0; topic < numTopics; topic++) {
-				score = (localTopicCounts[topic] + alpha) *
-						phi[topic][type];
-				topicTermScores[topic] = score;
-				sum += score;
-			}
-
-			Randoms random = new Randoms();
-			// Choose a random point between 0 and the sum of all topic scores
-			double sample = random.nextUniform() * sum;
-
-			// Figure out which topic contains that point
-			newTopic = -1;
-			while (sample > 0.0) {
-				newTopic++;
-				sample -= topicTermScores[newTopic];
-			}
-
-			// Make sure we actually sampled a topic
-			if (newTopic == -1) {
-				throw new IllegalStateException ("SimpleLDA: New topic not sampled.");
-			}
-
-			// Put that new topic into the counts
-			oneDocTopics[position] = newTopic;
-			localTopicCounts[newTopic]++;
-		}
-
-	}
-
 	public static LabelAlphabet newLabelAlphabet (int numTopics) {
 		LabelAlphabet ret = new LabelAlphabet();
 		for (int i = 0; i < numTopics; i++)
 			ret.lookupIndex("topic"+i);
 		return ret;
-	}
-
-	public static double perplexity(LDAConfiguration conf, InstanceList testSet, 
-			List<Map<Integer, Integer>> topicTypeCounts, double [][] phi) {
-		double alpha  = conf.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
-		double beta   = conf.getBeta(LDAConfiguration.BETA_DEFAULT);
-		int numTopics = conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT);
-		double alphaSum = alpha * numTopics;
-		double logLikelihood = 0.0;
-
-		// The likelihood of the model is a combination of a 
-		// Dirichlet-multinomial for the words in each topic
-		// and a Dirichlet-multinomial for the topics in each
-		// document.
-
-		// The likelihood function of a dirichlet multinomial is
-		//	 Gamma( sum_i alpha_i )	 prod_i Gamma( alpha_i + N_i )
-		//	prod_i Gamma( alpha_i )	  Gamma( sum_i (alpha_i + N_i) )
-
-		// So the log likelihood is 
-		//	logGamma ( sum_i alpha_i ) - logGamma ( sum_i (alpha_i + N_i) ) + 
-		//	 sum_i [ logGamma( alpha_i + N_i) - logGamma( alpha_i ) ]
-
-
-		ArrayList<TopicAssignment> data = new ArrayList<TopicAssignment>();
-		for (Instance instance : testSet) {
-			FeatureSequence tokenSequence =	(FeatureSequence) instance.getData();
-			LabelSequence topicSequence = new LabelSequence(newLabelAlphabet (numTopics), new int[ tokenSequence.size() ]);
-
-			sampleTopicAssignments (conf,phi, tokenSequence,  topicSequence);
-			data.add(new TopicAssignment (instance, topicSequence));
-		}
-
-
-		// Do the documents first
-
-		int[] topicCounts = new int[numTopics];
-		double[] topicLogGammas = new double[numTopics];
-		int[] docTopics;
-
-		for (int topic=0; topic < numTopics; topic++) {
-			topicLogGammas[ topic ] = Dirichlet.logGamma( alpha );
-		}
-
-		for (int doc=0; doc < data.size(); doc++) {
-			LabelSequence topicSequence = (LabelSequence) data.get(doc).topicSequence;
-
-			docTopics = topicSequence.getFeatures();
-
-			for (int token=0; token < docTopics.length; token++) {
-				topicCounts[ docTopics[token] ]++;
-			}
-
-			for (int topic=0; topic < numTopics; topic++) {
-				if (topicCounts[topic] > 0) {
-					logLikelihood += (Dirichlet.logGamma(alpha + topicCounts[topic]) -
-							topicLogGammas[ topic ]);
-				}
-			}
-
-			// subtract the (count + parameter) sum term
-			logLikelihood -= Dirichlet.logGamma(alphaSum + docTopics.length);
-
-			Arrays.fill(topicCounts, 0);
-		}
-
-		// add the parameter sum term
-		logLikelihood += testSet.size() * Dirichlet.logGamma(alphaSum);
-
-		// Count the number of type-topic pairs
-		int nonZeroTypeTopics = 0;
-		int type;
-		int [] tokensPerTopic = new int[numTopics];
-
-		for( int topic = 0; topic < numTopics; topic++) {
-			Map<Integer, Integer> typeMap = topicTypeCounts.get(topic);
-			for (java.util.Iterator<Integer> typeIterator = 
-					typeMap.keySet().iterator(); typeIterator.hasNext(); ) {
-				type = typeIterator.next();
-				nonZeroTypeTopics++;
-				int countOfThisToken = typeMap.get(type);
-				tokensPerTopic[topic] += countOfThisToken;
-				logLikelihood += Dirichlet.logGamma(beta + countOfThisToken);
-			}
-		}
-
-		for (int topic=0; topic < numTopics; topic++) {
-			logLikelihood -= 
-					Dirichlet.logGamma( (beta * numTopics) +
-							tokensPerTopic[ topic ] );
-			if (Double.isNaN(logLikelihood)) {
-				System.out.println("after topic " + topic + " " + tokensPerTopic[ topic ]);
-				System.exit(1);
-			}
-
-		}
-
-		logLikelihood += 
-				(Dirichlet.logGamma(beta * numTopics)) -
-				(Dirichlet.logGamma(beta) * nonZeroTypeTopics);
-
-		if (Double.isNaN(logLikelihood)) {
-			System.out.println("at the end");
-			System.exit(1);
-		}
-
-		return logLikelihood;
 	}
 
 	/**

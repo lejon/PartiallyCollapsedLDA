@@ -10,11 +10,11 @@ import org.apache.commons.configuration.ConfigurationException;
 import cc.mallet.configuration.ConfigFactory;
 import cc.mallet.configuration.LDACommandLineParser;
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.types.CrossValidationIterator;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
 public class XValidationCreator {

@@ -14,6 +14,7 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.ParallelDirichlet;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
 public class SpaliasUncollapsedTest {

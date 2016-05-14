@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import cc.mallet.topics.LDAUtils;
+import cc.mallet.util.LDAUtils;
 
 public class LDAUtilsTest {
 

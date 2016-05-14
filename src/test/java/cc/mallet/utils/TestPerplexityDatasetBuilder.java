@@ -14,13 +14,13 @@ import org.junit.Test;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.ParanoidUncollapsedParallelLDA;
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.PerplexityDatasetBuilder;
 

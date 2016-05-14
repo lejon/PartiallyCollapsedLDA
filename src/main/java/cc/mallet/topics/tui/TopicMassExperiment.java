@@ -41,9 +41,9 @@ import cc.mallet.configuration.LDACommandLineParser;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.ParsedLDAConfiguration;
 import cc.mallet.topics.LDAGibbsSampler;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
 public class TopicMassExperiment {

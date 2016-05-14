@@ -26,7 +26,6 @@ import akka.actor.Inbox;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.LDARemoteConfiguration;
 import cc.mallet.topics.LDAGibbsSampler;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.ModifiedSimpleLDA;
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.topics.randomscan.document.BatchBuilderFactory;
@@ -45,6 +44,7 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.types.ParallelDirichlet;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LDAThreadFactory;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
 

@@ -16,10 +16,10 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.LDATrainTestCommandLineParser;
 import cc.mallet.configuration.LDATrainTestConfiguration;
 import cc.mallet.configuration.ParsedLDAConfiguration;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.Timer;
 
