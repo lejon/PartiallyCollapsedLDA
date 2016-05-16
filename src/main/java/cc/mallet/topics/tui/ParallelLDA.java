@@ -258,13 +258,6 @@ public class ParallelLDA {
 							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
 			break;
 		}
-		case "paranoid_parallel": {
-			model = new ParanoidSpaliasUncollapsedLDA(config);
-			System.out.println(
-					String.format("Uncollapsed Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
-			break;
-		}
 		default : {
 			System.out.println("Invalid model type. Aborting");
 			return null;
