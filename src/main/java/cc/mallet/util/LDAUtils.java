@@ -19,11 +19,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
-import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.pipe.CharSequenceLowercase;
 import cc.mallet.pipe.FeatureCountPipe;
 import cc.mallet.pipe.Pipe;
@@ -45,7 +43,6 @@ import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.SimpleTokenizerLarge;
-import cc.mallet.util.Randoms;
 
 public class LDAUtils {
 
@@ -558,30 +555,6 @@ public class LDAUtils {
 			}
 		}
 	}
-	
-	public static void writeASCIIIntMatrix(int[][] matrix, int rows, int columns, String fn, String sep) throws FileNotFoundException, IOException {
-		File file = new File(fn);
-		if (file.exists()) {
-			System.out.println("Warning : the file " + file.getName()
-					+ " already exists !");
-		}
-		try (FileWriter fw = new FileWriter(file, false); 
-				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter pw  = new PrintWriter(bw)) {
-			for (int i = 0; i < matrix.length; i++) {
-				for (int j = 0; j < matrix[i].length; j++) {
-					pw.print(matrix[i][j] + "");
-					if((j+1)<matrix[i].length) {
-						pw.print(sep);
-					}
-				}
-				pw.println();
-			}
-		} catch (IOException e) {
-			throw new IllegalArgumentException("File " + file.getName()
-					+ " is unwritable : " + e.toString());
-		}
-	}
 
 	public static void writeASCIIIntMatrix(int[][] matrix, String fn, String sep) throws FileNotFoundException, IOException {
 		File file = new File(fn);
@@ -663,7 +636,7 @@ public class LDAUtils {
 					+ " is unwritable : " + e.toString());
 		}
 	}
-	
+		
 	public static int [][] readBinaryIntMatrix(int rows, int columns, String fn) throws IOException {
 		File matrixFile = new File(fn);
 		int [][] matrix = new int[rows][columns];
@@ -700,6 +673,36 @@ public class LDAUtils {
 	    for (int i = 0; i < rows.size(); i++) {
 	    	List<Integer> row = rows.get(i);
 	    	int [] irow = new int[row.size()];
+	    	for (int j = 0; j < row.size(); j++) {
+				irow[j] = row.get(j);
+			}
+	    	result[i] = irow;
+	    }
+		return result;
+	}
+	
+	public static double[][] readASCIIDoubleMatrix(String filename, String sep) throws IOException {
+		List<List<Double>> rows = new ArrayList<List<Double>>();
+		File file = new File(filename);
+	    FileReader fr = new FileReader(file);
+	    BufferedReader br = new BufferedReader(fr);
+	    String line;
+	    while((line = br.readLine()) != null){
+	    	List<Double> row = new ArrayList<Double>();
+	    	String [] ints = line.split(sep);
+	    	for (int i = 0; i < ints.length; i++) {
+				if(ints[i].trim().length()>0) {
+					row.add(Double.parseDouble(ints[i]));
+				}
+			}
+	    	rows.add(row);
+	    }
+	    br.close();
+	    fr.close();
+	    double [][] result = new double[rows.size()][];
+	    for (int i = 0; i < rows.size(); i++) {
+	    	List<Double> row = rows.get(i);
+	    	double [] irow = new double[row.size()];
 	    	for (int j = 0; j < row.size(); j++) {
 				irow[j] = row.get(j);
 			}
