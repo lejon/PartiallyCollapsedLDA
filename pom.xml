@@ -51,7 +51,8 @@
 	<!-- v4.4.2: Fixed bugs in Light PC-LDA and Light LDA -->
 	<!-- v4.4.3: Added implementation if getCorpusSize to ADLDA -->
 	<!-- v4.5.0: Added support for TF-IDF pruning of vocabulary -->
-	<version>4.5.0</version>
+	<!-- v4.5.1: Some cleanups and more unit tests on Utils. Added smoke test for LightPCLDAtypeTopicProposal -->
+	<version>4.5.1</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
