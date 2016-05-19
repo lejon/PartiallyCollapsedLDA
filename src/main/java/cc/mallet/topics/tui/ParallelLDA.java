@@ -19,7 +19,6 @@ import cc.mallet.topics.LDASamplerWithPhi;
 import cc.mallet.topics.LightPCLDA;
 import cc.mallet.topics.LightPCLDAtypeTopicProposal;
 import cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA;
-import cc.mallet.topics.ParanoidSpaliasUncollapsedLDA;
 import cc.mallet.topics.SerialCollapsedLDA;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.topics.SpaliasUncollapsedParallelWithPriors;
