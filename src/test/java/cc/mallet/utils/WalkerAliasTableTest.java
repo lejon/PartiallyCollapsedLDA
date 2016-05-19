@@ -28,6 +28,7 @@ public class WalkerAliasTableTest {
 	Class walkerClass;
 	WalkerAliasTable walker;
 	double epsilon = 0.001;
+	double alpha = 0.1;
 
 	public WalkerAliasTableTest(@SuppressWarnings("rawtypes") Class testClass) {
 		walkerClass = testClass;
@@ -52,22 +53,17 @@ public class WalkerAliasTableTest {
 	@Test
 	public void basicTest() {
 		double [] probs = {2.0/15.0,7.0/15.0,6.0/15.0};
-		for (int i = 0; i < probs.length; i++) {
-			System.out.println(probs[i]);
-		}
 		walker.initTableNormalizedProbabilities(probs);	
 		int noSamples = 100000;
 		int [] samples = new int[noSamples];
-		for (int i = 0; i < samples.length; i++) {
-			samples[i] = walker.generateSample();
-		}
 		int [] cnts = new int[probs.length];
 		for (int i = 0; i < samples.length; i++) {
+			samples[i] = walker.generateSample();
 			cnts[samples[i]]++;
 		}
-		System.out.println("Counts: ");
+		//System.out.println("Counts: ");
 		for (int i = 0; i < cnts.length; i++) {			
-			System.out.print(cnts[i] + " (" + ((double)cnts[i])/noSamples + "),"  + probs[i]);
+			//System.out.print(cnts[i] + " (" + ((double)cnts[i])/noSamples + "),"  + probs[i]);
 			double meanDiff = probs[i] - (((double)cnts[i])/noSamples);
 			double stdi = Math.sqrt((probs[i]*(1-probs[i]))/noSamples);
 			double sigmas = Math.abs(meanDiff) / stdi;
@@ -94,11 +90,9 @@ public class WalkerAliasTableTest {
 		for (int j = 0; j < noLoops; j++) {
 			int noSamples = 1_000_000;
 			int [] samples = new int[noSamples];
-			for (int i = 0; i < samples.length; i++) {
-				samples[i] = walker.generateSample();
-			}
 			int [] cnts = new int[uNormProbs.length];
 			for (int i = 0; i < samples.length; i++) {
+				samples[i] = walker.generateSample();
 				cnts[samples[i]]++;
 			}
 			//System.out.println("Counts: ");
@@ -112,44 +106,28 @@ public class WalkerAliasTableTest {
 			}
 			//System.out.println();
 		}
-		
 	}
 
 	@Test
 	public void testModerate() {
 		double [] alphas = {0.5,0.3,0.1,0.01,0.01};
 		Dirichlet distgen = new Dirichlet(alphas);
-		int noLoops = 100;
-		for (int j = 0; j < noLoops; j++) {
-			double [] probs = distgen.nextDistribution(); 
-			walker.initTableNormalizedProbabilities(probs);
-			int noSamples = 1_000_000;
-			int [] samples = new int[noSamples];
-			for (int i = 0; i < samples.length; i++) {
-				samples[i] = walker.generateSample();
+		double [] probs = distgen.nextDistribution(); 
+		walker.initTableNormalizedProbabilities(probs);
+		int noSamples = 5_000_000;
+		int [] samples = new int[noSamples];
+		long [] cnts = new long[probs.length];
+		for (int i = 0; i < samples.length; i++) {
+			samples[i] = walker.generateSample();
+			cnts[samples[i]]++;
+		}
+		ChiSquareTest cs = new ChiSquareTest();
+		if(cs.chiSquareTest(probs, cnts, alpha)) {
+			double [] calcProbs = new double[probs.length];
+			for (int i = 0; i < calcProbs.length; i++) {
+				calcProbs[i] = ((double)cnts[i] / noSamples);
 			}
-			int [] cnts = new int[probs.length];
-			for (int i = 0; i < samples.length; i++) {
-				cnts[samples[i]]++;
-			}
-			//System.out.println("Counts: ");
-			for (int i = 0; i < cnts.length; i++) {			
-				//System.out.print(cnts[i] + " (" + ((double)cnts[i])/noSamples + "),");
-				double meanDiff = probs[i] - (((double)cnts[i])/((double)noSamples));
-				double stdi = Math.sqrt((probs[i]*(1-probs[i]))/noSamples);
-				double sigmas = Math.abs(meanDiff) / stdi;
-				if(sigmas<6) {
-					System.out.println("Sigmas = " + sigmas);
-					System.out.print("Probs: [");
-					for (int k = 0; k < probs.length; k++) {
-						System.out.print(probs[i] + ", ");
-					}
-					System.out.println("]");
-				}
-				assertTrue(sigmas<6);
-				//assertEquals(probs[i], ((double)cnts[i])/noSamples, epsilon);
-			}
-			//System.out.println();
+			fail("Probs are not equal: " + Arrays.toString(probs) + "\n" +  Arrays.toString(calcProbs));
 		}
 	}
 
@@ -157,36 +135,22 @@ public class WalkerAliasTableTest {
 	@Test
 	public void testExtreme() {
 		Dirichlet distgen = new Dirichlet(900);
-		int noLoops = 100;
-		for (int j = 0; j < noLoops; j++) {
-			double [] probs = distgen.nextDistribution(); 
-			walker.initTableNormalizedProbabilities(probs);
-			int noSamples = 1_000_000;
-			int [] samples = new int[noSamples];
-			for (int i = 0; i < samples.length; i++) {
-				samples[i] = walker.generateSample();
+		double [] probs = distgen.nextDistribution(); 
+		walker.initTableNormalizedProbabilities(probs);
+		int noSamples = 15_000_000;
+		int [] samples = new int[noSamples];
+		long [] cnts = new long[probs.length];
+		for (int i = 0; i < samples.length; i++) {
+			samples[i] = walker.generateSample();
+			cnts[samples[i]]++;
+		}
+		ChiSquareTest cs = new ChiSquareTest();
+		if(cs.chiSquareTest(probs, cnts, alpha)) {
+			double [] calcProbs = new double[probs.length];
+			for (int i = 0; i < calcProbs.length; i++) {
+				calcProbs[i] = ((double)cnts[i] / noSamples);
 			}
-			int [] cnts = new int[probs.length];
-			for (int i = 0; i < samples.length; i++) {
-				cnts[samples[i]]++;
-			}
-			//System.out.println("Counts: ");
-			for (int i = 0; i < cnts.length; i++) {			
-				//System.out.print(cnts[i] + " (" + ((double)cnts[i])/noSamples + "),");
-				double meanDiff = probs[i] - (((double)cnts[i])/noSamples);
-				double stdi = Math.sqrt((probs[i]*(1-probs[i]))/noSamples);
-				double sigmas = Math.abs(meanDiff) / stdi;
-				if(sigmas>6) {
-					System.out.println("Sigmas = " + sigmas);
-					System.out.print("Probs: [");
-					for (int k = 0; k < probs.length; k++) {
-						System.out.print(probs[i] + ", ");
-					}
-					System.out.println("]");
-				}
-				assertTrue("Sigma was: "+ sigmas, sigmas<6);
-			}
-			//System.out.println();
+			fail("Probs are not equal: " + Arrays.toString(probs) + "\n" +  Arrays.toString(calcProbs));
 		}
 	}
 
@@ -206,12 +170,13 @@ public class WalkerAliasTableTest {
 
 		ChiSquareTest cs = new ChiSquareTest();
 		
-		if(cs.chiSquareTest(probs, cnts, 0.01)) {
-			fail();
-		} else {
-			System.out.println("Probs: " + Arrays.toString(probs) + " ARE equal to " +  Arrays.toString(probs));
+		if(cs.chiSquareTest(probs, cnts, alpha)) {
+			double [] calcProbs = new double[probs.length];
+			for (int i = 0; i < calcProbs.length; i++) {
+				calcProbs[i] = ((double)cnts[i] / noSamples);
+			}
+			fail("Probs are not equal: " + Arrays.toString(probs) + "\n" +  Arrays.toString(calcProbs));
 		}
-
 	}
 	
 	@Test
@@ -224,17 +189,14 @@ public class WalkerAliasTableTest {
 		int [] samples = new int[noSamples];
 		
 		// Generate samples from Alias table
+		int [] cnts = new int[probs.length];
 		long tstart = System.currentTimeMillis();
 		for (int i = 0; i < noSamples; i++) {
 			samples[i] = walker.generateSample();
-		}
-		long tend = System.currentTimeMillis();
-		
-		int [] cnts = new int[probs.length];
-		for (int i = 0; i < samples.length; i++) {
 			cnts[samples[i]]++;
 		}
-		
+		long tend = System.currentTimeMillis();
+				
 		// Generate samples from plain multinomial sampler
 		long mstart = System.currentTimeMillis();
 		multinomialSampler(probs, noSamples);	
@@ -246,9 +208,9 @@ public class WalkerAliasTableTest {
 			multiCnts[samples[i]]++;
 		}
 
-		System.out.println("Counts: ");
+		//System.out.println("Counts: ");
 		for (int i = 0; i < probs.length; i++) {			
-			System.out.print(samples[i] + " (" + ((double)samples[i])/noSamples + "),");
+			//System.out.print(samples[i] + " (" + ((double)samples[i])/noSamples + "),");
 			assertEquals(probs[i], ((double)cnts[i])/noSamples, epsilon);
 			assertEquals(probs[i], ((double)multiCnts[i])/noSamples, epsilon);
 			assertEquals(multiCnts[i],cnts[i]);
