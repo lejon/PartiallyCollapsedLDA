@@ -101,10 +101,10 @@ public class ParallelLDA {
 				InstanceList instances;
 				if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
 					instances = LDAUtils.loadInstancesKeep(dataset_fn, 
-							config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers());					
+							config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.NO_TOP_WORDS_DEFAULT));					
 				} else {					
 					instances = LDAUtils.loadInstancesPrune(dataset_fn, 
-							config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
+							config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.NO_TOP_WORDS_DEFAULT));
 				}
 
 				LDAGibbsSampler model = createModel(config, whichModel);
@@ -167,7 +167,7 @@ public class ParallelLDA {
 				lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
 						ParallelLDA.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
 				PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
-				out.println(LDAUtils.formatTopWords(model.getTopWords(50)));
+				out.println(LDAUtils.formatTopWords(model.getTopWords(config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT))));
 				out.flush();
 				out.close();
 

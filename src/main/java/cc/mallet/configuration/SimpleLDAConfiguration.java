@@ -444,4 +444,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	public Integer getTfIdfVocabSize(int defaultValue) {
 		return tfIdfThreshold == null ? defaultValue : tfIdfThreshold;
 	}
+
+	@Override
+	public int getNrTopWords(int defaltNr) {
+		return LDAConfiguration.NO_TOP_WORDS_DEFAULT;
+	}
+
+	@Override
+	public int getMaxDocumentBufferSize(int defaltSize) {
+		return LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT;
+	}
 }

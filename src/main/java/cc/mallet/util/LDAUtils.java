@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 
+import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.pipe.CharSequenceLowercase;
 import cc.mallet.pipe.FeatureCountPipe;
 import cc.mallet.pipe.Pipe;
@@ -82,7 +83,11 @@ public class LDAUtils {
 	 * @throws FileNotFoundException 
 	 */
 	public static InstanceList loadInstances(String inputFile, String stoplistFile, int pruneCount) throws FileNotFoundException {
-		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, true);
+		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, true, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT);
+	}
+	
+	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers) throws FileNotFoundException {
+		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT);
 	}
 	
 	/**
@@ -95,7 +100,7 @@ public class LDAUtils {
 	 * @return
 	 * @throws FileNotFoundException
 	 */
-	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers) throws FileNotFoundException {
+	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers, int maxBufSize) throws FileNotFoundException {
 		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
@@ -104,15 +109,15 @@ public class LDAUtils {
 
 		if (stoplistFile != null) {
 			if(keepNumbers) {				
-				tokenizer = new NumericAlsoTokenizer(new File(stoplistFile));
+				tokenizer = new NumericAlsoTokenizer(new File(stoplistFile), maxBufSize);
 			} else {
-				tokenizer = new SimpleTokenizerLarge(new File(stoplistFile));
+				tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
 			}
 		} else {
 			if(keepNumbers) {
-				tokenizer = new NumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
+				tokenizer = new NumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
 			} else {
-				tokenizer = new SimpleTokenizerLarge(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
+				tokenizer = new SimpleTokenizerLarge(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
 			}
 		}
 
@@ -187,6 +192,10 @@ public class LDAUtils {
 
 		return instances;
 	}
+
+	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers) throws FileNotFoundException {
+		return loadInstancesKeep(inputFile, stoplistFile, keepCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT);
+	}
 	
 	/**
 	 * Loads instances and keeps the <code>keepCount</code> number of words with 
@@ -199,7 +208,7 @@ public class LDAUtils {
 	 * @return
 	 * @throws FileNotFoundException
 	 */
-	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers) throws FileNotFoundException {
+	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, int maxBufSize) throws FileNotFoundException {
 		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
@@ -208,15 +217,15 @@ public class LDAUtils {
 
 		if (stoplistFile != null) {
 			if(keepNumbers) {				
-				tokenizer = new NumericAlsoTokenizer(new File(stoplistFile));
+				tokenizer = new NumericAlsoTokenizer(new File(stoplistFile), maxBufSize);
 			} else {
-				tokenizer = new SimpleTokenizerLarge(new File(stoplistFile));
+				tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
 			}
 		} else {
 			if(keepNumbers) {
-				tokenizer = new NumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
+				tokenizer = new NumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
 			} else {
-				tokenizer = new SimpleTokenizerLarge(NumericAlsoTokenizer.USE_EMPTY_STOPLIST);
+				tokenizer = new SimpleTokenizerLarge(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
 			}
 		}
 

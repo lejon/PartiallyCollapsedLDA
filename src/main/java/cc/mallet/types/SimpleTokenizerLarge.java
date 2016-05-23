@@ -14,7 +14,7 @@ import cc.mallet.pipe.SimpleTokenizer;
 public class SimpleTokenizerLarge extends SimpleTokenizer {
 
 	private static final long serialVersionUID = 1L;
-	protected static int tokenBufferSize = 10000;
+	protected int tokenBufferSize = 10000;
 
 	public SimpleTokenizerLarge(File stopfile) {
 		super(stopfile);
@@ -26,6 +26,21 @@ public class SimpleTokenizerLarge extends SimpleTokenizer {
 	
 	public SimpleTokenizerLarge(HashSet<String> stoplist) {
 		super(stoplist);
+	}
+	
+	public SimpleTokenizerLarge(File stopfile, int bufferSize) {
+		super(stopfile);
+		tokenBufferSize = bufferSize;
+	}
+	
+	public SimpleTokenizerLarge(int languageFlag, int bufferSize) {
+		super(languageFlag);
+		tokenBufferSize = bufferSize;
+	}
+	
+	public SimpleTokenizerLarge(HashSet<String> stoplist, int bufferSize) {
+		super(stoplist);
+		tokenBufferSize = bufferSize;
 	}
 	
 	@Override
@@ -118,12 +133,12 @@ public class SimpleTokenizerLarge extends SimpleTokenizer {
 		return instance;
 	}
 
-	public static int getTokenBufferSize() {
+	public int getTokenBufferSize() {
 		return tokenBufferSize;
 	}
 
-	public static void setTokenBufferSize(int tokenBufferSize) {
-		SimpleTokenizerLarge.tokenBufferSize = tokenBufferSize;
+	public void setTokenBufferSize(int tokenBufferSize) {
+		this.tokenBufferSize = tokenBufferSize;
 	}
 	
 }

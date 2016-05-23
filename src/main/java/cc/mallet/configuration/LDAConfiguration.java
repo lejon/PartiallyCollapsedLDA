@@ -28,6 +28,8 @@ public interface LDAConfiguration {
 	public static final int PHI_THIN_DEFAULT = 1;
 	public static final boolean SAVE_PHI_MEAN_DEFAULT = true;
 	public static final int TF_IDF_VOCAB_SIZE_DEFAULT = -1;
+	public static final int NO_TOP_WORDS_DEFAULT = 20;
+	public static final int MAX_DOC_BUFFFER_SIZE_DEFAULT = 10000;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -142,4 +144,8 @@ public interface LDAConfiguration {
 	public int getPhiBurnInPercent(int phiBurnInDefault);
 
 	int getPhiMeanThin(int phiMeanThinDefault);
+
+	public int getNrTopWords(int defaltNr);
+	
+	public int getMaxDocumentBufferSize(int defaltSize);
 }

@@ -11,7 +11,7 @@ public class NumericAlsoTokenizer extends SimpleTokenizerLarge {
 
 	private static final long serialVersionUID = 1L;
 	
-	protected static int tokenBufferSize = 10000;
+	protected int tokenBufferSize = 10000;
 
 	public NumericAlsoTokenizer(int languageFlag) {
 		super(languageFlag);
@@ -23,6 +23,21 @@ public class NumericAlsoTokenizer extends SimpleTokenizerLarge {
 
 	public NumericAlsoTokenizer(HashSet<String> stoplist) {
 		super(stoplist);
+	}
+	
+	public NumericAlsoTokenizer(int languageFlag, int maxBufSize) {
+		super(languageFlag);
+		tokenBufferSize = maxBufSize;
+	}
+
+	public NumericAlsoTokenizer(File stopfile, int maxBufSize) {
+		super(stopfile);
+		tokenBufferSize = maxBufSize;
+	}
+
+	public NumericAlsoTokenizer(HashSet<String> stoplist, int maxBufSize) {
+		super(stoplist);
+		tokenBufferSize = maxBufSize;
 	}
 
 	@Override
@@ -116,12 +131,12 @@ public class NumericAlsoTokenizer extends SimpleTokenizerLarge {
 	return instance;
 	}
 	
-	public static int getTokenBufferSize() {
+	public int getTokenBufferSize() {
 		return tokenBufferSize;
 	}
 
-	public static void setTokenBufferSize(int tokenBufferSize) {
-		SimpleTokenizerLarge.tokenBufferSize = tokenBufferSize;
+	public void setTokenBufferSize(int tokenBufferSize) {
+		this.tokenBufferSize = tokenBufferSize;
 	}
 
 

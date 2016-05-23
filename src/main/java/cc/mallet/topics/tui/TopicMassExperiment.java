@@ -923,5 +923,15 @@ public class TopicMassExperiment {
 		public Integer getTfIdfVocabSize(int defaultValue) {
 			return pc.getTfIdfVocabSize(defaultValue);
 		}
+
+		@Override
+		public int getNrTopWords(int defaltNr) {
+			return pc.getNrTopWords(defaltNr);
+		}
+
+		@Override
+		public int getMaxDocumentBufferSize(int defaltSize) {
+			return pc.getMaxDocumentBufferSize(defaltSize);
+		}
 	}
 }

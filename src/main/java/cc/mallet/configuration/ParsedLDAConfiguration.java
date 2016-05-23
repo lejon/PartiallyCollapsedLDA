@@ -333,4 +333,13 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		return getInteger("tfidf_vocab_size",defaultValue);
 	}
 
+	@Override
+	public int getNrTopWords(int defaltNr) {
+		return getInteger("nr_top_words",defaltNr);
+	}
+
+	@Override
+	public int getMaxDocumentBufferSize(int defaltSize) {
+		return getInteger("max_doc_buf_size",defaltSize);
+	}
 }
