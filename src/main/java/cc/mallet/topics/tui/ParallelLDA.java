@@ -167,7 +167,11 @@ public class ParallelLDA {
 				lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
 						ParallelLDA.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
 				PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
-				out.println(LDAUtils.formatTopWords(model.getTopWords(config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT))));
+				int requestedWords = config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT);
+				if(requestedWords>instances.getDataAlphabet().size()) {
+					requestedWords = instances.getDataAlphabet().size();
+				}
+				out.println(LDAUtils.formatTopWords(model.getTopWords(requestedWords)));
 				out.flush();
 				out.close();
 
