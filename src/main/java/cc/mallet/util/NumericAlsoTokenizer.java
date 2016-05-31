@@ -10,8 +10,6 @@ import cc.mallet.types.SimpleTokenizerLarge;
 public class NumericAlsoTokenizer extends SimpleTokenizerLarge {
 
 	private static final long serialVersionUID = 1L;
-	
-	protected int tokenBufferSize = 10000;
 
 	public NumericAlsoTokenizer(int languageFlag) {
 		super(languageFlag);
@@ -26,18 +24,15 @@ public class NumericAlsoTokenizer extends SimpleTokenizerLarge {
 	}
 	
 	public NumericAlsoTokenizer(int languageFlag, int maxBufSize) {
-		super(languageFlag);
-		tokenBufferSize = maxBufSize;
+		super(languageFlag, maxBufSize);
 	}
 
 	public NumericAlsoTokenizer(File stopfile, int maxBufSize) {
-		super(stopfile);
-		tokenBufferSize = maxBufSize;
+		super(stopfile, maxBufSize);
 	}
 
 	public NumericAlsoTokenizer(HashSet<String> stoplist, int maxBufSize) {
-		super(stoplist);
-		tokenBufferSize = maxBufSize;
+		super(stoplist, maxBufSize);
 	}
 
 	@Override
@@ -130,14 +125,4 @@ public class NumericAlsoTokenizer extends SimpleTokenizerLarge {
 	
 	return instance;
 	}
-	
-	public int getTokenBufferSize() {
-		return tokenBufferSize;
-	}
-
-	public void setTokenBufferSize(int tokenBufferSize) {
-		this.tokenBufferSize = tokenBufferSize;
-	}
-
-
 }

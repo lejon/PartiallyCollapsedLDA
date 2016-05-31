@@ -7,7 +7,7 @@ import java.util.HashSet;
 import cc.mallet.pipe.SimpleTokenizer;
 
 /**
- * The ONLY thing this class does different than its parent is allocate a bigger tokenBuffer (10000 vs 1000)
+ * The ONLY thing this class does different than its parent is allocate a bigger tokenBuffer (default 10000 vs 1000)
  * @author Leif Jonsson
  *
  */
