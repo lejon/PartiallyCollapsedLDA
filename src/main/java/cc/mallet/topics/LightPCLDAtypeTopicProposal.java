@@ -192,7 +192,11 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			} else {
 				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (beta * numTopics)) * numTopics); // assume symmetric beta, just draws one topic
 			}
-			// System.out.println("uw: " + u_w + " tokptype " +  tokensPerType[type] + " beta * K " + beta * numTopics);			
+
+			// Make sure we actually sampled a valid topic
+			if (wordTopicIndicatorProposal < 0 || wordTopicIndicatorProposal > numTopics) {
+				throw new IllegalStateException ("Light PC-LDA (Type topic proposal): Sampled invalid topic (" + wordTopicIndicatorProposal + ").");
+			}			
 			
 			// If we drew a new topic indicator, do MH step for Word proposal
 			if(wordTopicIndicatorProposal!=oldTopic) {
@@ -242,6 +246,11 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics);
 			}
 			
+			// Make sure we actually sampled a valid topic
+			if (docTopicIndicatorProposal < 0 || docTopicIndicatorProposal > numTopics) {
+				throw new IllegalStateException ("Light PC-LDA (Type topic proposal): Sampled invalid topic (" + docTopicIndicatorProposal + ").");
+			}
+			
 			// If we drew a new topic indicator, do MH step for Document proposal
 			if(docTopicIndicatorProposal!=oldTopic) {
 				double n_d_zstar_not_i = localTopicCounts_not_i[docTopicIndicatorProposal];
@@ -275,7 +284,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 
 			// Make sure we actually sampled a valid topic
 			if (newTopic < 0 || newTopic > numTopics) {
-				throw new IllegalStateException ("LightPC-LDA: New valid topic not sampled (" + newTopic + ").");
+				throw new IllegalStateException ("Light PC-LDA (Type topic proposal): Sampled invalid topic (" + newTopic + ").");
 			}
 
 			// Remove one count from old topic
