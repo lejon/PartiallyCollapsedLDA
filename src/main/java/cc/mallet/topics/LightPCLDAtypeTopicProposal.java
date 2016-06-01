@@ -173,21 +173,20 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			decrement(myBatch, oldTopic, type);
 
 			// #####################################
-			// Word Topic Distribution 
+			// Word-Topic Proposal 
 			// #####################################
 			
 			// N_{d,Z_i} => # counts of topic Z_i in document d
+			
 			// Create n_d^{-i}, decrease document topic count with z_i
+
 			localTopicCounts_not_i[oldTopic]--;
 			
+			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + beta * numTopics); // (n_w + V*beta) * u where u ~ U(0,1)
+
 			int wordTopicIndicatorProposal = -1;
-			double u1 = ThreadLocalRandom.current().nextDouble() ; // (n_w + V*beta) * u where u ~ U(0,1)
-			// wordTopicIndicatorProposal = aliasTables[type].generateSample(u1);
-			
-			double u_w = u1 * (tokensPerType[type] + beta * numTopics); // (n_w + V*beta) * u where u ~ U(0,1)
 			if(u_w < tokensPerType[type]) {
 				double u = u_w / (double) tokensPerType[type];
-				// wordTopicIndicatorProposal = aliasTables[type].generateSample(u);
 				wordTopicIndicatorProposal = nonZeroTypeTopics[type][aliasTables[type].generateSample(u)];
 			} else {
 				wordTopicIndicatorProposal = (int) (((u_w - tokensPerType[type]) / (beta * numTopics)) * numTopics); // assume symmetric beta, just draws one topic
@@ -198,8 +197,8 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 				throw new IllegalStateException ("Light PC-LDA (Type topic proposal): Sampled invalid topic (" + wordTopicIndicatorProposal + ").");
 			}			
 			
-			// If we drew a new topic indicator, do MH step for Word proposal
 			if(wordTopicIndicatorProposal!=oldTopic) {
+				// If we drew a new topic indicator, do MH step for Word proposal
 				double n_d_zi_not_i = localTopicCounts_not_i[oldTopic];
 				double n_d_zstar_not_i = localTopicCounts_not_i[wordTopicIndicatorProposal];
 				double n_zstar_beta_hat = topicCountBetaHat[wordTopicIndicatorProposal];
@@ -226,7 +225,6 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 						// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
 						// By doing this the below document proposal will be relative to the 
 						// new best proposal so far
-						// wordAccepts.incrementAndGet();
 						oldTopic = wordTopicIndicatorProposal;
 					} 
 				}
@@ -234,7 +232,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			}
 			
 			// #####################################
-			// Document Topic Distribution 
+			// Document-Topic Proposal  
 			// #####################################
 			 
 			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha));
@@ -251,8 +249,8 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 				throw new IllegalStateException ("Light PC-LDA (Type topic proposal): Sampled invalid topic (" + docTopicIndicatorProposal + ").");
 			}
 			
-			// If we drew a new topic indicator, do MH step for Document proposal
 			if(docTopicIndicatorProposal!=oldTopic) {
+				// If we drew a new topic indicator, do MH step for Document proposal
 				double n_d_zstar_not_i = localTopicCounts_not_i[docTopicIndicatorProposal];
 				double n_d_zi_not_i = localTopicCounts_not_i[oldTopic];
 				double n_d_zi = localTopicCounts[oldTopic];
@@ -270,15 +268,12 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	
 					if (accept_pi_d) {
 						newTopic = docTopicIndicatorProposal;
-						//docAccepts.incrementAndGet();
 					} else {
 						// We did not accept either word or document proposal 
 						// so oldTopic is still the best indicator
 						newTopic = oldTopic;
-						//oldAccepts.incrementAndGet();
 					}	
 				}
-
 			}
 			increment(myBatch, newTopic, type);
 

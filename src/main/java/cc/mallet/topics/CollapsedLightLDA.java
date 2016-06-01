@@ -997,10 +997,9 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			// N_{d,Z_i} => # counts of topic Z_i in document d
 			// s = old state
 			// t = proposed state
-			
+
 			localTopicCounts_i[oldTopic]--;
 			
-			// Draw topic proposal t
 			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + beta * numTopics); // (n_wk + K * beta) * u where u ~ U(0,1)
 
 			int wordTopicIndicatorProposal = -1;
@@ -1087,8 +1086,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				throw new IllegalStateException ("Collapsed Light-LDA: Sampled invalid topic (" + docTopicIndicatorProposal + ").");
 			}
 
-			// If we drew a new topic indicator, do MH step for Document proposal
 			if(docTopicIndicatorProposal!=oldTopic) {
+				// If we drew a new topic indicator, do MH step for Document proposal
 				double n_d_s = localTopicCounts[oldTopic];
 				double n_d_t = localTopicCounts[docTopicIndicatorProposal];
 				double n_d_s_i = localTopicCounts_i[oldTopic];
@@ -1118,7 +1117,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 						// We did not accept either word or document proposal 
 						// so oldTopic is still the best indicator
 						newTopic = oldTopic;
-						//oldAccepts.incrementAndGet();
 					}	
 				}
 			}
