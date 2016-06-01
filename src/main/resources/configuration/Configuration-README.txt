@@ -52,6 +52,13 @@ topic_batches = 3
 ## Rare threshold: Min threshold for how many times a word must occur to be included in vocab
 rare_threshold = 3
 
+## TF-IDF: 
+## Specifies how many words the final dictionary will contain.
+## keeps the "tfidf_vocab_size" number of words with the highest TF-IDF values according to the following formula:
+## double tfIdf = (tf == 0 || idf == 0) ? 0.0 : (double) tf * Math.log(corpusSize / (double) idf);
+## Stopwords are STILL respected!
+tfidf_vocab_size = 100
+
 ## Topic Interval: How often to print top words to console (and log likelihood to file) during sampling (takes time), 0 means never
 topic_interval = 100
 
