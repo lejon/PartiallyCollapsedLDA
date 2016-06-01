@@ -54,7 +54,8 @@
 	<!-- v4.5.1: Some cleanups and more unit tests on Utils. Added smoke test for LightPCLDAtypeTopicProposal -->
 	<!-- v4.6.1: Added possibility to configure the "nr_top_words" (default=20) to print and "max_doc_buf_size" (default 10000) to adjust the size of the max document size. -->
 	<!-- v4.6.2: Fix max_doc_size bug, used wrong default value. -->
-	<version>4.6.2</version>
+	<!-- v4.6.3: Fixed bug in light collapsed acceptance calc -->
+	<version>4.6.3</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
