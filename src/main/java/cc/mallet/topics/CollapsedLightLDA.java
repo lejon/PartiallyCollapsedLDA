@@ -985,7 +985,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			int newTopic = oldTopic;
 			
 			if(documentLocalTopicCounts[oldTopic]<0) 
-				throw new IllegalStateException("LightPC-LDA: Counts cannot be negative! Count for topic:" 
+				throw new IllegalStateException("Collapsed LightPC-LDA: Counts cannot be negative! Count for topic:" 
 						+ oldTopic + " is: " + documentLocalTopicCounts[oldTopic]);
 
 			decrement(myBatch, oldTopic, type);
@@ -1013,7 +1013,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 						
 			// Make sure we actually sampled a valid topic
 			if (wordTopicIndicatorProposal < 0 || wordTopicIndicatorProposal > numTopics) {
-				throw new IllegalStateException ("Collapsed Light-LDA: New valid topic not sampled (" + newTopic + ").");
+				throw new IllegalStateException ("Collapsed Light-LDA: Sampled invalid topic (" + wordTopicIndicatorProposal + ").");
 			}
 			
 			
@@ -1084,7 +1084,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			
 			// Make sure we actually sampled a valid topic
 			if (docTopicIndicatorProposal < 0 || docTopicIndicatorProposal > numTopics) {
-				throw new IllegalStateException ("Collapsed Light-LDA: New valid topic not sampled (" + newTopic + ").");
+				throw new IllegalStateException ("Collapsed Light-LDA: Sampled invalid topic (" + docTopicIndicatorProposal + ").");
 			}
 
 			// If we drew a new topic indicator, do MH step for Document proposal
@@ -1126,7 +1126,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 			// Make sure we actually sampled a valid topic
 			if (newTopic < 0 || newTopic > numTopics) {
-				throw new IllegalStateException ("LightPC-LDA: New valid topic not sampled (" + newTopic + ").");
+				throw new IllegalStateException ("Collapsed Light-LDA: Sampled invalid topic (" + newTopic + ").");
 			}
 
 			// Remove one count from old topic
