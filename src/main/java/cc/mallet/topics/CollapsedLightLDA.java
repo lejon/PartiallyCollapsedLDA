@@ -1036,7 +1036,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				pi_w *= ((beta + n_w_t_i) / (beta + n_w_s_i));
 				pi_w *= ((betaSum + n_s_i) / (betaSum + n_t_i));
 				pi_w *= ((beta + n_w_s) / (beta + n_w_t));
-				pi_w *= ((beta + n_t) / (beta + n_s));
+				pi_w *= ((betaSum + n_t) / (betaSum + n_s));
 				
 				if(pi_w > 1){
 					documentLocalTopicCounts[oldTopic]--;
