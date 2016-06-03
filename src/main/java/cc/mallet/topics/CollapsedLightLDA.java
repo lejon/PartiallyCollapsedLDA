@@ -272,7 +272,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		if(sumtotal != corpusWordCount) {
 			throw new IllegalArgumentException("Count does not sum to nr. types! Sumtotal: " + sumtotal + " no.types: " + corpusWordCount);
 		}
-		System.out.println("Type Topic count is consistent...");
+		//System.out.println("Type Topic count is consistent...");
 	}
 
 	public void ensureTTEquals() {
@@ -972,7 +972,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				throw new IllegalStateException ("Collapsed Light-LDA: Sampled invalid topic (" + wordTopicIndicatorProposal + ").");
 			}
 			
-			
 			if(wordTopicIndicatorProposal!=oldTopic) {
 				// If we drew a new topic indicator, do MH step for Word proposal
 				
@@ -997,11 +996,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				if(pi_w > 1){
 					localTopicCounts[oldTopic]--;
 					localTopicCounts[wordTopicIndicatorProposal]++;
-					globalTypeTopicCounts[type][oldTopic]--;
-					globalTypeTopicCounts[type][wordTopicIndicatorProposal]++;
-					globalTokensPerTopic[oldTopic]--;
-					globalTokensPerTopic[wordTopicIndicatorProposal]++;
-					
+					balanceGlobalCounts(globalTypeTopicCounts, globalTokensPerTopic, type, oldTopic, wordTopicIndicatorProposal);
 					oldTopic = wordTopicIndicatorProposal;
 				} else {
 					double u_pi_w = ThreadLocalRandom.current().nextDouble();
@@ -1010,16 +1005,12 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 					if(accept_pi_w) {				
 						localTopicCounts[oldTopic]--;
 						localTopicCounts[wordTopicIndicatorProposal]++;
-						globalTypeTopicCounts[type][oldTopic]--;
-						globalTypeTopicCounts[type][wordTopicIndicatorProposal]++;
-						globalTokensPerTopic[oldTopic]--;
-						globalTokensPerTopic[wordTopicIndicatorProposal]++;
+						balanceGlobalCounts(globalTypeTopicCounts, globalTokensPerTopic, type, oldTopic, wordTopicIndicatorProposal);
 	
 						// Set oldTopic to the new wordTopicIndicatorProposal just accepted.
 						// By doing this the below document proposal will be relative to the 
 						// new best proposal so far
 						oldTopic = wordTopicIndicatorProposal;
-						//wordAccepts.incrementAndGet();
 					} 
 				}
 
@@ -1054,7 +1045,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				double n_t_i = globalTokensPerTopic[docTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
 				double n_s_i = globalTokensPerTopic[oldTopic] - 1.0; 
 								
-				
 				// Calculate rejection rate
 				double pi_d = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
 				pi_d *= ((beta + n_w_t_i) / (beta + n_w_s_i));
@@ -1093,13 +1083,16 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			// Make sure the "_i" version is also up to date!
 			localTopicCounts_i[newTopic]++;
 			
-			// Update local versions of typeTopicCounts and tokensPerTopic 
-			globalTypeTopicCounts[type][oldTopic]--;
-			globalTypeTopicCounts[type][newTopic]++;
-			globalTokensPerTopic[oldTopic]--;
-			globalTokensPerTopic[newTopic]++;
-			
+			balanceGlobalCounts(globalTypeTopicCounts, globalTokensPerTopic, type, oldTopic, newTopic);
 		}
+	}
+
+
+	void balanceGlobalCounts(int[][] globalTypeTopicCounts, int[] globalTokensPerTopic, int type, int oldTopic,	int newTopicProposal) {
+		globalTypeTopicCounts[type][oldTopic]--;
+		globalTypeTopicCounts[type][newTopicProposal]++;
+		globalTokensPerTopic[oldTopic]--;
+		globalTokensPerTopic[newTopicProposal]++;
 	}
 
 	protected void increment(int myBatch, int newTopic, int type) {
