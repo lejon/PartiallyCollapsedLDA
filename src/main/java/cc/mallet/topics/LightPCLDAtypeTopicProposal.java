@@ -164,16 +164,8 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			
 			if(wordTopicIndicatorProposal!=oldTopic) {
 				// If we drew a new topic indicator, do MH step for Word proposal
-				double n_d_zi_not_i = localTopicCounts_not_i[oldTopic];
-				double n_d_zstar_not_i = localTopicCounts_not_i[wordTopicIndicatorProposal];
-				double n_zstar_beta_hat = topicCountBetaHat[wordTopicIndicatorProposal];
-				double n_zi_beta_hat = topicCountBetaHat[oldTopic];
-				double n_w_zi = typeTopicCounts[type][oldTopic];
-				double n_w_zstar = typeTopicCounts[type][wordTopicIndicatorProposal];
-								
-				double nom = phi[wordTopicIndicatorProposal][type] * (alpha + n_d_zstar_not_i) * (beta + n_w_zi) * n_zstar_beta_hat;
-				double denom = phi[oldTopic][type] * (alpha + n_d_zi_not_i)  * (beta + n_w_zstar) * n_zi_beta_hat;
-				double pi_w =  nom / denom;
+				double pi_w = calculateWordAcceptanceProbability(localTopicCounts_not_i, type, oldTopic,
+						wordTopicIndicatorProposal, topicCountBetaHat, typeTopicCounts, phi, alpha, beta);
 				
 				if(pi_w > 1){
 					localTopicCounts[oldTopic]--;
@@ -216,14 +208,8 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			
 			if(docTopicIndicatorProposal!=oldTopic) {
 				// If we drew a new topic indicator, do MH step for Document proposal
-				double n_d_zstar_not_i = localTopicCounts_not_i[docTopicIndicatorProposal];
-				double n_d_zi_not_i = localTopicCounts_not_i[oldTopic];
-				double n_d_zi = localTopicCounts[oldTopic];
-				double n_d_zstar = localTopicCounts[docTopicIndicatorProposal];
-
-				double nom = phi[docTopicIndicatorProposal][type] * (alpha + n_d_zstar_not_i) * (alpha + n_d_zi);
-				double denom = phi[oldTopic][type] * (alpha + n_d_zi_not_i) * (alpha + n_d_zstar);
-				double pi_d = nom / denom;
+				double pi_d = calculateDocumentAcceptanceProbability(localTopicCounts, localTopicCounts_not_i, type,
+						oldTopic, docTopicIndicatorProposal, phi, alpha);
 				// Calculate MH acceptance Min.(1,ratio) but as an if else
 				if (pi_d > 1){
 					newTopic = docTopicIndicatorProposal;
@@ -256,6 +242,36 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			// Make sure the "_i" version is also up to date!
 			localTopicCounts_not_i[newTopic]++;
 		}
+	}
+
+
+	public static double calculateDocumentAcceptanceProbability(double[] localTopicCounts, double[] localTopicCounts_not_i, int type,
+			int oldTopic, int docTopicIndicatorProposal, double[][] phi, double alpha) {
+		double n_d_zstar_not_i = localTopicCounts_not_i[docTopicIndicatorProposal];
+		double n_d_zi_not_i = localTopicCounts_not_i[oldTopic];
+		double n_d_zi = localTopicCounts[oldTopic];
+		double n_d_zstar = localTopicCounts[docTopicIndicatorProposal];
+
+		double nom = phi[docTopicIndicatorProposal][type] * (alpha + n_d_zstar_not_i) * (alpha + n_d_zi);
+		double denom = phi[oldTopic][type] * (alpha + n_d_zi_not_i) * (alpha + n_d_zstar);
+		double pi_d = nom / denom;
+		return pi_d;
+	}
+
+
+	public static double calculateWordAcceptanceProbability(double[] localTopicCounts_not_i, int type, int oldTopic,
+			int wordTopicIndicatorProposal, double[] topicCountBetaHat, int[][] typeTopicCounts, double[][] phi, double alpha, double beta) {
+		double n_d_zi_not_i = localTopicCounts_not_i[oldTopic];
+		double n_d_zstar_not_i = localTopicCounts_not_i[wordTopicIndicatorProposal];
+		double n_zstar_beta_hat = topicCountBetaHat[wordTopicIndicatorProposal];
+		double n_zi_beta_hat = topicCountBetaHat[oldTopic];
+		double n_w_zi = typeTopicCounts[type][oldTopic];
+		double n_w_zstar = typeTopicCounts[type][wordTopicIndicatorProposal];
+						
+		double nom = phi[wordTopicIndicatorProposal][type] * (alpha + n_d_zstar_not_i) * (beta + n_w_zi) * n_zstar_beta_hat;
+		double denom = phi[oldTopic][type] * (alpha + n_d_zi_not_i)  * (beta + n_w_zstar) * n_zi_beta_hat;
+		double pi_w =  nom / denom;
+		return pi_w;
 	}	
 	
 	protected void initTokensPerType() {

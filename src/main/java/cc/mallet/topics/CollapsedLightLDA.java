@@ -964,23 +964,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			if(wordTopicIndicatorProposal!=oldTopic) {
 				// If we drew a new topic indicator, do MH step for Word proposal
 				
-				double n_d_s_i = localTopicCounts_i[oldTopic];
-				double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
-				double n_w_s = globalTypeTopicCounts[type][oldTopic];
-				double n_w_t = globalTypeTopicCounts[type][wordTopicIndicatorProposal];				
-				double n_w_s_i = globalTypeTopicCounts[type][oldTopic] - 1.0;
-				double n_w_t_i = n_w_t; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
-				double n_t = globalTokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
-				double n_s = globalTokensPerTopic[oldTopic];
-				double n_t_i = n_t; 
-				double n_s_i = n_s - 1.0; 
-				
-				// Calculate rejection rate
-				double pi_w = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
-				pi_w *= ((beta + n_w_t_i) / (beta + n_w_s_i));
-				pi_w *= ((betaSum + n_s_i) / (betaSum + n_t_i));
-				pi_w *= ((beta + n_w_s) / (beta + n_w_t));
-				pi_w *= ((betaSum + n_t) / (betaSum + n_s));
+				double pi_w = calculateWordAcceptanceProbability(globalTypeTopicCounts, globalTokensPerTopic,
+						localTopicCounts_i, type, oldTopic, wordTopicIndicatorProposal, alpha, beta, betaSum);
 				
 				if(pi_w > 1){
 					localTopicCounts[oldTopic]--;
@@ -1025,20 +1010,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 			if(docTopicIndicatorProposal!=oldTopic) {
 				// If we drew a new topic indicator, do MH step for Document proposal
-				double n_d_s = localTopicCounts[oldTopic];
-				double n_d_t = localTopicCounts[docTopicIndicatorProposal];
-				double n_d_s_i = localTopicCounts_i[oldTopic];
-				double n_d_t_i = localTopicCounts_i[docTopicIndicatorProposal];
-				double n_w_s_i = globalTypeTopicCounts[type][oldTopic] - 1.0;
-				double n_w_t_i = globalTypeTopicCounts[type][docTopicIndicatorProposal]; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
-				double n_t_i = globalTokensPerTopic[docTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
-				double n_s_i = globalTokensPerTopic[oldTopic] - 1.0; 
-								
-				// Calculate rejection rate
-				double pi_d = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
-				pi_d *= ((beta + n_w_t_i) / (beta + n_w_s_i));
-				pi_d *= ((betaSum + n_s_i) / (betaSum + n_t_i));
-				pi_d *= ((alpha + n_d_s) / (alpha + n_d_t));
+				double pi_d = calculateDocumentAcceptanceProbability(globalTypeTopicCounts, globalTokensPerTopic,
+						localTopicCounts, localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal, alpha, beta, betaSum);
 				
 				// Calculate MH acceptance Min.(1,ratio) but as an if else
 				if (pi_d > 1){
@@ -1076,6 +1049,56 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		}
 	}
 
+
+	static double calculateDocumentAcceptanceProbability(int[][] globalTypeTopicCounts, int[] globalTokensPerTopic,
+			double[] localTopicCounts, double[] localTopicCounts_i, int type, int oldTopic,
+			int docTopicIndicatorProposal, double alpha, 
+			double beta, double betaSum) {
+		double n_d_s = localTopicCounts[oldTopic];
+		double n_d_t = localTopicCounts[docTopicIndicatorProposal];
+		double n_d_s_i = localTopicCounts_i[oldTopic];
+		double n_d_t_i = localTopicCounts_i[docTopicIndicatorProposal];
+		double n_w_s_i = globalTypeTopicCounts[type][oldTopic] - 1.0;
+		double n_w_t_i = globalTypeTopicCounts[type][docTopicIndicatorProposal]; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
+		double n_t_i = globalTokensPerTopic[docTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
+		double n_s_i = globalTokensPerTopic[oldTopic] - 1.0; 
+						
+		// Calculate rejection rate
+		double pi_d = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
+		pi_d *= ((beta + n_w_t_i) / (beta + n_w_s_i));
+		pi_d *= ((betaSum + n_s_i) / (betaSum + n_t_i));
+		pi_d *= ((alpha + n_d_s) / (alpha + n_d_t));
+		return pi_d;
+	}
+
+
+	static double calculateWordAcceptanceProbability(int[][] globalTypeTopicCounts, int[] globalTokensPerTopic,
+			double[] localTopicCounts_i, int type, int oldTopic, int wordTopicIndicatorProposal, double alpha, 
+			double beta, double betaSum) {
+		double n_d_s_i = localTopicCounts_i[oldTopic];
+		double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
+		double n_w_s = globalTypeTopicCounts[type][oldTopic];
+		double n_w_t = globalTypeTopicCounts[type][wordTopicIndicatorProposal];				
+		double n_w_s_i = globalTypeTopicCounts[type][oldTopic] - 1.0;
+		double n_w_t_i = n_w_t; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
+		double n_t = globalTokensPerTopic[wordTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
+		double n_s = globalTokensPerTopic[oldTopic];
+		double n_t_i = n_t; 
+		double n_s_i = n_s - 1.0; 
+		
+		// Calculate rejection rate
+		double pi_w = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
+		System.out.println("pi_w: " + pi_w);
+		pi_w *= ((beta + n_w_t_i) / (beta + n_w_s_i));
+		System.out.println("pi_w: " + pi_w);
+		pi_w *= ((betaSum + n_s_i) / (betaSum + n_t_i));
+		System.out.println("pi_w: " + pi_w);
+		pi_w *= ((beta + n_w_s) / (beta + n_w_t));
+		System.out.println("pi_w: " + pi_w);
+		pi_w *= ((betaSum + n_t) / (betaSum + n_s));
+		System.out.println("pi_w: " + pi_w);
+		return pi_w;
+	}
 
 	void balanceGlobalCounts(int[][] globalTypeTopicCounts, int[] globalTokensPerTopic, int type, int oldTopic,	int newTopicProposal) {
 		globalTypeTopicCounts[type][oldTopic]--;
