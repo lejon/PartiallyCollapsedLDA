@@ -51,7 +51,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 		super.addInstances(training);
 		
 		initTokensPerType(); 
-		initTopicCountBetaHat();
+		initTopicCountBetaHat(topicCountBetaHat, numTopics, numTypes, typeTopicCounts, betaSum);
 	}
 	
 	@Override
@@ -84,11 +84,11 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 		
 	};
 	
-	protected void initTopicCountBetaHat(){
+	protected static void initTopicCountBetaHat(double[] topicCountBetaHat, int numTopics, int numTypes, int[][] typeTopicCount, double betaSum){
 		for (int topic = 0; topic < numTopics; topic++) {
 			topicCountBetaHat[topic] = 0;
 			for (int type = 0; type < numTypes; type++) {
-				topicCountBetaHat[topic] += typeTopicCounts[type][topic];
+				topicCountBetaHat[topic] += typeTopicCount[type][topic];
 			}
 			topicCountBetaHat[topic] += betaSum;
 		}

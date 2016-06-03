@@ -356,7 +356,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 		// Initializing global sparse structure and tokensPerType and topicCountBetaHat()
 		initTokensPerType(); 
-		initTopicCountBetaHat();
+		LightPCLDAtypeTopicProposal.initTopicCountBetaHat(topicCountBetaHat, numTopics, numTypes, typeTopicCounts, betaSum);
 	}
 
 	protected void updateTypeTopicCount(int type, int topic, int count) {
@@ -520,17 +520,6 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		public Callable<TableBuildResult> instance(int type) {
 			return new TypeTopicParallelTableBuilder(type, nonZeroTypeTopicCnt, nonZeroTypeTopics, 
 					typeTopicCounts, topicCountBetaHat, aliasTables, numTopics);
-		}
-	}
-	
-	// TODO: This has been copied from LightPCLDAtypeTopicProposal.
-	protected void initTopicCountBetaHat(){
-		for (int topic = 0; topic < numTopics; topic++) {
-			topicCountBetaHat[topic] = 0;
-			for (int type = 0; type < numTypes; type++) {
-				topicCountBetaHat[topic] += typeTopicCounts[type][topic];
-			}
-			topicCountBetaHat[topic] += betaSum;
 		}
 	}
 	
