@@ -41,6 +41,7 @@ import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.IDSorter;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.types.KeepConnectorPunctuationTokenizerLarge;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.SimpleTokenizerLarge;
@@ -83,11 +84,11 @@ public class LDAUtils {
 	 * @throws FileNotFoundException 
 	 */
 	public static InstanceList loadInstances(String inputFile, String stoplistFile, int pruneCount) throws FileNotFoundException {
-		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, true, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT);
+		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, true, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false);
 	}
 	
 	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers) throws FileNotFoundException {
-		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT);
+		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false);
 	}
 	
 	/**
@@ -97,29 +98,18 @@ public class LDAUtils {
 	 * @param stoplistFile
 	 * @param pruneCount The number of times a word must occur in the corpus to be included
 	 * @param keepNumbers
+	 * @param keepConnectors TODO
 	 * @return
 	 * @throws FileNotFoundException
 	 */
-	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers, int maxBufSize) throws FileNotFoundException {
+	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers, int maxBufSize, boolean keepConnectors) throws FileNotFoundException {
 		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
 		int labelGroup = 2;
 		int nameGroup = 1; // data, label, name fields
 
-		if (stoplistFile != null) {
-			if(keepNumbers) {				
-				tokenizer = new NumericAlsoTokenizer(new File(stoplistFile), maxBufSize);
-			} else {
-				tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
-			}
-		} else {
-			if(keepNumbers) {
-				tokenizer = new NumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
-			} else {
-				tokenizer = new SimpleTokenizerLarge(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
-			}
-		}
+		tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
 
 		if (pruneCount > 0) {
 			CsvIterator reader = new CsvIterator(
@@ -194,7 +184,7 @@ public class LDAUtils {
 	}
 
 	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers) throws FileNotFoundException {
-		return loadInstancesKeep(inputFile, stoplistFile, keepCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT);
+		return loadInstancesKeep(inputFile, stoplistFile, keepCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false);
 	}
 	
 	/**
@@ -205,29 +195,18 @@ public class LDAUtils {
 	 * @param stoplistFile
 	 * @param keepCount
 	 * @param keepNumbers
+	 * @param keepConnectors TODO
 	 * @return
 	 * @throws FileNotFoundException
 	 */
-	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, int maxBufSize) throws FileNotFoundException {
+	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, int maxBufSize, boolean keepConnectors) throws FileNotFoundException {
 		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
 		int labelGroup = 2;
 		int nameGroup = 1; // data, label, name fields
 
-		if (stoplistFile != null) {
-			if(keepNumbers) {				
-				tokenizer = new NumericAlsoTokenizer(new File(stoplistFile), maxBufSize);
-			} else {
-				tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
-			}
-		} else {
-			if(keepNumbers) {
-				tokenizer = new NumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
-			} else {
-				tokenizer = new SimpleTokenizerLarge(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
-			}
-		}
+		tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
 
 		if (keepCount > 0) {
 			CsvIterator reader = new CsvIterator(
@@ -299,6 +278,40 @@ public class LDAUtils {
 		instances.addThruPipe(reader);
 
 		return instances;
+	}
+
+	static SimpleTokenizerLarge initTokenizer(String stoplistFile, boolean keepNumbers, int maxBufSize, boolean keepConnectors) {
+		SimpleTokenizerLarge tokenizer;
+		if(keepConnectors) {
+			if (stoplistFile != null) {
+				if(keepNumbers) {				
+					tokenizer = new KeepConnectorPunctuationNumericAlsoTokenizer(new File(stoplistFile), maxBufSize);
+				} else {
+					tokenizer = new KeepConnectorPunctuationTokenizerLarge(new File(stoplistFile), maxBufSize);
+				}
+			} else {
+				if(keepNumbers) {
+					tokenizer = new KeepConnectorPunctuationNumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
+				} else {
+					tokenizer = new KeepConnectorPunctuationTokenizerLarge(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
+				}
+			}
+		} else {
+			if (stoplistFile != null) {
+				if(keepNumbers) {				
+					tokenizer = new NumericAlsoTokenizer(new File(stoplistFile), maxBufSize);
+				} else {
+					tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
+				}
+			} else {
+				if(keepNumbers) {
+					tokenizer = new NumericAlsoTokenizer(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
+				} else {
+					tokenizer = new SimpleTokenizerLarge(NumericAlsoTokenizer.USE_EMPTY_STOPLIST, maxBufSize);
+				}
+			}
+		}
+		return tokenizer;
 	}
 
 
