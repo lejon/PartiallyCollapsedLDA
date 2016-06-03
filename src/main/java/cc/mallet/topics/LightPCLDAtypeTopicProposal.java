@@ -7,7 +7,6 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
-import cc.mallet.util.OptimizedGentleAliasMethodDynamicSize;
 
 /**
  * @author Leif Jonsson
@@ -36,7 +35,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	
 	public LightPCLDAtypeTopicProposal(LDAConfiguration config) {
 		super(config);
-		tbFactory = new TTTableBuilderFactory();
+		tbFactory = new TypeTopicTableBuilderFactory();
 		
 	}
 	
@@ -72,47 +71,13 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	}
 	
 	
-	class TTTableBuilderFactory implements TableBuilderFactory {
+	class TypeTopicTableBuilderFactory implements TableBuilderFactory {
 		public Callable<TableBuildResult> instance(int type) {
-			return new TTParallelTableBuilder(type);
+			return new TypeTopicParallelTableBuilder(type, nonZeroTypeTopicCnt, nonZeroTypeTopics, 
+					typeTopicCounts, topicCountBetaHat, aliasTables, numTopics);
 		}
 	}
 
-	class TTParallelTableBuilder implements Callable<TableBuildResult> {
-		int type;
-		public TTParallelTableBuilder(int type) {
-			this.type = type;
-		}
-		@Override
-		public TableBuildResult call() {
-			/* Nonsparse solution
-			double [] probs = new double[numTopics];
-			double typeMass = 0; // Type prior mass
-			for (int topic = 0; topic < numTopics; topic++) {
-				// TODO: If this works we can use a sparse version instead
-				typeMass += probs[topic] = (typeTopicCounts[type][topic] + beta) / topicCountBetaHat[topic];
-			}
-			*/
-			
-			double [] probs = new double[nonZeroTypeTopicCnt[type]];
-			// Iterate over nonzero topic indicators
-			double typeMass = 0.0;
-			for (int i = 0; i < nonZeroTypeTopicCnt[type]; i++) {
-				typeMass += probs[i] = typeTopicCounts[type][nonZeroTypeTopics[type][i]] / topicCountBetaHat[nonZeroTypeTopics[type][i]];
-			}
-			
-			if(aliasTables[type]==null) {
-				int aliasSize = numTopics;
-				// TODO Fix so that Alias tables uses a minimum of memory by maximizing the Alias tables size to the number of tokens per type
-				aliasTables[type] = new OptimizedGentleAliasMethodDynamicSize(probs, typeMass, aliasSize);
-			} else {
-				aliasTables[type].reGenerateAliasTable(probs, typeMass);
-			}
-				
-			return new TableBuildResult(type, aliasTables[type], typeMass);
-		}   
-	}
-	
 	@Override
 	public void preIteration() {
 		super.preIteration();
