@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.topics.CollapsedLightLDA.LightLDADocSamplingContext;
 import cc.mallet.types.InstanceList;
 
 public class ParanoidCollapsedLightLDA extends CollapsedLightLDA {
@@ -55,9 +56,13 @@ public class ParanoidCollapsedLightLDA extends CollapsedLightLDA {
 	}
 
 	@Override
-	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx)  {
+	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctxIn)  {
 		//SamplingResult res = super.sampleTopicAssignmentsParallel(tokenSequence, oneDocTopics, myBatch);
+		LightLDADocSamplingContext ctx = (LightLDADocSamplingContext) ctxIn;
+		int [][] globalTypeTopicCounts = ctx.getMyTypeTopicCounts();
 		super.sampleTopicAssignmentsParallel(ctx);
+		ensureConsistentTopicTypeCounts(globalTypeTopicCounts);
+		//System.out.println("Glboal type topic count is consistent!");
 		//ensureConsistentTopicTypeCountDelta(batchLocalTopicTypeUpdates, ctx.getMyBatch());
 	}
 
