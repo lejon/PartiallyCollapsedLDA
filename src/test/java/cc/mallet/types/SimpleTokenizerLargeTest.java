@@ -35,6 +35,7 @@ public class SimpleTokenizerLargeTest {
 
 	@Test
 	public void testIntegration() throws ConfigurationException, ParseException {
+		ConfigFactory.setMainConfiguration(null);
 		String [] args = {"--run_cfg=src/test/resources/max_doc_buf.cfg"};
 		
 		LDACommandLineParser cp = new LDACommandLineParser(args);
