@@ -147,7 +147,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 
 			localTopicCounts_not_i[oldTopic]--;
 			
-			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + beta * numTopics); // (n_w + V*beta) * u where u ~ U(0,1)
+			double u_w = ThreadLocalRandom.current().nextDouble() * (tokensPerType[type] + beta * numTopics); // (n_wk + K * beta) * u where u ~ U(0,1)
 
 			int wordTopicIndicatorProposal = -1;
 			if(u_w < tokensPerType[type]) {
