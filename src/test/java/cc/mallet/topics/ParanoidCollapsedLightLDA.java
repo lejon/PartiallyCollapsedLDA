@@ -10,8 +10,6 @@ import cc.mallet.types.InstanceList;
 public class ParanoidCollapsedLightLDA extends CollapsedLightLDA {
 
 	private static final long	serialVersionUID	= 6948198361119397002L;
-
-	boolean silent = false;
 	
 	public ParanoidCollapsedLightLDA(LDAConfiguration config) {
 		super(config);
@@ -21,7 +19,6 @@ public class ParanoidCollapsedLightLDA extends CollapsedLightLDA {
 	public void addInstances(InstanceList training) {
 		super.addInstances(training);
 		ensureConsistentTopicTypeCounts(typeTopicCounts);
-		if(!silent) System.out.println("Topic count is consistent after add instances!");
 		debugPrintMMatrix();
 	}
 
@@ -29,7 +26,6 @@ public class ParanoidCollapsedLightLDA extends CollapsedLightLDA {
 	protected void updateCounts(List<Future<BatchDocumentSamplerResult>> futureResults) throws InterruptedException {
 		super.updateCounts(futureResults);
 		ensureConsistentTopicTypeCounts(typeTopicCounts);
-		if(!silent) System.out.println("Topic count is consistent after count update!");
 		debugPrintMMatrix();
 	}
 	
