@@ -933,5 +933,10 @@ public class TopicMassExperiment {
 		public int getMaxDocumentBufferSize(int defaltSize) {
 			return pc.getMaxDocumentBufferSize(defaltSize);
 		}
+
+		@Override
+		public boolean getKeepConnectingPunctuation(boolean defaultKeepConnectingPunctuation) {
+			return false;
+		}
 	}
 }

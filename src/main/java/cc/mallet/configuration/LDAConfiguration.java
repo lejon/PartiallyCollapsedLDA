@@ -30,6 +30,7 @@ public interface LDAConfiguration {
 	public static final int TF_IDF_VOCAB_SIZE_DEFAULT = -1;
 	public static final int NO_TOP_WORDS_DEFAULT = 20;
 	public static final int MAX_DOC_BUFFFER_SIZE_DEFAULT = 10000;
+	public static final boolean KEEP_CONNECTING_PUNCTUATION = false;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -148,4 +149,6 @@ public interface LDAConfiguration {
 	public int getNrTopWords(int defaltNr);
 	
 	public int getMaxDocumentBufferSize(int defaltSize);
+
+	public boolean getKeepConnectingPunctuation(boolean defaultKeepConnectingPunctuation);
 }

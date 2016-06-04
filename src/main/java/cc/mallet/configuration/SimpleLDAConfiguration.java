@@ -454,4 +454,9 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	public int getMaxDocumentBufferSize(int defaltSize) {
 		return LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT;
 	}
+
+	@Override
+	public boolean getKeepConnectingPunctuation(boolean defaultKeepConnectingPunctuation) {
+		return false;
+	}
 }

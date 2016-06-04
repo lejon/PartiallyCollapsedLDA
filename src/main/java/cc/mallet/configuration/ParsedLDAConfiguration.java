@@ -342,4 +342,12 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public int getMaxDocumentBufferSize(int defaltSize) {
 		return getInteger("max_doc_buf_size",defaltSize);
 	}
+
+	@Override
+	public boolean getKeepConnectingPunctuation(boolean defaultKeepConnectingPunctuation) {
+		String key = "keep_connecting_punctuation";
+		Object prop = super.getProperty(translateKey(key));
+		if(prop==null) return defaultKeepConnectingPunctuation;
+		return getBooleanProperty(key);
+	}
 }
