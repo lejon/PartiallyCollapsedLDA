@@ -1054,20 +1054,42 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			double[] localTopicCounts, double[] localTopicCounts_i, int type, int oldTopic,
 			int docTopicIndicatorProposal, double alpha, 
 			double beta, double betaSum) {
+		
+		// System.out.println("type: " + type + " oldTopic: " + oldTopic + " proposal: " + docTopicIndicatorProposal);
+		
 		double n_d_s = localTopicCounts[oldTopic];
 		double n_d_t = localTopicCounts[docTopicIndicatorProposal];
+		// System.out.println("n_d_s: " + n_d_s + " n_d_t: " + n_d_t);
+		// System.out.println("localTopicCounts: " + Arrays.toString(localTopicCounts));
+		// System.out.println("localTopicCounts_i: " + Arrays.toString(localTopicCounts_i));
 		double n_d_s_i = localTopicCounts_i[oldTopic];
 		double n_d_t_i = localTopicCounts_i[docTopicIndicatorProposal];
 		double n_w_s_i = globalTypeTopicCounts[type][oldTopic] - 1.0;
 		double n_w_t_i = globalTypeTopicCounts[type][docTopicIndicatorProposal]; // Since wordTopicIndicatorProposal!=oldTopic above promise that s!=t and hence n_tw=n_t_i
 		double n_t_i = globalTokensPerTopic[docTopicIndicatorProposal]; // Global counts of the number of topic indicators in each topic
 		double n_s_i = globalTokensPerTopic[oldTopic] - 1.0; 
-						
+		
+		// pi_d = [(n−di_td + alpha_t)(n−di_tw + βw)(n−di_s + βhat)(nsd + alpha_s)]/
+		//	      [(n−di_sd + alpha_s)(n−di_sw + βw)(n−di_t + βhat)(ntd + alpha_t)]
+		/*
+		System.out.println("(n−di_td + alpha_t) / (n−di_sd + alpha_s) : (" +  n_d_t_i + " + " + alpha + ")/(" +  n_d_s_i + " + " + alpha + ")");		
+		System.out.println("(n−di_tw + βw) / (n−di_sw + βw) : (" +  n_w_t_i + " + " + beta + ")/(" +  n_w_s_i + " + " + beta + ")");				
+		System.out.println("(n^−di_s + beta_hat) / (n^−di_t + beta_hat) : (" +  n_s_i + " + " + betaSum + ")/(" +  n_t_i + " + " + betaSum + ")");
+		System.out.println("(nsd + alpha_s) / (ntd + alpha_t) : (" +  n_d_s + " + " + alpha + ")/(" +  n_d_t + " + " + alpha + ")");
+
+		pi_d <- 
+		  ((c(5,3) + a) * (c(3, 4) + b) * (c(22, 28) + bhat) * (c(3,5) + a)) / 
+		  ((c(2,4) + a) * (c(8, 5) + b) * (c(29, 23) + bhat) * (c(5,3) + a))
+		*/
 		// Calculate rejection rate
 		double pi_d = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
+		// System.out.println("pi_d: " + pi_d);
 		pi_d *= ((beta + n_w_t_i) / (beta + n_w_s_i));
+		// System.out.println("pi_d: " + pi_d);
 		pi_d *= ((betaSum + n_s_i) / (betaSum + n_t_i));
+		// System.out.println("pi_d: " + pi_d);
 		pi_d *= ((alpha + n_d_s) / (alpha + n_d_t));
+		// System.out.println("pi_d: " + pi_d);
 		return pi_d;
 	}
 
@@ -1075,6 +1097,9 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	static double calculateWordAcceptanceProbability(int[][] globalTypeTopicCounts, int[] globalTokensPerTopic,
 			double[] localTopicCounts_i, int type, int oldTopic, int wordTopicIndicatorProposal, double alpha, 
 			double beta, double betaSum) {
+		
+		// System.out.println("type: " + type + " oldTopic: " + oldTopic + " proposal: " + wordTopicIndicatorProposal);
+		
 		double n_d_s_i = localTopicCounts_i[oldTopic];
 		double n_d_t_i = localTopicCounts_i[wordTopicIndicatorProposal];
 		double n_w_s = globalTypeTopicCounts[type][oldTopic];
@@ -1086,17 +1111,27 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		double n_t_i = n_t; 
 		double n_s_i = n_s - 1.0; 
 		
+		/*
+		pi_w =[(n^−di_td + alpha_t)(n^−di_tw + beta_w)(n^−di_s + beta_hat)(n_sw + beta_w)(nt + beta_hat)]/
+			  [(n^−di_sd + alpha_s)(n^−di_sw + beta_w)(n^−di_t + beta_hat)(n_tw + beta_w)(ns + beta_hat)]
+		
+		System.out.println("(n^−di_td + alpha_t) / (n^−di_sd + alpha_s) : (" +  n_d_t_i + " + " + alpha + ")/(" +  n_d_s_i + " + " + alpha + ")");
+		System.out.println("(n^−di_tw + beta_w) / (n^−di_sw + beta_w) : (" +  n_w_t_i + " + " + beta + ")/(" +  n_w_s_i + " + " + beta + ")");		
+		System.out.println("(n^−di_s + beta_hat) / (n^−di_t + beta_hat) : (" +  n_s_i + " + " + betaSum + ")/(" +  n_t_i + " + " + betaSum + ")");		
+		System.out.println("(n_sw + beta_w) / (n_tw + beta_w) : (" +  n_w_s + " + " + beta + ")/(" +  n_w_t + " + " + beta + ")");		
+		System.out.println("(nt + beta_hat) / (ns + beta_hat) : (" +  n_t + " + " + betaSum + ")/(" +  n_s + " + " + betaSum + ")");		
+		 */
 		// Calculate rejection rate
 		double pi_w = ((alpha + n_d_t_i) / (alpha + n_d_s_i));
-		System.out.println("pi_w: " + pi_w);
+		// System.out.println("pi_w: " + pi_w);
 		pi_w *= ((beta + n_w_t_i) / (beta + n_w_s_i));
-		System.out.println("pi_w: " + pi_w);
+		// System.out.println("pi_w: " + pi_w);
 		pi_w *= ((betaSum + n_s_i) / (betaSum + n_t_i));
-		System.out.println("pi_w: " + pi_w);
+		// System.out.println("pi_w: " + pi_w);
 		pi_w *= ((beta + n_w_s) / (beta + n_w_t));
-		System.out.println("pi_w: " + pi_w);
+		// System.out.println("pi_w: " + pi_w);
 		pi_w *= ((betaSum + n_t) / (betaSum + n_s));
-		System.out.println("pi_w: " + pi_w);
+		// System.out.println("pi_w: " + pi_w);
 		return pi_w;
 	}
 

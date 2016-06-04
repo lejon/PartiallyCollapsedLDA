@@ -7,7 +7,7 @@ import java.util.Arrays;
 import org.junit.Test;
 
 public class LightXLDATest {
-
+	/*
 	@Test
 	public void testEnsureSameAcceptanceProbability() {
 		int numTopics = 2;
@@ -61,7 +61,11 @@ public class LightXLDATest {
 		assertEquals("CollapsedLightLDA WordAcceptanceProbability does not equal that of LightPCLDA", cLightWordProb, pLightWordProb, 0.00001);
 		assertEquals("CollapsedLightLDA DocumentAcceptanceProbability does not equal that of LightPCLDA",cLightDocProb, pLightDocProb, 0.00001);
 	}
+	*/
 	
+	// TODO: Potential error, giving pointers instead of arrays I had localTopiccount_i = localtopiccount
+	// TODO: Potential error, inverse of phi?
+	// TODO: Potential error, Right elements in accept/reject betaSum instead of beta
 	
 	@Test
 	public void testEnsureSameAcceptanceProbabilityDocument() {
@@ -90,6 +94,12 @@ public class LightXLDATest {
 				{4,6},
 				{9,3},
 			};
+		int [][] globalTypeTopicCounts_not_i = new int[numTypes][numTopics];
+		for (int i = 0; i < numTypes; i++) {	
+			for (int j = 0; j < numTopics; j++) {	
+				globalTypeTopicCounts_not_i[i][j] = globalTypeTopicCounts[i][j];
+			}
+		}
 		for (int j = 0; j < globalTypeTopicCounts.length; j++) {			
 			System.out.println("globalTypeTopicCounts: " + Arrays.toString(globalTypeTopicCounts[j]));
 		}
@@ -102,12 +112,13 @@ public class LightXLDATest {
 		System.out.println("topicCountBetaHatManual: " + Arrays.toString(topicCountBetaHatManual));
 		assertEquals("topicCountBetaHat[0] is not calculated correctly", topicCountBetaHat[0], topicCountBetaHatManual[0], 0.00001);
 		assertEquals("topicCountBetaHat[1] is not calculated correctly", topicCountBetaHat[1], topicCountBetaHatManual[1], 0.00001);
+		double [] topicCountBetaHat_not_i = Arrays.copyOf(topicCountBetaHat, topicCountBetaHat.length);
 		
 		// Calculate and assert phi
-		double [][] phi = new double[numTypes][numTopics];
+		double [][] phi = new double[numTopics][numTypes];
 		for (int i = 0; i < numTypes; i++) {	
 			for (int j = 0; j < numTopics; j++) {	
-				phi[i][j] = (globalTypeTopicCounts[i][j] + beta) / topicCountBetaHat[j]; 
+				phi[j][i] = (globalTypeTopicCounts[i][j] + beta) / topicCountBetaHat[j]; 
 			}
 		}
 		double phiMan00 = (10 + 0.01) / 23.03;
@@ -120,9 +131,11 @@ public class LightXLDATest {
 		
 		// Calculate and assert globalTokensPerTopic
 		int [] globalTokensPerTopic = new int[numTopics];
+		int [] globalTokensPerTopic_not_i = new int[numTopics];
 		for (int i = 0; i < numTypes; i++) {	
 			for (int j = 0; j < numTopics; j++) {	
 				globalTokensPerTopic[j] += globalTypeTopicCounts[i][j]; 
+				globalTokensPerTopic_not_i[j] += globalTypeTopicCounts[i][j]; 
 			}
 		}
 		assertEquals("globalTokensPerTopic[0] is not calculated correctly", globalTokensPerTopic[0], 23.0 , 0.00001);
@@ -145,7 +158,7 @@ public class LightXLDATest {
 		// If phi_i is used: pw2LightWordProbManual = 2.6131462 0.8757712 = cLightWordProbManual
 		// If phi_i is used: pw2LightWordProbManual = 0.4209629 1.2117754 = cLightDocProbManual
 		
-		double [] localTopicCounts_i = localTopicCounts;
+		double [] localTopicCounts_i = Arrays.copyOf(localTopicCounts, localTopicCounts.length);
 		System.out.println("documentTopics: " + Arrays.toString(documentTopics));
 		System.out.println("documentTypes: " + Arrays.toString(documentTypes));
 		System.out.println("wordTopicIndicatorProposal: " + Arrays.toString(wordTopicIndicatorProposal));
@@ -155,49 +168,55 @@ public class LightXLDATest {
 			int oldTopic = documentTopics[j];
 			
 			localTopicCounts_i[documentTopics[j]] -= 1;
-			double [] localTopicCounts_not_i = Arrays.copyOf(localTopicCounts_i, localTopicCounts_i.length);
-			System.out.println("localTopicCounts_i: " + Arrays.toString(localTopicCounts_i));
-			globalTypeTopicCounts[type][documentTopics[j]] -= 1;
+			// System.out.println("localTopicCounts_i: " + Arrays.toString(localTopicCounts_i));
+			globalTypeTopicCounts_not_i[type][documentTopics[j]] -= 1;
 			for (int i = 0; i < globalTypeTopicCounts.length; i++) {
-				System.out.println("globalTypeTopicCounts_not_i: " + Arrays.toString(globalTypeTopicCounts[i]));
+				// System.out.println("globalTypeTopicCounts_not_i: " + Arrays.toString(globalTypeTopicCounts_not_i[i]));
 			}
-			globalTokensPerTopic[documentTopics[j]] -= 1;
-			System.out.println("globalTokensPerTopic_not_i: " + Arrays.toString(globalTokensPerTopic));
+			globalTokensPerTopic_not_i[documentTopics[j]] -= 1;
+			// System.out.println("globalTokensPerTopic_not_i: " + Arrays.toString(globalTokensPerTopic_not_i));
 
-			topicCountBetaHat[documentTopics[j]] -= 1;
-			System.out.println("globalTokensPerTopic_not_i: " + Arrays.toString(topicCountBetaHat));
+			topicCountBetaHat_not_i[documentTopics[j]] -= 1;
+			// System.out.println("globalTokensPerTopic_not_i: " + Arrays.toString(topicCountBetaHat_not_i));
 			
-			double [][] phi_i = new double[numTypes][numTopics];
+			double [][] phi_i = new double[numTopics][numTypes];
 			for (int i = 0; i < numTypes; i++) {	
 				for (int k = 0; k < numTopics; k++) {	
-					phi_i[i][k] = (globalTypeTopicCounts[i][k] + beta) / topicCountBetaHat[k]; 
-					// System.out.println((globalTypeTopicCounts[i][k] + beta) + "/" + (topicCountBetaHat[k]-1) + " = " + phi_i[i][k]);
+					phi_i[k][i] = (globalTypeTopicCounts_not_i[i][k] + beta) / topicCountBetaHat_not_i[k]; 
+					// System.out.println((globalTypeTopicCounts_not_i[i][k] + beta) + "/" + topicCountBetaHat_not_i[k] + " = " + phi_i[k][i]);
 				}
 			}
 			for (int k = 0; k < phi.length; k++) {
-				System.out.println("Phi_i: " + Arrays.toString(phi_i[k]));
+				// System.out.println("Phi_i: " + Arrays.toString(phi_i[k]));
 			}
-
+			// 																		int[][] globalTypeTopicCounts, int[] globalTokensPerTopic, double[] localTopicCounts_i, int type, int oldTopic, int wordTopicIndicatorProposal, double alpha, double beta, double betaSum
 			double cLightWordProb = CollapsedLightLDA.calculateWordAcceptanceProbability(globalTypeTopicCounts, globalTokensPerTopic, localTopicCounts_i, type, oldTopic, wordTopicIndicatorProposal[j], alpha, beta, betaSum);
 			System.out.println("cL pi_w:" + cLightWordProb + " cLightWordProb (manual):" + cLightWordProbManual[j]);
 			assertEquals("CollapsedLightLDA WordAcceptanceProbability is not correct", cLightWordProb, cLightWordProbManual[j], 0.00001);
 			
-			double cLightDocProb = CollapsedLightLDA.calculateDocumentAcceptanceProbability(globalTypeTopicCounts, globalTokensPerTopic, localTopicCounts_i, localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal[j], alpha, beta, betaSum);			
+			// System.out.println("localTopicCounts: " + Arrays.toString(localTopicCounts));
+			// System.out.println("localTopicCounts_i: " + Arrays.toString(localTopicCounts_i));
+			//                                                                      int[][] globalTypeTopicCounts, int[] globalTokensPerTopic, double[] localTopicCounts, double[] localTopicCounts_i, int type, int oldTopic, int docTopicIndicatorProposal, double alpha, double beta, double betaSum
+			double cLightDocProb = CollapsedLightLDA.calculateDocumentAcceptanceProbability(globalTypeTopicCounts, globalTokensPerTopic, localTopicCounts, localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal[j], alpha, beta, betaSum);			
 			System.out.println("cL pi_d:" + cLightDocProb + " cLightDocProb (manual):" + cLightDocProbManual[j]);
 			assertEquals("CollapsedLightLDA DocAcceptanceProbability is not correct", cLightDocProb, cLightDocProbManual[j], 0.00001);
 			
-			double pw2LightWordProb = LightPCLDAtypeTopicProposal.calculateWordAcceptanceProbability(localTopicCounts_i, type, oldTopic, wordTopicIndicatorProposal[j], topicCountBetaHat, globalTypeTopicCounts, phi, alpha, betaSum);
+			//                                                                              double[] localTopicCounts_not_i, int type, int oldTopic, int wordTopicIndicatorProposal, double[] topicCountBetaHat, int[][] typeTopicCounts, double[][] phi, double alpha, double beta
+			double pw2LightWordProb = LightPCLDAtypeTopicProposal.calculateWordAcceptanceProbability(localTopicCounts_i, type, oldTopic, wordTopicIndicatorProposal[j], topicCountBetaHat, globalTypeTopicCounts, phi, alpha, beta);
 			System.out.println("pw2 pi_w:" + pw2LightWordProb + " pw2LightWordProbManual (manual):" + pw2LightWordProbManual[j]);
 			assertEquals("PCLightLDAw2 WordAcceptanceProbability is not correct", pw2LightWordProb, pw2LightWordProbManual[j], 0.00001);			
 			
+			//                                                                                 double[] localTopicCounts, double[] localTopicCounts_not_i, int type, int oldTopic, int docTopicIndicatorProposal, double[][] phi, double alpha
 			double pw2LightDocProb = LightPCLDAtypeTopicProposal.calculateDocumentAcceptanceProbability(localTopicCounts, localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal[j], phi, alpha);
 			System.out.println("pw2 pi_w:" + pw2LightDocProb + " pw2LightWordProbManual (manual):" + pw2LightDocProbManual[j]);
 			assertEquals("PCLightLDAw2 DocAcceptanceProbability is not correct", pw2LightDocProb, pw2LightDocProbManual[j], 0.00001);			
 			
-			double pw2LightWordProb_phi_i = LightPCLDAtypeTopicProposal.calculateWordAcceptanceProbability(localTopicCounts_i, type, oldTopic, wordTopicIndicatorProposal[j], topicCountBetaHat, globalTypeTopicCounts, phi_i, alpha, betaSum);
+			double pw2LightWordProb_phi_i = LightPCLDAtypeTopicProposal.calculateWordAcceptanceProbability(localTopicCounts_i, type, oldTopic, wordTopicIndicatorProposal[j], topicCountBetaHat, globalTypeTopicCounts, phi_i, alpha, beta);
+			System.out.println("pw2LightWordProb_phi_i:" + pw2LightWordProb_phi_i + " cLightWordProb:" + cLightWordProb);
 			assertEquals("WordAcceptanceProbability CollapsedLightLDA != PCLightLDAw2 with Phi_i", pw2LightWordProb_phi_i, cLightWordProb, 0.00001);			
 			
-			double pw2LightDocProb_phi_i = LightPCLDAtypeTopicProposal.calculateDocumentAcceptanceProbability(localTopicCounts, localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal[j], phi, alpha);
+			double pw2LightDocProb_phi_i = LightPCLDAtypeTopicProposal.calculateDocumentAcceptanceProbability(localTopicCounts, localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal[j], phi_i, alpha);
+			System.out.println("pw2LightWordProb_phi_i:" + pw2LightDocProb_phi_i + " cLightWordProb:" + cLightDocProb);
 			assertEquals("DocAcceptanceProbability CollapsedLightLDA != PCLightLDAw2 with Phi_i", pw2LightDocProb_phi_i, cLightDocProb, 0.00001);			
 						
 			/*
@@ -207,9 +226,9 @@ public class LightXLDATest {
 			*/
 			
 			System.out.println();
-			topicCountBetaHat[documentTopics[j]] += 1;
-			globalTypeTopicCounts[type][documentTopics[j]] += 1;
-			globalTokensPerTopic[documentTopics[j]] += 1;
+			topicCountBetaHat_not_i[documentTopics[j]] += 1;
+			globalTypeTopicCounts_not_i[type][documentTopics[j]] += 1;
+			globalTokensPerTopic_not_i[documentTopics[j]] += 1;
 			localTopicCounts_i[documentTopics[j]] += 1;
 		}
 
