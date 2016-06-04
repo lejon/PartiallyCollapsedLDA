@@ -190,15 +190,14 @@ public class LightXLDATest {
 			System.out.println("pw2 pi_w:" + pw2LightWordProb + " pw2LightWordProbManual (manual):" + pw2LightWordProbManual[j]);
 			assertEquals("PCLightLDAw2 WordAcceptanceProbability is not correct", pw2LightWordProb, pw2LightWordProbManual[j], 0.00001);			
 			
-			double pw2LightDocProb = LightPCLDAtypeTopicProposal.calculateDocumentAcceptanceProbability(localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal[j], topicCountBetaHat, globalTypeTopicCounts, phi, alpha, betaSum);
+			double pw2LightDocProb = LightPCLDAtypeTopicProposal.calculateDocumentAcceptanceProbability(localTopicCounts, localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal[j], phi, alpha);
 			System.out.println("pw2 pi_w:" + pw2LightDocProb + " pw2LightWordProbManual (manual):" + pw2LightDocProbManual[j]);
 			assertEquals("PCLightLDAw2 DocAcceptanceProbability is not correct", pw2LightDocProb, pw2LightDocProbManual[j], 0.00001);			
-			
 			
 			double pw2LightWordProb_phi_i = LightPCLDAtypeTopicProposal.calculateWordAcceptanceProbability(localTopicCounts_i, type, oldTopic, wordTopicIndicatorProposal[j], topicCountBetaHat, globalTypeTopicCounts, phi_i, alpha, betaSum);
 			assertEquals("WordAcceptanceProbability CollapsedLightLDA != PCLightLDAw2 with Phi_i", pw2LightWordProb_phi_i, cLightWordProb, 0.00001);			
 			
-			double pw2LightDocProb_phi_i = LightPCLDAtypeTopicProposal.calculateDocumentAcceptanceProbability(localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal[j], topicCountBetaHat, globalTypeTopicCounts, phi_i, alpha, betaSum);
+			double pw2LightDocProb_phi_i = LightPCLDAtypeTopicProposal.calculateDocumentAcceptanceProbability(localTopicCounts, localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal[j], phi, alpha);
 			assertEquals("DocAcceptanceProbability CollapsedLightLDA != PCLightLDAw2 with Phi_i", pw2LightDocProb_phi_i, cLightDocProb, 0.00001);			
 						
 			/*
