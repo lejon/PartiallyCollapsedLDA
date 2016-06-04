@@ -1,45 +1,52 @@
-package cc.mallet.types;
+package cc.mallet.pipe;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 
+import cc.mallet.pipe.SimpleTokenizer;
+import cc.mallet.types.Instance;
+
 /**
- * Allows for configuring special classes of Unicode characters to keep
+ * The ONLY thing this class does different than its parent is allocate a bigger tokenBuffer (default 10000 vs 1000)
  * @author Leif Jonsson
  *
  */
-public class KeepConnectorPunctuationTokenizerLarge extends SimpleTokenizerLarge {
+public class SimpleTokenizerLarge extends SimpleTokenizer {
 
 	private static final long serialVersionUID = 1L;
+	protected int tokenBufferSize = 10000;
 
-	public KeepConnectorPunctuationTokenizerLarge(File stopfile) {
+	public SimpleTokenizerLarge(File stopfile) {
 		super(stopfile);
 	}
 	
-	public KeepConnectorPunctuationTokenizerLarge(int languageFlag) {
+	public SimpleTokenizerLarge(int languageFlag) {
 		super(languageFlag);
 	}
 	
-	public KeepConnectorPunctuationTokenizerLarge(HashSet<String> stoplist) {
+	public SimpleTokenizerLarge(HashSet<String> stoplist) {
 		super(stoplist);
 	}
 	
-	public KeepConnectorPunctuationTokenizerLarge(File stopfile, int bufferSize) {
-		super(stopfile, bufferSize);
+	public SimpleTokenizerLarge(File stopfile, int bufferSize) {
+		super(stopfile);
+		tokenBufferSize = bufferSize;
 	}
 	
-	public KeepConnectorPunctuationTokenizerLarge(int languageFlag, int bufferSize) {
-		super(languageFlag, bufferSize);
+	public SimpleTokenizerLarge(int languageFlag, int bufferSize) {
+		super(languageFlag);
+		tokenBufferSize = bufferSize;
 	}
 	
-	public KeepConnectorPunctuationTokenizerLarge(HashSet<String> stoplist, int bufferSize) {
-		super(stoplist, bufferSize);
+	public SimpleTokenizerLarge(HashSet<String> stoplist, int bufferSize) {
+		super(stoplist);
+		tokenBufferSize = bufferSize;
 	}
 	
 	@Override
-	public KeepConnectorPunctuationTokenizerLarge deepClone() {
-		return new KeepConnectorPunctuationTokenizerLarge((HashSet<String>) stoplist.clone());
+	public SimpleTokenizerLarge deepClone() {
+		return new SimpleTokenizerLarge((HashSet<String>) stoplist.clone());
 	}
 	
 	public Instance pipe(Instance instance) {
@@ -65,7 +72,6 @@ public class KeepConnectorPunctuationTokenizerLarge extends SimpleTokenizerLarge
 				int codePointType = Character.getType(codePoint);
 
 				if (codePointType == Character.LOWERCASE_LETTER ||
-					codePointType == Character.CONNECTOR_PUNCTUATION ||
 					codePointType == Character.UPPERCASE_LETTER) {
 					length++;
 					tokenBuffer[length] = codePoint;
@@ -75,6 +81,7 @@ public class KeepConnectorPunctuationTokenizerLarge extends SimpleTokenizerLarge
 						 codePointType == Character.PARAGRAPH_SEPARATOR ||
 						 codePointType == Character.END_PUNCTUATION ||
 						 codePointType == Character.DASH_PUNCTUATION ||
+						 codePointType == Character.CONNECTOR_PUNCTUATION ||
 						 codePointType == Character.START_PUNCTUATION ||
 						 codePointType == Character.INITIAL_QUOTE_PUNCTUATION ||
 						 codePointType == Character.FINAL_QUOTE_PUNCTUATION ||

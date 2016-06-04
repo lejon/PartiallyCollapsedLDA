@@ -1,11 +1,10 @@
-package cc.mallet.util;
+package cc.mallet.pipe;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 
 import cc.mallet.types.Instance;
-import cc.mallet.types.SimpleTokenizerLarge;
 
 public class NumericAlsoTokenizer extends SimpleTokenizerLarge {
 

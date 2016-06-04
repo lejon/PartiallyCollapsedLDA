@@ -13,6 +13,7 @@ import cc.mallet.configuration.ConfigFactory;
 import cc.mallet.configuration.LDACommandLineParser;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.ParsedLDAConfiguration;
+import cc.mallet.pipe.SimpleTokenizerLarge;
 import cc.mallet.util.LDAUtils;
 
 public class SimpleTokenizerLargeTest {

@@ -25,9 +25,13 @@ import java.util.logging.Logger;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.pipe.CharSequenceLowercase;
 import cc.mallet.pipe.FeatureCountPipe;
+import cc.mallet.pipe.KeepConnectorPunctuationNumericAlsoTokenizer;
+import cc.mallet.pipe.KeepConnectorPunctuationTokenizerLarge;
+import cc.mallet.pipe.NumericAlsoTokenizer;
 import cc.mallet.pipe.Pipe;
 import cc.mallet.pipe.SerialPipes;
 import cc.mallet.pipe.SimpleTokenizer;
+import cc.mallet.pipe.SimpleTokenizerLarge;
 import cc.mallet.pipe.StringList2FeatureSequence;
 import cc.mallet.pipe.Target2Label;
 import cc.mallet.pipe.TfIdfPipe;
@@ -41,10 +45,8 @@ import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.IDSorter;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.KeepConnectorPunctuationTokenizerLarge;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
-import cc.mallet.types.SimpleTokenizerLarge;
 
 public class LDAUtils {
 
