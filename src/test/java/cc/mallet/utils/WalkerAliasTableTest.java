@@ -28,7 +28,7 @@ public class WalkerAliasTableTest {
 	Class walkerClass;
 	WalkerAliasTable walker;
 	double epsilon = 0.001;
-	double alpha = 0.1;
+	double alpha = 0.001;
 
 	public WalkerAliasTableTest(@SuppressWarnings("rawtypes") Class testClass) {
 		walkerClass = testClass;
