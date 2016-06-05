@@ -5,7 +5,6 @@ import static org.junit.Assert.assertEquals;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.configuration.ConfigurationException;
@@ -13,9 +12,6 @@ import org.junit.Test;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
-import cc.mallet.topics.ADLDA;
-import cc.mallet.topics.SerialCollapsedLDA;
-import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.topics.randomscan.document.BatchBuilderFactory;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.Instance;
@@ -98,6 +94,7 @@ public class TestInitialization {
 		int [][] adldaTopicIndicators       = adlda.getTypeTopicCounts();
 		int [][] lightPcLdaTopicIndicators  = lightpclda.getTypeTopicCounts();
 		int [][] collapsedlightTopicIndicators  = collapsedlight.getTypeTopicCounts();
+		int [][] lightPcLdaTTPTopicIndicators  = lightpcldaTTP.getTypeTopicCounts();
 
 		for (int i = 0; i < uncollapsedTopicIndicators.length; i++) {
 			for (int j = 0; j < uncollapsedTopicIndicators[i].length; j++) {
@@ -116,10 +113,13 @@ public class TestInitialization {
 				assertEquals("Collapsed and CollapsedLight are not the same: " 
 						+ collapsedTopicIndicators[i][j] + "!=" + collapsedlightTopicIndicators[i][j], 
 						collapsedTopicIndicators[i][j], collapsedlightTopicIndicators[i][j]);
+				assertEquals("Collapsed and LightPCLDATTP are not the same: " 
+						+ collapsedTopicIndicators[i][j] + "!=" + lightPcLdaTTPTopicIndicators[i][j], 
+						collapsedTopicIndicators[i][j], lightPcLdaTTPTopicIndicators[i][j]);
 			}
 		}
 		
-		
+		// CollapsedLight and LightPCLDAtypeTopicProposal should have the same "tokens per type"
 		int [] collapsedLightTTP =  collapsedlight.getTokensPerType(); 
 		int [] lightPCLDATTP = lightpcldaTTP.getTokensPerType();
 		assertEquals("Collapsed Light and LightPCLDAtypeTopicProposal does not initialize the same length of tokens per type",
@@ -136,6 +136,7 @@ public class TestInitialization {
 		int [] uncollapsedTokensPerTopic = uncollapsed.getTopicTotals();
 		int [] adldaTokensPerTopic       = adlda.getTopicTotals();
 		int [] lightPcLdaTokensPerTopic  = lightpclda.getTopicTotals();
+		int [] lightPcLdaTTPTokensPerTopic  = lightpcldaTTP.getTopicTotals();
 		int [] collapsedlightTokensPerTopic  = collapsedlight.getTopicTotals();
 
 		for (int i = 0; i < collapsedTokensPerTopic.length; i++) {
@@ -154,6 +155,9 @@ public class TestInitialization {
 			assertEquals("Collapsed and CollapsedLight token counts are not the same: " 
 					+ collapsedTokensPerTopic[i] + "!=" + collapsedlightTokensPerTopic[i], 
 					collapsedTokensPerTopic[i], collapsedlightTokensPerTopic[i]);
+			assertEquals("Collapsed and LightPCLDAtypeTopicProposal token counts are not the same: " 
+					+ collapsedTokensPerTopic[i] + "!=" + lightPcLdaTTPTokensPerTopic[i], 
+					collapsedTokensPerTopic[i], lightPcLdaTTPTokensPerTopic[i]);
 		}
 
 		double spaliasModelLogLikelihood   = spalias.modelLogLikelihood();
@@ -161,6 +165,7 @@ public class TestInitialization {
 		double uncollapsedModelLogLikelihood = uncollapsed.modelLogLikelihood();
 		double adldaModelLogLikelihood       = adlda.modelLogLikelihood();
 		double lightpcldaModelLogLikelihood  = lightpclda.modelLogLikelihood();
+		double lightpcldaTTPModelLogLikelihood  = lightpcldaTTP.modelLogLikelihood();
 		double collapsedlightModelLogLikelihood  = collapsedlight.modelLogLikelihood();
 		
 		assertEquals("ADLDA and Collapsed LogLikelihoods are not the same: " 
@@ -183,6 +188,10 @@ public class TestInitialization {
 				+ collapsedModelLogLikelihood + " != " + collapsedlightModelLogLikelihood 
 				+ " Diff: " + (collapsedModelLogLikelihood-collapsedlightModelLogLikelihood) ,
 				collapsedModelLogLikelihood, collapsedlightModelLogLikelihood, epsilon);
+		assertEquals("Collapsed and LightPCLDAtypeTopicProposal LogLikelihoods are not the same: " 
+				+ collapsedModelLogLikelihood + " != " + lightpcldaTTPModelLogLikelihood 
+				+ " Diff: " + (collapsedModelLogLikelihood-lightpcldaTTPModelLogLikelihood) ,
+				collapsedModelLogLikelihood, lightpcldaTTPModelLogLikelihood, epsilon);
 
 		TestUtils.assertEqualArrays(collapsed.getTypeTopicCounts(), uncollapsed.getTypeTopicCounts());
 	
@@ -191,6 +200,7 @@ public class TestInitialization {
 		int [][] uncollapsedZIndicators = uncollapsed.getZIndicators();
 		int [][] adldaZIndicators       = adlda.getZIndicators();
 		int [][] lightPcLdaZIndicators  = lightpclda.getZIndicators();
+		int [][] lightPcLdaTTPZIndicators  = lightpcldaTTP.getZIndicators();
 		int [][] collapsedlightZIndicators  = collapsedlight.getZIndicators();
 		
 		for (int i = 0; i < collapsedZIndicators.length; i++) {
@@ -210,6 +220,9 @@ public class TestInitialization {
 				assertEquals("Collapsed and LightPCLDA ZIndicators are not the same: " 
 						+ collapsedZIndicators[i][j] + "!=" + collapsedlightZIndicators[i][j], 
 						collapsedZIndicators[i][j], collapsedlightZIndicators[i][j]);
+				assertEquals("Collapsed and LightPCLDAtypeTopicProposal ZIndicators are not the same: " 
+						+ collapsedZIndicators[i][j] + "!=" + lightPcLdaTTPZIndicators[i][j], 
+						collapsedZIndicators[i][j], lightPcLdaTTPZIndicators[i][j]);
 			}
 		}
 	}
