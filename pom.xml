@@ -55,7 +55,8 @@
 	<!-- v4.6.1: Added possibility to configure the "nr_top_words" (default=20) to print and "max_doc_buf_size" (default 10000) to adjust the size of the max document size. -->
 	<!-- v4.6.2: Fix max_doc_size bug, used wrong default value. -->
 	<!-- v4.6.3: Fixed bug in light collapsed acceptance calc -->
-	<version>4.6.3</version>
+	<!-- v4.6.4: Fixed potential bug parallel updates of batchLocalTopicTypeUpdates -->
+	<version>4.6.4</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
