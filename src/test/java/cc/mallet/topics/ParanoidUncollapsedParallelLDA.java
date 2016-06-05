@@ -16,8 +16,6 @@ public class ParanoidUncollapsedParallelLDA extends EfficientUncollapsedParallel
 		super.samplePhi();
 		ensureConsistentPhi(phi);
 		ensureConsistentTopicTypeCounts(topicTypeCountMapping, typeTopicCounts, tokensPerTopic);
-		System.out.println("Phi is consistent after sampling!");
-		System.out.println("Topic count is consistent after sampling!");
 		debugPrintMMatrix();
 	}
 
@@ -27,8 +25,6 @@ public class ParanoidUncollapsedParallelLDA extends EfficientUncollapsedParallel
 		//ensureConsistentTopicTypeCounts(topicTypeCounts);
 		ensureConsistentPhi(phi);
 		ensureConsistentTopicTypeCounts(topicTypeCountMapping, typeTopicCounts, tokensPerTopic);
-		System.out.println("Phi is consistent after add instances!");
-		System.out.println("Topic count is consistent after add instances!");
 		debugPrintMMatrix();
 	}
 
@@ -36,9 +32,7 @@ public class ParanoidUncollapsedParallelLDA extends EfficientUncollapsedParallel
 	protected void updateCounts() throws InterruptedException {
 		super.updateCounts();
 		ensureConsistentPhi(phi);
-		System.out.println("Phi is consistent after count update!");
 		ensureConsistentTopicTypeCounts(topicTypeCountMapping, typeTopicCounts, tokensPerTopic);
-		System.out.println("Topic count is consistent after count update!");
 		debugPrintMMatrix();
 	}
 	

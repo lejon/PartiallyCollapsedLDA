@@ -1,0 +1,5 @@
+docno:1	X	'INSERT DISK THREE' ? But_I_can only get two in the drive ! 
+docno:2	X	'Intel Inside' is a Government Warning required by Law.
+docno:3	X	'Intel Inside': The world's most widely used warning label.
+docno:4	X	A Freudian slip is when you say one thing but mean your mother
+docno:5	X	A backward poet writes inverse.

@@ -7,8 +7,6 @@ public class ParanoidVSSpaliasUncollapsedLDA extends NZVSSpaliasUncollapsedParal
 
 	private static final long	serialVersionUID	= 6948198361119397002L;
 
-	boolean silent = false;
-	
 	public ParanoidVSSpaliasUncollapsedLDA(LDAConfiguration config) {
 		super(config);
 	}
@@ -18,8 +16,6 @@ public class ParanoidVSSpaliasUncollapsedLDA extends NZVSSpaliasUncollapsedParal
 		super.samplePhi();
 		ensureConsistentPhi(phi);
 		ensureConsistentTopicTypeCounts(topicTypeCountMapping, typeTopicCounts, tokensPerTopic);
-		if(!silent) System.out.println("Phi is consistent after sampling!");
-		if(!silent) System.out.println("Topic count is consistent after sampling!");
 		debugPrintMMatrix();
 	}
 
@@ -29,8 +25,6 @@ public class ParanoidVSSpaliasUncollapsedLDA extends NZVSSpaliasUncollapsedParal
 		//ensureConsistentTopicTypeCounts(topicTypeCounts);
 		ensureConsistentPhi(phi);
 		ensureConsistentTopicTypeCounts(topicTypeCountMapping, typeTopicCounts, tokensPerTopic);
-		if(!silent) System.out.println("Phi is consistent after add instances!");
-		if(!silent) System.out.println("Topic count is consistent after add instances!");
 		debugPrintMMatrix();
 	}
 
@@ -38,9 +32,7 @@ public class ParanoidVSSpaliasUncollapsedLDA extends NZVSSpaliasUncollapsedParal
 	protected void updateCounts() throws InterruptedException {
 		super.updateCounts();
 		ensureConsistentPhi(phi);
-		if(!silent) System.out.println("Phi is consistent after count update!");
 		ensureConsistentTopicTypeCounts(topicTypeCountMapping, typeTopicCounts, tokensPerTopic);
-		if(!silent) System.out.println("Topic count is consistent after count update!");
 		debugPrintMMatrix();
 	}
 	

@@ -100,11 +100,21 @@ public class ParallelLDA {
 
 				InstanceList instances;
 				if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
-					instances = LDAUtils.loadInstancesKeep(dataset_fn, 
-							config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT));					
+					instances = LDAUtils.loadInstancesKeep(
+							dataset_fn, 
+							config.getStoplistFilename("stoplist.txt"), 
+							config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
+							config.keepNumbers(), 
+							config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+							config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION));					
 				} else {					
-					instances = LDAUtils.loadInstancesPrune(dataset_fn, 
-							config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT));
+					instances = LDAUtils.loadInstancesPrune(
+							dataset_fn, 
+							config.getStoplistFilename("stoplist.txt"), 
+							config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), 
+							config.keepNumbers(), 
+							config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+							config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION));
 				}
 
 				LDAGibbsSampler model = createModel(config, whichModel);
