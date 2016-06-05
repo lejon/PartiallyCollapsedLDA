@@ -8,10 +8,6 @@ import org.junit.Test;
 
 public class LightXLDATest {
 	
-	// TODO: Potential error, giving pointers instead of arrays I had localTopiccount_i = localtopiccount
-	// TODO: Potential error, inverse of phi?
-	// TODO: Potential error, Right elements in accept/reject betaSum instead of beta
-	
 	@Test
 	public void testEnsureSameAcceptanceProbabilityDocument() {
 		System.out.println("\ntestEnsureSameAcceptanceProbabilityDocument\n");
