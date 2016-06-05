@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.configuration.ConfigurationException;
@@ -83,6 +84,10 @@ public class TestInitialization {
 		lightpclda.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
 		lightpclda.addInstances(instances);
 
+		LightPCLDAtypeTopicProposal lightpcldaTTP = new LightPCLDAtypeTopicProposal(config);
+		lightpcldaTTP.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		lightpcldaTTP.addInstances(instances);
+		
 		CollapsedLightLDA collapsedlight = new CollapsedLightLDA(config);
 		collapsedlight.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
 		collapsedlight.addInstances(instances);
@@ -112,6 +117,18 @@ public class TestInitialization {
 						+ collapsedTopicIndicators[i][j] + "!=" + collapsedlightTopicIndicators[i][j], 
 						collapsedTopicIndicators[i][j], collapsedlightTopicIndicators[i][j]);
 			}
+		}
+		
+		
+		int [] collapsedLightTTP =  collapsedlight.getTokensPerType(); 
+		int [] lightPCLDATTP = lightpcldaTTP.getTokensPerType();
+		assertEquals("Collapsed Light and LightPCLDAtypeTopicProposal does not initialize the same length of tokens per type",
+				collapsedLightTTP.length,
+				lightPCLDATTP.length);
+		for (int i = 0; i < lightPCLDATTP.length; i++) {			
+			assertEquals("Collapsed Light and LightPCLDAtypeTopicProposal does not initialize the same tokens per type",
+					collapsedLightTTP[i],
+					lightPCLDATTP[i]);
 		}
 
 		int [] spaliasTokensPerTopic   = spalias.getTopicTotals();
