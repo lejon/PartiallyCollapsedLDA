@@ -699,9 +699,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			long updates = 0;
 			for (int type = 0; type < numTypes; type++) {	
 				if(batchLocalTopicTypeUpdates[topic][type].get()!=0) {
-					updateTypeTopicCount(type, topic, batchLocalTopicTypeUpdates[topic][type].get());
-					// Now reset the count
-					batchLocalTopicTypeUpdates[topic][type].set(0);		
+					updateTypeTopicCount(type, topic, batchLocalTopicTypeUpdates[topic][type].getAndSet(0));
 
 					// Update delta statistics
 					boolean success = globalDeltaNUpdates[topic].increment(type);
