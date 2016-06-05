@@ -1409,4 +1409,9 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		nonZeroTypeTopics[type][topicIndex] = nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]];
 		nonZeroTypeTopicsBackMapping[type][nonZeroTypeTopics[type][topicIndex]] = topicIndex;
 	}
+
+
+	public int[] getTokensPerType() {
+		return tokensPerType;
+	}
 }

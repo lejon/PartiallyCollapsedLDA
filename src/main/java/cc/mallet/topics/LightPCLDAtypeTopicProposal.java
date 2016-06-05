@@ -306,4 +306,9 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 		nonZeroTypeTopics[type][topicIndex] = nonZeroTypeTopics[type][nonZeroTypeTopicCnt[type]];
 		nonZeroTypeTopicsBackMapping[type][nonZeroTypeTopics[type][topicIndex]] = topicIndex;
 	}
+
+
+	public int[] getTokensPerType() {
+		return tokensPerType;
+	}
 }
