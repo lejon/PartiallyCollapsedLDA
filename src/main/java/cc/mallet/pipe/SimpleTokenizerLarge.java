@@ -46,7 +46,7 @@ public class SimpleTokenizerLarge extends SimpleTokenizer {
 	
 	@Override
 	public SimpleTokenizerLarge deepClone() {
-		return new SimpleTokenizerLarge((HashSet<String>) stoplist.clone());
+		return new SimpleTokenizerLarge((HashSet<String>) stoplist.clone(), tokenBufferSize);
 	}
 	
 	public Instance pipe(Instance instance) {
