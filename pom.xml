@@ -56,7 +56,8 @@
 	<!-- v4.6.2: Fix max_doc_size bug, used wrong default value. -->
 	<!-- v4.6.3: Fixed bug in light collapsed acceptance calc -->
 	<!-- v4.6.4: Fixed potential bug parallel updates of batchLocalTopicTypeUpdates -->
-	<version>4.6.4</version>
+	<!-- v4.6.5: Possible fix for tokenizer bug -->
+	<version>4.6.5</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
