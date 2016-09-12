@@ -44,6 +44,9 @@ in bash.
 
 Occationally some of the "probabilistic" tests fail due to random chance. This is ok in a statistical sense but not for a test suite so this should eventually be tuned. For now if the suite is re-run it should be ok.
 
+## Example run using binary (the release JAR)
+
+```java -cp PCPLDA-4.6.5.jar cc.mallet.topics.tui.ParallelLDA --run_cfg=src/main/resources/configuration/PLDAConfig.cfg```
 
 ## Public DOI
 [![DOI](https://zenodo.org/badge/13374/lejon/PartiallyCollapsedLDA.svg)](http://dx.doi.org/10.5281/zenodo.18102)
