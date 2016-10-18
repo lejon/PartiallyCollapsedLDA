@@ -151,4 +151,8 @@ public interface LDAConfiguration {
 	public int getMaxDocumentBufferSize(int defaltSize);
 
 	public boolean getKeepConnectingPunctuation(boolean defaultKeepConnectingPunctuation);
+	
+	public boolean saveVocabulary(boolean defaultVal);
+
+	public String getVocabularyFilename();
 }

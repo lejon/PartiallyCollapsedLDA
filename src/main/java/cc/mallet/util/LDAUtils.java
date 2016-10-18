@@ -1044,4 +1044,26 @@ public class LDAUtils {
 		String label  = instance.getLabeling().getBestLabel().toString();
 		return label;
 	}
+
+	public static String[] extractVocabulaty(Alphabet dataAlphabet) {
+		String [] vocab = new String[dataAlphabet.size()];
+		for (int i = 0; i < vocab.length; i++) {
+			vocab[i] = dataAlphabet.lookupObject(i).toString();
+		}
+		return vocab;
+	}
+
+	public static void writeStringArray(String[] vocabulary, String fileName) {
+		File file = new File(fileName);
+		try (FileWriter fw = new FileWriter(file, false); 
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter pw  = new PrintWriter(bw)) {
+			for (int i = 0; i < vocabulary.length; i++) {
+				pw.println(vocabulary[i]);
+			}
+		} catch (IOException e) {
+			throw new IllegalArgumentException("File " + file.getName()
+					+ " is unwritable : " + e.toString());
+		}
+	}
 }

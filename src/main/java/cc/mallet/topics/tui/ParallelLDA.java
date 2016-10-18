@@ -125,6 +125,7 @@ public class ParallelLDA {
 				} else {
 					System.out.println(String.format("Rare word threshold: %d", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD)));
 				}
+				
 
 				System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
 				System.out.println("Instance list is: " + instances.size());
@@ -167,9 +168,20 @@ public class ParallelLDA {
 						} else {
 							System.err.println("WARNING: ParallelLDA: No Phi means where sampled, not saving Phi means! This is likely due to a combination of configuration settings of phi_mean_burnin, phi_mean_thin and save_phi_mean");
 						}
+						// No big point in saving Phi without the vocabulary
+						String vocabFn = config.getVocabularyFilename();
+						if(vocabFn==null || vocabFn.length()==0) { vocabFn = "phi_vocabulary.txt"; }
+						String [] vobaculary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
+						LDAUtils.writeStringArray(vobaculary,lgDir.getAbsolutePath() + "/" + vocabFn);
 					}
 				}
 
+				if(config.saveVocabulary(false)) {
+					String vocabFn = config.getVocabularyFilename();
+					String [] vobaculary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
+					LDAUtils.writeStringArray(vobaculary,lgDir.getAbsolutePath() + "/" + vocabFn);
+				}
+				
 				List<String> metadata = new ArrayList<String>();
 				metadata.add("No. Topics: " + model.getNoTopics());
 				metadata.add("Start Seed: " + model.getStartSeed());

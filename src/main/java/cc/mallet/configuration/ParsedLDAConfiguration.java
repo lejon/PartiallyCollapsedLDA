@@ -350,4 +350,18 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		if(prop==null) return defaultKeepConnectingPunctuation;
 		return getBooleanProperty(key);
 	}
+	
+	@Override
+	public boolean saveVocabulary(boolean defaultValue) {
+		String key = "save_vocabulary";
+		Object prop = super.getProperty(translateKey(key));
+		if(prop==null) return defaultValue;
+		return getBooleanProperty(key);
+	}
+	
+	@Override
+	public String getVocabularyFilename() {
+		return getStringProperty("vocabulary_filename");
+	}
+
 }

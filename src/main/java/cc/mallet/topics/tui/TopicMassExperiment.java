@@ -938,5 +938,15 @@ public class TopicMassExperiment {
 		public boolean getKeepConnectingPunctuation(boolean defaultKeepConnectingPunctuation) {
 			return false;
 		}
+
+		@Override
+		public boolean saveVocabulary(boolean defaultVal) {
+			return false;
+		}
+
+		@Override
+		public String getVocabularyFilename() {
+			return null;
+		}
 	}
 }
