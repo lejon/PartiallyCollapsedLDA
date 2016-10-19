@@ -155,4 +155,12 @@ public interface LDAConfiguration {
 	public boolean saveVocabulary(boolean defaultVal);
 
 	public String getVocabularyFilename();
+
+	public boolean saveTermFrequencies(boolean defaultValue);
+
+	public String getTermFrequencyFilename();
+
+	public boolean saveDocLengths(boolean defaultValue);
+
+	public String getDocLengthsFilename();
 }

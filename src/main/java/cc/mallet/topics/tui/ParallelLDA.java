@@ -182,6 +182,19 @@ public class ParallelLDA {
 					LDAUtils.writeStringArray(vobaculary,lgDir.getAbsolutePath() + "/" + vocabFn);
 				}
 				
+				if(config.saveTermFrequencies(false)) {
+					String termCntFn = config.getTermFrequencyFilename();
+					int [] freqs = LDAUtils.extractTermCounts(instances);
+					LDAUtils.writeIntArray(freqs, lgDir.getAbsolutePath() + "/" + termCntFn);
+				}
+				
+				if(config.saveDocLengths(false)) {
+					String docLensFn = config.getDocLengthsFilename();
+					int [] freqs = LDAUtils.extractDocLength(instances);
+					LDAUtils.writeIntArray(freqs, lgDir.getAbsolutePath() + "/" + docLensFn);
+					
+				}
+				
 				List<String> metadata = new ArrayList<String>();
 				metadata.add("No. Topics: " + model.getNoTopics());
 				metadata.add("Start Seed: " + model.getStartSeed());

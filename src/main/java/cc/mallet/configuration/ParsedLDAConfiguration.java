@@ -364,4 +364,30 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		return getStringProperty("vocabulary_filename");
 	}
 
+	@Override
+	public boolean saveTermFrequencies(boolean defaultValue) {
+		String key = "save_term_frequencies";
+		Object prop = super.getProperty(translateKey(key));
+		if(prop==null) return defaultValue;
+		return getBooleanProperty(key);
+	}
+
+	@Override
+	public String getTermFrequencyFilename() {
+		return getStringProperty("term_frequencies_filename");
+	}
+
+	@Override
+	public boolean saveDocLengths(boolean defaultValue) {
+		String key = "save_doc_lengths";
+		Object prop = super.getProperty(translateKey(key));
+		if(prop==null) return defaultValue;
+		return getBooleanProperty(key);
+	}
+
+	@Override
+	public String getDocLengthsFilename() {
+		return getStringProperty("doc_lengths_filename");
+	}
+
 }

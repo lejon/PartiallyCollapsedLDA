@@ -948,5 +948,25 @@ public class TopicMassExperiment {
 		public String getVocabularyFilename() {
 			return null;
 		}
+
+		@Override
+		public boolean saveTermFrequencies(boolean defaultValue) {
+			return defaultValue;
+		}
+
+		@Override
+		public String getTermFrequencyFilename() {
+			return null;
+		}
+
+		@Override
+		public boolean saveDocLengths(boolean defaultValue) {
+			return defaultValue;
+		}
+
+		@Override
+		public String getDocLengthsFilename() {
+			return null;
+		}
 	}
 }

@@ -1066,4 +1066,42 @@ public class LDAUtils {
 					+ " is unwritable : " + e.toString());
 		}
 	}
+
+	public static void writeIntArray(int[] iarr, String fileName) {
+		File file = new File(fileName);
+		try (FileWriter fw = new FileWriter(file, false); 
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter pw  = new PrintWriter(bw)) {
+			for (int i = 0; i < iarr.length; i++) {
+				pw.println(iarr[i]);
+			}
+		} catch (IOException e) {
+			throw new IllegalArgumentException("File " + file.getName()
+					+ " is unwritable : " + e.toString());
+		}
+	}
+
+	
+	public static int[] extractTermCounts(InstanceList instances) {
+		int [] termCounts = new int[instances.getDataAlphabet().size()];
+		for (int i = 0; i < instances.size(); i++) {
+			Instance inst = instances.get(i);
+			FeatureSequence tokenSequence =	(FeatureSequence) inst.getData();
+			int [] tokens = tokenSequence.getFeatures();
+			for (int j = 0; j < tokens.length; j++) {
+				termCounts[tokens[j]]++;
+			}
+		}
+		return termCounts;
+	}
+
+	public static int[] extractDocLength(InstanceList instances) {
+		int [] docLens = new int[instances.size()];
+		for (int i = 0; i < docLens.length; i++) {
+			Instance inst = instances.get(i);
+			FeatureSequence tokenSequence =	(FeatureSequence) inst.getData();
+			docLens[i] = tokenSequence.size();
+		}
+		return docLens;
+	}
 }

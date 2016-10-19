@@ -36,6 +36,23 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private int skipStep = 1;
 	private boolean savePhi;
 	private int phiBurnIn;
+	private String docLengthsFilename;
+	private boolean saveDocLengths;
+	private String termFrequencyFilename;
+	private boolean saveTermFrequencies;
+	private String vocabularyFn;
+	private boolean saveVocabulary;
+	private boolean printPhi;
+	private boolean measureTiming;
+	private boolean logTypeTopicDensity;
+	private boolean logDocumentDensity;
+	private String experimentOutputDirectory;
+	private boolean logPhiDensity;
+	private boolean keepNumbers;
+	private boolean saveDocumentTopicMeans;
+	private String documentTopicMeansOutputFilename;
+	private String phiMeansOutputFilename;
+	private boolean keepConnectingPunctuation;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -57,6 +74,83 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	}
 
 	public SimpleLDAConfiguration() {
+	}
+	
+	public void setPrintPhi(boolean printPhi) {
+		this.printPhi = printPhi;
+	}
+
+	public void setMeasureTiming(boolean measureTiming) {
+		this.measureTiming = measureTiming;
+	}
+
+	public void setLogTypeTopicDensity(boolean logTypeTopicDensity) {
+		this.logTypeTopicDensity = logTypeTopicDensity;
+	}
+
+	public void setLogDocumentDensity(boolean logDocumentDensity) {
+		this.logDocumentDensity = logDocumentDensity;
+	}
+
+	public void setExperimentOutputDirectory(String experimentOutputDirectory) {
+		this.experimentOutputDirectory = experimentOutputDirectory;
+	}
+
+	public void setLogPhiDensity(boolean logPhiDensity) {
+		this.logPhiDensity = logPhiDensity;
+	}
+
+	public void setKeepNumbers(boolean keepNumbers) {
+		this.keepNumbers = keepNumbers;
+	}
+
+	public void setSaveDocumentTopicMeans(boolean saveDocumentTopicMeans) {
+		this.saveDocumentTopicMeans = saveDocumentTopicMeans;
+	}
+
+	public void setDocumentTopicMeansOutputFilename(String documentTopicMeansOutputFilename) {
+		this.documentTopicMeansOutputFilename = documentTopicMeansOutputFilename;
+	}
+
+	public void setPhiMeansOutputFilename(String phiMeansOutputFilename) {
+		this.phiMeansOutputFilename = phiMeansOutputFilename;
+	}
+
+	public void setKeepConnectingPunctuation(boolean keepConnectingPunctuation) {
+		this.keepConnectingPunctuation = keepConnectingPunctuation;
+	}
+
+
+	public Integer getNoTopics() {
+		return noTopics;
+	}
+
+	public Integer getRareThreshold() {
+		return rareThreshold;
+	}
+
+	public int getPhiBurnIn() {
+		return phiBurnIn;
+	}
+
+	public void setDocLengthsFilename(String docLengthsFilename) {
+		this.docLengthsFilename = docLengthsFilename;
+	}
+
+	public void setSaveDocLengths(boolean saveDocLengths) {
+		this.saveDocLengths = saveDocLengths;
+	}
+
+	public void setSaveTermFrequencies(boolean saveTermFrequencies) {
+		this.saveTermFrequencies = saveTermFrequencies;
+	}
+
+	public void setVocabularyFn(String vocabularyFn) {
+		this.vocabularyFn = vocabularyFn;
+	}
+
+	public void setSaveVocabulary(boolean saveVocabulary) {
+		this.saveVocabulary = saveVocabulary;
 	}
 
 	@Override
@@ -204,12 +298,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public boolean getPrintPhi() {
-		return false;
+		return printPhi;
 	}
 
 	@Override
 	public boolean getMeasureTiming() {
-		return false;
+		return measureTiming;
 	}
 
 	@Override
@@ -360,17 +454,17 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public boolean logTypeTopicDensity(boolean logTypeTopicDensityDefault) {
-		return false;
+		return logTypeTopicDensity;
 	}
 
 	@Override
 	public boolean logDocumentDensity(boolean logDocumentDensityDefault) {
-		return false;
+		return logDocumentDensity;
 	}
 
 	@Override
 	public String getExperimentOutputDirectory(String defaultDir) {
-		return null;
+		return experimentOutputDirectory;
 	}
 	
 	@Override
@@ -380,7 +474,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public boolean logPhiDensity(String logPhiDensityDefault) {
-		return false;
+		return logPhiDensity;
 	}
 
 	public String getTopicPriorFilename() {
@@ -398,22 +492,22 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public boolean keepNumbers() {
-		return false;
+		return keepNumbers;
 	}
 
 	@Override
 	public boolean saveDocumentTopicMeans() {
-		return false;
+		return saveDocumentTopicMeans;
 	}
 
 	@Override
 	public String getDocumentTopicMeansOutputFilename() {
-		return null;
+		return documentTopicMeansOutputFilename;
 	}
 
 	@Override
 	public String getPhiMeansOutputFilename() {
-		return null;
+		return phiMeansOutputFilename;
 	}
 
 	@Override
@@ -457,16 +551,36 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public boolean getKeepConnectingPunctuation(boolean defaultKeepConnectingPunctuation) {
-		return false;
+		return keepConnectingPunctuation;
 	}
 
 	@Override
 	public boolean saveVocabulary(boolean defaultVal) {
-		return false;
+		return saveVocabulary;
 	}
 
 	@Override
 	public String getVocabularyFilename() {
-		return "vocabulary.txt";
+		return vocabularyFn;
+	}
+
+	@Override
+	public boolean saveTermFrequencies(boolean defaultValue) {
+		return saveTermFrequencies;
+	}
+
+	@Override
+	public String getTermFrequencyFilename() {
+		return termFrequencyFilename;
+	}
+
+	@Override
+	public boolean saveDocLengths(boolean defaultValue) {
+		return saveDocLengths;
+	}
+
+	@Override
+	public String getDocLengthsFilename() {
+		return docLengthsFilename;
 	}
 }
