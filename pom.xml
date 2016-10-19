@@ -57,7 +57,8 @@
 	<!-- v4.6.3: Fixed bug in light collapsed acceptance calc -->
 	<!-- v4.6.4: Fixed potential bug parallel updates of batchLocalTopicTypeUpdates -->
 	<!-- v4.6.5: Possible fix for tokenizer bug -->
-	<version>4.6.5</version>
+	<!-- v4.6.6: Added config options to produce more stats, doc lengths and term frequencies -->
+	<version>4.6.6</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
