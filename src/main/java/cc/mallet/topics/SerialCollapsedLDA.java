@@ -277,6 +277,11 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 		String[][] topTopicWords = LDAUtils.getTopWords(noWords, numTypes, numTopics, typeTopicCounts, alphabet);
 		return topTopicWords;
 	}
+	
+	public String [][] getTopRelevanceWords(int noWords, double lambda) {
+		String[][] topRelevanceWords = LDAUtils.getTopRelevanceWords(noWords, numTypes, numTopics, typeTopicCounts,  beta,  lambda, alphabet);
+		return topRelevanceWords;
+	}
 
 	@Override
 	public int[][] getZIndicators() {

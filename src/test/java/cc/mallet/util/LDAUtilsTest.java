@@ -492,4 +492,45 @@ public class LDAUtilsTest {
 			System.out.println("[" + i + "]: " + Arrays.toString(readMatrix[i]));
 		}
 	}
+	
+	@Test
+	public void testCalcProbWord() {
+		double beta = 0.1;
+		int [][] typeTopicCounts = new int [][] {
+				{3,2,5},
+				{1,5,2},
+				{0,0,0}};
+				
+		int nrWords = typeTopicCounts.length;
+		double totTokens = 3+2+5+1+5+2+0+0+0 + (nrWords*beta);
+		double probT1 = ((3+2+5)+beta) / (double) totTokens;	
+		double probT2 = ((1+5+2)+beta) / (double) totTokens;	
+		double probT3 = ((0+0+0)+beta) / (double) totTokens;	
+		double [] probs = LDAUtils.calcWordProb(typeTopicCounts, beta);
+		assertEquals(typeTopicCounts.length, probs.length);
+		assertEquals(probT1, probs[0], 0.00000001);
+		assertEquals(probT2, probs[1], 0.00000001);
+		assertEquals(probT3, probs[2], 0.00000001);
+		assertEquals(beta/totTokens, probs[2], 0.00000001);
+	}
+	
+	@Test
+	public void testCalcWordProbGivenTopic() {
+		double beta = 0.1;
+		int [][] typeTopicCounts = new int [][] {
+				{3,2,5},
+				{1,5,2},
+				{0,0,0}};
+		int topic1Sum = 3+1;
+		int topic2Sum = 2+5;
+		int nrTopics = typeTopicCounts[0].length;
+		int nrWords = typeTopicCounts.length;
+		double probW1GivenT1 = (typeTopicCounts[0][0] + (beta / nrTopics)) /  (topic1Sum + (nrWords*beta/nrTopics));
+		double probW2GivenT2 = (typeTopicCounts[1][1] + (beta / nrTopics)) /  (topic2Sum + (nrWords*beta/nrTopics));
+		double probW3GivenT1 = (typeTopicCounts[2][0] + (beta / nrTopics)) /  (topic1Sum + (nrWords*beta/nrTopics));
+		double [][] probsWordGivenTopic = LDAUtils.calcWordProbGivenTopic(typeTopicCounts, beta);
+		assertEquals(probW1GivenT1, probsWordGivenTopic[0][0], 0.00000001);
+		assertEquals(probW2GivenT2, probsWordGivenTopic[1][1], 0.00000001);
+		assertEquals(probW3GivenT1, probsWordGivenTopic[2][0], 0.00000001);
+	}
 }

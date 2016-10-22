@@ -396,6 +396,11 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 
 		return result;
 	}
+	
+	public String [][] getTopRelevanceWords(int noWords, double lambda) {
+		String[][] topRelevanceWords = LDAUtils.getTopRelevanceWords(noWords, numTypes, numTopics, typeTopicCounts,  beta,  lambda, alphabet);
+		return topRelevanceWords;
+	}
 
 	@Override
 	public int[][] getZIndicators() {

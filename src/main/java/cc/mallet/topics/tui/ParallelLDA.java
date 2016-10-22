@@ -201,6 +201,7 @@ public class ParallelLDA {
 				// Save stats for this run
 				lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
 						ParallelLDA.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
+				
 				PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
 				int requestedWords = config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT);
 				if(requestedWords>instances.getDataAlphabet().size()) {
@@ -209,8 +210,20 @@ public class ParallelLDA {
 				out.println(LDAUtils.formatTopWords(model.getTopWords(requestedWords)));
 				out.flush();
 				out.close();
+				
+				out = new PrintWriter(lgDir.getAbsolutePath() + "/RelevanceWords.txt");
+				if(requestedWords>instances.getDataAlphabet().size()) {
+					requestedWords = instances.getDataAlphabet().size();
+				}
+				out.println(LDAUtils.formatTopWords(
+						model.getTopRelevanceWords(requestedWords, config.getLambda(LDAConfiguration.LAMBDA_DEFAULT))));
+				out.flush();
+				out.close();
 
 				System.out.println("Top words are: \n" + LDAUtils.formatTopWords(model.getTopWords(20)));
+				System.out.println("Relevance words are: \n" + 
+						LDAUtils.formatTopWords(model.getTopRelevanceWords(20,config.getLambda(LDAConfiguration.LAMBDA_DEFAULT))));
+
 				System.out.println("I am done!");
 			}
 			if(buildVer==null||implVer==null) {

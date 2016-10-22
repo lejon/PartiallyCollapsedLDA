@@ -48,6 +48,8 @@ import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 
+import static java.lang.Math.log;
+
 public class LDAUtils {
 
 	public LDAUtils() {
@@ -315,7 +317,66 @@ public class LDAUtils {
 		}
 		return tokenizer;
 	}
+	
+	public static String[][] getTopRelevanceWords(int noWords, int numTypes, int numTopics, 
+			int[][] typeTopicCounts, double beta, double lambda, Alphabet alphabet) {
+		if(noWords>numTypes) {
+			throw new IllegalArgumentException("Asked for more words (" + noWords + ") than there are types (unique words = noTypes = " + numTypes + ")."); 
+		}
+		IDSorter[] sortedWords = new IDSorter[numTypes];
+		String [][] topTopicWords = new String[numTopics][noWords];
+		
+		double [][] p_w_k = calcWordProbGivenTopic(typeTopicCounts, beta);
+		double [] p_w = calcWordProb(typeTopicCounts, beta);
 
+		for (int topic = 0; topic < numTopics; topic++) {
+			for (int type = 0; type < numTypes; type++) {
+				double relevance = lambda * log(p_w_k[type][topic]) + (1-lambda) * log(p_w_k[type][topic] / p_w[type]); 
+				sortedWords[type] = new IDSorter(type, relevance);
+			}
+
+			Arrays.sort(sortedWords);
+
+			for (int i=0; i < noWords && i < topTopicWords[topic].length && i < numTypes; i++) {
+				topTopicWords[topic][i] = (String) alphabet.lookupObject(sortedWords[i].getID());
+			}
+		}
+		return topTopicWords;
+	}
+
+	public static double[] calcWordProb(int[][] typeTopicCounts, double beta) {
+		int nrTopics = typeTopicCounts[0].length;
+		int nrWords = typeTopicCounts.length;
+		double [] wordProbs = new double[nrWords];
+		double wordMass = 0;
+		for (int w = 0; w < nrWords; w++) {
+			for (int k = 0; k < nrTopics; k++) { 
+				wordMass += typeTopicCounts[w][k];
+				wordProbs[w] += typeTopicCounts[w][k];
+			}
+			wordProbs[w] += beta;
+		}
+		for (int w = 0; w < nrWords; w++) {
+			wordProbs[w] /= (wordMass+(beta*nrWords));
+		}
+		return wordProbs;
+	}
+
+	public static double[][] calcWordProbGivenTopic(int[][] typeTopicCounts, double beta) {
+		int nrTopics = typeTopicCounts[0].length;
+		int nrWords = typeTopicCounts.length;
+		double [][] wordProbGivenTopic = new double[nrWords][nrTopics];
+		for (int k = 0; k < nrTopics; k++) { 
+			double wordMass = 0;
+			for (int w = 0; w < nrWords; w++) {
+				wordMass += typeTopicCounts[w][k];
+			}
+			for (int w = 0; w < nrWords; w++) {
+				wordProbGivenTopic[w][k] = (typeTopicCounts[w][k] + (beta/nrTopics)) / (wordMass + (nrWords * (beta / nrTopics)));
+			}
+		}
+		return wordProbGivenTopic;
+	}
 
 	public static String[][] getTopWords(int noWords, int numTypes, int numTopics, int[][] typeTopicCounts, Alphabet alphabet) {
 		if(noWords>numTypes) {

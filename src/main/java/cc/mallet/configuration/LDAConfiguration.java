@@ -31,6 +31,7 @@ public interface LDAConfiguration {
 	public static final int NO_TOP_WORDS_DEFAULT = 20;
 	public static final int MAX_DOC_BUFFFER_SIZE_DEFAULT = 10000;
 	public static final boolean KEEP_CONNECTING_PUNCTUATION = false;
+	public static final double LAMBDA_DEFAULT = 0.6;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -163,4 +164,6 @@ public interface LDAConfiguration {
 	public boolean saveDocLengths(boolean defaultValue);
 
 	public String getDocLengthsFilename();
+
+	public double getLambda(double lambdaDefault);
 }

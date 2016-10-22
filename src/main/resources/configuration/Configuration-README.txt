@@ -151,3 +151,32 @@ stoplist = stoplist.txt
 
 debug = 0
 
+log_document_density = true
+
+log_type_topic_density = true
+save_doc_topic_means = true
+
+# Log Phi
+log_phi_density = true
+# Phi Log filename
+doc_topic_mean_filename = doc_topic_means.csv
+
+# Percent burn in before start sampling phi mean
+phi_mean_burnin = 20
+# Phi mean thinning
+phi_mean_thin = 10
+# Save Phi means, must be set for output to be created
+save_phi_means = true
+phi_mean_filename = phi_means.csv
+
+# Must be set for doc_lengths_file to be created
+save_doc_lengths = true
+doc_lengths_filename = doc_lengths.txt
+
+# Must be set for term_frequencies_file to be created
+save_term_frequencies = true
+term_frequencies_filename = term_frequencies.txt
+
+# lambda - relevance value when calculating relevance words
+lambda = 0.6
+

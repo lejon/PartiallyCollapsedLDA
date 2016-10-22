@@ -10,6 +10,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private Integer noTopics;
 	private Double alpha;
 	private Double beta;
+	private Double lambda;
 	private Integer noIters;
 	private Integer noBatches;
 	private Integer noTopicBatches;
@@ -582,5 +583,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	@Override
 	public String getDocLengthsFilename() {
 		return docLengthsFilename;
+	}
+
+	@Override
+	public double getLambda(double lambdaDefault) {
+		return lambda;
 	}
 }

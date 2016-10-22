@@ -968,5 +968,10 @@ public class TopicMassExperiment {
 		public String getDocLengthsFilename() {
 			return null;
 		}
+
+		@Override
+		public double getLambda(double lambdaDefault) {
+			return 0.6;
+		}
 	}
 }

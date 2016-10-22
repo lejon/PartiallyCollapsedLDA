@@ -390,4 +390,8 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		return getStringProperty("doc_lengths_filename");
 	}
 
+	@Override
+	public double getLambda(double defaultValue) {
+		return getDouble("lambda",defaultValue);
+	}
 }

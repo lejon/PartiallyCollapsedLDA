@@ -36,4 +36,5 @@ public interface LDAGibbsSampler {
 	void postSample();
 	void postZ();
 	void preZ();
+	String[][] getTopRelevanceWords(int requestedWords, double lambda);
 }

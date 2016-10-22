@@ -145,6 +145,11 @@ public class BatchBuilderTest {
 		public void preZ() {
 			
 		}
+
+		@Override
+		public String[][] getTopRelevanceWords(int requestedWords, double lambda) {
+			return null;
+		}
 	}
 
 	@Test
