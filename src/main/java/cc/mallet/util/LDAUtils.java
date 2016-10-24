@@ -357,11 +357,11 @@ public class LDAUtils {
 		double [][] p_w_k = calcTopicProbGivenWord(typeTopicCounts, alpha, beta);
 		double [] p_w = calcUnsmoothedWordProb(typeTopicCounts);
 
-		double [] distinctiveness = calcWordDistinctiveness(p_w_k, p_w);
+		double [][] distinctiveness = calcWordDistinctiveness(p_w_k, p_w);
 		
 		for (int topic = 0; topic < numTopics; topic++) {
 			for (int type = 0; type < numTypes; type++) {
-				sortedWords[type] = new IDSorter(type, distinctiveness[type]);
+				sortedWords[type] = new IDSorter(type, distinctiveness[type][topic]);
 			}
 
 			Arrays.sort(sortedWords);
@@ -384,11 +384,11 @@ public class LDAUtils {
 		double [][] p_w_k = calcTopicProbGivenWord(typeTopicCounts, alpha, beta);
 		double [] p_w = calcUnsmoothedWordProb(typeTopicCounts);
 		
-		double [] saliency = calcWordSaliency(p_w_k,p_w);
+		double [][] saliency = calcWordSaliency(p_w_k,p_w);
 
 		for (int topic = 0; topic < numTopics; topic++) {
 			for (int type = 0; type < numTypes; type++) { 
-				sortedWords[type] = new IDSorter(type, saliency[type]);
+				sortedWords[type] = new IDSorter(type, saliency[type][topic]);
 			}
 
 			Arrays.sort(sortedWords);
@@ -408,13 +408,13 @@ public class LDAUtils {
 	 * @param p_w probability of a word
 	 * @return array with word distinctiveness measures
 	 */
-	public static double[] calcWordDistinctiveness(double [][] p_w_k, double [] p_w) {
+	public static double[][] calcWordDistinctiveness(double [][] p_w_k, double [] p_w) {
 		int nrTopics = p_w_k[0].length;
 		int nrWords = p_w_k.length;
-		double [] wordDistinctiveness = new double[nrWords];
+		double [][] wordDistinctiveness = new double[nrWords][nrTopics];
 		for (int w = 0; w < nrWords; w++) {
 			for (int k = 0; k < nrTopics; k++) {
-				wordDistinctiveness[w] += p_w_k[w][k] * log(p_w_k[w][k] / p_w[w]);
+				wordDistinctiveness[w][k] += p_w_k[w][k] * log(p_w_k[w][k] / p_w[w]);
 			}
 		}
 		return wordDistinctiveness;
@@ -428,11 +428,15 @@ public class LDAUtils {
 	 * @param p_w probability of a word
 	 * @return array with word saliency measures
 	 */
-	public static double[] calcWordSaliency(double [][] p_w_k, double [] p_w) {
-		double [] wordDistinctiveness = calcWordDistinctiveness(p_w_k, p_w);
-		double [] wordSaliency = new double[wordDistinctiveness.length];
+	public static double[][] calcWordSaliency(double [][] p_w_k, double [] p_w) {
+		int nrTopics = p_w_k[0].length;
+		int nrWords = p_w_k.length;
+		double [][] wordDistinctiveness = calcWordDistinctiveness(p_w_k, p_w);
+		double [][] wordSaliency = new double[nrWords][nrTopics];
 		for (int w = 0; w < wordSaliency.length; w++) {
-			wordSaliency[w] = p_w[w] * wordDistinctiveness[w];
+			for (int k = 0; k < nrTopics; k++) {
+				wordSaliency[w][k] = p_w[w] * wordDistinctiveness[w][k];
+			}
 		}
 		return wordSaliency;
 	}
