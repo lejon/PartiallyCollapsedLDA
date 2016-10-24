@@ -288,7 +288,9 @@ public class KLDivergenceClassifier extends Classifier {
 		clssFs.close();
 		
 		PrintWriter topOut = new PrintWriter(lgDir.getAbsolutePath() + "/fold-" + fold + "-TopWords.txt");
-		String topWords = LDAUtils.formatTopWords(trainedSampler.getTopWords(50));
+		
+		String topWords = LDAUtils.formatTopWords(LDAUtils.getTopWords(config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT), trainedSampler.getAlphabet().size(), 
+				trainedSampler.getNoTopics(), trainedSampler.getTypeTopicMatrix(), trainedSampler.getAlphabet()));
 		topOut.println(topWords);
 		System.out.println("Top words are: \n" + topWords);
 		topOut.flush();

@@ -142,11 +142,20 @@ public class ParallelLDATrainTest extends ParallelLDA {
 				lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
 						ParallelLDATrainTest.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
 				PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
-				out.println(LDAUtils.formatTopWords(trainedSampler.getTopWords(50)));
+				String topWords = LDAUtils.formatTopWords(
+						LDAUtils.getTopRelevanceWords(config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT), 
+								trainedSampler.getAlphabet().size(), 
+								trainedSampler.getNoTopics(), 
+								trainedSampler.getTypeTopicMatrix(),  
+								config.getAlpha(LDAConfiguration.ALPHA_DEFAULT), 
+								config.getBeta(LDAConfiguration.BETA_DEFAULT),
+								config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
+								trainedSampler.getAlphabet()));
+				out.println(topWords);
 				out.flush();
 				out.close();
 
-				System.out.println("Top words are: \n" + LDAUtils.formatTopWords(trainedSampler.getTopWords(20)));
+				System.out.println("Top words are: \n" + topWords);
 
 				System.out.println("I am done!");
 			}

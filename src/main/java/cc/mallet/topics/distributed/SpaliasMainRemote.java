@@ -146,11 +146,20 @@ public class SpaliasMainRemote {
 				SpaliasMainRemote.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
 		File lgDir = lu.getLogDir();
 		PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
-		out.println(LDAUtils.formatTopWords(model.getTopWords(20)));
+		String topWords = LDAUtils.formatTopWords(
+				LDAUtils.getTopRelevanceWords(20, 
+						model.getAlphabet().size(), 
+						model.getNoTopics(), 
+						model.getTypeTopicMatrix(),  
+						config.getAlpha(LDAConfiguration.ALPHA_DEFAULT), 
+						config.getBeta(LDAConfiguration.BETA_DEFAULT),
+						config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
+						model.getAlphabet()));
+		out.println(topWords);
 		out.flush();
 		out.close();
 
-		System.out.println("Top words are: \n" + LDAUtils.formatTopWords(model.getTopWords(20)));
+		System.out.println("Top words are: \n" + topWords);
 
 		System.out.println("I am done!");
 	}

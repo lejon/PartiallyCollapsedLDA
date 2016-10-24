@@ -200,12 +200,15 @@ public class KLClassifier {
 
 				File lgDir = lu.getLogDir();
 				
+				
 				if(multiCorpus) {
 					Map<String, LDASamplerWithPhi> samplers = mcmodel.getTrainedSamplers();
 					PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
 					for (String key : samplers.keySet()) {
 						LDASamplerWithPhi sampler = samplers.get(key);
-						String topWords = LDAUtils.formatTopWords(sampler.getTopWords(50));
+						String [][] topWordMatrix = LDAUtils.getTopWords(config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT), 
+								sampler.getAlphabet().size(), config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), sampler.getTypeTopicMatrix(), mcmodel.getAlphabet());
+						String topWords = LDAUtils.formatTopWords(topWordMatrix);
 						out.println("Top words for class "+ key +" are: \n" + topWords);
 						System.out.println("Top words for class "+ key +" are: \n" + topWords);
 					}
@@ -214,7 +217,9 @@ public class KLClassifier {
 				} else {
 					LDASamplerWithPhi sampler = model.getTrainedSampler();
 					PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
-					String topWords = LDAUtils.formatTopWords(sampler.getTopWords(50));
+					String [][] topWordMatrix = LDAUtils.getTopWords(config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT), 
+							sampler.getAlphabet().size(), config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), sampler.getTypeTopicMatrix(), mcmodel.getAlphabet());
+					String topWords = LDAUtils.formatTopWords(topWordMatrix);
 					out.println(topWords);
 					System.out.println("Top words for class are: \n" + topWords);
 					out.flush();

@@ -57,9 +57,6 @@ public class BatchBuilderTest {
 		public void setRandomSeed(int seed) {}
 
 		@Override
-		public String[][] getTopWords(int noWords) {return null;}
-
-		@Override
 		public int getNoTopics() {return 0;}
 
 		@Override
@@ -144,11 +141,6 @@ public class BatchBuilderTest {
 		@Override
 		public void preZ() {
 			
-		}
-
-		@Override
-		public String[][] getTopRelevanceWords(int requestedWords, double lambda) {
-			return null;
 		}
 	}
 

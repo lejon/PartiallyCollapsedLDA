@@ -13,7 +13,6 @@ public interface LDAGibbsSampler {
 	void addInstances (InstanceList training);
 	void sample (int iterations) throws IOException;
 	void setRandomSeed(int seed);
-	String [][] getTopWords(int noWords);
 	int getNoTopics();
 	int getCurrentIteration();
 	int [][] getZIndicators();
@@ -36,5 +35,4 @@ public interface LDAGibbsSampler {
 	void postSample();
 	void postZ();
 	void preZ();
-	String[][] getTopRelevanceWords(int requestedWords, double lambda);
 }

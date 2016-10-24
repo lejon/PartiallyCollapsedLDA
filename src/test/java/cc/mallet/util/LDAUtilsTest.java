@@ -494,43 +494,194 @@ public class LDAUtilsTest {
 	}
 	
 	@Test
-	public void testCalcProbWord() {
-		double beta = 0.1;
+	public void testCalcProbTopic() {
+		// 5 types - 3 topics
 		int [][] typeTopicCounts = new int [][] {
 				{3,2,5},
 				{1,5,2},
-				{0,0,0}};
+				{0,0,0},
+				{9,1,1},
+				{20,0,0}
+				};
+		
+		double [] probs = LDAUtils.calcTopicProb(typeTopicCounts);
+		
+		double totTokens = 3+2+5+1+5+2+0+0+0+9+1+1+20+0+0;
+		
+		double probT1 = (typeTopicCounts[0][0] + typeTopicCounts[1][0] + typeTopicCounts[2][0] + typeTopicCounts[3][0] + typeTopicCounts[4][0]) / (double) totTokens; 
+		double probT2 = (typeTopicCounts[0][1] + typeTopicCounts[1][1] + typeTopicCounts[2][1] + typeTopicCounts[3][1] + typeTopicCounts[4][1]) / (double) totTokens;
+		double probT3 = (typeTopicCounts[0][2] + typeTopicCounts[1][2] + typeTopicCounts[2][2] + typeTopicCounts[3][2] + typeTopicCounts[4][2]) / (double) totTokens;
+		
+		assertEquals(typeTopicCounts[0].length, probs.length);
+		assertEquals(probT1, probs[0], 0.00000001);
+		assertEquals(probT2, probs[1], 0.00000001);
+		assertEquals(probT3, probs[2], 0.00000001);
+	}
+	
+	@Test
+	public void testCalcProbTopicGivenWord() {
+		double beta = 0.1;
+		double alpha = 0.1;
+
+		// 5 types - 3 topics
+		int [][] typeTopicCounts = new int [][] {
+				{3,2,5},
+				{1,5,2},
+				{0,0,0},
+				{9,1,1},
+				{20,0,0}
+				};
+
+		double [][] probs = LDAUtils.calcTopicProbGivenWord(typeTopicCounts, alpha, beta);
+		
+		double sumW1 = 3+2+5;
+		double sumW2 = 1+5+2;
+		double sumW5 = 20;
+		
+		double probT1GivenW1 = typeTopicCounts[0][0] / sumW1;
+		double probT2GivenW2 = typeTopicCounts[1][1] / sumW2;
+		double probT3GivenW5 = typeTopicCounts[4][2] / sumW5;
+		
+		assertEquals(typeTopicCounts.length, probs.length);
+		assertEquals(probT1GivenW1, probs[0][0], 0.00000001);
+		assertEquals(probT2GivenW2, probs[1][1], 0.00000001);
+		assertEquals(probT3GivenW5, probs[4][2], 0.00000001);
+	}
+	
+	@Test
+	public void testCalcProbWord() {
+		double beta = 0.1;
+		double alpha = 0.1;
+		// 5 types - 3 topics
+		int [][] typeTopicCounts = new int [][] {
+				{3,2,5},
+				{1,5,2},
+				{0,0,0},
+				{9,1,1},
+				{20,0,0}
+				};
 				
+		int nrTopics = typeTopicCounts[0].length;
 		int nrWords = typeTopicCounts.length;
-		double totTokens = 3+2+5+1+5+2+0+0+0 + (nrWords*beta);
-		double probT1 = ((3+2+5)+beta) / (double) totTokens;	
-		double probT2 = ((1+5+2)+beta) / (double) totTokens;	
-		double probT3 = ((0+0+0)+beta) / (double) totTokens;	
-		double [] probs = LDAUtils.calcWordProb(typeTopicCounts, beta);
+		
+		double priorWordProb = (beta/nrWords) * (alpha/nrTopics);
+		
+		double totTokens = 3+2+5+1+5+2+0+0+0+9+1+1+20+0+0;
+		double probT1 = ((3+2+5)+(nrTopics*priorWordProb)) / (double) (totTokens + (alpha * beta));	
+		double probT2 = ((1+5+2)+(nrTopics*priorWordProb)) / (double) (totTokens + (alpha * beta));	
+		double probT3 = ((0+0+0)+(nrTopics*priorWordProb)) / (double) (totTokens + (alpha * beta));	
+		double [] probs = LDAUtils.calcWordProb(typeTopicCounts, alpha, beta);
 		assertEquals(typeTopicCounts.length, probs.length);
 		assertEquals(probT1, probs[0], 0.00000001);
 		assertEquals(probT2, probs[1], 0.00000001);
 		assertEquals(probT3, probs[2], 0.00000001);
-		assertEquals(beta/totTokens, probs[2], 0.00000001);
+		assertEquals((beta/nrWords*alpha) / (totTokens + (alpha * beta)), probs[2], 0.00000001);
+	}
+	
+	@Test
+	public void testCalcUnsmoothedProbWord() {
+		// 5 types - 3 topics
+		int [][] typeTopicCounts = new int [][] {
+				{3,2,5},
+				{1,5,2},
+				{0,0,0},
+				{9,1,1},
+				{20,0,0}
+				};
+				
+		double totTokens = 3+2+5+1+5+2+0+0+0+9+1+1+20+0+0;
+		double probT1 = (3+2+5) / (double) totTokens;	
+		double probT2 = (1+5+2) / (double) totTokens;	
+		double probT3 = (0+0+0) / (double) totTokens;	
+		double [] probs = LDAUtils.calcUnsmoothedWordProb(typeTopicCounts);
+		assertEquals(typeTopicCounts.length, probs.length);
+		assertEquals(probT1, probs[0], 0.00000001);
+		assertEquals(probT2, probs[1], 0.00000001);
+		assertEquals(probT3, probs[2], 0.00000001);
 	}
 	
 	@Test
 	public void testCalcWordProbGivenTopic() {
 		double beta = 0.1;
+		// 5 types - 3 topics
 		int [][] typeTopicCounts = new int [][] {
 				{3,2,5},
 				{1,5,2},
-				{0,0,0}};
-		int topic1Sum = 3+1;
-		int topic2Sum = 2+5;
-		int nrTopics = typeTopicCounts[0].length;
+				{0,0,0},
+				{9,1,1},
+				{20,0,0}};
+		int topic1Sum = 3+1+9+20;
+		int topic2Sum = 2+5+1;
 		int nrWords = typeTopicCounts.length;
-		double probW1GivenT1 = (typeTopicCounts[0][0] + (beta / nrTopics)) /  (topic1Sum + (nrWords*beta/nrTopics));
-		double probW2GivenT2 = (typeTopicCounts[1][1] + (beta / nrTopics)) /  (topic2Sum + (nrWords*beta/nrTopics));
-		double probW3GivenT1 = (typeTopicCounts[2][0] + (beta / nrTopics)) /  (topic1Sum + (nrWords*beta/nrTopics));
+		
+		double priorWordProb = (beta/nrWords);
+		
+		double probW1GivenT1 = (typeTopicCounts[0][0] + priorWordProb) /  (topic1Sum + beta);
+		double probW2GivenT2 = (typeTopicCounts[1][1] + priorWordProb) /  (topic2Sum + beta);
+		double probW3GivenT1 = (typeTopicCounts[2][0] + priorWordProb) /  (topic1Sum + beta);
 		double [][] probsWordGivenTopic = LDAUtils.calcWordProbGivenTopic(typeTopicCounts, beta);
 		assertEquals(probW1GivenT1, probsWordGivenTopic[0][0], 0.00000001);
 		assertEquals(probW2GivenT2, probsWordGivenTopic[1][1], 0.00000001);
 		assertEquals(probW3GivenT1, probsWordGivenTopic[2][0], 0.00000001);
+	}
+	
+	@Test
+	public void testCalcUnsmoothedWordProbGivenTopic() {
+		// 5 types - 3 topics
+		int [][] typeTopicCounts = new int [][] {
+				{3,2,5},
+				{1,5,2},
+				{0,0,0},
+				{9,1,1},
+				{20,0,0}};
+		int topic1Sum = typeTopicCounts[0][0] + typeTopicCounts[1][0] + typeTopicCounts[2][0] + typeTopicCounts[3][0] + typeTopicCounts[4][0];
+		int topic2Sum = typeTopicCounts[0][1] + typeTopicCounts[1][1] + typeTopicCounts[2][1] + typeTopicCounts[3][1] + typeTopicCounts[4][1];
+		double probW1GivenT1 = typeTopicCounts[0][0] / (double) topic1Sum;
+		double probW2GivenT2 = typeTopicCounts[1][1] / (double)  topic2Sum;
+		double probW3GivenT1 = typeTopicCounts[2][0] / (double)  topic1Sum;
+		double [][] probsWordGivenTopic = LDAUtils.calcUnsmoothedWordProbGivenTopic(typeTopicCounts);
+		assertEquals(probW1GivenT1, probsWordGivenTopic[0][0], 0.00000001);
+		assertEquals(probW2GivenT2, probsWordGivenTopic[1][1], 0.00000001);
+		assertEquals(probW3GivenT1, probsWordGivenTopic[2][0], 0.00000001);
+	}
+	
+	@Test
+	public void testK1ReWeighting() {
+		double beta = 0.1;
+		double alpha = 0.1;
+		// 5 types - 3 topics
+		int [][] typeTopicCounts = new int [][] {
+				{3,2,5},
+				{1,5,2},
+				{0,0,0},
+				{9,1,1},
+				{20,0,0}};
+
+		double [][] wordProbGivenTopic = LDAUtils.calcWordProbGivenTopic(typeTopicCounts, beta);
+		
+		for (int i = 0; i < wordProbGivenTopic.length; i++) {
+			for (int j = 0; j < wordProbGivenTopic[i].length; j++) {
+				System.out.print(wordProbGivenTopic[i][j] + ", ");
+			}
+			System.out.println();
+		}
+		
+		System.out.println();
+
+		double k1W1GivenT1 = wordProbGivenTopic[0][0] / (wordProbGivenTopic[0][0] + wordProbGivenTopic[0][1] + wordProbGivenTopic[0][2]);
+		double k1W2GivenT2 = wordProbGivenTopic[1][1] / (wordProbGivenTopic[1][0] + wordProbGivenTopic[1][1] + wordProbGivenTopic[1][2]);
+		double k1W3GivenT1 = wordProbGivenTopic[2][0] / (wordProbGivenTopic[2][0] + wordProbGivenTopic[2][1] + wordProbGivenTopic[2][2]);
+		
+		double [][] probsWordGivenTopic = LDAUtils.calcK1(typeTopicCounts, alpha, beta);
+		
+		for (int i = 0; i < probsWordGivenTopic.length; i++) {
+			for (int j = 0; j < probsWordGivenTopic[i].length; j++) {
+				System.out.print(probsWordGivenTopic[i][j] + ", ");
+			}
+			System.out.println();
+		}
+		assertEquals(k1W1GivenT1, probsWordGivenTopic[0][0], 0.00000001);
+		assertEquals(k1W2GivenT2, probsWordGivenTopic[1][1], 0.00000001);
+		assertEquals(k1W3GivenT1, probsWordGivenTopic[2][0], 0.00000001);
 	}
 }

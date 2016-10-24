@@ -207,7 +207,9 @@ public class ParallelLDA {
 				if(requestedWords>instances.getDataAlphabet().size()) {
 					requestedWords = instances.getDataAlphabet().size();
 				}
-				out.println(LDAUtils.formatTopWords(model.getTopWords(requestedWords)));
+				
+				//int noWords, int numTypes, int numTopics, int[][] typeTopicCounts, Alphabet alphabet
+				out.println(LDAUtils.formatTopWords(LDAUtils.getTopWords(requestedWords, model.getAlphabet().size(), model.getNoTopics(), model.getTypeTopicMatrix(), model.getAlphabet())));
 				out.flush();
 				out.close();
 				
@@ -216,13 +218,45 @@ public class ParallelLDA {
 					requestedWords = instances.getDataAlphabet().size();
 				}
 				out.println(LDAUtils.formatTopWords(
-						model.getTopRelevanceWords(requestedWords, config.getLambda(LDAConfiguration.LAMBDA_DEFAULT))));
+						LDAUtils.getTopRelevanceWords(requestedWords, 
+								model.getAlphabet().size(), 
+								model.getNoTopics(), 
+								model.getTypeTopicMatrix(),  
+								config.getAlpha(LDAConfiguration.ALPHA_DEFAULT), 
+								config.getBeta(LDAConfiguration.BETA_DEFAULT),
+								config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
+								model.getAlphabet())));
 				out.flush();
 				out.close();
 
-				System.out.println("Top words are: \n" + LDAUtils.formatTopWords(model.getTopWords(20)));
+				System.out.println("Top words are: \n" + LDAUtils.formatTopWords(
+						LDAUtils.getTopRelevanceWords(20, 
+								model.getAlphabet().size(), 
+								model.getNoTopics(), 
+								model.getTypeTopicMatrix(),  
+								config.getAlpha(LDAConfiguration.ALPHA_DEFAULT), 
+								config.getBeta(LDAConfiguration.BETA_DEFAULT),
+								config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
+								model.getAlphabet())));
 				System.out.println("Relevance words are: \n" + 
-						LDAUtils.formatTopWords(model.getTopRelevanceWords(20,config.getLambda(LDAConfiguration.LAMBDA_DEFAULT))));
+						LDAUtils.formatTopWords(LDAUtils.getTopRelevanceWords(20, 
+								model.getAlphabet().size(), 
+								model.getNoTopics(), 
+								model.getTypeTopicMatrix(),  
+								config.getAlpha(LDAConfiguration.ALPHA_DEFAULT), 
+								config.getBeta(LDAConfiguration.BETA_DEFAULT),
+								config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
+								model.getAlphabet())));
+				System.out.println("Distinctive words are: \n" + LDAUtils.formatTopWords(LDAUtils.getTopDistinctiveWords(20, model.getAlphabet().size(), model.getNoTopics(), 
+						model.getTypeTopicMatrix(),  
+						config.getAlpha(LDAConfiguration.ALPHA_DEFAULT), 
+						config.getBeta(LDAConfiguration.BETA_DEFAULT),
+						model.getAlphabet())));
+				System.out.println("Salient words are: \n" + LDAUtils.formatTopWords(LDAUtils.getTopSalientWords(20, model.getAlphabet().size(), model.getNoTopics(), 
+						model.getTypeTopicMatrix(),  
+						config.getAlpha(LDAConfiguration.ALPHA_DEFAULT), 
+						config.getBeta(LDAConfiguration.BETA_DEFAULT),
+						model.getAlphabet())));
 
 				System.out.println("I am done!");
 			}

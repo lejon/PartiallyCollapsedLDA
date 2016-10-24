@@ -2,32 +2,14 @@ package cc.mallet.configuration;
 
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.cli.ParseException;
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.math3.stat.inference.AlternativeHypothesis;
 import org.apache.commons.math3.stat.inference.BinomialTest;
 import org.junit.Test;
-
-import cc.mallet.configuration.ConfigFactory;
-import cc.mallet.configuration.LDACommandLineParser;
-import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.topics.ADLDA;
-import cc.mallet.topics.EfficientUncollapsedParallelLDA;
-import cc.mallet.topics.LDAGibbsSampler;
-import cc.mallet.topics.ModifiedSimpleLDA;
-import cc.mallet.topics.ParanoidUncollapsedParallelLDA;
-import cc.mallet.topics.SerialCollapsedLDA;
-import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
-import cc.mallet.topics.UncollapsedParallelLDA;
-import cc.mallet.types.InstanceList;
-import cc.mallet.util.LDAUtils;
-import cc.mallet.util.LoggingUtils;
 
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
@@ -140,20 +122,6 @@ public class SmokeTest {
 		assertTrue(passFail);
 	}
 	
-	public int[][] topTopicWords (int numWords, LDAGibbsSampler model) {
-		int numTopics = model.getNoTopics();
-		String [][] topWords = model.getTopWords(numWords);
-		int [][] topTopicWords = new int[numTopics][numWords];
-
-		for (int i = 0; i < topTopicWords.length; i++) {
-			for (int j = 0; j < topTopicWords[i].length; j++) {
-				topTopicWords[i][j] = Integer.parseInt(topWords[i][j]);
-			}
-		}
-
-		return topTopicWords;
-	}
-
 	protected String vectorToString(int[] vector) {
 		String res = "{";
 		for (int j = 0; j < vector.length; j++) {

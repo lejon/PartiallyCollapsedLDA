@@ -156,16 +156,6 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		return countsForEachToken;
 	} 
 
-	public String [][] getTopWords(int noWords) {
-		String[][] topTopicWords = LDAUtils.getTopWords(noWords, numTypes, numTopics, typeTopicCounts, alphabet);
-		return topTopicWords;
-	}
-
-	public String [][] getTopRelevanceWords(int noWords, double lambda) {
-		String[][] topRelevanceWords = LDAUtils.getTopRelevanceWords(noWords, numTypes, numTopics, typeTopicCounts,  beta,  lambda, alphabet);
-		return topRelevanceWords;
-	}
-
 	@Override
 	public void setConfiguration(LDAConfiguration config) {
 		this.config = config;
