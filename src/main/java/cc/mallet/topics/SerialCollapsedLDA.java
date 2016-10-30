@@ -34,7 +34,7 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 	public SerialCollapsedLDA(LDAConfiguration config) {
 		super(config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT),
 				config.getAlpha(LDAConfiguration.ALPHA_DEFAULT)*config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT),
-				config.getBeta(LDAConfiguration.ALPHA_DEFAULT),
+				config.getBeta(LDAConfiguration.BETA_DEFAULT),
 				new Randoms(config.getSeed(LDAConfiguration.SEED_DEFAULT))
 				);
 		setConfiguration(config);
