@@ -521,7 +521,6 @@ public class LDAUtilsTest {
 	@Test
 	public void testCalcProbTopicGivenWord() {
 		double beta = 0.1;
-		double alpha = 0.1;
 
 		// 5 types - 3 topics
 		int [][] typeTopicCounts = new int [][] {
@@ -532,7 +531,7 @@ public class LDAUtilsTest {
 				{20,0,0}
 				};
 
-		double [][] probs = LDAUtils.calcTopicProbGivenWord(typeTopicCounts, alpha, beta);
+		double [][] probs = LDAUtils.calcTopicProbGivenWord(typeTopicCounts, beta);
 		
 		double sumW1 = 3+2+5;
 		double sumW2 = 1+5+2;
@@ -551,7 +550,6 @@ public class LDAUtilsTest {
 	@Test
 	public void testCalcProbWord() {
 		double beta = 0.1;
-		double alpha = 0.1;
 		// 5 types - 3 topics
 		int [][] typeTopicCounts = new int [][] {
 				{3,2,5},
@@ -564,18 +562,16 @@ public class LDAUtilsTest {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords = typeTopicCounts.length;
 		
-		double priorWordProb = (beta/nrWords) * (alpha/nrTopics);
-		
 		double totTokens = 3+2+5+1+5+2+0+0+0+9+1+1+20+0+0;
-		double probT1 = ((3+2+5)+(nrTopics*priorWordProb)) / (double) (totTokens + (alpha * beta));	
-		double probT2 = ((1+5+2)+(nrTopics*priorWordProb)) / (double) (totTokens + (alpha * beta));	
-		double probT3 = ((0+0+0)+(nrTopics*priorWordProb)) / (double) (totTokens + (alpha * beta));	
-		double [] probs = LDAUtils.calcWordProb(typeTopicCounts, alpha, beta);
+		double probT1 = ((3+2+5)+(nrTopics*beta)) / (double) (totTokens + (nrTopics*beta*nrWords));	
+		double probT2 = ((1+5+2)+(nrTopics*beta)) / (double) (totTokens + (nrTopics*beta*nrWords));	
+		double probT3 = ((0+0+0)+(nrTopics*beta)) / (double) (totTokens + (nrTopics*beta*nrWords));	
+		double [] probs = LDAUtils.calcWordProb(typeTopicCounts,  beta);
 		assertEquals(typeTopicCounts.length, probs.length);
 		assertEquals(probT1, probs[0], 0.00000001);
 		assertEquals(probT2, probs[1], 0.00000001);
 		assertEquals(probT3, probs[2], 0.00000001);
-		assertEquals((beta/nrWords*alpha) / (totTokens + (alpha * beta)), probs[2], 0.00000001);
+		assertEquals((beta * nrTopics) / (totTokens + (nrWords*beta*nrTopics)), probs[2], 0.00000001);
 	}
 	
 	@Test
@@ -601,7 +597,7 @@ public class LDAUtilsTest {
 	}
 	
 	@Test
-	public void testCalcWordProbGivenTopic() {
+	public void testCalcWordProbGivenTopicWithZero() {
 		double beta = 0.1;
 		// 5 types - 3 topics
 		int [][] typeTopicCounts = new int [][] {
@@ -614,15 +610,39 @@ public class LDAUtilsTest {
 		int topic2Sum = 2+5+1;
 		int nrWords = typeTopicCounts.length;
 		
-		double priorWordProb = (beta/nrWords);
-		
-		double probW1GivenT1 = (typeTopicCounts[0][0] + priorWordProb) /  (topic1Sum + beta);
-		double probW2GivenT2 = (typeTopicCounts[1][1] + priorWordProb) /  (topic2Sum + beta);
-		double probW3GivenT1 = (typeTopicCounts[2][0] + priorWordProb) /  (topic1Sum + beta);
+		double probW1GivenT1 = (typeTopicCounts[0][0] + beta) /  (topic1Sum + (beta*nrWords));
+		double probW2GivenT2 = (typeTopicCounts[1][1] + beta) /  (topic2Sum + (beta*nrWords));
+		double probW3GivenT1 = (typeTopicCounts[2][0] + beta) /  (topic1Sum + (beta*nrWords));
 		double [][] probsWordGivenTopic = LDAUtils.calcWordProbGivenTopic(typeTopicCounts, beta);
 		assertEquals(probW1GivenT1, probsWordGivenTopic[0][0], 0.00000001);
 		assertEquals(probW2GivenT2, probsWordGivenTopic[1][1], 0.00000001);
 		assertEquals(probW3GivenT1, probsWordGivenTopic[2][0], 0.00000001);
+	}
+	
+	@Test
+	public void testCalcWordProbGivenTopic() {
+		double beta = 0.1;
+		// 3 types - 3 topics
+		int [][] typeTopicCounts = new int [][] {
+				{3,2,5},
+				{1,5,2},
+				{2,1,2}};
+		int topic1Sum = 3+1+2;
+		int topic2Sum = 2+5+1;
+		int topic3Sum = 5+2+2;
+		int nrWords = typeTopicCounts.length;
+		
+		double priorWordProb = beta;
+		
+		double probW1GivenT1 = (typeTopicCounts[0][0] + priorWordProb) /  (topic1Sum + (nrWords*beta));
+		double probW2GivenT2 = (typeTopicCounts[1][1] + priorWordProb) /  (topic2Sum + (nrWords*beta));
+		double probW3GivenT1 = (typeTopicCounts[2][0] + priorWordProb) /  (topic1Sum + (nrWords*beta));
+		double probW3GivenT3 = (typeTopicCounts[2][2] + priorWordProb) /  (topic3Sum + (nrWords*beta));
+		double [][] probsWordGivenTopic = LDAUtils.calcWordProbGivenTopic(typeTopicCounts, beta);
+		assertEquals(probW1GivenT1, probsWordGivenTopic[0][0], 0.00000001);
+		assertEquals(probW2GivenT2, probsWordGivenTopic[1][1], 0.00000001);
+		assertEquals(probW3GivenT1, probsWordGivenTopic[2][0], 0.00000001);
+		assertEquals(probW3GivenT3, probsWordGivenTopic[2][2], 0.00000001);
 	}
 	
 	@Test
@@ -648,7 +668,6 @@ public class LDAUtilsTest {
 	@Test
 	public void testK1ReWeighting() {
 		double beta = 0.1;
-		double alpha = 0.1;
 		// 5 types - 3 topics
 		int [][] typeTopicCounts = new int [][] {
 				{3,2,5},
@@ -672,7 +691,7 @@ public class LDAUtilsTest {
 		double k1W2GivenT2 = wordProbGivenTopic[1][1] / (wordProbGivenTopic[1][0] + wordProbGivenTopic[1][1] + wordProbGivenTopic[1][2]);
 		double k1W3GivenT1 = wordProbGivenTopic[2][0] / (wordProbGivenTopic[2][0] + wordProbGivenTopic[2][1] + wordProbGivenTopic[2][2]);
 		
-		double [][] probsWordGivenTopic = LDAUtils.calcK1(typeTopicCounts, alpha, beta);
+		double [][] probsWordGivenTopic = LDAUtils.calcK1(typeTopicCounts, beta);
 		
 		for (int i = 0; i < probsWordGivenTopic.length; i++) {
 			for (int j = 0; j < probsWordGivenTopic[i].length; j++) {
