@@ -151,7 +151,6 @@ public class SpaliasMainRemote {
 						model.getAlphabet().size(), 
 						model.getNoTopics(), 
 						model.getTypeTopicMatrix(),  
-						config.getAlpha(LDAConfiguration.ALPHA_DEFAULT), 
 						config.getBeta(LDAConfiguration.BETA_DEFAULT),
 						config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
 						model.getAlphabet()));

@@ -319,21 +319,19 @@ public class LDAUtils {
 	}
 	
 	public static String[][] getTopRelevanceWords(int noWords, int numTypes, int numTopics, 
-			int[][] typeTopicCounts, double alpha, double beta, double lambda, Alphabet alphabet) {
+			int[][] typeTopicCounts, double beta, double lambda, Alphabet alphabet) {
 		if(noWords>numTypes) {
 			throw new IllegalArgumentException("Asked for more words (" + noWords + ") than there are types (unique words = noTypes = " + numTypes + ")."); 
 		}
 		IDSorter[] sortedWords = new IDSorter[numTypes];
 		String [][] topTopicWords = new String[numTopics][noWords];
 		
-//		double [][] p_w_k = calcWordProbGivenTopic(typeTopicCounts, beta);
-//		double [] p_w = calcWordProb(typeTopicCounts, alpha, beta);
-		double [][] p_w_k = calcUnsmoothedWordProbGivenTopic(typeTopicCounts);
-		double [] p_w = calcUnsmoothedWordProb(typeTopicCounts);
+		double [][] p_w_k = calcWordProbGivenTopic(typeTopicCounts, beta);
+		double [] p_w = calcWordProb(typeTopicCounts, beta);
 
 		for (int topic = 0; topic < numTopics; topic++) {
 			for (int type = 0; type < numTypes; type++) {
-				double relevance = lambda * log(p_w_k[type][topic]) + (1-lambda) * log(p_w_k[type][topic] / p_w[type]); 
+				double relevance = lambda * log(p_w_k[type][topic]) + (1-lambda) * (log(p_w_k[type][topic]) - log(p_w[type])); 
 				sortedWords[type] = new IDSorter(type, relevance);
 			}
 
@@ -347,14 +345,14 @@ public class LDAUtils {
 	}
 	
 	public static String[][] getTopDistinctiveWords(int noWords, int numTypes, int numTopics, 
-			int[][] typeTopicCounts, double alpha, double beta, Alphabet alphabet) {
+			int[][] typeTopicCounts, double beta, Alphabet alphabet) {
 		if(noWords>numTypes) {
 			throw new IllegalArgumentException("Asked for more words (" + noWords + ") than there are types (unique words = noTypes = " + numTypes + ")."); 
 		}
 		IDSorter[] sortedWords = new IDSorter[numTypes];
 		String [][] topTopicWords = new String[numTopics][noWords];
 		
-		double [][] p_w_k = calcTopicProbGivenWord(typeTopicCounts, alpha, beta);
+		double [][] p_w_k = calcTopicProbGivenWord(typeTopicCounts, beta);
 		double [] p_w = calcUnsmoothedWordProb(typeTopicCounts);
 
 		double [][] distinctiveness = calcWordDistinctiveness(p_w_k, p_w);
@@ -374,14 +372,14 @@ public class LDAUtils {
 	}
 	
 	public static String[][] getTopSalientWords(int noWords, int numTypes, int numTopics, 
-			int[][] typeTopicCounts, double alpha, double beta, Alphabet alphabet) {
+			int[][] typeTopicCounts, double beta, Alphabet alphabet) {
 		if(noWords>numTypes) {
 			throw new IllegalArgumentException("Asked for more words (" + noWords + ") than there are types (unique words = noTypes = " + numTypes + ")."); 
 		}
 		IDSorter[] sortedWords = new IDSorter[numTypes];
 		String [][] topTopicWords = new String[numTopics][noWords];
 		
-		double [][] p_w_k = calcTopicProbGivenWord(typeTopicCounts, alpha, beta);
+		double [][] p_w_k = calcTopicProbGivenWord(typeTopicCounts, beta);
 		double [] p_w = calcUnsmoothedWordProb(typeTopicCounts);
 		
 		double [][] saliency = calcWordSaliency(p_w_k,p_w);
@@ -406,7 +404,7 @@ public class LDAUtils {
 	 * by Jason Chuang, Christopher D. Manning, Jeffrey Heer
 	 * @param p_w_k probability of topic given word
 	 * @param p_w probability of a word
-	 * @return array with word distinctiveness measures
+	 * @return array with word distinctiveness measures dim(array) = nrWords x nrTopics
 	 */
 	public static double[][] calcWordDistinctiveness(double [][] p_w_k, double [] p_w) {
 		int nrTopics = p_w_k[0].length;
@@ -458,22 +456,20 @@ public class LDAUtils {
 		return topicProbs;
 	}
 
-	public static double[] calcWordProb(int[][] typeTopicCounts, double alpha, double beta) {
+	public static double[] calcWordProb(int[][] typeTopicCounts, double beta) {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords = typeTopicCounts.length;
-		
-		double priorWordProb = (beta/nrWords) * (alpha/nrTopics);
 		
 		double [] wordProbs = new double[nrWords];
 		double wordMass = 0;
 		for (int w = 0; w < nrWords; w++) {
 			for (int k = 0; k < nrTopics; k++) { 
-				wordMass += typeTopicCounts[w][k];
-				wordProbs[w] += typeTopicCounts[w][k] + priorWordProb;
+				wordMass += typeTopicCounts[w][k] + beta;
+				wordProbs[w] += typeTopicCounts[w][k] + beta;
 			}
 		}
 		for (int w = 0; w < nrWords; w++) {
-			wordProbs[w] /= (wordMass + (alpha*beta));
+			wordProbs[w] /= wordMass;
 		}
 		return wordProbs;
 	}
@@ -496,14 +492,14 @@ public class LDAUtils {
 	}
 	
 	public static String[][] getK1ReWeightedWords(int noWords, int numTypes, int numTopics, 
-			int[][] typeTopicCounts, double alpha, double beta, Alphabet alphabet) {
+			int[][] typeTopicCounts, double beta, Alphabet alphabet) {
 		if(noWords>numTypes) {
 			throw new IllegalArgumentException("Asked for more words (" + noWords + ") than there are types (unique words = noTypes = " + numTypes + ")."); 
 		}
 		IDSorter[] sortedWords = new IDSorter[numTypes];
 		String [][] topTopicWords = new String[numTopics][noWords];
 	
-		double[][] k1ReWeighted = calcK1(typeTopicCounts, alpha, beta); 
+		double[][] k1ReWeighted = calcK1(typeTopicCounts, beta); 
 
 		for (int topic = 0; topic < numTopics; topic++) {
 			for (int type = 0; type < numTypes; type++) {
@@ -525,11 +521,10 @@ public class LDAUtils {
 	 * by Yangqiu Song, Shimei Pan, Shixia Liu, Michelle X. Zhou, Weihong Qian
 	 * 
 	 * @param typeTopicCounts word frequencies according to topic
-	 * @param alpha TODO
 	 * @param beta beta prior
 	 * @return matrix of re-weighted words given topic 
 	 */
-	public static double[][] calcK1(int[][] typeTopicCounts, double alpha, double beta) {
+	public static double[][] calcK1(int[][] typeTopicCounts, double beta) {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords = typeTopicCounts.length;
 		double [][] wordK1GivenTopic = new double[nrWords][nrTopics];
@@ -551,16 +546,14 @@ public class LDAUtils {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords = typeTopicCounts.length;
 		
-		double priorWordProb = (beta/nrWords);
-		
 		double [][] wordProbGivenTopic = new double[nrWords][nrTopics];
 		for (int k = 0; k < nrTopics; k++) { 
 			double wordMass = 0;
 			for (int w = 0; w < nrWords; w++) {
-				wordMass += typeTopicCounts[w][k];
+				wordMass += typeTopicCounts[w][k] + beta;
 			}
 			for (int w = 0; w < nrWords; w++) {
-				wordProbGivenTopic[w][k] = (typeTopicCounts[w][k] + priorWordProb) / (wordMass + beta);
+				wordProbGivenTopic[w][k] = (typeTopicCounts[w][k] + beta) / wordMass;
 			}
 		}
 		return wordProbGivenTopic;
@@ -569,11 +562,10 @@ public class LDAUtils {
 	/**
 	 * Calculate topic probability given a word
 	 * @param typeTopicCounts
-	 * @param alpha alpha prior
 	 * @param beta beta prior
 	 * @return matrix (topic first) of probabilities of topic given a word i.e matrix[topic][word] = probability of topic given word
 	 */
-	public static double[][] calcTopicProbGivenWord(int[][] typeTopicCounts, double alpha, double beta) {
+	public static double[][] calcTopicProbGivenWord(int[][] typeTopicCounts, double beta) {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords  = typeTopicCounts.length;
 

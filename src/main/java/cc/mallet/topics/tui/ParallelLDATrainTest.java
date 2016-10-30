@@ -147,7 +147,6 @@ public class ParallelLDATrainTest extends ParallelLDA {
 								trainedSampler.getAlphabet().size(), 
 								trainedSampler.getNoTopics(), 
 								trainedSampler.getTypeTopicMatrix(),  
-								config.getAlpha(LDAConfiguration.ALPHA_DEFAULT), 
 								config.getBeta(LDAConfiguration.BETA_DEFAULT),
 								config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
 								trainedSampler.getAlphabet()));
