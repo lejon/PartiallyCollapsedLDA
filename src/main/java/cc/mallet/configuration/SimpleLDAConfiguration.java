@@ -169,12 +169,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public void activateSubconfig(String subConfName) {
-		throw new RuntimeException("activateSubconfig is not supported on SimpleLDAConfiguration");
+
 	}
 
 	@Override
 	public void forceActivateSubconfig(String subConfName) {
-		throw new RuntimeException("forceActivateSubconfig is not supported on SimpleLDAConfiguration");
+
 	}
 
 	@Override
@@ -317,7 +317,17 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public int[] getIntArrayProperty(String key, int [] defaultValues) {
-		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
+		switch(key) {
+		case "dn_diagnostic_interval": {
+			return new int [0];
+		}
+		case "diagnostic_interval": {
+			return new int [0];
+		}
+		default : {
+			return defaultValues;
+		}
+		}
 	}
 
 	@Override
@@ -404,7 +414,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public String[] getSubTopicIndexBuilders(int i) {
-		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
+		return null;
 	}
 	
 	@Override
@@ -419,22 +429,22 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public int[] getPrintNDocsInterval() {
-		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
+		return new int [0];
 	}
 
 	@Override
 	public int getPrintNDocs() {
-		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
+		return 0;
 	}
 
 	@Override
 	public int[] getPrintNTopWordsInterval() {
-		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
+		return new int [0];
 	}
 
 	@Override
 	public int getPrintNTopWords() {
-		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
+		return 0;
 	}
 
 	public void setProportionalTopicIndexBuilderSkipStep(int stepSize) {
