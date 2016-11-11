@@ -55,6 +55,9 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private String phiMeansOutputFilename;
 	private boolean keepConnectingPunctuation;
 	private String stoplistFilename;
+	private int nrTopWords = -1 ;
+	private int maxDocBufferSize = -1;
+	private int phiMeanThinDefault = -1;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -314,17 +317,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public int[] getIntArrayProperty(String key, int [] defaultValues) {
-		switch(key) {
-		case "dn_diagnostic_interval": {
-			return new int [0];
-		}
-		case "diagnostic_interval": {
-			return new int [0];
-		}
-		default : {
-			return defaultValues;
-		}
-		}
+		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
 	}
 
 	@Override
@@ -411,7 +404,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public String[] getSubTopicIndexBuilders(int i) {
-		return null;
+		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
 	}
 	
 	@Override
@@ -426,22 +419,22 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public int[] getPrintNDocsInterval() {
-		return new int [0];
+		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
 	}
 
 	@Override
 	public int getPrintNDocs() {
-		return 0;
+		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
 	}
 
 	@Override
 	public int[] getPrintNTopWordsInterval() {
-		return new int [0];
+		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
 	}
 
 	@Override
 	public int getPrintNTopWords() {
-		return 0;
+		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration");
 	}
 
 	public void setProportionalTopicIndexBuilderSkipStep(int stepSize) {
@@ -524,7 +517,6 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 		this.phiBurnIn = phiBurnIn;
 	}
 
-	
 	@Override
 	public int getPhiBurnInPercent(int phiBurnInDefault) {
 		return phiBurnIn;
@@ -532,7 +524,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	
 	@Override
 	public int getPhiMeanThin(int phiMeanThinDefault) {
-		return phiMeanThinDefault;
+		return this.phiMeanThinDefault < 0 ? phiMeanThinDefault : this.phiMeanThinDefault;
 	}
 
 	public void setSavePhi(boolean savePhi) {
@@ -546,12 +538,18 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public int getNrTopWords(int defaltNr) {
-		return LDAConfiguration.NO_TOP_WORDS_DEFAULT;
+		if(nrTopWords < 0 )
+			return defaltNr;
+		else 
+			return nrTopWords;
 	}
 
 	@Override
 	public int getMaxDocumentBufferSize(int defaltSize) {
-		return LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT;
+		if(maxDocBufferSize  < 0 )
+			return defaltSize;
+		else 
+			return maxDocBufferSize;
 	}
 
 	@Override
