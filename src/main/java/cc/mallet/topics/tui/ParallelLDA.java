@@ -158,6 +158,12 @@ public class ParallelLDA {
 					LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
 				}
 
+				if(config.saveDocumentThetaEstimate()) {
+					String docTopicThetaFn = config.getDocumentTopicThetaOutputFilename();
+					double [][] means = model.getThetaEstimate();
+					LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicThetaFn, ",");
+				}
+
 				if(model instanceof LDASamplerWithPhi) {
 					LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
 					if(config.savePhiMeans(LDAConfiguration.SAVE_PHI_MEAN_DEFAULT)) {

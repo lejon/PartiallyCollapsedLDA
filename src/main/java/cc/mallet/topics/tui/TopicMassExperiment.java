@@ -900,6 +900,11 @@ public class TopicMassExperiment {
 		}
 
 		@Override
+		public String getDocumentTopicThetaOutputFilename() {
+			return pc.getDocumentTopicThetaOutputFilename();
+		}
+
+		@Override
 		public String getPhiMeansOutputFilename() {
 			return null;
 		}
@@ -972,6 +977,11 @@ public class TopicMassExperiment {
 		@Override
 		public double getLambda(double lambdaDefault) {
 			return 0.6;
+		}
+
+		@Override
+		public boolean saveDocumentThetaEstimate() {
+			return pc.saveDocumentThetaEstimate();
 		}
 	}
 }

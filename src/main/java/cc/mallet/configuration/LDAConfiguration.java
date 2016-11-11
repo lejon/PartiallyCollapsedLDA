@@ -166,4 +166,8 @@ public interface LDAConfiguration {
 	public String getDocLengthsFilename();
 
 	public double getLambda(double lambdaDefault);
+
+	public String getDocumentTopicThetaOutputFilename();
+
+	public boolean saveDocumentThetaEstimate();
 }

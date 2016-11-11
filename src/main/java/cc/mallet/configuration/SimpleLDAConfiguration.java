@@ -1,7 +1,5 @@
 package cc.mallet.configuration;
 
-import org.apache.commons.lang.NotImplementedException;
-
 import cc.mallet.util.LoggingUtils;
 
 public class SimpleLDAConfiguration implements LDAConfiguration {
@@ -51,9 +49,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private boolean logPhiDensity;
 	private boolean keepNumbers;
 	private boolean saveDocumentTopicMeans;
+	private boolean saveDocumentTopicTheta;
 	private String documentTopicMeansOutputFilename;
+	private String documentTopicThetaOutputFilename;
 	private String phiMeansOutputFilename;
 	private boolean keepConnectingPunctuation;
+	private String stoplistFilename;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -121,7 +122,6 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 		this.keepConnectingPunctuation = keepConnectingPunctuation;
 	}
 
-
 	public Integer getNoTopics() {
 		return noTopics;
 	}
@@ -166,12 +166,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public void activateSubconfig(String subConfName) {
-
+		throw new RuntimeException("activateSubconfig is not supported on SimpleLDAConfiguration");
 	}
 
 	@Override
 	public void forceActivateSubconfig(String subConfName) {
-
+		throw new RuntimeException("forceActivateSubconfig is not supported on SimpleLDAConfiguration");
 	}
 
 	@Override
@@ -421,7 +421,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public void setProperty(String key, Object value) {
-		throw new NotImplementedException("This method is not implemented for SimpleLDAConfiguration, use type safe deticated methods instead (you might need to implement the one you need! :))");
+		throw new RuntimeException("This method is not implemented for SimpleLDAConfiguration, use type safe deticated methods instead (you might need to implement the one you need! :))");
 	}
 
 	@Override
@@ -488,7 +488,11 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public String getStoplistFilename(String string) {
-		return "stoplist.txt";
+		return stoplistFilename;
+	}
+
+	public void setStoplistFilename(String string) {
+		this.stoplistFilename = string;
 	}
 
 	@Override
@@ -589,4 +593,22 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	public double getLambda(double lambdaDefault) {
 		return lambda;
 	}
+	
+	public void setSaveDocumentTopicTheta(boolean saveDocumentTopicTheta) {
+		this.saveDocumentTopicTheta = saveDocumentTopicTheta;
+	}
+
+	public String getDocumentTopicThetaOutputFilename() {
+		return documentTopicThetaOutputFilename;
+	}
+
+	public void setDocumentTopicThetaOutputFilename(String documentTopicThetaOutputFilename) {
+		this.documentTopicThetaOutputFilename = documentTopicThetaOutputFilename;
+	}
+
+	@Override
+	public boolean saveDocumentThetaEstimate() {
+		return saveDocumentTopicTheta;
+	}
+
 }

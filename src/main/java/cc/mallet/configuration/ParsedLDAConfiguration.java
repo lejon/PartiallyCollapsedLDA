@@ -394,4 +394,18 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public double getLambda(double defaultValue) {
 		return getDouble("lambda",defaultValue);
 	}
+	
+	@Override
+	public String getDocumentTopicThetaOutputFilename() {
+		return getStringProperty("doc_topic_theta_filename");
+	}
+
+	@Override
+	public boolean saveDocumentThetaEstimate() {
+		String key = "save_doc_theta_estimate";
+		return getBooleanProperty(key);
+
+	}
+
+	
 }
