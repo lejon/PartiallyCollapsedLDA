@@ -60,7 +60,8 @@
 	<!-- v4.6.6: Added config options to produce more stats, doc lengths and term frequencies -->
 	<!-- v4.7.0: Bumped POM with new Version. This version contains API Changes. Removed getTopWords from LDASampler API. These are now residing in LDAUtils. -->
 	<!-- v4.7.1: Corrected probability calculations when displaying relevance words -->
-	<version>4.7.1</version>
+	<!-- v4.7.2: Added option to output theta estimate -->
+	<version>4.7.2</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
