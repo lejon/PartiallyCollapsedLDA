@@ -257,6 +257,13 @@ public class ParallelLDA {
 								model.getTypeTopicMatrix(),  
 								config.getBeta(LDAConfiguration.BETA_DEFAULT),
 								model.getAlphabet())));
+				System.out.println("KR1 re-weighted words are: \n" + 
+						LDAUtils.formatTopWords(LDAUtils.getK1ReWeightedWords(20, 
+								model.getAlphabet().size(), 
+								model.getNoTopics(), 
+								model.getTypeTopicMatrix(),  
+								config.getBeta(LDAConfiguration.BETA_DEFAULT),
+								model.getAlphabet())));
 
 				System.out.println("I am done!");
 			}

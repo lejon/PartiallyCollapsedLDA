@@ -491,6 +491,19 @@ public class LDAUtils {
 		return wordProbs;
 	}
 	
+	
+	/**
+	 * Calculate KR1 re-weighting scheme as defined in "Topic and Keyword Re-ranking for LDA-based Topic Modeling"
+	 * Yangqiu Song, Shimei Pan, Shixia Liu, Michelle X. Zhou, Weihong Qian
+	 * 
+	 * @param noWords
+	 * @param numTypes
+	 * @param numTopics
+	 * @param typeTopicCounts
+	 * @param beta
+	 * @param alphabet
+	 * @return
+	 */
 	public static String[][] getK1ReWeightedWords(int noWords, int numTypes, int numTopics, 
 			int[][] typeTopicCounts, double beta, Alphabet alphabet) {
 		if(noWords>numTypes) {
