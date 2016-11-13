@@ -61,7 +61,8 @@
 	<!-- v4.7.0: Bumped POM with new Version. This version contains API Changes. Removed getTopWords from LDASampler API. These are now residing in LDAUtils. -->
 	<!-- v4.7.1: Corrected probability calculations when displaying relevance words -->
 	<!-- v4.7.2: Added option to output theta estimate -->
-	<version>4.7.2</version>
+	<!-- v4.7.3: Word Salience and KR1 word re-weighting working. (it is printed but no no option to save it yet)-->
+	<version>4.7.3</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
