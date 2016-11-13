@@ -234,8 +234,8 @@ public class ParallelLDA {
 				out.flush();
 				out.close();
 
-				System.out.println("Top words are: \n" + LDAUtils.formatTopWords(
-						LDAUtils.getTopRelevanceWords(20, 
+				System.out.println("Top words are: \n" + 
+						LDAUtils.formatTopWords(LDAUtils.getTopRelevanceWords(20, 
 								model.getAlphabet().size(), 
 								model.getNoTopics(), 
 								model.getTypeTopicMatrix(),  
@@ -250,14 +250,13 @@ public class ParallelLDA {
 								config.getBeta(LDAConfiguration.BETA_DEFAULT),
 								config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
 								model.getAlphabet())));
-				System.out.println("Distinctive words are: \n" + LDAUtils.formatTopWords(LDAUtils.getTopDistinctiveWords(20, model.getAlphabet().size(), model.getNoTopics(), 
-						model.getTypeTopicMatrix(),  
-						config.getBeta(LDAConfiguration.BETA_DEFAULT),
-						model.getAlphabet())));
-				System.out.println("Salient words are: \n" + LDAUtils.formatTopWords(LDAUtils.getTopSalientWords(20, model.getAlphabet().size(), model.getNoTopics(), 
-						model.getTypeTopicMatrix(),  
-						config.getBeta(LDAConfiguration.BETA_DEFAULT),
-						model.getAlphabet())));
+				System.out.println("Salient words are: \n" + 
+						LDAUtils.formatTopWords(LDAUtils.getTopSalientWords(20, 
+								model.getAlphabet().size(), 
+								model.getNoTopics(), 
+								model.getTypeTopicMatrix(),  
+								config.getBeta(LDAConfiguration.BETA_DEFAULT),
+								model.getAlphabet())));
 
 				System.out.println("I am done!");
 			}

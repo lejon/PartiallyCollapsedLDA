@@ -517,11 +517,10 @@ public class LDAUtilsTest {
 		assertEquals(probT2, probs[1], 0.00000001);
 		assertEquals(probT3, probs[2], 0.00000001);
 	}
-	
+		
 	@Test
 	public void testCalcProbTopicGivenWord() {
-		double beta = 0.1;
-
+		double beta = 0.01;
 		// 5 types - 3 topics
 		int [][] typeTopicCounts = new int [][] {
 				{3,2,5},
@@ -530,21 +529,33 @@ public class LDAUtilsTest {
 				{9,1,1},
 				{20,0,0}
 				};
+		
+		int nrTopics = typeTopicCounts[0].length;
+		int nrWords = typeTopicCounts.length;
 
-		double [][] probs = LDAUtils.calcTopicProbGivenWord(typeTopicCounts, beta);
+		double [][] probs = LDAUtils.calcTopicProbGivenWord(typeTopicCounts,beta);
 		
-		double sumW1 = 3+2+5;
-		double sumW2 = 1+5+2;
-		double sumW5 = 20;
-		
-		double probT1GivenW1 = typeTopicCounts[0][0] / sumW1;
-		double probT2GivenW2 = typeTopicCounts[1][1] / sumW2;
-		double probT3GivenW5 = typeTopicCounts[4][2] / sumW5;
-		
+		double totTokens = 3+2+5+1+5+2+0+0+0+9+1+1+20+0+0;
+
+		double probW1 = (3+2+5 + nrTopics*beta) / (totTokens + nrTopics*beta*nrWords);
+		double probW1GivenT1 = (3+beta) / (3+1+9+20 + beta*nrWords);
+		double probT1 = (3+1+9+20 + beta*nrWords) / (totTokens + nrTopics*beta*nrWords);
+		double probT1GivenW1 = probW1GivenT1 * probT1 / probW1;
+
+		double probW2 = (1+5+2 + nrTopics*beta) / (totTokens + nrTopics*beta*nrWords);
+		double probW2GivenT2 = (5+beta) / (2+5+1 + beta*nrWords);
+		double probT2 = (2+5+1 + beta*nrWords) / (totTokens + nrTopics*beta*nrWords);
+		double probT2GivenW2 = probW2GivenT2 * probT2 / probW2;
+
+		double probW4 = (9+1+1 + nrTopics*beta) / (totTokens + nrTopics*beta*nrWords);
+		double probW4GivenT3 = (1+beta) / (5+2+1 + beta*nrWords);
+		double probT3 = (5+2+1 + beta*nrWords) / (totTokens + nrTopics*beta*nrWords);
+		double probT3GivenW4 = probW4GivenT3 * probT3 / probW4;
+
 		assertEquals(typeTopicCounts.length, probs.length);
 		assertEquals(probT1GivenW1, probs[0][0], 0.00000001);
 		assertEquals(probT2GivenW2, probs[1][1], 0.00000001);
-		assertEquals(probT3GivenW5, probs[4][2], 0.00000001);
+		assertEquals(probT3GivenW4, probs[3][2], 0.00000001);
 	}
 	
 	@Test

@@ -353,7 +353,7 @@ public class LDAUtils {
 		String [][] topTopicWords = new String[numTopics][noWords];
 		
 		double [][] p_w_k = calcTopicProbGivenWord(typeTopicCounts, beta);
-		double [] p_w = calcUnsmoothedWordProb(typeTopicCounts);
+		double [] p_w = calcWordProb(typeTopicCounts, beta);
 
 		double [][] distinctiveness = calcWordDistinctiveness(p_w_k, p_w);
 		
@@ -380,7 +380,7 @@ public class LDAUtils {
 		String [][] topTopicWords = new String[numTopics][noWords];
 		
 		double [][] p_w_k = calcTopicProbGivenWord(typeTopicCounts, beta);
-		double [] p_w = calcUnsmoothedWordProb(typeTopicCounts);
+		double [] p_w = calcWordProb(typeTopicCounts, beta);
 		
 		double [][] saliency = calcWordSaliency(p_w_k,p_w);
 
@@ -568,21 +568,32 @@ public class LDAUtils {
 	public static double[][] calcTopicProbGivenWord(int[][] typeTopicCounts, double beta) {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords  = typeTopicCounts.length;
-
+		
+		double [] topicProbability = new double[nrTopics];
+		double [] typeSum = new double[nrWords];
+		double totalTokencount = 0;
+		for (int type = 0; type < typeTopicCounts.length; type++) {
+			for (int topic = 0; topic < typeTopicCounts[type].length; topic++) {
+				double weight = typeTopicCounts[type][topic] + beta;
+				topicProbability[topic] += weight;
+				typeSum[type] += weight;
+				totalTokencount += weight;
+			}
+		}
 		double [][] probTopicGivenWord = new double[nrWords][nrTopics];
-		double [] rowSum = new double[nrWords];
-		for (int w = 0; w < nrWords; w++) {
-			for (int k = 0; k < nrTopics; k++) {
-				rowSum[w] += typeTopicCounts[w][k];
-				probTopicGivenWord[w][k] = typeTopicCounts[w][k];
+		for (int type = 0; type < typeTopicCounts.length; type++) {
+			for (int topic = 0; topic < typeTopicCounts[type].length; topic++) {
+				double weight = typeTopicCounts[type][topic] + beta;
+				
+				double p_w_t = weight / topicProbability[topic];
+				double p_t   = topicProbability[topic] / totalTokencount;
+				double p_w   = typeSum[type] / totalTokencount;
+				
+				double topicProb =  p_w_t * p_t / p_w;
+				probTopicGivenWord[type][topic] = topicProb;
 			}
 		}
-		for (int w = 0; w < nrWords; w++) {
-			for (int k = 0; k < nrTopics; k++) {
-				probTopicGivenWord[w][k] /= rowSum[w];
-			}
-		}
-
+		
 		return probTopicGivenWord;
 	}
 	
