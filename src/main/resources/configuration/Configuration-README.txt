@@ -161,10 +161,13 @@ log_phi_density = true
 # Phi Log filename
 doc_topic_mean_filename = doc_topic_means.csv
 
-# Percent burn in before start sampling phi mean
+# Percent burn in (i.e percent of total number of iterations) before start sampling phi mean
+# Example: iterations = 2000, phi_mean_burning = 50 => start sampling Phi at 1000 iterations
 phi_mean_burnin = 20
-# Phi mean thinning
+
+# Phi mean thinning, number of iteration between each Phi sample
 phi_mean_thin = 10
+
 # Save Phi means, must be set for output to be created
 save_phi_means = true
 phi_mean_filename = phi_means.csv
@@ -179,4 +182,14 @@ term_frequencies_filename = term_frequencies.txt
 
 # lambda - relevance value when calculating relevance words
 lambda = 0.6
+
+# Save the number of times individual words occur in entire corpus
+save_term_frequencies = true
+term_frequencies_filename = term_frequencies.txt
+
+# Save the vocabulary used (after, stop words, rare words, etc...)
+# Order is the same as in Phi
+save_vocabulary = true
+vocabulary_filename = lda_vocab.txt
+
 
