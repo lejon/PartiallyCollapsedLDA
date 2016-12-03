@@ -959,7 +959,7 @@ public class LDAUtils {
 				for (int j = 0; j < matrix[i].length; j++) {
 					pw.print(formatDouble(matrix[i][j],mydecimalFormat,noDigits) + "");
 					if((j+1)<matrix[i].length) {
-						pw.print(sep + " ");
+						pw.print(sep);
 					}
 				}
 				pw.println();
