@@ -17,6 +17,7 @@ import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
+import cc.mallet.types.SparseDirichlet;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;
@@ -88,6 +89,10 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 
 	public void setTestSet(InstanceList testSet) {
 		this.testSet = testSet;
+	}
+	
+	protected SparseDirichlet createDirichletSampler() {
+		return new SparseDirichlet(numTypes,beta);
 	}
 
 	protected static Logger logger = MalletLogger.getLogger(SimpleLDA.class.getName());

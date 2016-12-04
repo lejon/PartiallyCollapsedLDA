@@ -305,7 +305,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				batchLocalTopicTypeUpdates[i][j] = new AtomicInteger();
 			}
 		}
-		dirichletSampler = new SparseDirichlet(numTypes,beta);
+		dirichletSampler = createDirichletSampler();
 
 		nonZeroTypeTopics = new int[numTypes][numTopics];
 		nonZeroTypeTopicsBackMapping = new int[numTypes][numTopics];

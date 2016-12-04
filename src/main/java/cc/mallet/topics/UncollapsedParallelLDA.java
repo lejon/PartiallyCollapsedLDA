@@ -324,7 +324,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				batchLocalTopicTypeUpdates[i][j] = new AtomicInteger();
 			}
 		}
-		dirichletSampler = new SparseDirichlet(numTypes,beta);
+		dirichletSampler = createDirichletSampler();
 
 		// Initializing fields needed to sample phi
 		betaSum = beta * numTypes;
