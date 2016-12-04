@@ -282,72 +282,52 @@ public class ParallelLDA {
 		switch(whichModel) {
 		case "adlda": {
 			model = new ADLDA(config);
-			System.out.println(
-					String.format("ADLDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			System.out.println("ADLDA.");
 			break;
 		}
 		case "uncollapsed": {
 			model = new UncollapsedParallelLDA(config);
-			System.out.println(
-					String.format("Uncollapsed Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			System.out.println("Uncollapsed Parallell LDA.");
 			break;
 		}
 		case "collapsed": {
 			model = new SerialCollapsedLDA(config);
-			System.out.println(
-					String.format("Uncollapsed Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			System.out.println("Uncollapsed Parallell LDA.");
 			break;
 		}
 		case "lightcollapsed": {
 			model = new CollapsedLightLDA(config);
-			System.out.println(
-					String.format("CollapsedLightLDA Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			System.out.println("CollapsedLightLDA Parallell LDA.");
 			break;
 		}
 		case "efficient_uncollapsed": {
 			model = new EfficientUncollapsedParallelLDA(config);
-			System.out.println(
-					String.format("EfficientUncollapsedParallelLDA Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			System.out.println("EfficientUncollapsedParallelLDA Parallell LDA.");
 			break;
 		}
 		case "spalias": {
 			model = new SpaliasUncollapsedParallelLDA(config);
-			System.out.println(
-					String.format("SpaliasUncollapsed Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			System.out.println("SpaliasUncollapsed Parallell LDA (%d batches).");
 			break;
 		}
 		case "spalias_priors": {
 			model = new SpaliasUncollapsedParallelWithPriors(config);
-			System.out.println(
-					String.format("SpaliasUncollapsed Parallell LDA with Priors(%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			System.out.println("SpaliasUncollapsed Parallell LDA with Priors.");
 			break;
 		}
 		case "lightpclda": {
 			model = new LightPCLDA(config);
-			System.out.println(
-					String.format("Light PC LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			System.out.println("Light PC LDA.");
 			break;
 		}
 		case "lightpcldaw2": {
 			model = new LightPCLDAtypeTopicProposal(config);
-			System.out.println(
-					String.format("Light PC LDA with proposal 2 (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			System.out.println("Light PC LDA with proposal 2.");
 			break;
 		}
 		case "nzvsspalias": {
 			model = new NZVSSpaliasUncollapsedParallelLDA(config);
-			System.out.println(
-					String.format("NZVSSpaliasUncollapsedParallelLDA Parallell LDA (%d batches).", 
-							config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+			System.out.println("NZVSSpaliasUncollapsedParallelLDA Parallell LDA.");
 			break;
 		}
 		default : {
