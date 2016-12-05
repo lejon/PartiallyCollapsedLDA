@@ -1104,6 +1104,20 @@ public class LDAUtils {
 		return topicSortedWords;
 	}
 
+	public static String formatTopWordsAsCsv(String[][] topWords) {
+		String result = "";
+		for (int i = 0; i < topWords.length; i++) {
+			for (int j = 0; j < topWords[i].length; j++) {
+				result += topWords[i][j];
+				if((j+1) < topWords[i].length) {
+					result += ",";
+				}
+			}
+			result += "\n";
+		}
+		return result;
+	}
+	
 	public static String formatTopWords(String[][] topWords) {
 		String result = "";
 		for (int i = 0; i < topWords.length; i++) {

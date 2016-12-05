@@ -146,7 +146,7 @@ public class SpaliasMainRemote {
 				SpaliasMainRemote.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
 		File lgDir = lu.getLogDir();
 		PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
-		String topWords = LDAUtils.formatTopWords(
+		String topWords = LDAUtils.formatTopWordsAsCsv(
 				LDAUtils.getTopRelevanceWords(20, 
 						model.getAlphabet().size(), 
 						model.getNoTopics(), 

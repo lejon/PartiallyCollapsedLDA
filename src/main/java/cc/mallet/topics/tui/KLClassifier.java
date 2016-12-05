@@ -208,7 +208,7 @@ public class KLClassifier {
 						LDASamplerWithPhi sampler = samplers.get(key);
 						String [][] topWordMatrix = LDAUtils.getTopWords(config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT), 
 								sampler.getAlphabet().size(), config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), sampler.getTypeTopicMatrix(), mcmodel.getAlphabet());
-						String topWords = LDAUtils.formatTopWords(topWordMatrix);
+						String topWords = LDAUtils.formatTopWordsAsCsv(topWordMatrix);
 						out.println("Top words for class "+ key +" are: \n" + topWords);
 						System.out.println("Top words for class "+ key +" are: \n" + topWords);
 					}
@@ -219,7 +219,7 @@ public class KLClassifier {
 					PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
 					String [][] topWordMatrix = LDAUtils.getTopWords(config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT), 
 							sampler.getAlphabet().size(), config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), sampler.getTypeTopicMatrix(), mcmodel.getAlphabet());
-					String topWords = LDAUtils.formatTopWords(topWordMatrix);
+					String topWords = LDAUtils.formatTopWordsAsCsv(topWordMatrix);
 					out.println(topWords);
 					System.out.println("Top words for class are: \n" + topWords);
 					out.flush();

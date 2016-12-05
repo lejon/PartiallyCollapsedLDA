@@ -215,7 +215,12 @@ public class ParallelLDA {
 				}
 				
 				//int noWords, int numTypes, int numTopics, int[][] typeTopicCounts, Alphabet alphabet
-				out.println(LDAUtils.formatTopWords(LDAUtils.getTopWords(requestedWords, model.getAlphabet().size(), model.getNoTopics(), model.getTypeTopicMatrix(), model.getAlphabet())));
+				out.println(LDAUtils.formatTopWordsAsCsv(
+						LDAUtils.getTopWords(requestedWords, 
+								model.getAlphabet().size(), 
+								model.getNoTopics(), 
+								model.getTypeTopicMatrix(), 
+								model.getAlphabet())));
 				out.flush();
 				out.close();
 				
@@ -223,7 +228,7 @@ public class ParallelLDA {
 				if(requestedWords>instances.getDataAlphabet().size()) {
 					requestedWords = instances.getDataAlphabet().size();
 				}
-				out.println(LDAUtils.formatTopWords(
+				out.println(LDAUtils.formatTopWordsAsCsv(
 						LDAUtils.getTopRelevanceWords(requestedWords, 
 								model.getAlphabet().size(), 
 								model.getNoTopics(), 

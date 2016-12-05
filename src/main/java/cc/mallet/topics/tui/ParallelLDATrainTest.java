@@ -142,7 +142,7 @@ public class ParallelLDATrainTest extends ParallelLDA {
 				lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
 						ParallelLDATrainTest.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
 				PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
-				String topWords = LDAUtils.formatTopWords(
+				String topWords = LDAUtils.formatTopWordsAsCsv(
 						LDAUtils.getTopRelevanceWords(config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT), 
 								trainedSampler.getAlphabet().size(), 
 								trainedSampler.getNoTopics(), 
