@@ -62,7 +62,8 @@
 	<!-- v4.7.1: Corrected probability calculations when displaying relevance words -->
 	<!-- v4.7.2: Added option to output theta estimate -->
 	<!-- v4.7.3: Word Salience and KR1 word re-weighting working. (it is printed but no no option to save it yet)-->
-	<version>4.7.3</version>
+	<!-- v4.7.4: Minor fixes, saves TopWords and RelevanceWords as CSV rather than text file-->
+	<version>4.7.4</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
