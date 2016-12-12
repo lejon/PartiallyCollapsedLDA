@@ -126,4 +126,32 @@ public class SimpleTokenizerLargeTest {
 	}
 
 
+	@Test
+	public void testBug() throws ConfigurationException, ParseException, FileNotFoundException {
+		ConfigFactory.setMainConfiguration(null);
+		String [] args = {"--run_cfg=src/test/resources/max_doc_buf-2.cfg"};
+		
+		LDACommandLineParser cp = new LDACommandLineParser(args);
+		ParsedLDAConfiguration config = (ParsedLDAConfiguration) ConfigFactory.getMainConfiguration(cp);
+		config.activateSubconfig("large_wiki_random_100_spalias_cores_16_seed_4711");
+		
+		assertEquals(100000,config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT));
+
+		assertEquals(7700,(int)config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT));
+		try {
+			if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
+				LDAUtils.loadInstancesKeep(config.getDatasetFilename(), 
+						config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), 5, false);					
+			} else {
+				fail("TF-IDF was not > 0");
+			}
+		} catch(java.lang.ArrayIndexOutOfBoundsException aiob) {
+			return;
+		}
+		fail("Test did not throw ArrayIndexOutOfBoundsException");
+		
+		LDAUtils.loadInstancesKeep(config.getDatasetFilename(), 
+				config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), 10000, false);
+	}
+	
 }
