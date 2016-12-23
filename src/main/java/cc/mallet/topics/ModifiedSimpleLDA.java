@@ -2,6 +2,7 @@ package cc.mallet.topics;
 
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -92,7 +93,35 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	}
 	
 	protected SparseDirichlet createDirichletSampler() {
-		return new SparseDirichlet(numTypes,beta);
+		return instantiateSparseDirichletSampler(LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_DEFAULT,numTypes,beta);
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected synchronized SparseDirichlet instantiateSparseDirichletSampler(String samplerClassName, int numTypes, double beta) {
+		String model_name = config.getSparseDirichletSamplerClass(samplerClassName);
+
+		@SuppressWarnings("rawtypes")
+		Class modelClass = null;
+		try {
+			modelClass = Class.forName(model_name);
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			throw new IllegalArgumentException(e);
+		}
+
+		@SuppressWarnings("rawtypes")
+		Class[] argumentTypes = new Class[2];
+		argumentTypes[0] = int.class;
+		argumentTypes[1] = double.class; 
+
+		try {
+			return (SparseDirichlet) modelClass.getDeclaredConstructor(argumentTypes).newInstance(numTypes,beta);
+		} catch (InstantiationException | IllegalAccessException
+				| InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			e.printStackTrace();
+			throw new IllegalArgumentException(e);
+		}
 	}
 
 	protected static Logger logger = MalletLogger.getLogger(SimpleLDA.class.getName());

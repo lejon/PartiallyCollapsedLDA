@@ -407,5 +407,14 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 
 	}
 
+	@Override
+	public String getSparseDirichletSamplerClass(String samplerClassName) {
+		String samplerName = getStringProperty("sparse_dirichlet_sampler_name");
+		if(samplerName==null || samplerName.length()==0) {
+			samplerName = samplerClassName;
+		}
+		return samplerName;
+	}
+
 	
 }

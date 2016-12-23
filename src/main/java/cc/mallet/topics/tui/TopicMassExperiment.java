@@ -906,7 +906,7 @@ public class TopicMassExperiment {
 
 		@Override
 		public String getPhiMeansOutputFilename() {
-			return null;
+			return pc.getPhiMeansOutputFilename();
 		}
 
 		@Override
@@ -951,7 +951,7 @@ public class TopicMassExperiment {
 
 		@Override
 		public String getVocabularyFilename() {
-			return null;
+			return pc.getVocabularyFilename();
 		}
 
 		@Override
@@ -961,7 +961,7 @@ public class TopicMassExperiment {
 
 		@Override
 		public String getTermFrequencyFilename() {
-			return null;
+			return pc.getTermFrequencyFilename();
 		}
 
 		@Override
@@ -971,7 +971,7 @@ public class TopicMassExperiment {
 
 		@Override
 		public String getDocLengthsFilename() {
-			return null;
+			return pc.getDocLengthsFilename();
 		}
 
 		@Override
@@ -982,6 +982,11 @@ public class TopicMassExperiment {
 		@Override
 		public boolean saveDocumentThetaEstimate() {
 			return pc.saveDocumentThetaEstimate();
+		}
+
+		@Override
+		public String getSparseDirichletSamplerClass(String samplerClassName) {
+			return pc.getSparseDirichletSamplerClass(samplerClassName);
 		}
 	}
 }
