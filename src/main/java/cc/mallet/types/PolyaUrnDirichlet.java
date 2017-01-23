@@ -1,8 +1,12 @@
 package cc.mallet.types;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.apache.commons.math3.util.FastMath;
-import java.util.concurrent.ThreadLocalRandom;
+
+import gnu.trove.TIntArrayList;
+import scala.NotImplementedError;
 
 public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirichlet {
 
@@ -14,9 +18,9 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 		super(size, prior);
 	}
 
-	public double[] nextDistribution(int [] counts) {
+	public VSResult nextDistributionWithSparseness(int [] counts) {
 		double distribution[] = new double[partition.length];
-
+		TIntArrayList resultingNonZeroIdxs = new TIntArrayList();
 		double sum = 0;
 
 		// implements the Poisson Polya Urn
@@ -30,6 +34,9 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 				distribution[i] = (double) nextPoisson((double) counts[i]);
 			}
 			sum += distribution[i];
+			if(distribution[i]!=0) {
+				resultingNonZeroIdxs.add(i);
+			}
 		}
 
 		for (int i=0; i<distribution.length; i++) {
@@ -39,9 +46,18 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 			}			
 		}
 
-		return distribution;
+		return new VSResult(distribution, resultingNonZeroIdxs.toNativeArray());
+	}
+	
+	@Override
+	public double[] nextDistribution(int[] counts) {
+		return nextDistributionWithSparseness(counts).phiRow;
 	}
 
+	@Override
+	public VSResult nextDistributionWithSparseness() {
+		throw new NotImplementedError();
+	}
 
 	// HACK: copy/pasted to avoid instantiating PoissonDistribution classes that won't be used except for random draws
 	// taken from ApacheCommons Math and modified for ThreadLocalRandom and nextStandardExponential (Apache licensed)
@@ -142,6 +158,4 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 			}
 		}
 	}
-
-
 }

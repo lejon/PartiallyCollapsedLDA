@@ -52,4 +52,16 @@ public class MarsagliaSparseDirichlet extends ParallelDirichlet implements Spars
 		return distribution;
 	}
 
+	@Override
+	public VSResult nextDistributionWithSparseness() {
+		int [] nonZero = new int[0]; 
+		return new VSResult(nextDistribution(), nonZero);
+	}
+
+	@Override
+	public VSResult nextDistributionWithSparseness(int[] counts) {
+		int [] nonZero = new int[0]; 
+		return new VSResult(nextDistribution(counts), nonZero);
+	}
+
 }
