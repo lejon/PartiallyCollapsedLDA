@@ -1,6 +1,7 @@
 package cc.mallet.topics;
 
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,8 +17,10 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
+import cc.mallet.types.PoissonFixedCoeffSampler;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.VariableSelectionResult;
+import cc.mallet.util.IntArraySortUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
@@ -32,10 +35,10 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	
 	// #### VSSelection
 	// Jagged array containing the topics that are non-zero for each type
-	int [][] zeroTypeTopicIdxs = null;
+	int [][] nonZeroTypeTopicIdxs = null;
 	// How many indices  are zero for each type, i.e the column count for the zeroTypeTopicIdxs array
-	Object [] zeroTypeTopicIdxsColLocks = null;
-	AtomicInteger [] zeroTypeTopicColIdxs = null;	
+	Object [] nonZeroTypeTopicIdxsColLocks = null;
+	AtomicInteger [] nonZeroTypeTopicColIdxs = null;	
 
 	public PolyaUrnSpaliasLDA(LDAConfiguration config) {
 		super(config);
@@ -45,13 +48,13 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	public void addInstances(InstanceList training) {
 		alphabet = training.getDataAlphabet();
 		numTypes = alphabet.size();
-		zeroTypeTopicIdxs = new int[numTypes][numTopics];
+		nonZeroTypeTopicIdxs = new int[numTypes][numTopics];
 		phitrans    = new double[numTypes][numTopics];
-		zeroTypeTopicIdxsColLocks = new Object[numTypes];
-		zeroTypeTopicColIdxs = new AtomicInteger[numTypes];
+		nonZeroTypeTopicIdxsColLocks = new Object[numTypes];
+		nonZeroTypeTopicColIdxs = new AtomicInteger[numTypes];
 		for (int i = 0; i < numTypes; i++) {
-			zeroTypeTopicIdxsColLocks[i] = new Object();
-			zeroTypeTopicColIdxs[i] = new AtomicInteger();
+			nonZeroTypeTopicIdxsColLocks[i] = new Object();
+			nonZeroTypeTopicColIdxs[i] = new AtomicInteger();
 		}
 		aliasTables = new WalkerAliasTable[numTypes];
 		typeNorm    = new double[numTypes];
@@ -62,7 +65,38 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 
 	@Override
 	protected SparseDirichlet createDirichletSampler() {
-		return instantiateSparseDirichletSampler("cc.mallet.types.PolyaUrnDirichlet",numTypes,beta);
+		PoissonFixedCoeffSampler fep = new PoissonFixedCoeffSampler(beta, 100);
+		return instantiateSparseDirichletSampler("cc.mallet.types.PolyaUrnDirichletFixedCoeffPoisson",numTypes,beta,fep);
+		//return instantiateSparseDirichletSampler("cc.mallet.types.PolyaUrnDirichlet",numTypes,beta);
+	}
+
+	@SuppressWarnings("unchecked")
+	private SparseDirichlet instantiateSparseDirichletSampler(String samplerClassName, int numTypes, double beta, PoissonFixedCoeffSampler fep) {
+		String model_name = config.getSparseDirichletSamplerClass(samplerClassName);
+
+		@SuppressWarnings("rawtypes")
+		Class modelClass = null;
+		try {
+			modelClass = Class.forName(model_name);
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			throw new IllegalArgumentException(e);
+		}
+
+		@SuppressWarnings("rawtypes")
+		Class[] argumentTypes = new Class[3];
+		argumentTypes[0] = int.class;
+		argumentTypes[1] = double.class; 
+		argumentTypes[2] = PoissonFixedCoeffSampler.class; 
+
+		try {
+			return (SparseDirichlet) modelClass.getDeclaredConstructor(argumentTypes).newInstance(numTypes,beta,fep);
+		} catch (InstantiationException | IllegalAccessException
+				| InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			e.printStackTrace();
+			throw new IllegalArgumentException(e);
+		}
 	}
 
 	class ParallelTableBuilder implements Callable<TableBuildResult> {
@@ -157,8 +191,8 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	public void prePhi() {
 		super.prePhi();
 		for (int type = 0; type < numTypes; type++) {
-			zeroTypeTopicColIdxs[type].set(0);
-			Arrays.fill(zeroTypeTopicIdxs[type],0);
+			nonZeroTypeTopicColIdxs[type].set(0);
+			Arrays.fill(nonZeroTypeTopicIdxs[type],0);
 		}
 	}
 
@@ -177,16 +211,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		super.postSample();
 	}
 	
-	/*
-	public static String intVectorToString(int [] m, int maxIdx) {
-		if(m.length==0 || maxIdx == 0) return "";
-		String res = "";
-		for (int i = 0; i < m.length && i < maxIdx; i++) {
-			res += m[i] + ", ";
-		}
-		return res.substring(0, res.length()-1);
-	}*/
-
 	@Override
 	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
@@ -253,7 +277,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			decrement(myBatch, oldTopic, type);
 			//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
 			
-			int nonZeroTypeCnt = zeroTypeTopicColIdxs[type].get();
+			int nonZeroTypeCnt = nonZeroTypeTopicColIdxs[type].get();
 			
 			/*nonZeroTopicCntAdjusted = intersection(zeroTypeTopicIdxs[type], nonZeroTypeCnt, 
 					nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicsAdjusted, nonZeroTopicCnt);	
@@ -269,10 +293,10 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			}*/
 			
 			if(nonZeroTypeCnt < nonZeroTopicCnt) {
-				// INTERSECTION SHOULD IMPROVE perf since we use result both in cunmsum and sample topic
+				// INTERSECTION SHOULD IMPROVE perf since we use result both in cumsum and sample topic
 				// Intersection needs to b O(k) for it to improve perf, but unless we add more memory 
 				// requirements it becomes O(k log(k))
-				nonZeroTopicsAdjusted = zeroTypeTopicIdxs[type]; // Is it zero or nonzero, its confusing?
+				nonZeroTopicsAdjusted = nonZeroTypeTopicIdxs[type]; // Is it zero or nonzero, its confusing?
 				nonZeroTopicCntAdjusted = nonZeroTypeCnt;
 				//usedTypeSparsness.incrementAndGet();
 			} else {
@@ -549,13 +573,13 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
 			VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
 			phiMatrix[topic] = res.getPhi();
-			int [] nonZeroIdxs = res.getZeroIdxs();
-			//System.out.println("Topic " + topic + " contanis " + nonZeroIdxs.length + " nonZeros");
+			int [] nonZeroIdxs = res.getNonZeroIdxs();
+			//System.out.println("Topic " + topic + " contains " + nonZeroIdxs.length + " nonZeros");
 			//if(topic==0) {System.out.println("Non Zero in topic: " + zeroIdxs.length + " / " + phi[0].length + " = " + ((double)zeroIdxs.length)/phi[0].length);}
 			for (int i = 0; i < nonZeroIdxs.length; i++) {
 				int type = nonZeroIdxs[i];
-				synchronized (zeroTypeTopicIdxsColLocks[type]) {					
-					arrayIntSetAdd(zeroTypeTopicIdxs[type], topic, zeroTypeTopicColIdxs[type]);
+				synchronized (nonZeroTypeTopicIdxsColLocks[type]) {					
+					IntArraySortUtils.arrayIntSetAdd(nonZeroTypeTopicIdxs[type], topic, nonZeroTypeTopicColIdxs[type]);
 				}
 			}
 		}
@@ -570,58 +594,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			pw.flush();
 			pw.close();
 		}
-	}
-
-	// Insertion sort
-	public static boolean arrayIntSetAdd(int[] array, int value, AtomicInteger size) {
-		int currSize = size.get();
-		// Find the place to insert
-		int i = 0;
-		while (i < currSize && array[i]<value) i++;
-		// topic is already inserted
-		if(array[i]==value) {
-			// Special case if we insert Zero into an empty set
-			if(i==currSize) {
-				size.incrementAndGet();
-				return true;
-			}
-			return false;
-		};
-		// topic was not in set and it is the smallest value so far, insert and increase count
-		if(i==currSize) { array[i]=value; size.incrementAndGet(); return true;}
-		// Else insert topic at this pos and shift the others to the right
-		int tmp1 = value;
-		int tmp2;
-		while(i<currSize) {
-			tmp2 = array[i];
-			array[i] = tmp1;
-			tmp1 = tmp2;
-			i++;
-		}
-		// Insert the last element
-		array[i] = tmp1;
-		size.incrementAndGet();
-		return true;
-	}
-
-	// Insertion sort
-	public static boolean arrayIntSetRemove(int[] array, int value, AtomicInteger size) {
-		int currSize = size.get();
-		// Find the place to remove
-		int i = 0;
-		while (i < currSize && array[i]!=value) i++;
-		// Didn't find element
-		if(i==currSize) {return false;}
-		// topic was the last element, just remove it
-		if(i!=(currSize-1)) { 
-			// Else remove topic at this pos and shift the others to the left
-			while(i<(currSize-1)) {
-				array[i] = array[i+1]; 
-				i++;
-			}
-		}
-		size.decrementAndGet();
-		return true;
 	}
 
 }

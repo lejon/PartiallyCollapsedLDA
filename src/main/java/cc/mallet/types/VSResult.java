@@ -2,20 +2,20 @@ package cc.mallet.types;
 
 public class VSResult implements VariableSelectionResult {
 	public double [] phiRow;
-	public int [] zeroIdxs;
+	public int [] nonZeroIdxs;
 	public VSResult(double[] phiRow, int [] nonZeroIdxs) {
 		this.phiRow = phiRow;
-		this.zeroIdxs = nonZeroIdxs;
+		this.nonZeroIdxs = nonZeroIdxs;
 	}
 	@Override
 	public double[] getPhi() {
 		return phiRow;
 	}
 	@Override
-	public int[] getZeroIdxs() {
-		int [] res = new int[zeroIdxs.length];
-		for (int i = 0; i < zeroIdxs.length; i++) {
-			res[i] = zeroIdxs[i];
+	public int[] getNonZeroIdxs() {
+		int [] res = new int[nonZeroIdxs.length];
+		for (int i = 0; i < nonZeroIdxs.length; i++) {
+			res[i] = nonZeroIdxs[i];
 		}
 		return res;
 	}
