@@ -11,7 +11,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.FeatureSequence;
@@ -34,12 +33,11 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	private ExecutorService tableBuilderExecutor;
 	
 	
-	// #### VSSelection
+	// #### Sparsity handling
 	// Jagged array containing the topics that are non-zero for each type
 	int [][] nonZeroTypeTopicIdxs = null;
 	// How many indices  are zero for each type, i.e the column count for the zeroTypeTopicIdxs array
-	Object [] nonZeroTypeTopicIdxsColLocks = null;
-	AtomicInteger [] nonZeroTypeTopicColIdxs = null;	
+	int [] nonZeroTypeTopicColIdxs = null;	
 
 	public PolyaUrnSpaliasLDA(LDAConfiguration config) {
 		super(config);
@@ -51,12 +49,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		numTypes = alphabet.size();
 		nonZeroTypeTopicIdxs = new int[numTypes][numTopics];
 		phitrans    = new double[numTypes][numTopics];
-		nonZeroTypeTopicIdxsColLocks = new Object[numTypes];
-		nonZeroTypeTopicColIdxs = new AtomicInteger[numTypes];
-		for (int i = 0; i < numTypes; i++) {
-			nonZeroTypeTopicIdxsColLocks[i] = new Object();
-			nonZeroTypeTopicColIdxs[i] = new AtomicInteger();
-		}
+		nonZeroTypeTopicColIdxs = new int[numTypes];
 		aliasTables = new WalkerAliasTable[numTypes];
 		typeNorm    = new double[numTypes];
 		super.addInstances(training);
@@ -112,6 +105,10 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			double [] phiType =  phitrans[type]; 
 			for (int topic = 0; topic < numTopics; topic++) {
 				typeMass += probs[topic] = phiType[topic] * alpha; // alpha[topic]
+				if(phiType[topic]!=0) {
+					int newSize = nonZeroTypeTopicColIdxs[type]++;
+					nonZeroTypeTopicIdxs[type][newSize] = topic;
+				}
 			}
 			
 			if(aliasTables[type]==null) {
@@ -193,11 +190,11 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	@Override
 	public void prePhi() {
 		super.prePhi();
-		for (int type = 0; type < numTypes; type++) {
-			nonZeroTypeTopicColIdxs[type].set(0);
+		Arrays.fill(nonZeroTypeTopicColIdxs,0);
+		//for (int type = 0; type < numTypes; type++) {
 			// Should not be needed, since we just overwrite previous iteration result
 			//Arrays.fill(nonZeroTypeTopicIdxs[type],0);
-		}
+		//}
 	}
 
 	@Override
@@ -253,7 +250,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		
 		double sum; // sigma_likelihood
 		double[] cumsum = new double[numTopics]; 
-		int [] nonZeroTopicsAdjusted = new int[numTopics];
+		int [] nonZeroTopicsAdjusted;
 		int nonZeroTopicCntAdjusted;
 
 		//	Iterate over the words in the document
@@ -280,7 +277,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			decrement(myBatch, oldTopic, type);
 			//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
 			
-			int nonZeroTypeCnt = nonZeroTypeTopicColIdxs[type].get();
+			int nonZeroTypeCnt = nonZeroTypeTopicColIdxs[type];
 			
 			/*nonZeroTopicCntAdjusted = intersection(zeroTypeTopicIdxs[type], nonZeroTypeCnt, 
 					nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicsAdjusted, nonZeroTopicCnt);	
@@ -299,7 +296,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 				// INTERSECTION SHOULD IMPROVE perf since we use result both in cumsum and sample topic
 				// Intersection needs to b O(k) for it to improve perf, but unless we add more memory 
 				// requirements it becomes O(k log(k))
-				nonZeroTopicsAdjusted = nonZeroTypeTopicIdxs[type]; // Is it zero or nonzero, its confusing?
+				nonZeroTopicsAdjusted = nonZeroTypeTopicIdxs[type];
 				nonZeroTopicCntAdjusted = nonZeroTypeCnt;
 				//usedTypeSparsness.incrementAndGet();
 			} else {
@@ -311,13 +308,11 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			
 			// Document and type sparsity removed all (but one?) topics, just use the prior contribution
 			if(nonZeroTopicCntAdjusted==0) {
-				//toPrior.incrementAndGet();
 				newTopic = (int) Math.floor(u * this.numTopics); // uniform (0,1)
 			} else {
-				double score;
-				int topic = nonZeroTopicsAdjusted[0];
 				double [] phiType =  phitrans[type]; 
-				score = localTopicCounts[topic] * phiType[topic];
+				int topic = nonZeroTopicsAdjusted[0];
+				double score = localTopicCounts[topic] * phiType[topic];
 				cumsum[0] = score;
 				// Now calculate and add up the scores for each topic for this word
 				// We build a cumsum indexed by topicIndex
@@ -570,15 +565,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
 			VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
 			phiMatrix[topic] = res.getPhi();
-			int [] nonZeroIdxs = res.getNonZeroIdxs();
-			//System.out.println("Topic " + topic + " contains " + nonZeroIdxs.length + " nonZeros");
-			//if(topic==0) {System.out.println("Non Zero in topic: " + zeroIdxs.length + " / " + phi[0].length + " = " + ((double)zeroIdxs.length)/phi[0].length);}
-			for (int i = 0; i < nonZeroIdxs.length; i++) {
-				int type = nonZeroIdxs[i];
-				synchronized (nonZeroTypeTopicIdxsColLocks[type]) {					
-					IntArraySortUtils.arrayIntSetAddSorted(nonZeroTypeTopicIdxs[type], topic, nonZeroTypeTopicColIdxs[type]);
-				}
-			}
 		}
 		long elapsedMillis = System.currentTimeMillis();
 		long threadId = Thread.currentThread().getId();
