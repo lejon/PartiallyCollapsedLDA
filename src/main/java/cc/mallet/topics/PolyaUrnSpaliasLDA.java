@@ -309,7 +309,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			// Document and type sparsity removed all (but one?) topics, just use the prior contribution
 			if(nonZeroTopicCntAdjusted==0) {
 				//toPrior.incrementAndGet();
-				newTopic = aliasTables[type].generateSample(u); // uniform (0,1)
+				newTopic = (int) Math.floor(u * this.numTopics); // uniform (0,1)
 			} else {
 				double score;
 				int topic = nonZeroTopicsAdjusted[0];
