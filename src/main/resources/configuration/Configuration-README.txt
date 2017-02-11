@@ -192,4 +192,10 @@ term_frequencies_filename = term_frequencies.txt
 save_vocabulary = true
 vocabulary_filename = lda_vocab.txt
 
-
+# The full class name (package + classname) of the sparse dirichlet sampler class
+# this class must implement the SparseDirichlet interface and 
+# have a constructor ClassName(int dirichletDimension, double prior)
+# default is MarsagliaSparseDirichlet (see below)
+# a Polya Urn approximation is also available (PolyaUrnDirichlet)
+#sparse_dirichlet_sampler_name = cc.mallet.types.PolyaUrnDirichlet
+sparse_dirichlet_sampler_name = cc.mallet.types.MarsagliaSparseDirichlet

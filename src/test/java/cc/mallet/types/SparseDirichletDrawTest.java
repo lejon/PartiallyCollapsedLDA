@@ -15,7 +15,7 @@ public class SparseDirichletDrawTest {
 	@Test
 	public void testNormal() {
 		double alpha[] = {1.0, 1.0, 1.0, 1.0};	
-		SparseDirichlet sparseDirichlet = new SparseDirichlet(alpha);
+		SparseDirichlet sparseDirichlet = new MarsagliaSparseDirichlet(alpha);
 		Dirichlet dirichlet = new Dirichlet(alpha);
 
 		int noLoops = 10_000;
@@ -30,11 +30,11 @@ public class SparseDirichletDrawTest {
 			}
 		}
 		assertTrue(ks.kolmogorovSmirnovTest(d1s, d2s) > 0.00001);
-		System.out.println("Draws:");
-		for (int i = 0; i < d2s.length; i++) {
-			System.out.print(d1s[i]  + "<=>" + d2s[i] + ", ");
-		}
-		System.out.println();
+//		System.out.println("Draws:");
+//		for (int i = 0; i < d2s.length; i++) {
+//			System.out.print(d1s[i]  + "<=>" + d2s[i] + ", ");
+//		}
+//		System.out.println();
 
 	}
 	
@@ -46,7 +46,7 @@ public class SparseDirichletDrawTest {
 		for (int i = 0; i < alphaPlain.length; i++) {
 			alphaPlain[i] = alpha[i] + counts[i];
 		}
-		SparseDirichlet sparseDirichlet = new SparseDirichlet(alpha);
+		SparseDirichlet sparseDirichlet = new MarsagliaSparseDirichlet(alpha);
 		Dirichlet dirichlet = new Dirichlet(alphaPlain);
 
 		int noLoops = 10_000;
@@ -61,11 +61,11 @@ public class SparseDirichletDrawTest {
 			}
 		}
 		assertTrue(ks.kolmogorovSmirnovTest(d1s, d2s) > 0.00001);
-		System.out.println("Draws:");
-		for (int i = 0; i < d2s.length; i++) {
-			System.out.print(d1s[i]  + "<=>" + d2s[i] + ", ");
-		}
-		System.out.println();
+//		System.out.println("Draws:");
+//		for (int i = 0; i < d2s.length; i++) {
+//			System.out.print(d1s[i]  + "<=>" + d2s[i] + ", ");
+//		}
+//		System.out.println();
 
 	}
 	
@@ -89,35 +89,35 @@ public class SparseDirichletDrawTest {
 			alphaPlain[i] = alpha[i] + counts[i];
 		}
 		
-		SparseDirichlet sparseDirichlet = new SparseDirichlet(alpha);
+		SparseDirichlet sparseDirichlet = new MarsagliaSparseDirichlet(alpha);
 		ParallelDirichlet dirichlet = new ParallelDirichlet(alphaPlain);
 
 		int noLoops = 20_000;
 		double [] d1s = new double[alpha.length];
-		long ts = System.currentTimeMillis();
+		//long ts = System.currentTimeMillis();
 		for (int loop = 0; loop < noLoops; loop++) {
 			double [] sparseDraws = sparseDirichlet.nextDistribution(counts);
 			for (int i = 0; i < sparseDraws.length; i++) {
 				d1s[i] += sparseDraws[i];
 			}
 		}
-		System.out.println("Time Sparse: " + (System.currentTimeMillis() - ts));
+		//System.out.println("Time Sparse: " + (System.currentTimeMillis() - ts));
 		double [] d2s = new double[alpha.length];
-		long tp = System.currentTimeMillis();
+		//long tp = System.currentTimeMillis();
 		for (int loop = 0; loop < noLoops; loop++) {
 			double [] draws = dirichlet.nextDistribution();
 			for (int i = 0; i < draws.length; i++) {
 				d2s[i] += draws[i];
 			}
 		}
-		System.out.println("Time Plain: " + (System.currentTimeMillis() - tp));
+		//System.out.println("Time Plain: " + (System.currentTimeMillis() - tp));
 		double pval = ks.kolmogorovSmirnovTest(d1s, d2s);
 
-		System.out.println("Counts:");
-		for (int i = 0; i < counts.length; i++) {
-			System.out.print(counts[i]  + ", ");
-		}
-		System.out.println();
+//		System.out.println("Counts:");
+//		for (int i = 0; i < counts.length; i++) {
+//			System.out.print(counts[i]  + ", ");
+//		}
+//		System.out.println();
 
 		assertTrue("Pval is: " + pval, pval > 0.00001);
 	}

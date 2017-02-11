@@ -32,6 +32,7 @@ public interface LDAConfiguration {
 	public static final int MAX_DOC_BUFFFER_SIZE_DEFAULT = 10000;
 	public static final boolean KEEP_CONNECTING_PUNCTUATION = false;
 	public static final double LAMBDA_DEFAULT = 0.6;
+	public static final String SPARSE_DIRICHLET_SAMPLER_DEFAULT = "cc.mallet.types.MarsagliaSparseDirichlet";
 
 	public LoggingUtils getLoggingUtil();
 
@@ -170,4 +171,6 @@ public interface LDAConfiguration {
 	public String getDocumentTopicThetaOutputFilename();
 
 	public boolean saveDocumentThetaEstimate();
+
+	public String getSparseDirichletSamplerClass(String samplerClassName);
 }

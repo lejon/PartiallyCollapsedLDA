@@ -1113,7 +1113,9 @@ public class LDAUtils {
 					result += ",";
 				}
 			}
-			result += "\n";
+			if((i+1) < topWords.length) {
+				result += "\n";
+			}
 		}
 		return result;
 	}
@@ -1123,9 +1125,14 @@ public class LDAUtils {
 		for (int i = 0; i < topWords.length; i++) {
 			result += "Topic " + (i+1) + ": ";
 			for (int j = 0; j < topWords[i].length; j++) {
-				result += topWords[i][j] + " ";
+				result += topWords[i][j];
+				if((j+1) < topWords[i].length) {
+					result += " ";
+				}
 			}
-			result += "\n";
+			if((i+1) < topWords.length) {
+				result += "\n";
+			}
 		}
 		return result;
 	}
