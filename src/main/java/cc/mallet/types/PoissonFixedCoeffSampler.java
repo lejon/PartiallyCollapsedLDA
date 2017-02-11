@@ -2,67 +2,62 @@ package cc.mallet.types;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.apache.commons.math3.distribution.PoissonDistribution;
 import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.apache.commons.math3.util.FastMath;
 
-import gnu.trove.TIntArrayList;
-import scala.NotImplementedError;
+import cc.mallet.util.OptimizedGentleAliasMethod;
+import cc.mallet.util.WalkerAliasTable;
 
-public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirichlet {
+/**
+ * Implementation of an efficient sampler for the Poisson distribution
 
-	public PolyaUrnDirichlet(double[] prior) {
-		super(prior);
-	}
+ * This sampler is efficient for the special case when we know that we will draw many values from a Poisson with mean 'beta+count'.
+ * I.e some fixed 'beta' value plus low counts. This is typically the case in LDA (Latent Dirichlet Allocation).
+ * When this is the case, we can pre-generate WalkerAlias tables for counts less than some value (say 100). This means that
+ * draws from the Poisson for count values < 100 will be very fast, where the standard Poisson draw is quite expensive.
+ * For draws when lambda is bigger than 100, the Poisson draw can be well approximated with a normal distribution and will also be fast.
+ * 
+ * @author Leif Jonsson
+ *
+ */
+public class PoissonFixedCoeffSampler {
 
-	public PolyaUrnDirichlet(int size, double prior) {
-		super(size, prior);
-	}
+	int L;
+	double beta;
+	WalkerAliasTable [] aliasTables;
 
-	public VSResult nextDistributionWithSparseness(int [] counts) {
-		double distribution[] = new double[partition.length];
-		TIntArrayList resultingNonZeroIdxs = new TIntArrayList();
-		double sum = 0;
-
-		// implements the Poisson Polya Urn
-		for (int i=0; i<distribution.length; i++) {
-			// determine whether we land in F_0 or F^_n
-			if(counts[i]==0 || ThreadLocalRandom.current().nextDouble((partition[i] * magnitude) + counts[i]) < partition[i] * magnitude) {
-				// sample from F_0
-				distribution[i] = (double) nextPoisson(partition[i] * magnitude);
-			} else {
-				// sample from F^_n
-				distribution[i] = (double) nextPoisson((double) counts[i]);
+	public PoissonFixedCoeffSampler(double beta, int L) {
+		this.L = L;
+		this.beta = beta;
+		aliasTables = new WalkerAliasTable[L];
+		for (int i = 0; i < aliasTables.length; i++) {
+			double [] pis = new double[L*2];
+			double lambda = beta+i;
+			PoissonDistribution pois = new PoissonDistribution(lambda);
+			for (int j = 0; j < pis.length; j++) {
+				pis[j] = pois.probability(j);
 			}
-			sum += distribution[i];
-			if(distribution[i]!=0) {
-				resultingNonZeroIdxs.add(i);
-			}
+			aliasTables[i] = createAliasTable(pis);			
 		}
-
-		for (int i=0; i<distribution.length; i++) {
-			distribution[i] /= sum;
-			if (distribution[i] <= 0) {
-				distribution[i] = Double.MIN_VALUE;
-			}			
-		}
-
-		return new VSResult(distribution, resultingNonZeroIdxs.toNativeArray());
-	}
-	
-	@Override
-	public double[] nextDistribution(int[] counts) {
-		return nextDistributionWithSparseness(counts).phiRow;
 	}
 
-	@Override
-	public VSResult nextDistributionWithSparseness() {
-		throw new NotImplementedError();
+	WalkerAliasTable createAliasTable(double [] pis) {
+		return new OptimizedGentleAliasMethod(pis);
+	}
+
+	public long nextPoisson(int betaAdd) {
+		if(betaAdd<L) {
+			return aliasTables[betaAdd].generateSample();
+		} else {
+			return nextStandardPoisson(beta + betaAdd);
+		}
 	}
 
 	// HACK: copy/pasted to avoid instantiating PoissonDistribution classes that won't be used except for random draws
 	// taken from ApacheCommons Math and modified for ThreadLocalRandom and nextStandardExponential (Apache licensed)
 	// no idea how good or how bad this algorithm is, for mean < 40, it uses IID exponentials, which seems inefficient
-	protected long nextPoisson(double meanPoisson) {
+	protected long nextStandardPoisson(double meanPoisson) {
 		final double pivot = 40.0d;
 		if (meanPoisson < pivot) {
 			double p = FastMath.exp(-meanPoisson);
@@ -85,7 +80,7 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 			final double lambdaFractional = meanPoisson - lambda;
 			final double logLambda = FastMath.log(lambda);
 			final double logLambdaFactorial = CombinatoricsUtils.factorialLog((int) lambda);
-			final long y2 = lambdaFractional < Double.MIN_VALUE ? 0 : nextPoisson(lambdaFractional);
+			final long y2 = lambdaFractional < Double.MIN_VALUE ? 0 : nextStandardPoisson(lambdaFractional);
 			final double delta = FastMath.sqrt(lambda * FastMath.log(32 * lambda / FastMath.PI + 1));
 			final double halfDelta = delta / 2;
 			final double twolpd = 2 * lambda + delta;

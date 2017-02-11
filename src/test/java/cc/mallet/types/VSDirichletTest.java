@@ -36,7 +36,7 @@ public class VSDirichletTest {
 			VariableSelectionResult res = dist.nextDistribution(relevantTypeTopicCounts, phiRow);
 			phiRow = res.getPhi();
 
-			int [] zeroIdxs = res.getZeroIdxs();
+			int [] zeroIdxs = res.getNonZeroIdxs();
 
 			assertTrue(res.getPhi().length==numTypes);
 			assertTrue(zeroIdxs.length<=numTypes);

@@ -19,6 +19,7 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.types.VSDirichlet;
 import cc.mallet.types.VariableSelectionDirichlet;
 import cc.mallet.types.VariableSelectionResult;
+import cc.mallet.util.IntArraySortUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
@@ -34,10 +35,10 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 	
 	// #### VSSelection
 	// Jagged array containing the topics that are non-zero for each type
-	int [][] zeroTypeTopicIdxs = null;
+	int [][] nonZeroTypeTopicIdxs = null;
 	// How many indices  are zero for each type, i.e the column count for the zeroTypeTopicIdxs array
-	Object [] zeroTypeTopicIdxsColLocks = null;
-	AtomicInteger [] zeroTypeTopicColIdxs = null;
+	Object [] nonZeroTypeTopicIdxsColLocks = null;
+	AtomicInteger [] nonZeroTypeTopicColIdxs = null;
 	
 	//AtomicInteger toPrior = new AtomicInteger();
 	//AtomicInteger usedTypeSparsness = new AtomicInteger();
@@ -54,13 +55,13 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 		vsDirichlet = new VSDirichlet(beta, config.getVariableSelectionPrior(vsPriorDefault));
 		alphabet = training.getDataAlphabet();
 		numTypes = alphabet.size();
-		zeroTypeTopicIdxs = new int[numTypes][numTopics];
+		nonZeroTypeTopicIdxs = new int[numTypes][numTopics];
 		phitrans    = new double[numTypes][numTopics];
-		zeroTypeTopicIdxsColLocks = new Object[numTypes];
-		zeroTypeTopicColIdxs = new AtomicInteger[numTypes];
+		nonZeroTypeTopicIdxsColLocks = new Object[numTypes];
+		nonZeroTypeTopicColIdxs = new AtomicInteger[numTypes];
 		for (int i = 0; i < numTypes; i++) {
-			zeroTypeTopicIdxsColLocks[i] = new Object();
-			zeroTypeTopicColIdxs[i] = new AtomicInteger();
+			nonZeroTypeTopicIdxsColLocks[i] = new Object();
+			nonZeroTypeTopicColIdxs[i] = new AtomicInteger();
 		}
 		aliasTables = new WalkerAliasTable[numTypes];
 		typeNorm    = new double[numTypes];
@@ -159,8 +160,8 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 	public void prePhi() {
 		super.prePhi();
 		for (int type = 0; type < numTypes; type++) {
-			zeroTypeTopicColIdxs[type].set(0);
-			Arrays.fill(zeroTypeTopicIdxs[type],0);
+			nonZeroTypeTopicColIdxs[type].set(0);
+			Arrays.fill(nonZeroTypeTopicIdxs[type],0);
 		}
 	}
 
@@ -179,16 +180,6 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 		super.postSample();
 	}
 	
-	/*
-	public static String intVectorToString(int [] m, int maxIdx) {
-		if(m.length==0 || maxIdx == 0) return "";
-		String res = "";
-		for (int i = 0; i < m.length && i < maxIdx; i++) {
-			res += m[i] + ", ";
-		}
-		return res.substring(0, res.length()-1);
-	}*/
-
 	@Override
 	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
@@ -255,7 +246,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 			decrement(myBatch, oldTopic, type);
 			//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
 			
-			int nonZeroTypeCnt = zeroTypeTopicColIdxs[type].get();
+			int nonZeroTypeCnt = nonZeroTypeTopicColIdxs[type].get();
 			
 			/*nonZeroTopicCntAdjusted = intersection(zeroTypeTopicIdxs[type], nonZeroTypeCnt, 
 					nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicsAdjusted, nonZeroTopicCnt);	
@@ -274,7 +265,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 				// INTERSECTION SHOULD IMPROVE perf since we use result both in cunmsum and sample topic
 				// Intersection needs to b O(k) for it to improve perf, but unless we add more memory 
 				// requirements it becomes O(k log(k))
-				nonZeroTopicsAdjusted = zeroTypeTopicIdxs[type]; // Is it zero or nonzero, its confusing?
+				nonZeroTopicsAdjusted = nonZeroTypeTopicIdxs[type]; // Is it zero or nonzero, its confusing?
 				nonZeroTopicCntAdjusted = nonZeroTypeCnt;
 				//usedTypeSparsness.incrementAndGet();
 			} else {
@@ -551,12 +542,12 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
 			VariableSelectionResult res = vsDirichlet.nextDistribution(relevantTypeTopicCounts, phiMatrix[topic]);
 			phiMatrix[topic] = res.getPhi();
-			int [] zeroIdxs = res.getZeroIdxs();
+			int [] nonZeroIdxs = res.getNonZeroIdxs();
 			//if(topic==0) {System.out.println("Non Zero in topic: " + zeroIdxs.length + " / " + phi[0].length + " = " + ((double)zeroIdxs.length)/phi[0].length);}
-			for (int i = 0; i < zeroIdxs.length; i++) {
-				int type = zeroIdxs[i];
-				synchronized (zeroTypeTopicIdxsColLocks[type]) {					
-					arrayIntSetAdd(zeroTypeTopicIdxs[type], topic, zeroTypeTopicColIdxs[type]);
+			for (int i = 0; i < nonZeroIdxs.length; i++) {
+				int type = nonZeroIdxs[i];
+				synchronized (nonZeroTypeTopicIdxsColLocks[type]) {					
+					IntArraySortUtils.arrayIntSetAddSorted(nonZeroTypeTopicIdxs[type], topic, nonZeroTypeTopicColIdxs[type]);
 				}
 			}
 		}
@@ -572,57 +563,4 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 			pw.close();
 		}
 	}
-
-	// Insertion sort
-	public static boolean arrayIntSetAdd(int[] array, int value, AtomicInteger size) {
-		int currSize = size.get();
-		// Find the place to insert
-		int i = 0;
-		while (i < currSize && array[i]<value) i++;
-		// topic is already inserted
-		if(array[i]==value) {
-			// Special case if we insert Zero into an empty set
-			if(i==currSize) {
-				size.incrementAndGet();
-				return true;
-			}
-			return false;
-		};
-		// topic was not in set and it is the smallest value so far, insert and increase count
-		if(i==currSize) { array[i]=value; size.incrementAndGet(); return true;}
-		// Else insert topic at this pos and shift the others to the right
-		int tmp1 = value;
-		int tmp2;
-		while(i<currSize) {
-			tmp2 = array[i];
-			array[i] = tmp1;
-			tmp1 = tmp2;
-			i++;
-		}
-		// Insert the last element
-		array[i] = tmp1;
-		size.incrementAndGet();
-		return true;
-	}
-
-	// Insertion sort
-	public static boolean arrayIntSetRemove(int[] array, int value, AtomicInteger size) {
-		int currSize = size.get();
-		// Find the place to remove
-		int i = 0;
-		while (i < currSize && array[i]!=value) i++;
-		// Didn't find element
-		if(i==currSize) {return false;}
-		// topic was the last element, just remove it
-		if(i!=(currSize-1)) { 
-			// Else remove topic at this pos and shift the others to the left
-			while(i<(currSize-1)) {
-				array[i] = array[i+1]; 
-				i++;
-			}
-		}
-		size.decrementAndGet();
-		return true;
-	}
-
 }
