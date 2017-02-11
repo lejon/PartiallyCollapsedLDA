@@ -156,5 +156,39 @@ public class PoissonFixedCoeffSamplerTest {
 
 		assertFalse(cs.chiSquareTestDataSetsComparison(fepDraws, stdDraws, 0.001));
 	}
+	
+	// Compare timings between ordinary and fixed coeff sampler
+	public void testChiSquareVsStdPoisson_Time() {
+		double beta = 0.01;
+		int L = 100;
+		PoissonFixedCoeffSampler fep = new PoissonFixedCoeffSampler(beta, L);
+
+		int nrDraws = 10_000_000;
+		int betaAdd = 99;
+		int testlimit = 3;
+		long [] fepDraws = new long[testlimit];
+		long [] stdDraws = new long[testlimit];
+		long start = System.currentTimeMillis();
+		for (int i = 0; i < nrDraws; i++) {
+			long nd = fep.nextPoisson(betaAdd);
+			if(nd<testlimit) fepDraws[(int)nd]++;
+		}
+		long tFep = System.currentTimeMillis();
+		System.out.println("Time FEP = " + (tFep - start));
+
+		PoissonDistribution stdPois = new PoissonDistribution(beta+betaAdd);
+		for (int i = 0; i < nrDraws; i++) {
+			long stdnd = stdPois.sample();
+			if(stdnd<testlimit) stdDraws[(int)stdnd]++;
+		}
+		long tStd = System.currentTimeMillis();
+		System.out.println("Time STD = " + (tStd - tFep));
+
+		
+		//System.out.println(Arrays.toString(fepDraws));
+		//System.out.println(Arrays.toString(stdDraws));
+
+		assertFalse(cs.chiSquareTestDataSetsComparison(fepDraws, stdDraws, 0.001));
+	}
 
 }
