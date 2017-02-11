@@ -407,11 +407,9 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	}*/
 
 	double calcCumSum(int type, double[] localTopicCounts, int[] nonZeroTopics, int nonZeroTopicCnt, double[] cumsum) {
-		double score;
-		double sum;
 		double [] phiType =  phitrans[type]; 
 		int topic = nonZeroTopics[0];
-		score = localTopicCounts[topic] * phiType[topic];
+		double score = localTopicCounts[topic] * phiType[topic];
 		cumsum[0] = score;
 		// Now calculate and add up the scores for each topic for this word
 		// We build a cumsum indexed by topicIndex
@@ -422,8 +420,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			cumsum[topicIdx] = score + cumsum[topicIdx-1];
 			topicIdx++;
 		}
-		sum = cumsum[topicIdx-1]; // sigma_likelihood
-		return sum;
+		return cumsum[topicIdx-1];
 	}
 
 	/*
