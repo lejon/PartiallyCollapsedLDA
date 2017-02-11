@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class IntArraySortUtils {
 
 	// Insertion sort
-	public static boolean arrayIntSetAdd(int[] array, int value, AtomicInteger size) {
+	public static boolean arrayIntSetAddSorted(int[] array, int value, AtomicInteger size) {
 		int currSize = size.get();
 		// Find the place to insert
 		int i = 0;
@@ -37,7 +37,7 @@ public class IntArraySortUtils {
 	}
 
 	// Insertion sort
-	public static boolean arrayIntSetRemove(int[] array, int value, AtomicInteger size) {
+	public static boolean arrayIntSetRemoveSorted(int[] array, int value, AtomicInteger size) {
 		int currSize = size.get();
 		// Find the place to remove
 		int i = 0;

@@ -19,7 +19,7 @@ public class InsertionSortTest {
 	public void testInsertZero() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 0, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 0, size);
 		int [] expected = {0,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
@@ -29,7 +29,7 @@ public class InsertionSortTest {
 	public void testInsertEmpty() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
@@ -39,11 +39,11 @@ public class InsertionSortTest {
 	public void testInsertOneBigger() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 20, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 20, size);
 		int [] expected2 = {15,20,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
@@ -53,11 +53,11 @@ public class InsertionSortTest {
 	public void testInsertOneSmaller() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 10, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 10, size);
 		int [] expected2 = {10,15,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
@@ -67,15 +67,15 @@ public class InsertionSortTest {
 	public void testInsertInBetween() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 10, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 10, size);
 		int [] expected2 = {10,15,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 12, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 12, size);
 		int [] expected3 = {10,12,15,0,0,0,0,0,0,0};
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(3, size.get());
@@ -85,19 +85,19 @@ public class InsertionSortTest {
 	public void testInsertExistingFirst() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 10, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 10, size);
 		int [] expected2 = {10,15,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 12, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 12, size);
 		int [] expected3 = {10,12,15,0,0,0,0,0,0,0};
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(3, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 10, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 10, size);
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(3, size.get());
 	}
@@ -107,19 +107,19 @@ public class InsertionSortTest {
 	public void testInsertExistingMiddle() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 10, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 10, size);
 		int [] expected2 = {10,15,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 12, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 12, size);
 		int [] expected3 = {10,12,15,0,0,0,0,0,0,0};
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(3, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 12, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 12, size);
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(3, size.get());
 	}
@@ -128,19 +128,19 @@ public class InsertionSortTest {
 	public void testInsertExistingLast() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 10, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 10, size);
 		int [] expected2 = {10,15,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 12, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 12, size);
 		int [] expected3 = {10,12,15,0,0,0,0,0,0,0};
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(3, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(3, size.get());
 	}
@@ -149,46 +149,46 @@ public class InsertionSortTest {
 	public void testInsertToFullAddLast() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 10, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 10, size);
 		int [] expected2 = {10,15,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 12, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 12, size);
 		int [] expected3 = {10,12,15,0,0,0,0,0,0,0};
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(3, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 9, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 9, size);
 		int [] expected4 = {9,10,12,15,0,0,0,0,0,0};
 		assertArrayEquals(expected4, zeroTypeTopicIdxs);
 		assertEquals(4, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 11, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 11, size);
 		int [] expected5 = {9,10,11,12,15,0,0,0,0,0};
 		assertArrayEquals(expected5, zeroTypeTopicIdxs);
 		assertEquals(5, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 18, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 18, size);
 		int [] expected6 = {9,10,11,12,15,18,0,0,0,0};
 		assertArrayEquals(expected6, zeroTypeTopicIdxs);
 		assertEquals(6, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 0, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 0, size);
 		int [] expected7 = {0,9,10,11,12,15,18,0,0,0};
 		assertArrayEquals(expected7, zeroTypeTopicIdxs);
 		assertEquals(7, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, -1, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, -1, size);
 		int [] expected8 = {-1,0,9,10,11,12,15,18,0,0};
 		assertArrayEquals(expected8, zeroTypeTopicIdxs);
 		assertEquals(8, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, -1, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, -1, size);
 		assertArrayEquals(expected8, zeroTypeTopicIdxs);
 		assertEquals(8, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 16, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 16, size);
 		int [] expected9 = {-1,0,9,10,11,12,15,16,18,0};
 		assertArrayEquals(expected9, zeroTypeTopicIdxs);
 		assertEquals(9, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 20, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 20, size);
 		int [] expected10 = {-1,0,9,10,11,12,15,16,18,20};
 		assertArrayEquals(expected10, zeroTypeTopicIdxs);
 		assertEquals(10, size.get());
@@ -198,46 +198,46 @@ public class InsertionSortTest {
 	public void testInsertToFullNextToLast() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 10, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 10, size);
 		int [] expected2 = {10,15,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 12, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 12, size);
 		int [] expected3 = {10,12,15,0,0,0,0,0,0,0};
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(3, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 9, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 9, size);
 		int [] expected4 = {9,10,12,15,0,0,0,0,0,0};
 		assertArrayEquals(expected4, zeroTypeTopicIdxs);
 		assertEquals(4, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 11, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 11, size);
 		int [] expected5 = {9,10,11,12,15,0,0,0,0,0};
 		assertArrayEquals(expected5, zeroTypeTopicIdxs);
 		assertEquals(5, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 18, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 18, size);
 		int [] expected6 = {9,10,11,12,15,18,0,0,0,0};
 		assertArrayEquals(expected6, zeroTypeTopicIdxs);
 		assertEquals(6, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 0, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 0, size);
 		int [] expected7 = {0,9,10,11,12,15,18,0,0,0};
 		assertArrayEquals(expected7, zeroTypeTopicIdxs);
 		assertEquals(7, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, -1, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, -1, size);
 		int [] expected8 = {-1,0,9,10,11,12,15,18,0,0};
 		assertArrayEquals(expected8, zeroTypeTopicIdxs);
 		assertEquals(8, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, -1, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, -1, size);
 		assertArrayEquals(expected8, zeroTypeTopicIdxs);
 		assertEquals(8, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 16, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 16, size);
 		int [] expected9 = {-1,0,9,10,11,12,15,16,18,0};
 		assertArrayEquals(expected9, zeroTypeTopicIdxs);
 		assertEquals(9, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 17, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 17, size);
 		int [] expected10 = {-1,0,9,10,11,12,15,16,17,18};
 		assertArrayEquals(expected10, zeroTypeTopicIdxs);
 		assertEquals(10, size.get());
@@ -247,46 +247,46 @@ public class InsertionSortTest {
 	public void testInsertToFullFirst() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 10, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 10, size);
 		int [] expected2 = {10,15,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 12, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 12, size);
 		int [] expected3 = {10,12,15,0,0,0,0,0,0,0};
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(3, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 9, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 9, size);
 		int [] expected4 = {9,10,12,15,0,0,0,0,0,0};
 		assertArrayEquals(expected4, zeroTypeTopicIdxs);
 		assertEquals(4, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 11, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 11, size);
 		int [] expected5 = {9,10,11,12,15,0,0,0,0,0};
 		assertArrayEquals(expected5, zeroTypeTopicIdxs);
 		assertEquals(5, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 18, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 18, size);
 		int [] expected6 = {9,10,11,12,15,18,0,0,0,0};
 		assertArrayEquals(expected6, zeroTypeTopicIdxs);
 		assertEquals(6, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 0, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 0, size);
 		int [] expected7 = {0,9,10,11,12,15,18,0,0,0};
 		assertArrayEquals(expected7, zeroTypeTopicIdxs);
 		assertEquals(7, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, -1, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, -1, size);
 		int [] expected8 = {-1,0,9,10,11,12,15,18,0,0};
 		assertArrayEquals(expected8, zeroTypeTopicIdxs);
 		assertEquals(8, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, -1, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, -1, size);
 		assertArrayEquals(expected8, zeroTypeTopicIdxs);
 		assertEquals(8, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 16, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 16, size);
 		int [] expected9 = {-1,0,9,10,11,12,15,16,18,0};
 		assertArrayEquals(expected9, zeroTypeTopicIdxs);
 		assertEquals(9, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, -7, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, -7, size);
 		int [] expected10 = {-7,-1,0,9,10,11,12,15,16,18};
 		assertArrayEquals(expected10, zeroTypeTopicIdxs);
 		assertEquals(10, size.get());
@@ -296,7 +296,7 @@ public class InsertionSortTest {
 	public void testRemoveEmpty() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetRemove(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetRemoveSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {0,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(0, size.get());
@@ -306,11 +306,11 @@ public class InsertionSortTest {
 	public void testRemoveOne() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetRemove(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetRemoveSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected2 = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(0, size.get());
@@ -320,19 +320,19 @@ public class InsertionSortTest {
 	public void testRemoveToEmpty() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 20, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 20, size);
 		int [] expected2 = {15,20,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
-		IntArraySortUtils.arrayIntSetRemove(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetRemoveSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected3 = {20,20,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetRemove(zeroTypeTopicIdxs, 20, size);
+		IntArraySortUtils.arrayIntSetRemoveSorted(zeroTypeTopicIdxs, 20, size);
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(0, size.get());
 	}
@@ -341,25 +341,25 @@ public class InsertionSortTest {
 	public void testInsertAndRemoveToEmpty() {
 		int [] zeroTypeTopicIdxs = new int[10];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected = {15,0,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 20, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 20, size);
 		int [] expected2 = {15,20,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
-		IntArraySortUtils.arrayIntSetRemove(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetRemoveSorted(zeroTypeTopicIdxs, 15, size);
 		int [] expected3 = {20,20,0,0,0,0,0,0,0,0};
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetRemove(zeroTypeTopicIdxs, 20, size);
+		IntArraySortUtils.arrayIntSetRemoveSorted(zeroTypeTopicIdxs, 20, size);
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(0, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 20, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 20, size);
 		assertArrayEquals(expected3, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 15, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 15, size);
 		assertArrayEquals(expected2, zeroTypeTopicIdxs);
 		assertEquals(2, size.get());
 	}
@@ -368,19 +368,19 @@ public class InsertionSortTest {
 	public void testInsertAndRemoveExample() {
 		int [] zeroTypeTopicIdxs = new int[233];
 		AtomicInteger size = new AtomicInteger();
-		IntArraySortUtils.arrayIntSetRemove(zeroTypeTopicIdxs, 969, size);
+		IntArraySortUtils.arrayIntSetRemoveSorted(zeroTypeTopicIdxs, 969, size);
 		int [] expected = new int[233];
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(0, size.get());
-		IntArraySortUtils.arrayIntSetRemove(zeroTypeTopicIdxs, 614, size);
+		IntArraySortUtils.arrayIntSetRemoveSorted(zeroTypeTopicIdxs, 614, size);
 		assertArrayEquals(expected, zeroTypeTopicIdxs);
 		assertEquals(0, size.get());
-		IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, 545, size);
+		IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, 545, size);
 		int [] expected1 = new int[233];
 		expected1[0] = 545;
 		assertArrayEquals(expected1, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
-		IntArraySortUtils.arrayIntSetRemove(zeroTypeTopicIdxs, 96, size);
+		IntArraySortUtils.arrayIntSetRemoveSorted(zeroTypeTopicIdxs, 96, size);
 		assertArrayEquals(expected1, zeroTypeTopicIdxs);
 		assertEquals(1, size.get());
 	}
@@ -403,7 +403,7 @@ public class InsertionSortTest {
 				if(random.nextDouble()>0.5) {
 					//System.out.println("Insert: " + toInsertOrRemove);
 					ss.add(toInsertOrRemove);
-					didModify = IntArraySortUtils.arrayIntSetAdd(zeroTypeTopicIdxs, toInsertOrRemove, size);
+					didModify = IntArraySortUtils.arrayIntSetAddSorted(zeroTypeTopicIdxs, toInsertOrRemove, size);
 					if(didModify)
 						assertEquals(prevSize+1, size.get());
 					else 
@@ -412,7 +412,7 @@ public class InsertionSortTest {
 				} else {
 					//System.out.println("Remove: " + toInsertOrRemove);
 					ss.remove(toInsertOrRemove);
-					didModify = IntArraySortUtils.arrayIntSetRemove(zeroTypeTopicIdxs, toInsertOrRemove, size);
+					didModify = IntArraySortUtils.arrayIntSetRemoveSorted(zeroTypeTopicIdxs, toInsertOrRemove, size);
 					if(prevSize>0) {
 						if(didModify)
 							assertEquals(prevSize-1, size.get());

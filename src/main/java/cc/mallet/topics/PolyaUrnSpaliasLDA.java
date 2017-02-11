@@ -579,7 +579,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			for (int i = 0; i < nonZeroIdxs.length; i++) {
 				int type = nonZeroIdxs[i];
 				synchronized (nonZeroTypeTopicIdxsColLocks[type]) {					
-					IntArraySortUtils.arrayIntSetAdd(nonZeroTypeTopicIdxs[type], topic, nonZeroTypeTopicColIdxs[type]);
+					IntArraySortUtils.arrayIntSetAddSorted(nonZeroTypeTopicIdxs[type], topic, nonZeroTypeTopicColIdxs[type]);
 				}
 			}
 		}
