@@ -20,18 +20,19 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.types.PoissonFixedCoeffSampler;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.VariableSelectionResult;
-import cc.mallet.util.IntArraySortUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 
 public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGibbsSampler{
+	
+	protected double[][] phitrans;
+
 	private static final long serialVersionUID = 1L;
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
 	private ExecutorService tableBuilderExecutor;
 	
-	protected double[][] phitrans;
 	
 	// #### VSSelection
 	// Jagged array containing the topics that are non-zero for each type
@@ -155,8 +156,8 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		
 		transpose(phi, phitrans);
 		
-		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
 		List<ParallelTableBuilder> builders = new ArrayList<>();
+		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
 		if(topicTypeIndices!=null) {
 			// The topicIndexBuilder supports having different types per topic,
 			// this is currently not used, so we can just pick the first topic
@@ -165,11 +166,13 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			for (int typeIdx = 0; typeIdx < typesToSample.length; typeIdx++) {
 				builders.add(new ParallelTableBuilder(typesToSample[typeIdx]));
 			}
+			// if the topicIndexBuilder returns null it means sample ALL types
 		} else {
 			for (int type = 0; type < numTypes; type++) {
 				builders.add(new ParallelTableBuilder(type));
 			}			
 		}
+		
 		List<Future<TableBuildResult>> results;
 		try {
 			results = tableBuilderExecutor.invokeAll(builders);
@@ -192,7 +195,8 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		super.prePhi();
 		for (int type = 0; type < numTypes; type++) {
 			nonZeroTypeTopicColIdxs[type].set(0);
-			Arrays.fill(nonZeroTypeTopicIdxs[type],0);
+			// Should not be needed, since we just overwrite previous iteration result
+			//Arrays.fill(nonZeroTypeTopicIdxs[type],0);
 		}
 	}
 
@@ -207,10 +211,10 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 
 	@Override
 	public void postSample() {
-		tableBuilderExecutor.shutdown();
 		super.postSample();
+		tableBuilderExecutor.shutdown();
 	}
-	
+
 	@Override
 	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
@@ -233,7 +237,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 
 		// So we can map back from a topic to where it is in nonZeroTopics vector
 		int [] nonZeroTopicsBackMapping = new int[numTopics];
-		//Arrays.fill(nonZeroTopicsBackMapping, NOT_IN_SET);
 		
 		// Populate topic counts
 		int nonZeroTopicCnt = 0;
@@ -241,13 +244,13 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			int topicInd = oneDocTopics[position];
 			localTopicCounts[topicInd]++;
 			if(localTopicCounts[topicInd]==1) {
-				//nonZeroTopics.add(topicInd);
-				//nonZeroTopicCnt++;
 				nonZeroTopicCnt = insert(topicInd, nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicCnt);
 			}
 		}
+		
 		//kdDensities[myBatch] += nonZeroTopicCnt;
 		kdDensities.addAndGet(nonZeroTopicCnt);
+		
 		double sum; // sigma_likelihood
 		double[] cumsum = new double[numTopics]; 
 		int [] nonZeroTopicsAdjusted = new int[numTopics];
@@ -355,8 +358,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 
 			// Potentially update nonZeroTopics mapping
 			if(localTopicCounts[newTopic]==1) {
-				//nonZeroTopics.add(newTopic);
-				//nonZeroTopicCnt++;
 				nonZeroTopicCnt = insert(newTopic, nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicCnt);
 			}
 
@@ -444,7 +445,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		int newTopic;
 		if(u < (typeNorm[type]/(typeNorm[type] + sum))) {
 			//numPrior++;
-			//toPrior.incrementAndGet();
 			newTopic = aliasTables[type].generateSample(u+((sum*u)/typeNorm[type])); // uniform (0,1)
 			//System.out.println("Prior Sampled topic: " + newTopic);
 		} else {
