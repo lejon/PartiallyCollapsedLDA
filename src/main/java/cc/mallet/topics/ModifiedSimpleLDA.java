@@ -19,6 +19,7 @@ import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.SparseDirichlet;
+import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;
@@ -93,29 +94,26 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	}
 	
 	protected SparseDirichlet createDirichletSampler() {
-		return instantiateSparseDirichletSampler(LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_DEFAULT,numTypes,beta);
+		SparseDirichletSamplerBuilder db = instantiateSparseDirichletSamplerBuilder(config.getDirichletSamplerBuilderClass(LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_BULDER_DEFAULT));
+		return db.build(this);
 	}
 	
 	@SuppressWarnings("unchecked")
-	protected synchronized SparseDirichlet instantiateSparseDirichletSampler(String samplerClassName, int numTypes, double beta) {
-		String model_name = config.getSparseDirichletSamplerClass(samplerClassName);
-
+	protected SparseDirichletSamplerBuilder instantiateSparseDirichletSamplerBuilder(String samplerBuilderClassName) {
 		@SuppressWarnings("rawtypes")
 		Class modelClass = null;
 		try {
-			modelClass = Class.forName(model_name);
+			modelClass = Class.forName(samplerBuilderClassName);
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 			throw new IllegalArgumentException(e);
 		}
 
 		@SuppressWarnings("rawtypes")
-		Class[] argumentTypes = new Class[2];
-		argumentTypes[0] = int.class;
-		argumentTypes[1] = double.class; 
+		Class[] argumentTypes = new Class[0];
 
 		try {
-			return (SparseDirichlet) modelClass.getDeclaredConstructor(argumentTypes).newInstance(numTypes,beta);
+			return (SparseDirichletSamplerBuilder) modelClass.getDeclaredConstructor(argumentTypes).newInstance();
 		} catch (InstantiationException | IllegalAccessException
 				| InvocationTargetException
 				| NoSuchMethodException | SecurityException e) {
@@ -123,7 +121,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			throw new IllegalArgumentException(e);
 		}
 	}
-
+		
 	protected static Logger logger = MalletLogger.getLogger(SimpleLDA.class.getName());
 
 	public void setShowTopicsInterval(int interval) {
@@ -689,4 +687,15 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 
 		logger.info("[beta: " + formatter.format(beta) + "] ");		
 	}
+	
+	@Override
+	public LDAConfiguration getConfiguration() {
+		return config;
+	}
+
+	@Override
+	public int getNoTypes() {
+		return numTypes;
+	}
+
 }

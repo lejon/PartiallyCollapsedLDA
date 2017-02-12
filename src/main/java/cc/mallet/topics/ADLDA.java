@@ -520,4 +520,14 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 	public void preZ() {
 		
 	}
+
+	@Override
+	public LDAConfiguration getConfiguration() {
+		return config;
+	}
+
+	@Override
+	public int getNoTypes() {
+		return numTypes;
+	}
 }

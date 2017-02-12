@@ -1,7 +1,6 @@
 package cc.mallet.topics;
 
 import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,8 +15,8 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
-import cc.mallet.types.PoissonFixedCoeffSampler;
 import cc.mallet.types.SparseDirichlet;
+import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
@@ -37,8 +36,8 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	// Jagged array containing the topics that are non-zero for each type
 	int [][] nonZeroTypeTopicIdxs = null;
 	// How many indices  are zero for each type, i.e the column count for the zeroTypeTopicIdxs array
-	int [] nonZeroTypeTopicColIdxs = null;	
-
+	int [] nonZeroTypeTopicColIdxs = null;
+	
 	public PolyaUrnSpaliasLDA(LDAConfiguration config) {
 		super(config);
 	}
@@ -55,44 +54,11 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		super.addInstances(training);
 	}
 	
-	
-
-	@Override
 	protected SparseDirichlet createDirichletSampler() {
-		PoissonFixedCoeffSampler fep = new PoissonFixedCoeffSampler(beta, 100);
-		return instantiateSparseDirichletSampler("cc.mallet.types.PolyaUrnDirichletFixedCoeffPoisson",numTypes,beta,fep);
-		//return instantiateSparseDirichletSampler("cc.mallet.types.PolyaUrnDirichlet",numTypes,beta);
+		SparseDirichletSamplerBuilder db = instantiateSparseDirichletSamplerBuilder(config.getDirichletSamplerBuilderClass("cc.mallet.types.PolyaUrnFixedCoeffPoissonDirichletSamplerBuilder"));
+		return db.build(this);
 	}
-
-	@SuppressWarnings("unchecked")
-	private SparseDirichlet instantiateSparseDirichletSampler(String samplerClassName, int numTypes, double beta, PoissonFixedCoeffSampler fep) {
-		String model_name = config.getSparseDirichletSamplerClass(samplerClassName);
-
-		@SuppressWarnings("rawtypes")
-		Class modelClass = null;
-		try {
-			modelClass = Class.forName(model_name);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			throw new IllegalArgumentException(e);
-		}
-
-		@SuppressWarnings("rawtypes")
-		Class[] argumentTypes = new Class[3];
-		argumentTypes[0] = int.class;
-		argumentTypes[1] = double.class; 
-		argumentTypes[2] = PoissonFixedCoeffSampler.class; 
-
-		try {
-			return (SparseDirichlet) modelClass.getDeclaredConstructor(argumentTypes).newInstance(numTypes,beta,fep);
-		} catch (InstantiationException | IllegalAccessException
-				| InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
-			throw new IllegalArgumentException(e);
-		}
-	}
-
+	
 	class ParallelTableBuilder implements Callable<TableBuildResult> {
 		int type;
 		public ParallelTableBuilder(int type) {
@@ -578,5 +544,14 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			pw.close();
 		}
 	}
+	
+	@Override
+	public LDAConfiguration getConfiguration() {
+		return config;
+	}
 
+	@Override
+	public int getNoTypes() {
+		return numTypes;
+	}
 }

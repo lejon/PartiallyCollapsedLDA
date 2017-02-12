@@ -428,5 +428,16 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 	public void preZ() {
 		
 	}
+	
+	@Override
+	public LDAConfiguration getConfiguration() {
+		return config;
+	}
+
+	@Override
+	public int getNoTypes() {
+		return numTypes;
+	}
+
 
 }

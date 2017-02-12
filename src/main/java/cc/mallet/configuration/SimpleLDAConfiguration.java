@@ -58,7 +58,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private int nrTopWords = -1 ;
 	private int maxDocBufferSize = -1;
 	private int phiMeanThinDefault = -1;
-	private String sparseDirichletSamplerClass = LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_DEFAULT;
+	private String dirichletSamplerBuilderClassName = LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_BULDER_DEFAULT;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -620,13 +620,17 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 		return saveDocumentTopicTheta;
 	}
 
-	public void setSparseDirichletSamplerClass(String samplerClassName) {
-		sparseDirichletSamplerClass = samplerClassName;
+	public String getDirichletSamplerBuilderClassName() {
+		return dirichletSamplerBuilderClassName;
 	}
 
+	public void setDirichletSamplerBuilderClassName(String dirichletSamplerBuilderClassName) {
+		this.dirichletSamplerBuilderClassName = dirichletSamplerBuilderClassName;
+	}
+	
 	@Override
-	public String getSparseDirichletSamplerClass(String samplerClassName) {
-		return sparseDirichletSamplerClass;
+	public String getDirichletSamplerBuilderClass(String defaultName) {
+		return getDirichletSamplerBuilderClassName();
 	}
 
 }
