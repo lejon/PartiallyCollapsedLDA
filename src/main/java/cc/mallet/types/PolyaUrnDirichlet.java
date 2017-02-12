@@ -85,68 +85,77 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 	 * @param lambda Rate for the Poisson
 	 * @return a Possion covariate
 	 */
-	public static long nextPoissonO1(double lambda) {
-		if(lambda == 0) return 0;
-		else if(lambda < 10.0) {
-			double t = Math.exp(-lambda);
-			int k = 0;
-			double u = Math.random();
-			double s = t;
-			while(s < u) {
-				k += 1;
-				t *= lambda / k;
-				s += t;
-			}
-			return k;
-		} else if(lambda < 500.0) {
-			int k_start = (int) lambda;
-			double u = Math.random();
-			double t1 = Math.exp(k_start * Math.log(lambda) - lambda - org.apache.commons.math3.special.Gamma.logGamma(lambda+1));
-			if (t1 > u)
-				return k_start;
-			else {
-				int k1 = k_start;
-				int k2 = k_start;
-				double t2 = t1;
-				double s = t1;
-				while(true) {
-					k1 += 1;
-					t1 *= lambda / k1; s += t1;
-					if (s > u) return k1;
-					if (k2 > 0) {
-						t2 *= k2 / lambda;
-						k2 -= 1;
-						s += t2;
-						if (s > u) return k2;
-					}
-				}
-			}
-		} else {
-			double c = 0.767 - 3.36 / lambda;
-			double beta = Math.PI / Math.sqrt(3.0 * lambda);
-			double alpha = beta * lambda;
-			double k = Math.log(c) - lambda - Math.log(beta);
-			while (true) {
-				double u = Math.random();
-				double x = (alpha - Math.log((1.0 - u) / u)) / beta;
-				int n = (int) Math.floor(x + 0.5);
-				if (n > 0) {
-					double v = Math.random();
-					double y = alpha - beta * x;
-					double l = y + Math.log(v) - 2.0 * Math.log(1.0 + Math.exp(y));
-					double r = k + n * Math.log(lambda) - org.apache.commons.math3.special.Gamma.logGamma(n + 1);
-					if (l <= r)
-						return n;
-				}
-			}
-		}
-		// LEIF: When is this exception supposed to be thrown? After certain number of loops?   
-		// throw new Exception("exited infinite loop");
-	}
+	
+	// #########  Seem to be something wrong with this version, seems to end up in an endless while loop...
 
-	// HACK: copy/pasted to avoid instantiating PoissonDistribution classes that won't be used except for random draws
-	// taken from ApacheCommons Math and modified for ThreadLocalRandom and nextStandardExponential (Apache licensed)
-	// no idea how good or how bad this algorithm is, for mean < 40, it uses IID exponentials, which seems inefficient
+	//	public static long nextPoissonO1(double lambda) {
+//		if(lambda == 0) return 0;
+//		else if(lambda < 10.0) {
+//			double t = Math.exp(-lambda);
+//			int k = 0;
+//			double u = Math.random();
+//			double s = t;
+//			while(s < u) {
+//				k += 1;
+//				t *= lambda / k;
+//				s += t;
+//			}
+//			return k;
+//		} else if(lambda < 500.0) {
+//			int k_start = (int) lambda;
+//			double u = Math.random();
+//			double t1 = Math.exp(k_start * Math.log(lambda) - lambda - org.apache.commons.math3.special.Gamma.logGamma(lambda+1));
+//			if (t1 > u)
+//				return k_start;
+//			else {
+//				int k1 = k_start;
+//				int k2 = k_start;
+//				double t2 = t1;
+//				double s = t1;
+//				while(true) {
+//					k1 += 1;
+//					t1 *= lambda / k1; s += t1;
+//					if (s > u) return k1;
+//					if (k2 > 0) {
+//						t2 *= k2 / lambda;
+//						k2 -= 1;
+//						s += t2;
+//						if (s > u) return k2;
+//					}
+//				}
+//			}
+//		} else {
+//			double c = 0.767 - 3.36 / lambda;
+//			double beta = Math.PI / Math.sqrt(3.0 * lambda);
+//			double alpha = beta * lambda;
+//			double k = Math.log(c) - lambda - Math.log(beta);
+//			while (true) {
+//				double u = Math.random();
+//				double x = (alpha - Math.log((1.0 - u) / u)) / beta;
+//				int n = (int) Math.floor(x + 0.5);
+//				if (n > 0) {
+//					double v = Math.random();
+//					double y = alpha - beta * x;
+//					double l = y + Math.log(v) - 2.0 * Math.log(1.0 + Math.exp(y));
+//					double r = k + n * Math.log(lambda) - org.apache.commons.math3.special.Gamma.logGamma(n + 1);
+//					if (l <= r)
+//						return n;
+//				}
+//			}
+//		}
+//		// LEIF: When is this exception supposed to be thrown? After certain number of loops?   
+//		// throw new Exception("exited infinite loop");
+//	}
+
+	
+	/**
+	 * HACK: copy/pasted to avoid instantiating PoissonDistribution classes that won't be used except for random draws
+	 * taken from ApacheCommons Math and modified for ThreadLocalRandom and nextStandardExponential (Apache licensed)
+	 * no idea how good or how bad this algorithm is, for mean < 40, it uses IID exponentials, which seems inefficient
+	 * 
+	 * @param meanPoisson
+	 * @return Poisson covariate
+	 */
 	public static long nextPoissonCommons(double meanPoisson) {
 		final double pivot = 40.0d;
 		if (meanPoisson < pivot) {
