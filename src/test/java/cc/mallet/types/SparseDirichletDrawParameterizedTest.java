@@ -113,7 +113,7 @@ public class SparseDirichletDrawParameterizedTest {
 
 	}
 	
-	@Test
+	//@Test
 	public void testSparseCounts() {
 		sparseDirichlet = createSparseDirichlet(alphaDraw);
 		int [] counts  = new int[alphaDraw.length];
