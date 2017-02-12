@@ -26,6 +26,10 @@ public class PolyaUrnDirichletFixedCoeffPoisson extends PolyaUrnDirichlet implem
 			}
 		}
 
+		for (int i=0; i<distribution.length; i++) {
+			distribution[i] /= sum;
+		}
+
 		return new VSResult(distribution, resultingNonZeroIdxs.toNativeArray());
 	}
 	
