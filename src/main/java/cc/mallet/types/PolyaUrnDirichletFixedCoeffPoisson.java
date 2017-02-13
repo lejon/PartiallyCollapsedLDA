@@ -28,9 +28,10 @@ public class PolyaUrnDirichletFixedCoeffPoisson extends PolyaUrnDirichlet implem
 
 		for (int i=0; i<distribution.length; i++) {
 			distribution[i] /= sum;
-			if (distribution[i] <= 0) {
-				distribution[i] = Double.MIN_VALUE;
-			}			
+// With the Poisson it is allowed to have 0's
+//			if (distribution[i] <= 0) {
+//				distribution[i] = Double.MIN_VALUE;
+//			}			
 		}
 
 		return new VSResult(distribution, resultingNonZeroIdxs.toNativeArray());
