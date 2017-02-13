@@ -988,5 +988,10 @@ public class TopicMassExperiment {
 		public String getDirichletSamplerBuilderClass(String defaultName) {
 			return pc.getDirichletSamplerBuilderClass(defaultName);
 		}
+
+		@Override
+		public int getAliasPoissonThreshold(int aliasPoissonDefaultThreshold) {
+			return pc.getAliasPoissonThreshold(aliasPoissonDefaultThreshold);
+		}
 	}
 }

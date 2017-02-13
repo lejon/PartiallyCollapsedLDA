@@ -11,7 +11,9 @@ public class PolyaUrnFixedCoeffPoissonDirichletSamplerBuilder extends StandardAr
 
 	@Override
 	public SparseDirichlet build(LDAGibbsSampler sampler) {
-		PoissonFixedCoeffSampler fep = new PoissonFixedCoeffSampler(sampler.getConfiguration().getBeta(LDAConfiguration.BETA_DEFAULT), 100);
+		PoissonFixedCoeffSampler fep = new PoissonFixedCoeffSampler(
+				sampler.getConfiguration().getBeta(LDAConfiguration.BETA_DEFAULT), 
+				sampler.getConfiguration().getAliasPoissonThreshold(LDAConfiguration.ALIAS_POISSON_DEFAULT_THRESHOLD));
 		return instantiateSparseDirichletSampler(samplerClassName, 
 				sampler.getNoTypes(), 
 				sampler.getConfiguration().getBeta(LDAConfiguration.BETA_DEFAULT), fep);

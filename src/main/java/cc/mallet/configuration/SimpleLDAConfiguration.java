@@ -59,6 +59,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private int maxDocBufferSize = -1;
 	private int phiMeanThinDefault = -1;
 	private String dirichletSamplerBuilderClassName = LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_BULDER_DEFAULT;
+	private int aliasPoissonThreshold = LDAConfiguration.ALIAS_POISSON_DEFAULT_THRESHOLD;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -631,6 +632,19 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	@Override
 	public String getDirichletSamplerBuilderClass(String defaultName) {
 		return getDirichletSamplerBuilderClassName();
+	}
+	
+	public int getAliasPoissonThreshold() {
+		return aliasPoissonThreshold;
+	}
+
+	public void setAliasPoissonThreshold(int aliasPoissonThreshold) {
+		this.aliasPoissonThreshold = aliasPoissonThreshold;
+	}
+
+	@Override
+	public int getAliasPoissonThreshold(int aliasPoissonDefaultThreshold) {
+		return aliasPoissonThreshold;
 	}
 
 }

@@ -34,6 +34,7 @@ public interface LDAConfiguration {
 	public static final double LAMBDA_DEFAULT = 0.6;
 	public static final String SPARSE_DIRICHLET_SAMPLER_DEFAULT = "cc.mallet.types.MarsagliaSparseDirichlet";
 	public static final String SPARSE_DIRICHLET_SAMPLER_BULDER_DEFAULT = "cc.mallet.types.DefaultSparseDirichletSamplerBuilder";
+	public static final int ALIAS_POISSON_DEFAULT_THRESHOLD = 100;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -174,4 +175,6 @@ public interface LDAConfiguration {
 	public boolean saveDocumentThetaEstimate();
 
 	public String getDirichletSamplerBuilderClass(String samplerBuilderClassName);
+
+	public int getAliasPoissonThreshold(int aliasPoissonDefaultThreshold);
 }

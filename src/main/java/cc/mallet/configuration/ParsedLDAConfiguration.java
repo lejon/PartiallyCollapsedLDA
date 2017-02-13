@@ -416,5 +416,10 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		return samplerName;
 	}
 
+	@Override
+	public int getAliasPoissonThreshold(int aliasPoissonDefaultThreshold) {
+		return getInteger("alias_poisson_threshold",aliasPoissonDefaultThreshold);
+	}
+
 	
 }
