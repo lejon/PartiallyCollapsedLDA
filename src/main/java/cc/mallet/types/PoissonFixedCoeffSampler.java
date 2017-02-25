@@ -46,7 +46,7 @@ public class PoissonFixedCoeffSampler {
 		if(betaAdd<L) {
 			return aliasTables[betaAdd].generateSample();
 		} else {
-			return PolyaUrnDirichlet.nextPoisson(beta + betaAdd);
+			return PolyaUrnDirichlet.nextPoissonNormalApproximation(beta + betaAdd);
 		}
 	}
 }
