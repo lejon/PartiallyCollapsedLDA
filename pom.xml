@@ -64,7 +64,8 @@
 	<!-- v4.7.3: Word Salience and KR1 word re-weighting working. (it is printed but no no option to save it yet)-->
 	<!-- v4.7.4: Minor fixes, saves TopWords and RelevanceWords as CSV rather than text file-->
 	<!-- v5.0.0: Added Polya Urn based Dirichlet sampling-->
-	<version>5.0.0</version>
+	<!-- v5.0.1: Use normal approximation when not drawing using alias table -->
+	<version>5.0.1</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
