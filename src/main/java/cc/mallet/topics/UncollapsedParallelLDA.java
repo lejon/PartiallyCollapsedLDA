@@ -439,7 +439,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		Stats stats;
 		if(logTypeTopicDensity || logDocumentDensity) {
 			density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
-			docDensity = kdDensities.get() / (double) numTopics / numTypes;
+			docDensity = kdDensities.get() / (double) numTopics / data.size();
 			phiDensity = logPhiDensity ? LDAUtils.calculatePhiDensity(phi) : -1;
 			stats = new Stats(0, loggingPath, System.currentTimeMillis(), 0, 0, density, docDensity, zTimings, countTimings, phiDensity);
 			LDAUtils.logStatstHeaderToFile(stats);
@@ -510,7 +510,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				logger.fine(tw);
 				if(logTypeTopicDensity || logDocumentDensity) {
 					density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
-					docDensity = kdDensities.get() / (double) numTopics / numTypes;
+					docDensity = kdDensities.get() / (double) numTopics / data.size();
 					phiDensity = logPhiDensity ? LDAUtils.calculatePhiDensity(phi) : -1;
 					stats = new Stats(iteration, loggingPath, elapsedMillis, zSamplingTokenUpdateTime, phiSamplingTime, 
 							density, docDensity, zTimings, countTimings,phiDensity);
