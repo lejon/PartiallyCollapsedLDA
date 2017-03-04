@@ -39,7 +39,7 @@ public class PoissonFixedCoeffSamplerTest {
 				long nd = fep.nextPoisson(betaAdd);
 				if(nd<ul && nd>=ll) fepDraws[(int)(nd-ll)]++;
 			}
-			
+
 			{
 				long stdnd = stdPois.sample();
 				if(stdnd<ul && stdnd>=ll) stdDraws[(int)(stdnd-ll)]++;
@@ -156,7 +156,7 @@ public class PoissonFixedCoeffSamplerTest {
 
 		assertFalse(cs.chiSquareTestDataSetsComparison(fepDraws, stdDraws, 0.001));
 	}
-	
+
 	// Compare timings between ordinary and fixed coeff sampler
 	public void testChiSquareVsStdPoisson_Time() {
 		double beta = 0.01;
@@ -184,11 +184,65 @@ public class PoissonFixedCoeffSamplerTest {
 		long tStd = System.currentTimeMillis();
 		System.out.println("Time STD = " + (tStd - tFep));
 
-		
+
 		//System.out.println(Arrays.toString(fepDraws));
 		//System.out.println(Arrays.toString(stdDraws));
 
 		assertFalse(cs.chiSquareTestDataSetsComparison(fepDraws, stdDraws, 0.001));
 	}
 
+	// Very simple microbenchmark of different Poisson samplers
+	public static void main(String [] args) {
+
+		int nrDraws = 10_000_000;
+		
+		double lambdaFloatingPart = 0.01;
+		int lambdaIntegerPart = 99;
+
+		// Alias Poisson (PoissonFixedCoeffSampler)
+		long tFep = 0;
+		{
+			int L = 100;
+			PoissonFixedCoeffSampler fep = new PoissonFixedCoeffSampler(lambdaFloatingPart, L);
+			long [] fepDraws = new long[nrDraws];
+			long start = System.currentTimeMillis();
+			for (int i = 0; i < nrDraws; i++) {
+				long nd = fep.nextPoisson(lambdaIntegerPart);
+				fepDraws[(int)nd]++;
+			}
+			tFep = System.currentTimeMillis() - start;
+			System.out.println("Time FEP = " + tFep);
+		}
+		
+		// Normal approximation
+		long tNorm = 0;
+		{
+			long [] normDraws = new long[nrDraws];
+			long start = System.currentTimeMillis();
+			for (int i = 0; i < nrDraws; i++) {
+				long stdnd = PolyaUrnDirichlet.nextPoissonNormalApproximation(lambdaFloatingPart + lambdaIntegerPart);
+				normDraws[(int)stdnd]++;
+			}
+			tNorm = System.currentTimeMillis()-start;
+			System.out.println("Time NRM = " + tNorm);
+		}
+
+		// Standard Apache Commons
+		long tStd = 0;
+		{
+			long [] stdDraws = new long[nrDraws];
+			PoissonDistribution stdPois = new PoissonDistribution(lambdaFloatingPart+lambdaIntegerPart);
+			long start = System.currentTimeMillis();
+			for (int i = 0; i < nrDraws; i++) {
+				long stdnd = stdPois.sample();
+				stdDraws[(int)stdnd]++;
+			}
+			tStd = System.currentTimeMillis()-start;
+			System.out.println("Time STD = " + tStd);
+		}
+		
+		System.out.println("STD - FEP = " + (tStd-tFep));
+		System.out.println("NRM - FEP = " + (tNorm-tFep));
+
+	}
 }
