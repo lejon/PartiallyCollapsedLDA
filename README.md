@@ -1,4 +1,7 @@
 [![Build Status](https://travis-ci.org/lejon/PartiallyCollapsedLDA.svg?branch=master)](https://travis-ci.org/lejon/PartiallyCollapsedLDA) 
+
+![YourKit](https://www.yourkit.com/images/yklogo.png)
+
 PC-LDA
 =====
 Repo for our Partially Collapsed ParallelLDA implementation described in the article [arXiv:1506.03784](http://arxiv.org/abs/1506.03784 "arXiv:1506.03784"): 
@@ -50,4 +53,13 @@ Occationally some of the "probabilistic" tests fail due to random chance. This i
 
 ## Public DOI
 [![DOI](https://zenodo.org/badge/13374/lejon/PartiallyCollapsedLDA.svg)](http://dx.doi.org/10.5281/zenodo.18102)
+
+Acknowledgements
+----------------
+I'm a very satisfied user of the YourKit profiler. A Great product with great support.
+
+YourKit supports open source projects with its full-featured Java Profiler.
+YourKit, LLC is the creator of [YourKit Java Profiler](https://www.yourkit.com/java/profiler/)
+and [YourKit .NET Profiler](https://www.yourkit.com/.net/profiler/),
+innovative and intelligent tools for profiling Java and .NET applications.
 
