@@ -42,10 +42,9 @@ An example of a "main" class is cc.mallet.topics.tui.ParallelLDA
 1. Install Apache Maven and run:
 
 ```mvn package```
-
 in bash.
 
-Occationally some of the "probabilistic" tests fail due to random chance. This is ok in a statistical sense but not for a test suite so this should eventually be tuned. For now if the suite is re-run it should be ok.
+Occasionally some of the "probabilistic" tests fail due to random chance. This is ok in a statistical sense but not for a test suite so this should eventually be tuned. For now if the suite is re-run it should be ok.
 
 ## Example run using binary (the release JAR)
 
@@ -56,7 +55,7 @@ Occationally some of the "probabilistic" tests fail due to random chance. This i
 
 Acknowledgements
 ----------------
-I'm a very satisfied user of the YourKit profiler. A Great product with great support.
+I'm a very satisfied user of the YourKit profiler. A Great product with great support. It has been sucessfully used for profiling in this project.
 
 ![YourKit](https://www.yourkit.com/images/yklogo.png)
 
