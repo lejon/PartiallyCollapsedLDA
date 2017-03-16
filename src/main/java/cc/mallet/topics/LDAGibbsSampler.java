@@ -10,10 +10,12 @@ import cc.mallet.types.InstanceList;
 
 public interface LDAGibbsSampler {
 	void setConfiguration(LDAConfiguration config);
+	LDAConfiguration getConfiguration();
 	void addInstances (InstanceList training);
 	void sample (int iterations) throws IOException;
 	void setRandomSeed(int seed);
 	int getNoTopics();
+	int getNoTypes();
 	int getCurrentIteration();
 	int [][] getZIndicators();
 	double [][] getZbar();

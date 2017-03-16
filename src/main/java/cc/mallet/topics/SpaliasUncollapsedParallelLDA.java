@@ -326,6 +326,20 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		return sum;
 	}
 
+	/*
+	 * Sample a topic indicator
+	 * 
+	 * @param type Type of the current token to sample
+	 * @param nonZeroTopics Indices of the topics with p(z=k|.) > 0
+	 * @param nonZeroTopicCnt Number of indicies in nonZeroTopics
+	 * @param sum The sum of Sum_{nonzero_topic} localTopicCounts[topic] * phiType[topic] (also cumsum[nonZeroTopicCnt-1])
+	 * @param cumsum The cumulative sum over Sum_{nonzero_topic} localTopicCounts[topic] * phiType[topic]
+	 * @param u Uniform value within (0,1)
+	 * @param u_sigma Same uniform value within (0,(typeNorm[type] + sum))
+	 * 
+	 * @return 
+	 * 
+	 */
 	int sampleNewTopic(int type, int[] nonZeroTopics, int nonZeroTopicCnt, double sum, double[] cumsum, double u,
 			double u_sigma) {
 		int newTopic;

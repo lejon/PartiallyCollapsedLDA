@@ -1,8 +1,12 @@
 package cc.mallet.types;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.apache.commons.math3.util.FastMath;
-import java.util.concurrent.ThreadLocalRandom;
+
+import gnu.trove.TIntArrayList;
+import scala.NotImplementedError;
 
 public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirichlet {
 
@@ -14,9 +18,9 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 		super(size, prior);
 	}
 
-	public double[] nextDistribution(int [] counts) {
+	public VSResult nextDistributionWithSparseness(int [] counts) {
 		double distribution[] = new double[partition.length];
-
+		TIntArrayList resultingNonZeroIdxs = new TIntArrayList();
 		double sum = 0;
 
 		// implements the Poisson Polya Urn
@@ -30,23 +34,130 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 				distribution[i] = (double) nextPoisson((double) counts[i]);
 			}
 			sum += distribution[i];
+			if(distribution[i]!=0) {
+				resultingNonZeroIdxs.add(i);
+			}
 		}
 
 		for (int i=0; i<distribution.length; i++) {
 			distribution[i] /= sum;
-			if (distribution[i] <= 0) {
-				distribution[i] = Double.MIN_VALUE;
-			}			
+			// With the Poisson it is allowed to have 0's
+//			if (distribution[i] <= 0) {
+//				distribution[i] = Double.MIN_VALUE;
+//			}			
 		}
 
-		return distribution;
+		return new VSResult(distribution, resultingNonZeroIdxs.toNativeArray());
 	}
 
+	@Override
+	public double[] nextDistribution(int[] counts) {
+		return nextDistributionWithSparseness(counts).phiRow;
+	}
 
-	// HACK: copy/pasted to avoid instantiating PoissonDistribution classes that won't be used except for random draws
-	// taken from ApacheCommons Math and modified for ThreadLocalRandom and nextStandardExponential (Apache licensed)
-	// no idea how good or how bad this algorithm is, for mean < 40, it uses IID exponentials, which seems inefficient
-	protected long nextPoisson(double meanPoisson) {
+	@Override
+	public VSResult nextDistributionWithSparseness() {
+		throw new NotImplementedError();
+	}
+	
+	public static long nextPoisson(double meanPoisson) {
+		return nextPoissonCommons(meanPoisson);
+	}
+
+	/**
+	 * Normal approximation of Poisson draw. Should only be used when meanPoisson is
+	 * large enough for the normal approximation to be valid.
+	 * 
+	 * @param meanPoisson
+	 * @return
+	 */
+	public static long nextPoissonNormalApproximation(double meanPoisson) {
+		return Math.round(Math.sqrt(meanPoisson) * ThreadLocalRandom.current().nextGaussian() + (meanPoisson));
+	}
+	
+	/**
+	 * This is an O(1) algorithm for any lambda. The first half of the code is taken from Breeze, 
+	 * which appears to implement the method in Kemp (1991). Second half of the code is the PA 
+	 * method in Atkinson (1979) for large lambda, based on pseudo code I found online. The cutoff 
+	 * value (500) between the two methods was chosen by trial and error.
+	 * 
+	 * @autor Alexander Terenin (ported from Scala by Leif Jonsson)
+	 * 
+	 * @param lambda Rate for the Poisson
+	 * @return a Possion covariate
+	 */
+	
+	// #########  Seem to be something wrong with this version, seems to end up in an endless while loop...
+
+	//	public static long nextPoissonO1(double lambda) {
+//		if(lambda == 0) return 0;
+//		else if(lambda < 10.0) {
+//			double t = Math.exp(-lambda);
+//			int k = 0;
+//			double u = Math.random();
+//			double s = t;
+//			while(s < u) {
+//				k += 1;
+//				t *= lambda / k;
+//				s += t;
+//			}
+//			return k;
+//		} else if(lambda < 500.0) {
+//			int k_start = (int) lambda;
+//			double u = Math.random();
+//			double t1 = Math.exp(k_start * Math.log(lambda) - lambda - org.apache.commons.math3.special.Gamma.logGamma(lambda+1));
+//			if (t1 > u)
+//				return k_start;
+//			else {
+//				int k1 = k_start;
+//				int k2 = k_start;
+//				double t2 = t1;
+//				double s = t1;
+//				while(true) {
+//					k1 += 1;
+//					t1 *= lambda / k1; s += t1;
+//					if (s > u) return k1;
+//					if (k2 > 0) {
+//						t2 *= k2 / lambda;
+//						k2 -= 1;
+//						s += t2;
+//						if (s > u) return k2;
+//					}
+//				}
+//			}
+//		} else {
+//			double c = 0.767 - 3.36 / lambda;
+//			double beta = Math.PI / Math.sqrt(3.0 * lambda);
+//			double alpha = beta * lambda;
+//			double k = Math.log(c) - lambda - Math.log(beta);
+//			while (true) {
+//				double u = Math.random();
+//				double x = (alpha - Math.log((1.0 - u) / u)) / beta;
+//				int n = (int) Math.floor(x + 0.5);
+//				if (n > 0) {
+//					double v = Math.random();
+//					double y = alpha - beta * x;
+//					double l = y + Math.log(v) - 2.0 * Math.log(1.0 + Math.exp(y));
+//					double r = k + n * Math.log(lambda) - org.apache.commons.math3.special.Gamma.logGamma(n + 1);
+//					if (l <= r)
+//						return n;
+//				}
+//			}
+//		}
+//		// LEIF: When is this exception supposed to be thrown? After certain number of loops?   
+//		// throw new Exception("exited infinite loop");
+//	}
+
+	
+	/**
+	 * HACK: copy/pasted to avoid instantiating PoissonDistribution classes that won't be used except for random draws
+	 * taken from ApacheCommons Math and modified for ThreadLocalRandom and nextStandardExponential (Apache licensed)
+	 * no idea how good or how bad this algorithm is, for mean < 40, it uses IID exponentials, which seems inefficient
+	 * 
+	 * @param meanPoisson
+	 * @return Poisson covariate
+	 */
+	public static long nextPoissonCommons(double meanPoisson) {
 		final double pivot = 40.0d;
 		if (meanPoisson < pivot) {
 			double p = FastMath.exp(-meanPoisson);
@@ -69,7 +180,7 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 			final double lambdaFractional = meanPoisson - lambda;
 			final double logLambda = FastMath.log(lambda);
 			final double logLambdaFactorial = CombinatoricsUtils.factorialLog((int) lambda);
-			final long y2 = lambdaFractional < Double.MIN_VALUE ? 0 : nextPoisson(lambdaFractional);
+			final long y2 = lambdaFractional < Double.MIN_VALUE ? 0 : nextPoissonCommons(lambdaFractional);
 			final double delta = FastMath.sqrt(lambda * FastMath.log(32 * lambda / FastMath.PI + 1));
 			final double halfDelta = delta / 2;
 			final double twolpd = 2 * lambda + delta;
@@ -133,7 +244,7 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 	}
 
 	// exponential RV sampler via inversion method
-	protected double nextStandardExponential() {
+	public static double nextStandardExponential() {
 		for(;;) {
 			double u = ThreadLocalRandom.current().nextDouble();
 			double e = -FastMath.log(u);
@@ -142,6 +253,4 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 			}
 		}
 	}
-
-
 }

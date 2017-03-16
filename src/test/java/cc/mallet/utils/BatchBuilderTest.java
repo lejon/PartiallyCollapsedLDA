@@ -142,6 +142,16 @@ public class BatchBuilderTest {
 		public void preZ() {
 			
 		}
+
+		@Override
+		public LDAConfiguration getConfiguration() {
+			return null;
+		}
+
+		@Override
+		public int getNoTypes() {
+			return 0;
+		}
 	}
 
 	@Test

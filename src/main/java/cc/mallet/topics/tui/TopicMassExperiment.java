@@ -985,8 +985,13 @@ public class TopicMassExperiment {
 		}
 
 		@Override
-		public String getSparseDirichletSamplerClass(String samplerClassName) {
-			return pc.getSparseDirichletSamplerClass(samplerClassName);
+		public String getDirichletSamplerBuilderClass(String defaultName) {
+			return pc.getDirichletSamplerBuilderClass(defaultName);
+		}
+
+		@Override
+		public int getAliasPoissonThreshold(int aliasPoissonDefaultThreshold) {
+			return pc.getAliasPoissonThreshold(aliasPoissonDefaultThreshold);
 		}
 	}
 }
