@@ -2,6 +2,8 @@ package cc.mallet.types;
 
 import static org.junit.Assert.assertFalse;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 import org.apache.commons.math3.distribution.PoissonDistribution;
 import org.apache.commons.math3.stat.inference.ChiSquareTest;
 import org.junit.Test;
@@ -192,7 +194,7 @@ public class PoissonFixedCoeffSamplerTest {
 	}
 
 	// Very simple microbenchmark of different Poisson samplers
-	public static void main(String [] args) {
+	public static void microbenchmarkPoissonDraws() {
 
 		int nrDraws = 10_000_000;
 		
@@ -244,5 +246,41 @@ public class PoissonFixedCoeffSamplerTest {
 		System.out.println("STD - FEP = " + (tStd-tFep));
 		System.out.println("NRM - FEP = " + (tNorm-tFep));
 
+	}
+	
+	// Very simple microbenchmark of different Poisson samplers
+	public static void microbenchmarkUnifVsGaussian() {
+
+		int nrDraws = 100_000_000;
+		
+		long tNorm = 0;
+		{
+			double [] normDraws = new double[nrDraws];
+			long start = System.currentTimeMillis();
+			for (int i = 0; i < nrDraws; i++) {
+				normDraws[i] = ThreadLocalRandom.current().nextGaussian();
+			}
+			tNorm = System.currentTimeMillis()-start;
+			System.out.println("Time NRM = " + tNorm);
+		}
+
+		long tStd = 0;
+		{
+			double [] normDraws = new double[nrDraws];
+			long start = System.currentTimeMillis();
+			for (int i = 0; i < nrDraws; i++) {
+				normDraws[i] = ThreadLocalRandom.current().nextDouble();
+			}
+			tStd = System.currentTimeMillis()-start;
+			System.out.println("Time Unif = " + tStd);
+		}
+		
+		System.out.println("NRM - Unif = " + (tNorm-tStd));
+
+	}
+	
+	public static void main(String [] args) {
+		//microbenchmarkPoissonDraws();
+		microbenchmarkUnifVsGaussian();
 	}
 }
