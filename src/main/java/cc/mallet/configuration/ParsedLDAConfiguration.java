@@ -421,5 +421,9 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		return getInteger("alias_poisson_threshold",aliasPoissonDefaultThreshold);
 	}
 
-	
+	@Override
+	public String getFileRegex(String string) {
+		String ext = getStringProperty("file_regex");
+		return (ext == null || ext.length() == 0) ? string : ext;
+	}
 }

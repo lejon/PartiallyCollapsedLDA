@@ -100,22 +100,43 @@ public class ParallelLDA {
 				System.out.println("Scheme: " + whichModel);
 
 				InstanceList instances;
-				if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
-					instances = LDAUtils.loadInstancesKeep(
+				
+				File dsf = new File(dataset_fn); 
+				if(dsf.isDirectory()) {
+					instances = LDAUtils.loadInstanceDirectory(
 							dataset_fn, 
-							config.getStoplistFilename("stoplist.txt"), 
-							config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
-							config.keepNumbers(), 
-							config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
-							config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION));					
-				} else {					
-					instances = LDAUtils.loadInstancesPrune(
-							dataset_fn, 
+							config.getFileRegex(LDAConfiguration.FILE_REGEX_DEFAULT),
 							config.getStoplistFilename("stoplist.txt"), 
 							config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), 
 							config.keepNumbers(), 
 							config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
 							config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION));
+					if(instances.size()==0) {
+						System.err.println("No instances loaded. Perhaps your filename REGEX ('" 
+								+ config.getFileRegex(LDAConfiguration.FILE_REGEX_DEFAULT) + "') was wrong?");
+						System.err.println("Remember that Java RE's are not the same as Perls. \nTo match a filename that ends with '.txt', the regex would be '" 
+								+ LDAConfiguration.FILE_REGEX_DEFAULT + "'");
+						System.err.println("The filename given to match the regex against is the _full absolute path_ of the file.");
+						System.exit(-1);
+					}
+				} else {
+					if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
+						instances = LDAUtils.loadInstancesKeep(
+								dataset_fn, 
+								config.getStoplistFilename("stoplist.txt"), 
+								config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
+								config.keepNumbers(), 
+								config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+								config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION));					
+					} else {					
+						instances = LDAUtils.loadInstancesPrune(
+								dataset_fn, 
+								config.getStoplistFilename("stoplist.txt"), 
+								config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), 
+								config.keepNumbers(), 
+								config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+								config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION));
+					}
 				}
 
 				LDAGibbsSampler model = createModel(config, whichModel);

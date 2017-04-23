@@ -993,5 +993,10 @@ public class TopicMassExperiment {
 		public int getAliasPoissonThreshold(int aliasPoissonDefaultThreshold) {
 			return pc.getAliasPoissonThreshold(aliasPoissonDefaultThreshold);
 		}
+
+		@Override
+		public String getFileRegex(String string) {
+			return pc.getFileRegex(string);
+		}
 	}
 }

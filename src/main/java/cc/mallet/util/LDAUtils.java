@@ -1,10 +1,13 @@
 package cc.mallet.util;
 
+import static java.lang.Math.log;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -14,6 +17,7 @@ import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,10 +25,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.pipe.CharSequence2TokenSequence;
 import cc.mallet.pipe.CharSequenceLowercase;
 import cc.mallet.pipe.FeatureCountPipe;
+import cc.mallet.pipe.Input2CharSequence;
 import cc.mallet.pipe.KeepConnectorPunctuationNumericAlsoTokenizer;
 import cc.mallet.pipe.KeepConnectorPunctuationTokenizerLarge;
 import cc.mallet.pipe.NumericAlsoTokenizer;
@@ -35,7 +42,12 @@ import cc.mallet.pipe.SimpleTokenizerLarge;
 import cc.mallet.pipe.StringList2FeatureSequence;
 import cc.mallet.pipe.Target2Label;
 import cc.mallet.pipe.TfIdfPipe;
+import cc.mallet.pipe.TokenSequence2FeatureSequence;
+import cc.mallet.pipe.TokenSequenceLowercase;
+import cc.mallet.pipe.TokenSequencePredicateMatcher;
+import cc.mallet.pipe.TokenSequenceRemoveStopwords;
 import cc.mallet.pipe.iterator.CsvIterator;
+import cc.mallet.pipe.iterator.FileIterator;
 import cc.mallet.topics.LogState;
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.topics.TopicInferencer;
@@ -47,8 +59,6 @@ import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
-
-import static java.lang.Math.log;
 
 public class LDAUtils {
 
@@ -1433,5 +1443,137 @@ public class LDAUtils {
 			docLens[i] = tokenSequence.size();
 		}
 		return docLens;
+	}
+	
+	public static InstanceList loadInstanceDirectory(String directory, String fileRegex, String stoplistFile,
+			Integer rareThreshold, boolean keepNumbers, int maxDocumentBufferSize, boolean keepConnectors) {
+			return loadInstanceDirectories(new String[] {directory}, fileRegex, stoplistFile, rareThreshold,
+				 keepNumbers, maxDocumentBufferSize, keepConnectors);
+	}	
+
+	public static InstanceList loadInstanceDirectories(String [] directories, final String fileRegex, String stoplistFile, Integer keepCount,
+			boolean keepNumbers, int maxBufSize, boolean keepConnectors) {
+		
+		File [] fdirectories = new File[directories.length];
+		for (int i = 0; i < fdirectories.length; i++) {
+			fdirectories[i] = new File(directories[i]);
+		}
+		
+		SimpleTokenizerLarge tokenizer;
+
+		tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
+
+		if (keepCount > 0) {
+			FileIterator iterator = new FileIterator(fdirectories,
+                    new FileFilter() {
+						@Override
+						public boolean accept(File pathname) {
+							return pathname.toString().matches(fileRegex);
+						}
+					},
+                    FileIterator.LAST_DIRECTORY);
+
+			Alphabet alphabet = new Alphabet();
+			TokenSequence2FeatureSequence sl2fs = new TokenSequence2FeatureSequence(alphabet);
+			TfIdfPipe tfIdfPipe = new TfIdfPipe(alphabet, null);
+
+			ArrayList<Pipe> pipes = new ArrayList<Pipe>();
+			pipes.add(new Input2CharSequence("UTF-8"));
+			
+			Pattern tokenPattern =
+		            Pattern.compile("[\\p{L}\\p{N}_]+");
+
+			pipes.add(new CharSequence2TokenSequence(tokenPattern));
+			pipes.add(new TokenSequenceLowercase());
+			
+			TokenSequenceRemoveStopwords stopwordFilter =
+					new TokenSequenceRemoveStopwords(new File(stoplistFile),
+													 Charset.defaultCharset().displayName(),
+													 false, // don't include default list
+													 false,
+													 false);
+			pipes.add(stopwordFilter);
+			
+			TokenSequencePredicateMatcher reMatchPipe = new TokenSequencePredicateMatcher(new TokenSequencePredicateMatcher.Predicate<String>() {
+				@Override
+				public boolean test(String query) {
+					return !query.matches(".*(--+|__+).*");
+				}
+			});
+			pipes.add(reMatchPipe);
+			
+			pipes.add(sl2fs);
+			if (keepCount > 0) {
+				pipes.add(tfIdfPipe);
+			}
+
+			Pipe serialPipe = new SerialPipes(pipes);
+
+			Iterator<Instance> iiterator = serialPipe.newIteratorFrom(iterator);
+
+			int count = 0;
+
+			// We aren't really interested in the instance itself,
+			//  just the total feature counts.
+			while (iiterator.hasNext()) {
+				count++;
+				if (count % 100000 == 0) {
+					System.out.println(count);
+				}
+				iiterator.next();
+			}
+
+			if (keepCount > 0) {
+				tfIdfPipe.addPrunedWordsToStoplist(tokenizer, keepCount);
+			}
+		}
+
+		FileIterator iterator = new FileIterator(fdirectories,
+				new FileFilter() {
+					@Override
+					public boolean accept(File pathname) {
+						return pathname.toString().matches(fileRegex);
+					}
+				},
+				FileIterator.LAST_DIRECTORY);
+
+		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
+		Alphabet alphabet = new Alphabet();
+
+		TokenSequence2FeatureSequence sl2fs = new TokenSequence2FeatureSequence(alphabet);
+
+		pipes.add(new Input2CharSequence("UTF-8"));
+		
+		Pattern tokenPattern =
+	            Pattern.compile("[\\p{L}\\p{N}_]+");
+
+		pipes.add(new CharSequence2TokenSequence(tokenPattern));
+		pipes.add(new TokenSequenceLowercase());
+		TokenSequenceRemoveStopwords stopwordFilter =
+				new TokenSequenceRemoveStopwords(new File(stoplistFile),
+												 Charset.defaultCharset().displayName(),
+												 false, // don't include default list
+												 false,
+												 false);
+		pipes.add(stopwordFilter);
+		
+		TokenSequencePredicateMatcher reMatchPipe = new TokenSequencePredicateMatcher(new TokenSequencePredicateMatcher.Predicate<String>() {
+			@Override
+			public boolean test(String query) {
+				return !query.matches(".*(--+|__+).*");
+			}
+		});
+		pipes.add(reMatchPipe);
+		
+		pipes.add(sl2fs);
+		Target2Label ttl = new Target2Label ();
+		pipes.add(ttl);
+
+		Pipe serialPipe = new SerialPipes(pipes);
+
+		InstanceList instances = new InstanceList(serialPipe);
+		instances.addThruPipe(iterator);
+
+		return instances;	
 	}
 }

@@ -198,3 +198,8 @@ vocabulary_filename = lda_vocab.txt
 # Examples:
 sparse_dirichlet_sampler_builder_name = cc.mallet.types.PolyaUrnFixedCoeffPoissonDirichletSamplerBuilder
 sparse_dirichlet_sampler_builder_name = cc.mallet.types.PolyaUrnDirichletSamplerBuilder
+
+# If a directory is given instead of a filename, the instances are loaded 
+# from that directory (and its subdirs). file_regex is a regular expression
+# for which filenames to match, for .txt files, the regex should be .*\.txt$ 
+file_regex = .*\.txt$

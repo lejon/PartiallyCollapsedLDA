@@ -60,6 +60,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private int phiMeanThinDefault = -1;
 	private String dirichletSamplerBuilderClassName = LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_BULDER_DEFAULT;
 	private int aliasPoissonThreshold = LDAConfiguration.ALIAS_POISSON_DEFAULT_THRESHOLD;
+	private String fileRegex;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -645,6 +646,15 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	@Override
 	public int getAliasPoissonThreshold(int aliasPoissonDefaultThreshold) {
 		return aliasPoissonThreshold;
+	}
+
+	public void setFileRegex(String string) {
+		fileRegex = string;
+	}
+	
+	@Override
+	public String getFileRegex(String string) {
+		return fileRegex == null ? string : fileRegex;
 	}
 
 }
