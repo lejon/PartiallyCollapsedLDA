@@ -65,7 +65,8 @@
 	<!-- v4.7.4: Minor fixes, saves TopWords and RelevanceWords as CSV rather than text file-->
 	<!-- v5.0.0: Added Polya Urn based Dirichlet sampling-->
 	<!-- v5.0.1: Use normal approximation when not drawing using alias table -->
-	<version>5.0.1</version>
+	<!-- v5.1.0: Added functionality for loading instances directly from a directory rather than from a file -->
+	<version>5.1.0</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
