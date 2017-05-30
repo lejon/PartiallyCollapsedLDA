@@ -25,8 +25,8 @@ dataset = datasets/nips.txt
 
 ## Scheme: Which sampling scheme to use (uncollapsed, collapsed, adlda)
 ##		paranoid is uncollapsed with additional (time consuming) consistency checks
-scheme = uncollapsed
-#scheme = spalias
+#scheme = uncollapsed
+scheme = spalias
 
 ## Seed: seed for the random sampling, -1 means use clock time
 seed = -1 # -1 => use LSB of current time as seed
@@ -44,12 +44,14 @@ iterations = 8000
 diagnostic_interval = -1
 
 ## Batches: How many threads to use for Z sampling, (more threads are allocated for sampling Phi and count Updates)
-batches = 4
+## DEPRICATED: NOT USED
+#batches = 4
 
 ## Topic batches: How many threads for sampling Phi
-topic_batches = 3
+## DEPRICATED: NOT USED
+#topic_batches = 3
 
-## Rare threshold: Min threshold for how many times a word must occur to be included in vocab
+## Rare threshold: Min threshold for how many times a word must occur to be included in vocabulary
 rare_threshold = 3
 
 ## TF-IDF: 
@@ -73,7 +75,8 @@ start_diagnostic = 500
 measure_timing = false
 
 ## Results size: How many documents to buffer on the workers before sending back for updates
-results_size = 5
+## DEPRICATED: NOT USED
+#results_size = 5
 
 ### Batch Building Scheme: Different algorithms for building the document batches
  
@@ -152,7 +155,6 @@ stoplist = stoplist.txt
 debug = 0
 
 log_document_density = true
-
 log_type_topic_density = true
 save_doc_topic_means = true
 
