@@ -474,13 +474,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 
 	@Override
 	public int[][] getTypeTopicMatrix() {
-		int [][] res = new int[typeTopicCounts.length][typeTopicCounts[0].length];
-		for (int type = 0; type < res.length; type++) {
-			for (int topic = 0; topic < res[type].length; topic++) {
-				res[type][topic] = typeTopicCounts[type][topic] & topicMask;
-			}
-		}
-		return res;
+		return getTypeTopicCounts();
 	}
 	
 	public double [][] getZbar() {
