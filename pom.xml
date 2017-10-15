@@ -66,7 +66,8 @@
 	<!-- v5.0.0: Added Polya Urn based Dirichlet sampling-->
 	<!-- v5.0.1: Use normal approximation when not drawing using alias table -->
 	<!-- v5.1.0: Added functionality for loading instances directly from a directory rather than from a file -->
-	<version>5.1.0</version>
+	<!-- v5.1.1: Bugfix for crash on getTypeTopicCounts from ADLDA model -->
+	<version>5.1.1</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
