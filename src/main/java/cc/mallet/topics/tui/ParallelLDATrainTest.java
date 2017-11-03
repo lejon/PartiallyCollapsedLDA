@@ -129,7 +129,7 @@ public class ParallelLDATrainTest extends ParallelLDA {
 				SpaliasUncollapsedParallelLDA trainedSampler = XValidationCreator.sampleTrainingset(trainingInstances, config);
 				InstanceList testInstances = trainTest[TESTING];
 				System.out.println("Test set contains: " + testInstances.size() + " instances");
-				XValidationCreator.sampleTestset(testInstances, trainingInstances, trainedSampler.getPhi(), config);
+				SpaliasUncollapsedParallelLDA testSampler = XValidationCreator.sampleTestset(testInstances, trainingInstances, trainedSampler.getPhi(), config);
 				t.stop();
 				System.out.println("Finished:" + new Date());
 				
@@ -155,7 +155,18 @@ public class ParallelLDATrainTest extends ParallelLDA {
 				out.close();
 
 				System.out.println("Top words are: \n" + topWords);
-
+				
+				String testTopWords = LDAUtils.formatTopWordsAsCsv(
+						LDAUtils.getTopRelevanceWords(config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT), 
+								testSampler.getAlphabet().size(), 
+								testSampler.getNoTopics(), 
+								testSampler.getTypeTopicMatrix(),  
+								config.getBeta(LDAConfiguration.BETA_DEFAULT),
+								config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
+								testSampler.getAlphabet()));
+				
+				System.out.println("Test words are: \n" + testTopWords);
+				
 				System.out.println("I am done!");
 			}
 			if(buildVer==null||implVer==null) {

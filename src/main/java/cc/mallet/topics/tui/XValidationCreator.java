@@ -140,7 +140,7 @@ public class XValidationCreator {
 	}
 
 	
-	protected static void sampleTestset(InstanceList testInstances, InstanceList trainingInstances, double[][] phi, LDAConfiguration config) throws ConfigurationException, IOException {
+	protected static SpaliasUncollapsedParallelLDA sampleTestset(InstanceList testInstances, InstanceList trainingInstances, double[][] phi, LDAConfiguration config) throws ConfigurationException, IOException {
 		SpaliasUncollapsedParallelLDA spalias = new SpaliasUncollapsedParallelLDA(config);
 		spalias.addInstances(testInstances);
 		double [][] phiCopy = new double[phi.length][phi[0].length];
@@ -163,6 +163,7 @@ public class XValidationCreator {
 		}
 		out.flush();
 		out.close();
+		return spalias;
 	}
 	
 	public static String [] extractRowIds(InstanceList dataset) {
