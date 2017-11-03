@@ -453,7 +453,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 
 	protected static int removeSorted(int oldTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
 		if (nonZeroTopicCnt<1) {
-			throw new IllegalArgumentException ("SpaliasUncollapsedParallelLDA: Cannot remove, count is less than 1");
+			throw new IllegalArgumentException ("PolyaUrnLDA: Cannot remove, count is less than 1");
 		}
 		//System.out.println("New empty topic. Cnt = " + nonZeroTopicCnt);	
 		int nonZeroIdx = nonZeroTopicsBackMapping[oldTopic];
