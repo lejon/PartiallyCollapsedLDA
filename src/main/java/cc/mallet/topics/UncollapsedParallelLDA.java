@@ -456,11 +456,25 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					tokensPerTopic);
 		}
 		
+		Double heldOutLL = null;
+		
 		if(logTypeTopicDensity || logDocumentDensity || logPhiDensity) {
 			density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 			docDensity = kdDensities.get() / (double) numTopics / data.size();
 			phiDensity = logPhiDensity ? LDAUtils.calculatePhiDensity(phi) : -1;
-			stats = new Stats(0, loggingPath, System.currentTimeMillis(), 0, 0, density, docDensity, zTimings, countTimings, phiDensity);
+			
+			if(testSet != null) {
+				heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
+			}
+			
+			if(testSet!=null) {
+				stats = new Stats(0, loggingPath, System.currentTimeMillis(), 0, 0, 
+						density, docDensity, zTimings, countTimings,phiDensity,heldOutLL);						
+			} else {
+				stats = new Stats(0, loggingPath, System.currentTimeMillis(), 0, 0, 
+					density, docDensity, zTimings, countTimings,phiDensity);
+			} 
+			
 			LDAUtils.logStatstHeaderToFile(stats);
 			LDAUtils.logStatsToFile(stats);
 		}
@@ -515,7 +529,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 			// Occasionally print more information
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
-				Double heldOutLL = null;
+				
 				if(testSet != null) {
 					heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
 					LDAUtils.heldOutLLToFile(loggingPath, iteration, heldOutLL, logger);
