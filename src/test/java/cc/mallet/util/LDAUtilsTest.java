@@ -305,6 +305,35 @@ public class LDAUtilsTest {
 		InstanceList is = LDAUtils.loadInstancesKeep(ds, null, 20, true);
 		assertEquals(20,is.getDataAlphabet().size());	
 	}
+	
+	@Test
+	public void testLoadTestInstancesKeep() throws FileNotFoundException {
+		InstanceList is = LDAUtils.loadInstancesKeep(ds, null, 20, true);
+		is.getAlphabet().stopGrowth();
+		String dsTest = "src/main/resources/datasets/100ap.txt";
+		InstanceList testIS = LDAUtils.loadInstancesKeep(dsTest,null,20,true,1000,true,is.getDataAlphabet());
+		
+		assertEquals(100,testIS.size());
+		assertEquals(20,is.getDataAlphabet().size());	
+		assertEquals(20,testIS.getDataAlphabet().size());
+		assertTrue(is.getAlphabet().equals(testIS.getAlphabet()));
+	}
+
+	@Test
+	public void testLoadTestInstancesPrune() throws FileNotFoundException {
+		String ds = "src/main/resources/datasets/nips.txt";
+		InstanceList is = LDAUtils.loadInstancesPrune(ds, null, 50, true);
+		is.getAlphabet().stopGrowth();
+		String dsTest = "src/main/resources/datasets/100ap.txt";
+		InstanceList testIS = LDAUtils.loadInstancesPrune(dsTest,null,2,true,1000,true,is.getDataAlphabet());
+		
+		assertEquals(1499,is.size());
+		assertEquals(100,testIS.size());
+		assertEquals(4547,is.getDataAlphabet().size());	
+		assertEquals(4547,testIS.getDataAlphabet().size());
+		assertTrue(is.getAlphabet().equals(testIS.getAlphabet()));
+	}
+
 
 	@Test
 	public void testReadWriteBinaryDoubleMatrix() throws IOException {

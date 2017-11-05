@@ -50,6 +50,14 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	}
 
 	/* (non-Javadoc)
+	 * @see configuration.LDAConfiguration#getTestDatasetFilename()
+	 */
+	@Override
+	public String getTestDatasetFilename() {
+		return getStringProperty("test_dataset");
+	}
+
+	/* (non-Javadoc)
 	 * @see configuration.LDAConfiguration#getScheme()
 	 */
 	@Override

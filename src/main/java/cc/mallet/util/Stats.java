@@ -12,6 +12,7 @@ public class Stats {
 	public double phiDensity;
 	public long [] zTimings;
 	public long [] countTimings;
+	public Double heldOutLL;
 
 	public Stats(int iteration, String loggingPath,	long absoluteTime,	
 			long zSamplingTokenUpdateTime, long phiSamplingTime, double density,
@@ -26,6 +27,15 @@ public class Stats {
 		this.phiDensity = phiDensity;
 		this.zTimings = zTimings;
 		this.countTimings = countTimings;
+	}
+
+	public Stats(int iteration, String loggingPath, long elapsedMillis, long zSamplingTokenUpdateTime,
+			long phiSamplingTime, double density, double docDensity, long[] zTimings, long[] countTimings,
+			double phiDensity, Double heldOutLL) {
+		this(iteration, loggingPath,elapsedMillis,	
+				zSamplingTokenUpdateTime,  phiSamplingTime, density,
+				docDensity, zTimings, countTimings,  phiDensity);
+		this.heldOutLL = heldOutLL;
 	}
 
 }

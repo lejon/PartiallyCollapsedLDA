@@ -61,7 +61,7 @@ public class SimpleTokenizerLargeTest {
 		try {
 			if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
 				LDAUtils.loadInstancesKeep(config.getDatasetFilename(), 
-						config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), false);					
+						config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), false, null);					
 			} else {
 				fail("TF-IDF was not > 0");
 			}
@@ -71,7 +71,7 @@ public class SimpleTokenizerLargeTest {
 		fail("Test did not throw ArrayIndexOutOfBoundsException");
 		
 		LDAUtils.loadInstancesKeep(config.getDatasetFilename(), 
-				config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), 10000, false);
+				config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), 10000, false, null);
 	}
 	
 	@Test
@@ -84,13 +84,13 @@ public class SimpleTokenizerLargeTest {
 		config.activateSubconfig("special");
 
 		InstanceList instances = LDAUtils.loadInstancesKeep(config.getDatasetFilename(), 
-				null, config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), false);
+				null, config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), false, null);
 		
 		Alphabet alphabet = instances.getDataAlphabet();
 		assertTrue("Alphabet does not contain: 'but_i_can'",!alphabet.contains("but_i_can"));
 		
 		instances = LDAUtils.loadInstancesKeep(config.getDatasetFilename(), 
-				null, config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), true);
+				null, config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), true, null);
 		
 		alphabet = instances.getDataAlphabet();
 		assertTrue("Alphabet does not contain: 'but_i_can'",alphabet.contains("but_i_can"));
@@ -112,7 +112,7 @@ public class SimpleTokenizerLargeTest {
 		try {
 			if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)<0) {
 				LDAUtils.loadInstancesPrune(config.getDatasetFilename(), 
-						config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), false);					
+						config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), false, null);					
 			} else {
 				fail("TF-IDF was not > 0");
 			}
@@ -122,7 +122,7 @@ public class SimpleTokenizerLargeTest {
 		fail("Test did not throw ArrayIndexOutOfBoundsException");
 		
 		LDAUtils.loadInstancesPrune(config.getDatasetFilename(), 
-				config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), 10000, false);					
+				config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), 10000, false, null);					
 	}
 
 
@@ -141,7 +141,7 @@ public class SimpleTokenizerLargeTest {
 		try {
 			if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
 				LDAUtils.loadInstancesKeep(config.getDatasetFilename(), 
-						config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), 5, false);					
+						config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), 5, false, null);					
 			} else {
 				fail("TF-IDF was not > 0");
 			}
@@ -151,7 +151,7 @@ public class SimpleTokenizerLargeTest {
 		fail("Test did not throw ArrayIndexOutOfBoundsException");
 		
 		LDAUtils.loadInstancesKeep(config.getDatasetFilename(), 
-				config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), 10000, false);
+				config.getStoplistFilename("stoplist.txt"), config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), config.keepNumbers(), 10000, false, null);
 	}
 	
 }

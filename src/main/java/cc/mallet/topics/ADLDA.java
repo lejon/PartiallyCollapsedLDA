@@ -17,6 +17,7 @@ import cc.mallet.topics.ParallelTopicModel;
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.IDSorter;
+import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.MalletLogger;
@@ -524,4 +525,10 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 	public int getNoTypes() {
 		return numTypes;
 	}
+	
+	@Override
+	public void addTestInstances(InstanceList testSet) {
+		throw new NotImplementedException();
+	}
+
 }

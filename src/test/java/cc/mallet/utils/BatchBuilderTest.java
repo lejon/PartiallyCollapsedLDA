@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.junit.Test;
 
 import cc.mallet.configuration.LDAConfiguration;
@@ -151,6 +152,10 @@ public class BatchBuilderTest {
 		@Override
 		public int getNoTypes() {
 			return 0;
+		}
+		@Override
+		public void addTestInstances(InstanceList testSet) {
+			throw new NotImplementedException();
 		}
 	}
 

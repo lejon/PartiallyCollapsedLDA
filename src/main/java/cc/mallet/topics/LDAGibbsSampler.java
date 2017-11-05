@@ -12,6 +12,7 @@ public interface LDAGibbsSampler {
 	void setConfiguration(LDAConfiguration config);
 	LDAConfiguration getConfiguration();
 	void addInstances (InstanceList training);
+	void addTestInstances (InstanceList testSet);
 	void sample (int iterations) throws IOException;
 	void setRandomSeed(int seed);
 	int getNoTopics();

@@ -180,4 +180,6 @@ public interface LDAConfiguration {
 	public int getAliasPoissonThreshold(int aliasPoissonDefaultThreshold);
 
 	public String getFileRegex(String string);
+
+	public String getTestDatasetFilename();
 }

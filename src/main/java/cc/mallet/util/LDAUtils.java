@@ -98,25 +98,26 @@ public class LDAUtils {
 	 * @throws FileNotFoundException 
 	 */
 	public static InstanceList loadInstances(String inputFile, String stoplistFile, int pruneCount) throws FileNotFoundException {
-		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, true, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false);
+		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, true, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, null);
 	}
 	
 	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers) throws FileNotFoundException {
-		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false);
+		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, null);
 	}
 	
 	/**
 	 * Loads instances and prunes away low occurring words
 	 * 
-	 * @param inputFile
-	 * @param stoplistFile
+	 * @param inputFile Input file to load
+	 * @param stoplistFile File with stopwords, one per line
 	 * @param pruneCount The number of times a word must occur in the corpus to be included
-	 * @param keepNumbers
-	 * @param keepConnectors TODO
-	 * @return
+	 * @param keepNumbers Boolean flag to signal to keep numbers or not
+	 * @param keepConnectors Keep connectors. General category "Pc" in the Unicode specification.
+	 * @param dataAlphabet And optional (null else) data alphabet to use (typically used when loading a test set)
+	 * @return An InstanceList with the data in the input file
 	 * @throws FileNotFoundException
 	 */
-	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers, int maxBufSize, boolean keepConnectors) throws FileNotFoundException {
+	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers, int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) throws FileNotFoundException {
 		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
@@ -134,7 +135,12 @@ public class LDAUtils {
 					nameGroup);
 
 			ArrayList<Pipe> pipes = new ArrayList<Pipe>();
-			Alphabet alphabet = new Alphabet();
+			Alphabet alphabet = null;
+			if(dataAlphabet==null) {
+				alphabet = new Alphabet();
+			} else {
+				alphabet = dataAlphabet;
+			}
 
 			CharSequenceLowercase csl = new CharSequenceLowercase();
 			SimpleTokenizer st = tokenizer.deepClone();
@@ -177,7 +183,12 @@ public class LDAUtils {
 				nameGroup);
 
 		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
-		Alphabet alphabet = new Alphabet();
+		Alphabet alphabet = null;
+		if(dataAlphabet==null) {
+			alphabet = new Alphabet();
+		} else {
+			alphabet = dataAlphabet;
+		}
 
 		CharSequenceLowercase csl = new CharSequenceLowercase();
 		StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
@@ -198,22 +209,23 @@ public class LDAUtils {
 	}
 
 	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers) throws FileNotFoundException {
-		return loadInstancesKeep(inputFile, stoplistFile, keepCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false);
+		return loadInstancesKeep(inputFile, stoplistFile, keepCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, null);
 	}
 	
 	/**
 	 * Loads instances and keeps the <code>keepCount</code> number of words with 
 	 * the highest TF-IDF
 	 * 
-	 * @param inputFile
-	 * @param stoplistFile
-	 * @param keepCount
-	 * @param keepNumbers
-	 * @param keepConnectors TODO
-	 * @return
+	 * @param inputFile Input file to load
+	 * @param stoplistFile File with stopwords, one per line
+	 * @param keepCount The number of words to keep (based on TF-IDF)
+	 * @param keepNumbers Boolean flag to signal to keep numbers or not
+	 * @param keepConnectors Keep connectors. General category "Pc" in the Unicode specification.
+	 * @param dataAlphabet And optional (null else) data alphabet to use (typically used when loading a test set)
+	 * @return An InstanceList with the data in the input file
 	 * @throws FileNotFoundException
 	 */
-	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, int maxBufSize, boolean keepConnectors) throws FileNotFoundException {
+	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) throws FileNotFoundException {
 		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
@@ -231,7 +243,12 @@ public class LDAUtils {
 					nameGroup);
 
 			ArrayList<Pipe> pipes = new ArrayList<Pipe>();
-			Alphabet alphabet = new Alphabet();
+			Alphabet alphabet = null;
+			if(dataAlphabet==null) {
+				alphabet = new Alphabet();
+			} else {
+				alphabet = dataAlphabet;
+			}
 
 			CharSequenceLowercase csl = new CharSequenceLowercase();
 			SimpleTokenizer st = tokenizer.deepClone();
@@ -274,7 +291,12 @@ public class LDAUtils {
 				nameGroup);
 
 		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
-		Alphabet alphabet = new Alphabet();
+		Alphabet alphabet = null;
+		if(dataAlphabet==null) {
+			alphabet = new Alphabet();
+		} else {
+			alphabet = dataAlphabet;
+		}
 
 		CharSequenceLowercase csl = new CharSequenceLowercase();
 		StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
@@ -685,10 +707,25 @@ public class LDAUtils {
 				new FileWriter(likelihoodFile, true)))) {
 			out.println(iteration + "\t" + testPerplexity);
 		} catch (IOException e) {
-			//exception handling left as an exercise for the reader
+			e.printStackTrace();
+			System.err.println("Could not write test perplexity file");
 		}
 	}
 
+	public static void heldOutLLToFile(String loggingPath, int iteration,
+			double testPerplexity, Logger logger) {
+		String likelihoodFile;
+		logger.info("Held out Loglikelihood on testset is: " + testPerplexity);
+		likelihoodFile = loggingPath + "/test_held_out_log_likelihood.txt";
+		try(PrintWriter out = new PrintWriter(new BufferedWriter(
+				new FileWriter(likelihoodFile, true)))) {
+			out.println(iteration + "\t" + testPerplexity);
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.err.println("Could not write test held out log likelihood file");
+		}
+	}
+	
 	public static void logLikelihoodToFile(double logLik, int iteration, 
 			String wordsPerTopic, String loggingPath, Logger logger) {
 		logger.info("\n<" + iteration + "> Log Likelihood: " + logLik + "\n" +wordsPerTopic);
@@ -724,6 +761,9 @@ public class LDAUtils {
 			}
 		}
 		header += "\tphiDensity";
+		if(statsObject.heldOutLL!=null) {
+			header += "\theldOutLL";
+		}
 		String likelihoodFile = statsObject.loggingPath + "/stats.txt";
 		try(PrintWriter out = new PrintWriter(new BufferedWriter(
 				new FileWriter(likelihoodFile, true)))) {
@@ -752,6 +792,9 @@ public class LDAUtils {
 			}
 		}
 		logString += "\t" + statsObject.phiDensity;
+		if(statsObject.heldOutLL != null) {
+			logString += "\t" + statsObject.heldOutLL.doubleValue();
+		}
 		try(PrintWriter out = new PrintWriter(new BufferedWriter(
 				new FileWriter(likelihoodFile, true)))) {
 			out.println(logString);
@@ -1446,13 +1489,13 @@ public class LDAUtils {
 	}
 	
 	public static InstanceList loadInstanceDirectory(String directory, String fileRegex, String stoplistFile,
-			Integer rareThreshold, boolean keepNumbers, int maxDocumentBufferSize, boolean keepConnectors) {
+			Integer rareThreshold, boolean keepNumbers, int maxDocumentBufferSize, boolean keepConnectors, Alphabet alphabet) {
 			return loadInstanceDirectories(new String[] {directory}, fileRegex, stoplistFile, rareThreshold,
-				 keepNumbers, maxDocumentBufferSize, keepConnectors);
+				 keepNumbers, maxDocumentBufferSize, keepConnectors, alphabet);
 	}	
 
 	public static InstanceList loadInstanceDirectories(String [] directories, final String fileRegex, String stoplistFile, Integer keepCount,
-			boolean keepNumbers, int maxBufSize, boolean keepConnectors) {
+			boolean keepNumbers, int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) {
 		
 		File [] fdirectories = new File[directories.length];
 		for (int i = 0; i < fdirectories.length; i++) {
@@ -1473,7 +1516,13 @@ public class LDAUtils {
 					},
                     FileIterator.LAST_DIRECTORY);
 
-			Alphabet alphabet = new Alphabet();
+			Alphabet alphabet = null;
+			if(dataAlphabet==null) {
+				alphabet = new Alphabet();
+			} else {
+				alphabet = dataAlphabet;
+			}
+
 			TokenSequence2FeatureSequence sl2fs = new TokenSequence2FeatureSequence(alphabet);
 			TfIdfPipe tfIdfPipe = new TfIdfPipe(alphabet, null);
 
@@ -1538,7 +1587,12 @@ public class LDAUtils {
 				FileIterator.LAST_DIRECTORY);
 
 		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
-		Alphabet alphabet = new Alphabet();
+		Alphabet alphabet = null;
+		if(dataAlphabet==null) {
+			alphabet = new Alphabet();
+		} else {
+			alphabet = dataAlphabet;
+		}
 
 		TokenSequence2FeatureSequence sl2fs = new TokenSequence2FeatureSequence(alphabet);
 

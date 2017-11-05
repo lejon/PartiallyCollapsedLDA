@@ -1,8 +1,5 @@
 package cc.mallet.topics;
 
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntIntProcedure;
-
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -48,6 +45,8 @@ import cc.mallet.util.LDAThreadFactory;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.Stats;
+import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntIntProcedure;
 
 
 public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibbsSampler, LDASamplerWithPhi {
@@ -437,7 +436,27 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		double docDensity = -1;
 		double phiDensity;
 		Stats stats;
-		if(logTypeTopicDensity || logDocumentDensity) {
+	
+		double [] symmetricAlpha;
+		int numParticles = 100;
+
+		MarginalProbEstimatorPlain evaluator = null;
+
+		if(testSet != null) {
+			symmetricAlpha = new double[numTopics];
+			for (int i = 0; i < symmetricAlpha.length; i++) {
+				symmetricAlpha[i] = alphaSum / numTopics;
+			}
+
+
+			evaluator = new MarginalProbEstimatorPlain(numTopics,
+					symmetricAlpha, alphaSum,
+					beta,
+					typeTopicCounts, 
+					tokensPerTopic);
+		}
+		
+		if(logTypeTopicDensity || logDocumentDensity || logPhiDensity) {
 			density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 			docDensity = kdDensities.get() / (double) numTopics / data.size();
 			phiDensity = logPhiDensity ? LDAUtils.calculatePhiDensity(phi) : -1;
@@ -496,10 +515,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 			// Occasionally print more information
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
+				Double heldOutLL = null;
 				if(testSet != null) {
-					System.err.println("SHOULD PRINT PERPLEXITY!!!");
-					//double testPerplexity = LDAUtils.perplexity(config, testSet, getHashTopicTypeCounts(), phi);
-					//LDAUtils.perplexityToFile(loggingPath, iteration, testPerplexity, logger);
+					heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
+					LDAUtils.heldOutLLToFile(loggingPath, iteration, heldOutLL, logger);
 				}
 
 				logLik = modelLogLikelihood();	
@@ -512,8 +531,13 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 					docDensity = kdDensities.get() / (double) numTopics / data.size();
 					phiDensity = logPhiDensity ? LDAUtils.calculatePhiDensity(phi) : -1;
-					stats = new Stats(iteration, loggingPath, elapsedMillis, zSamplingTokenUpdateTime, phiSamplingTime, 
+					if(testSet!=null) {
+						stats = new Stats(iteration, loggingPath, elapsedMillis, zSamplingTokenUpdateTime, phiSamplingTime, 
+								density, docDensity, zTimings, countTimings,phiDensity,heldOutLL);						
+					} else {
+						stats = new Stats(iteration, loggingPath, elapsedMillis, zSamplingTokenUpdateTime, phiSamplingTime, 
 							density, docDensity, zTimings, countTimings,phiDensity);
+					}
 					LDAUtils.logStatsToFile(stats);
 				}
 			}

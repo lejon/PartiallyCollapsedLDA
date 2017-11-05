@@ -19,6 +19,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private Integer seed = 0;
 	private boolean debug = false;
 	private String dataset_fn;
+	private String test_dataset_fn;
 	private String building_scheme;
 	private double percentage_split_size_doc;
 	private double percentage_split_size_topic;
@@ -199,6 +200,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	public String getDatasetFilename() {
 		return dataset_fn;
 	}
+	
+	@Override
+	public String getTestDatasetFilename() {
+		return test_dataset_fn;
+	}
+
 
 	public void setDatasetFilename(String fn) {
 		dataset_fn = fn;

@@ -23,6 +23,13 @@ description = Partially Collapsed Parallel LDA with adaptive subsampling (not fu
 dataset = datasets/nips.txt
 #dataset = datasets/pubmed.txt
 
+## Test Dataset: Filename of test dataset file to use, must follow same format as dataset file
+## if this file is given, the held out log likelihood will be calculated every 'topic_interval' 
+## relative to this dataset. 
+## This slows down execution substantially, so if you are not evaluating your model, don't set this option! 
+## The held out LL is written to the file "test_held_out_log_likelihood.txt"
+test_dataset = datasets/enron.txt
+
 ## Scheme: Which sampling scheme to use (uncollapsed, collapsed, adlda)
 ##		paranoid is uncollapsed with additional (time consuming) consistency checks
 #scheme = uncollapsed
@@ -158,7 +165,7 @@ log_document_density = true
 log_type_topic_density = true
 save_doc_topic_means = true
 
-# Log Phi
+# Log Phi: Calculate the Ratio of Zeros in Phi (so should really be called Phi Sparsity I guess)
 log_phi_density = true
 # Phi Log filename
 doc_topic_mean_filename = doc_topic_means.csv

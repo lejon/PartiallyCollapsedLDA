@@ -293,6 +293,10 @@ public class TopicMassExperiment {
 			return pc.getDatasetFilename();
 		}
 
+		public String getTestDatasetFilename() {
+			return pc.getTestDatasetFilename();
+		}
+
 		public void setDetailEvents(boolean enable) {
 			pc.setDetailEvents(enable);
 		}

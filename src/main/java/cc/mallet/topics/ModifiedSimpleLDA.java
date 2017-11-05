@@ -698,4 +698,12 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		return numTypes;
 	}
 
+	@Override
+	public void addTestInstances(InstanceList testSet) {
+		if(!testSet.getAlphabet().equals(alphabet)) {
+			throw new IllegalStateException("Alphabets on training and test sets do not match!");
+		}
+		this.testSet = testSet;
+	}
+
 }

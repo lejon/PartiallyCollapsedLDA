@@ -13,6 +13,7 @@ import cc.mallet.topics.SimpleLDA;
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
+import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
@@ -437,6 +438,11 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 	@Override
 	public int getNoTypes() {
 		return numTypes;
+	}
+
+	@Override
+	public void addTestInstances(InstanceList testSet) {
+		throw new NotImplementedException();
 	}
 
 
