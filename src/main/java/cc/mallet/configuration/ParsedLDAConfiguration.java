@@ -312,6 +312,18 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public String getDocumentTopicMeansOutputFilename() {
 		return getStringProperty("doc_topic_mean_filename");
 	}
+	
+	@Override
+	public boolean saveDocumentTopicDiagnostics() {
+		String key = "save_doc_topic_diagnostics";
+		return getBooleanProperty(key);
+	}
+
+	@Override
+	public String getDocumentTopicDiagnosticsOutputFilename() {
+		return getStringProperty("doc_topic_diagnostics_filename");
+	}
+
 
 	@Override
 	public String getPhiMeansOutputFilename() {

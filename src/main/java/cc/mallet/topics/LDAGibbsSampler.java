@@ -16,6 +16,7 @@ public interface LDAGibbsSampler {
 	void sample (int iterations) throws IOException;
 	void setRandomSeed(int seed);
 	int getNoTopics();
+	int getNumTopics();
 	int getNoTypes();
 	int getCurrentIteration();
 	int [][] getZIndicators();
@@ -23,6 +24,7 @@ public interface LDAGibbsSampler {
 	double[][] getThetaEstimate();
 	void setZIndicators(int[][] zIndicators);
 	ArrayList<TopicAssignment> getDataset();
+	ArrayList<TopicAssignment> getData();
 	int[][] getDeltaStatistics();
 	int[] getTopTypeFrequencyIndices();
 	int[] getTypeFrequencies();
@@ -32,6 +34,9 @@ public interface LDAGibbsSampler {
 	double[] getTypeMassCumSum();
 	int [][] getDocumentTopicMatrix();
 	int [][] getTypeTopicMatrix();
+	int [] getTopicTotals();
+	double getBeta();
+	double[] getAlpha();
 	void preIteration();
 	void postIteration();
 	void preSample();

@@ -53,6 +53,8 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private boolean saveDocumentTopicTheta;
 	private String documentTopicMeansOutputFilename;
 	private String documentTopicThetaOutputFilename;
+	private boolean saveDocumentTopicDiagnostics;
+	private String documentTopicDiagnosticsOutputFilename;
 	private String phiMeansOutputFilename;
 	private boolean keepConnectingPunctuation;
 	private String stoplistFilename;
@@ -524,6 +526,16 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	}
 
 	@Override
+	public boolean saveDocumentTopicDiagnostics() {
+		return saveDocumentTopicDiagnostics;
+	}
+
+	@Override
+	public String getDocumentTopicDiagnosticsOutputFilename() {
+		return documentTopicDiagnosticsOutputFilename;
+	}
+	
+	@Override
 	public String getPhiMeansOutputFilename() {
 		return phiMeansOutputFilename;
 	}
@@ -662,6 +674,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	@Override
 	public String getFileRegex(String string) {
 		return fileRegex == null ? string : fileRegex;
+	}
+
+	public void setSaveDocumentTopicDiagnostics(boolean saveDocumentTopicDiagnostics) {
+		this.saveDocumentTopicDiagnostics = saveDocumentTopicDiagnostics;
+	}
+
+	public void setDocumentTopicDiagnosticsOutputFilename(String documentTopicDiagnosticsOutputFilename) {
+		this.documentTopicDiagnosticsOutputFilename = documentTopicDiagnosticsOutputFilename;
 	}
 
 }

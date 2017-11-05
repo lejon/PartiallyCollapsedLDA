@@ -24,6 +24,7 @@ import cc.mallet.topics.PolyaUrnSpaliasLDA;
 import cc.mallet.topics.SerialCollapsedLDA;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.topics.SpaliasUncollapsedParallelWithPriors;
+import cc.mallet.topics.TopicModelDiagnosticsPlain;
 import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.InstanceList;
@@ -145,11 +146,24 @@ public class ParallelLDA {
 				t.stop();
 				System.out.println("Finished:" + new Date());
 				
+				int requestedWords = config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT);
+				TopicModelDiagnosticsPlain tmd = new TopicModelDiagnosticsPlain(model, requestedWords);
+				System.out.println("Topic model diagnostics:");
+				System.out.println(tmd.toString());				
+				
 				File lgDir = lu.getLogDir();
 				if(config.saveDocumentTopicMeans()) {
 					String docTopicMeanFn = config.getDocumentTopicMeansOutputFilename();
 					double [][] means = model.getZbar();
 					LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
+				}
+				
+				if(config.saveDocumentTopicDiagnostics()) {
+					String docTopicDiagFn = config.getDocumentTopicDiagnosticsOutputFilename();
+					PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/" + docTopicDiagFn);
+					out.println(tmd.topicsToCsv());
+					out.flush();
+					out.close();
 				}
 
 				if(config.saveDocumentThetaEstimate()) {
@@ -202,7 +216,6 @@ public class ParallelLDA {
 				lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
 						ParallelLDA.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
 				
-				int requestedWords = config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT);
 				if(requestedWords>instances.getDataAlphabet().size()) {
 					requestedWords = instances.getDataAlphabet().size();
 				}
@@ -259,7 +272,7 @@ public class ParallelLDA {
 								model.getTypeTopicMatrix(),  
 								config.getBeta(LDAConfiguration.BETA_DEFAULT),
 								model.getAlphabet())));
-
+				
 				System.out.println("I am done!");
 			}
 			if(buildVer==null||implVer==null) {

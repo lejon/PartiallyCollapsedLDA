@@ -1002,5 +1002,15 @@ public class TopicMassExperiment {
 		public String getFileRegex(String string) {
 			return pc.getFileRegex(string);
 		}
+
+		@Override
+		public boolean saveDocumentTopicDiagnostics() {
+			return pc.saveDocumentTopicDiagnostics();
+		}
+
+		@Override
+		public String getDocumentTopicDiagnosticsOutputFilename() {
+			return pc.getDocumentTopicDiagnosticsOutputFilename();
+		}
 	}
 }

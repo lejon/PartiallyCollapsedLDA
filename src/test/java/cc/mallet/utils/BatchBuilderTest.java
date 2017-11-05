@@ -157,6 +157,31 @@ public class BatchBuilderTest {
 		public void addTestInstances(InstanceList testSet) {
 			throw new NotImplementedException();
 		}
+
+		@Override
+		public int getNumTopics() {
+			return getNoTopics();
+		}
+
+		@Override
+		public ArrayList<TopicAssignment> getData() {
+			return getDataset();
+		}
+
+		@Override
+		public int[] getTopicTotals() {
+			return null;
+		}
+
+		@Override
+		public double getBeta() {
+			return 0;
+		}
+
+		@Override
+		public double[] getAlpha() {
+			return null;
+		}
 	}
 
 	@Test

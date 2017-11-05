@@ -182,4 +182,8 @@ public interface LDAConfiguration {
 	public String getFileRegex(String string);
 
 	public String getTestDatasetFilename();
+
+	public boolean saveDocumentTopicDiagnostics();
+
+	public String getDocumentTopicDiagnosticsOutputFilename();
 }

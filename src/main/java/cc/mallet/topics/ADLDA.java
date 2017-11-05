@@ -531,4 +531,14 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 		throw new NotImplementedException();
 	}
 
+	@Override
+	public double getBeta() {
+		return beta;
+	}
+	
+	@Override
+	public double [] getAlpha() {
+		return alpha;
+	}
+
 }

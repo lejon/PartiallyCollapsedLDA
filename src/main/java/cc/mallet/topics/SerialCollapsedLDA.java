@@ -445,5 +445,17 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 		throw new NotImplementedException();
 	}
 
-
+	@Override
+	public double getBeta() {
+		return beta;
+	}
+	
+	@Override
+	public double[] getAlpha() {
+		double [] alphaVect = new double[numTopics];
+		for (int i = 0; i < alphaVect.length; i++) {
+			alphaVect[i] = alpha / numTopics;
+		}
+		return alphaVect;
+	}
 }

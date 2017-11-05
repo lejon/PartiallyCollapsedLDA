@@ -1119,11 +1119,13 @@ public class LDAUtils {
 	}
 
 	/**
+	 * This version takes a sparse (ala MALLET) type topic counts matrix
+	 * 
 	 *  Return an array of sorted sets (one set per topic). Each set 
 	 *   contains IDSorter objects with integer keys into the alphabet.
 	 *   To get direct access to the Strings, use getTopWords().
 	 */
-	public static ArrayList<TreeSet<IDSorter>> getSortedWords (int numTopics, int numTypes,
+	public static ArrayList<TreeSet<IDSorter>> getSortedWordsSparse (int numTopics, int numTypes,
 			int[][] typeTopicCounts) {
 
 		ArrayList<TreeSet<IDSorter>> topicSortedWords = new ArrayList<TreeSet<IDSorter>>(numTopics);
@@ -1157,6 +1159,43 @@ public class LDAUtils {
 		return topicSortedWords;
 	}
 
+	/**
+	 * This version takes a dense (plain) type topic counts matrix
+	 * 
+	 *  Return an array of sorted sets (one set per topic). Each set 
+	 *   contains IDSorter objects with integer keys into the alphabet.
+	 *   To get direct access to the Strings, use getTopWords().
+	 */
+	public static ArrayList<TreeSet<IDSorter>> getSortedWordsDense (int numTopics, int numTypes, int[][] typeTopicCounts) {
+
+		ArrayList<TreeSet<IDSorter>> topicSortedWords = new ArrayList<TreeSet<IDSorter>>(numTopics);
+
+		// Initialize the tree sets
+		for (int topic = 0; topic < numTopics; topic++) {
+			topicSortedWords.add(new TreeSet<IDSorter>());
+		}
+
+		// Collect counts
+		for (int type = 0; type < numTypes; type++) {
+
+			int[] topicCounts = typeTopicCounts[type];
+
+			int index = 0;
+			while (index < topicCounts.length) {
+
+				int topic = index;
+				int count = topicCounts[index];
+
+				topicSortedWords.get(topic).add(new IDSorter(type, count));
+
+				index++;
+			}
+		}
+
+		return topicSortedWords;
+	}
+
+	
 	public static String formatTopWordsAsCsv(String[][] topWords) {
 		String result = "";
 		for (int i = 0; i < topWords.length; i++) {
