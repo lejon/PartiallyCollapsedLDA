@@ -168,6 +168,19 @@ public class ConfigTest {
 		}
 	}
 
+	@Test
+	public void testNonExistingReturnsNull() throws ConfigurationException, ParseException {
+		int testTopics = 50;
+		String [] args = {"--topics=" + testTopics, "--run_cfg=src/main/resources/configuration/UnitTestConfig.cfg"};
+
+		LDACommandLineParser cp = new LDACommandLineParser(args);
+
+		Configuration config = new ParsedLDAConfiguration(cp);
+
+		config.activateSubconfig("demo");
+		String dontExist = config.getString("abtrakadabra");
+		assertTrue(dontExist == null);
+	}
 	
 
 }
