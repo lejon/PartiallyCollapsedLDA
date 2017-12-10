@@ -409,7 +409,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			//numLikelihood++;
 			//double u_lik = (u_sigma - typeNorm[type]) / sum; // Cumsum is not normalized so don't divide by sum 
 			double u_lik = (u_sigma - typeNorm[type]);
-			int slot = findIdx(cumsum,u_lik,nonZeroTopicCnt);
+			int slot = SpaliasUncollapsedParallelLDA.findIdx(cumsum,u_lik,nonZeroTopicCnt);
 			newTopic = nonZeroTopics[slot];
 			// Make sure we actually sampled a valid topic
 		}
@@ -483,34 +483,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		nonZeroTopicsBackMapping[newTopic] = slot;
 		nonZeroTopicCnt++;
 		return nonZeroTopicCnt;
-	}
-
-	protected static int findIdx(double[] cumsum, double u, int maxIdx) {
-		return findIdxBin(cumsum,u,maxIdx);
-	}
-	
-	protected static int findIdxBin(double[] cumsum, double u, int maxIdx) {
-		int slot = java.util.Arrays.binarySearch(cumsum,0,maxIdx,u);
-
-		return slot >= 0 ? slot : -(slot+1); 
-	}
-
-	public static int findIdxLinSentinel(double[] cumsum, double u, int maxIdx) {
-		cumsum[cumsum.length-1] = Double.MAX_VALUE;
-		int i = 0;
-		while(true) {
-			if(u<=cumsum[i]) return i;
-			i++;
-		}
-	}
-
-	public static int findIdxLin(double[] cumsum, double u, int maxIdx) {
-		for (int i = 0; i < maxIdx; i++) {
-			if(u<=cumsum[i]) return i;
-		}
-		return cumsum.length-1;
-	}
-	
+	}	
 	
 	@Override
 	protected void samplePhi() {

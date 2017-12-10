@@ -411,7 +411,11 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	}
 
 	protected static int findIdx(double[] cumsum, double u, int maxIdx) {
-		return findIdxBin(cumsum,u,maxIdx);
+		if(cumsum.length<1000) {
+			return findIdxLinSentinel(cumsum,u,maxIdx);
+		} else {
+			return findIdxBin(cumsum,u,maxIdx);
+		}
 	}
 	
 	protected static int findIdxBin(double[] cumsum, double u, int maxIdx) {
@@ -420,7 +424,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		return slot >= 0 ? slot : -(slot+1); 
 	}
 
-	public static int findIdxLinSentinel(double[] cumsum, double u, int maxIdx) {
+	protected static int findIdxLinSentinel(double[] cumsum, double u, int maxIdx) {
 		cumsum[cumsum.length-1] = Double.MAX_VALUE;
 		int i = 0;
 		while(true) {
@@ -429,7 +433,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		}
 	}
 
-	public static int findIdxLin(double[] cumsum, double u, int maxIdx) {
+	protected static int findIdxLin(double[] cumsum, double u, int maxIdx) {
 		for (int i = 0; i < maxIdx; i++) {
 			if(u<=cumsum[i]) return i;
 		}
