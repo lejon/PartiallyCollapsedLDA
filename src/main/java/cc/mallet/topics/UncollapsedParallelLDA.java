@@ -1478,7 +1478,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	 */
 	@Override
 	public double[][] getPhiMeans() {
-		if(noSampledPhi==0) return null;
+		if(noSampledPhi==0) {
+			logger.warning("No Phi has yet been sampled! getPhiMeans returns 'null'. Ensure that you have correctly configured 'phi_mean_burnin' and 'phi_mean_thin'");
+			return null;
+		}
 		double [][] result = new double[phiMean.length][phiMean[0].length];
 		for (int i = 0; i < phiMean.length; i++) {
 			for (int j = 0; j < phiMean[i].length; j++) {
