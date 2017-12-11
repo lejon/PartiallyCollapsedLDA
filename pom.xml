@@ -68,7 +68,8 @@
 	<!-- v5.1.0: Added functionality for loading instances directly from a directory rather than from a file -->
 	<!-- v5.1.1: Bugfix for crash on getTypeTopicCounts from ADLDA model -->
 	<!-- v5.2.1: Test set + held out LL calc + Topic Model Diagnostics -->
-	<version>5.2.1</version>
+	<!-- v5.2.2: Small refactoring -->
+	<version>5.2.2</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
