@@ -75,7 +75,8 @@ topic_interval = 100
 ##		Example: dn_diagnostic_interval = 10, 50, 5000, 7000 # Dump Delta N between iteration 10 and 50 and also between 5000 and 7000 
 dn_diagnostic_interval = -1
 
-## Start diagnostic:  
+## Start diagnostic:
+# Determines from which iteration Phi is printed to a binary file, when "print_phi" is set to true   
 start_diagnostic = 500
 
 ## Measure Timing: If timing measurements should be done (takes time)
