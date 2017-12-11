@@ -88,6 +88,54 @@ public class LDAUtils {
 	//
 	//		return new InstanceList (new SerialPipes(pipeList));
 	//	}
+	
+	public static InstanceList loadDataset(LDAConfiguration config, String dataset_fn) throws FileNotFoundException {
+		return loadDataset(config, dataset_fn, null);
+	}
+	
+	public static InstanceList loadDataset(LDAConfiguration config, String dataset_fn, Alphabet alphabet) throws FileNotFoundException {
+		InstanceList instances;
+		
+		File dsf = new File(dataset_fn); 
+		if(dsf.isDirectory()) {
+			instances = LDAUtils.loadInstanceDirectory(
+					dataset_fn, 
+					config.getFileRegex(LDAConfiguration.FILE_REGEX_DEFAULT),
+					config.getStoplistFilename("stoplist.txt"), 
+					config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), 
+					config.keepNumbers(), 
+					config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+					config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION),
+					alphabet);
+			if(instances.size()==0) {
+				System.err.println("No instances loaded. Perhaps your filename REGEX ('" 
+						+ config.getFileRegex(LDAConfiguration.FILE_REGEX_DEFAULT) + "') was wrong?");
+				System.err.println("Remember that Java RE's are not the same as Perls. \nTo match a filename that ends with '.txt', the regex would be '" 
+						+ LDAConfiguration.FILE_REGEX_DEFAULT + "'");
+				System.err.println("The filename given to match the regex against is the _full absolute path_ of the file.");
+				System.exit(-1);
+			}
+		} else {
+			if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
+				instances = LDAUtils.loadInstancesKeep(
+						dataset_fn, 
+						config.getStoplistFilename("stoplist.txt"), 
+						config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
+						config.keepNumbers(), 
+						config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+						config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), alphabet);					
+			} else {					
+				instances = LDAUtils.loadInstancesPrune(
+						dataset_fn, 
+						config.getStoplistFilename("stoplist.txt"), 
+						config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), 
+						config.keepNumbers(), 
+						config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+						config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), alphabet);
+			}
+		}
+		return instances;
+	}
 
 	/**
 	 * This has to be done in two sweeps to first find the counts then remove rare words
