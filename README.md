@@ -4,14 +4,18 @@
 
 PC-LDA
 =====
-Repo for our Partially Collapsed ParallelLDA implementation described in the article [arXiv:1506.03784](http://arxiv.org/abs/1506.03784 "arXiv:1506.03784"): 
+Repo for our Partially Collapsed ParallelLDA implementation described in the article 
+
+Magnusson, M., Jonsson, L., Villani, M., & Broman, D. (2017). Sparse Partially Collapsed MCMC for Parallel Inference in Topic Models. Journal of Computational and Graphical Statistics.
 
 ```
-   @unpublished{MagnussonJonsson2015,
-      author = "Måns Magnusson, Leif Jonsson, Mattias Villani, David Broman",
-      title = "Parallelizing LDA using Partially Collapsed Gibbs Sampling",
-      note = "http://github.com/lejon/PartiallyCollapsedLDA",
-      year = 2015}
+@article{magnusson2017sparse,
+  title={Sparse Partially Collapsed MCMC for Parallel Inference in Topic Models},
+  author={Magnusson, M{\aa}ns and Jonsson, Leif and Villani, Mattias and Broman, David},
+  journal={Journal of Computational and Graphical Statistics},
+  year={2017},
+  publisher={Taylor \& Francis}
+}
 ```
 
 The toolkit is Open Source Software, and is released under the Common Public License. You are welcome to use the code under the terms of the license for research or commercial purposes, however please acknowledge its use with a citation:
@@ -39,12 +43,19 @@ An example of a "main" class is cc.mallet.topics.tui.ParallelLDA
 
 ## Installation
 
-1. Install Apache Maven and run:
+1. Install Apache Maven
+2. Install the package using maven as follows:
 
 ```mvn package```
 in bash.
 
 Occasionally some of the "probabilistic" tests fail due to random chance. This is ok in a statistical sense but not for a test suite so this should eventually be tuned. For now if the suite is re-run it should be ok.
+
+To install without running tests use
+
+```mvn package -DskipTests```
+in bash.
+
 
 ## Example run using binary (the release JAR)
 
