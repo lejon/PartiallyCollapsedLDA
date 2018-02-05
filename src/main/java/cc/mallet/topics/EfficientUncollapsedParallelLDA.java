@@ -1,6 +1,5 @@
 package cc.mallet.topics;
 
-import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 import cc.mallet.configuration.LDAConfiguration;
@@ -31,8 +30,12 @@ public class EfficientUncollapsedParallelLDA extends UncollapsedParallelLDA impl
 		int [] oneDocTopics = topics.getFeatures();
 		
 		double[] localTopicCounts = new double[numTopics];
-		// With non uniform alpha, this should be filled accordingly
-		Arrays.fill(localTopicCounts, alpha);
+		// With a uniform alpha, 'fill' can be used
+		//Arrays.fill(localTopicCounts, alpha);
+		// With non uniform alpha, it should be filled accordingly
+		for (int i = 0; i < localTopicCounts.length; i++) {
+			localTopicCounts[i] = alpha[i];
+		}
 		
 		// Find the non-zero words and topic counts that we have in this document
 		for (int position = 0; position < docLength; position++) {

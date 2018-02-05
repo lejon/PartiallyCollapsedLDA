@@ -963,7 +963,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 				// If we drew a new topic indicator, do MH step for Word proposal
 				
 				double pi_w = calculateWordAcceptanceProbability(globalTypeTopicCounts, globalTokensPerTopic,
-						localTopicCounts_i, type, oldTopic, wordTopicIndicatorProposal, alpha, beta, betaSum);
+						localTopicCounts_i, type, oldTopic, wordTopicIndicatorProposal, alpha[oldTopic], beta, betaSum);
 				
 				if(pi_w > 1){
 					localTopicCounts[oldTopic]--;
@@ -992,13 +992,13 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			// Document-Topic Proposal  
 			// #####################################
 			 
-			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha));
+			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + alphaSum);
 			
 			int docTopicIndicatorProposal = -1;
 			if(u_i < oneDocTopics.length) {
 				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
 			} else {
-				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics);
+				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / alphaSum) * numTopics);
 			}
 			
 			// Make sure we actually sampled a valid topic
@@ -1009,7 +1009,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			if(docTopicIndicatorProposal!=oldTopic) {
 				// If we drew a new topic indicator, do MH step for Document proposal
 				double pi_d = calculateDocumentAcceptanceProbability(globalTypeTopicCounts, globalTokensPerTopic,
-						localTopicCounts, localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal, alpha, beta, betaSum);
+						localTopicCounts, localTopicCounts_i, type, oldTopic, docTopicIndicatorProposal, alpha[oldTopic], beta, betaSum);
 				
 				// Calculate MH acceptance Min.(1,ratio) but as an if else
 				if (pi_d > 1){
@@ -1189,7 +1189,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		int[] docTopics;
 
 		for (int topic=0; topic < numTopics; topic++) {
-			topicLogGammas[ topic ] = Dirichlet.logGammaStirling( alpha );
+			topicLogGammas[ topic ] = Dirichlet.logGammaStirling( alpha[topic] );
 		}
 
 		for (int doc=0; doc < data.size(); doc++) {
@@ -1203,7 +1203,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 			for (int topic=0; topic < numTopics; topic++) {
 				if (topicCounts[topic] > 0) {
-					logLikelihood += (Dirichlet.logGammaStirling(alpha + topicCounts[topic]) -
+					logLikelihood += (Dirichlet.logGammaStirling(alpha[topic] + topicCounts[topic]) -
 							topicLogGammas[ topic ]);
 				}
 			}

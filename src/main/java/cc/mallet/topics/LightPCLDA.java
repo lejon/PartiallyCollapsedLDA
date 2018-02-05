@@ -137,7 +137,7 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			if(wordTopicIndicatorProposal!=oldTopic) {
 				double n_d_zi_i = localTopicCounts_i[oldTopic];
 				double n_d_zstar_i = localTopicCounts_i[wordTopicIndicatorProposal];
-				double pi_w = (alpha + n_d_zstar_i) / (alpha + n_d_zi_i);
+				double pi_w = (alpha[oldTopic] + n_d_zstar_i) / (alpha[oldTopic] + n_d_zi_i);
 				if(pi_w > 1){
 					localTopicCounts[oldTopic]--;
 					localTopicCounts[wordTopicIndicatorProposal]++;
@@ -164,13 +164,13 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 			// Document Topic Distribution 
 			// #####################################
 			 
-			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha));
+			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + alphaSum);
 			
 			int docTopicIndicatorProposal = -1;
 			if(u_i < oneDocTopics.length) {
 				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
 			} else {
-				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics);
+				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / alphaSum) * numTopics);
 			}
 			
 			// If we drew a new topic indicator, do MH step for Document proposal
@@ -180,8 +180,8 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 				double n_d_zi = localTopicCounts[oldTopic];
 				double n_d_zstar = localTopicCounts[docTopicIndicatorProposal];
 
-				double nom = phi[docTopicIndicatorProposal][type] * (alpha + n_d_zstar_i) * (alpha + n_d_zi);
-				double denom = phi[oldTopic][type] * (alpha + n_d_zi_i) * (alpha + n_d_zstar);
+				double nom = phi[docTopicIndicatorProposal][type] * (alpha[oldTopic] + n_d_zstar_i) * (alpha[oldTopic] + n_d_zi);
+				double denom = phi[oldTopic][type] * (alpha[oldTopic] + n_d_zi_i) * (alpha[oldTopic] + n_d_zstar);
 				double ratio = nom / denom;
 				// Calculate MH acceptance Min.(1,ratio) but as an if else
 				if (ratio > 1){

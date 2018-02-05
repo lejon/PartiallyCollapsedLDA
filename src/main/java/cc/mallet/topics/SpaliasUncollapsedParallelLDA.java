@@ -67,7 +67,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 			double typeMass = 0; // Type prior mass
 			double [] phiType =  phitrans[type]; 
 			for (int topic = 0; topic < numTopics; topic++) {
-				typeMass += probs[topic] = phiType[topic] * alpha; // alpha[topic]
+				typeMass += probs[topic] = phiType[topic] * alpha[topic];
 			}
 			
 			if(aliasTables[type]==null) {

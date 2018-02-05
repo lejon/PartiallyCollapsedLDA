@@ -437,20 +437,13 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		double phiDensity;
 		Stats stats;
 	
-		double [] symmetricAlpha;
 		int numParticles = 100;
 
 		MarginalProbEstimatorPlain evaluator = null;
 
 		if(testSet != null) {
-			symmetricAlpha = new double[numTopics];
-			for (int i = 0; i < symmetricAlpha.length; i++) {
-				symmetricAlpha[i] = alphaSum / numTopics;
-			}
-
-
 			evaluator = new MarginalProbEstimatorPlain(numTopics,
-					symmetricAlpha, alphaSum,
+					alpha, alphaSum,
 					beta,
 					typeTopicCounts, 
 					tokensPerTopic);
@@ -1103,7 +1096,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			sum = 0.0;
 
 			for (int topic = 0; topic < numTopics; topic++) {
-				score = (localTopicCounts[topic] + alpha) * phi[topic][type];
+				score = (localTopicCounts[topic] + alpha[topic]) * phi[topic][type];
 				topicTermScores[topic] = score;
 				sum += score;
 			}
@@ -1193,7 +1186,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		int[] docTopics;
 
 		for (int topic=0; topic < numTopics; topic++) {
-			topicLogGammas[ topic ] = Dirichlet.logGammaStirling( alpha );
+			topicLogGammas[ topic ] = Dirichlet.logGammaStirling( alpha[topic] );
 		}
 
 		for (int doc=0; doc < data.size(); doc++) {
@@ -1207,7 +1200,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 			for (int topic=0; topic < numTopics; topic++) {
 				if (topicCounts[topic] > 0) {
-					logLikelihood += (Dirichlet.logGammaStirling(alpha + topicCounts[topic]) -
+					logLikelihood += (Dirichlet.logGammaStirling(alpha[topic] + topicCounts[topic]) -
 							topicLogGammas[ topic ]);
 				}
 			}

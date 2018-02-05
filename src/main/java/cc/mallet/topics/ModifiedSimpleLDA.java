@@ -2,7 +2,9 @@ package cc.mallet.topics;
 
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
@@ -15,8 +17,10 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
+import cc.mallet.types.IDSorter;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
@@ -24,26 +28,66 @@ import cc.mallet.util.LDAUtils;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;
 
-public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, AbortableSampler {
+public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Serializable {
+
+	protected static Logger logger = MalletLogger.getLogger(ModifiedSimpleLDA.class.getName());
+
+	// the training instances and their topic assignments
+	protected ArrayList<TopicAssignment> data;  
+
+	// the alphabet for the input data
+	protected Alphabet alphabet; 
+
+	// the alphabet for the topics
+	protected LabelAlphabet topicAlphabet; 
+
+	// The number of topics requested
+	protected int numTopics;
+
+	// The size of the vocabulary
+	protected int numTypes;
+
+	// Prior parameters
+	//protected double alpha;	 // Dirichlet(alpha,alpha,...) is the distribution over topics
+	protected double [] alpha;	 // Dirichlet(alpha,alpha,...) is the distribution over topics
+	protected double alphaSum;
+	protected double beta;   // Prior on per-topic multinomial distribution over words
+	protected double betaSum;
+	public static final double DEFAULT_BETA = 0.01;
+
+	// An array to put the topic counts for the current document. 
+	// Initialized locally below.  Defined here to avoid
+	// garbage collection overhead.
+	protected int[] oneDocTopicCounts; // indexed by <document index, topic index>
+
+	// Statistics needed for sampling.
+	protected int[][] typeTopicCounts; // indexed by <feature index, topic index>
+	protected int[] tokensPerTopic; // indexed by <topic index>
+
+	public int showTopicsInterval = 50;
+	public int wordsPerTopic = 10;
+
+	protected Randoms random;
+	protected NumberFormat formatter;
+	protected boolean printLogLikelihood = false;
+
 
 	protected static volatile boolean abort = false;
 	/**
-	 * Base class for all modifications of SimpleLDA done to test the Partially Collapsed Gibbs Sampler.
-	 * I had to extend SimpleLDA to instantiate a new logger to manage input, as the original logger is
-	 * private in the library implementation.
+	 * Derivative of SimpleLDA, but with support for non-uniform alpha and beta
 	 * 
-	 * @author Paolo Elena, Leif Jonsson
+	 * @author Leif Jonsson
 	 */
 	private static final long serialVersionUID = 1L;
 	int startSeed;
-	
+
 	protected Alphabet targetAlphabet;
 
 	protected LDAConfiguration config;
 
 	protected InstanceList testSet = null; 
 	protected int currentIteration = 0;
-	
+
 	// Used for random scan in subclass
 	protected int [] typeCounts;
 	// A vector of type indices sorted so the first element contains the index of the
@@ -51,7 +95,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	protected int [] typeFrequencyIndex;
 	// The cumulative sum of the token mass, (0-1)
 	protected double [] typeFrequencyCumSum;
-	
+
 	// for dirichlet estimation
 	public int[] docLengthCounts; // histogram of document sizes
 	public int[][] topicDocCounts; // histogram of document/topic counts, indexed by <topic index, sequence position index>
@@ -63,11 +107,39 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	int maxTypeCount;
 	private boolean histogramsInitialized; 
 	
+	private static LabelAlphabet newLabelAlphabet (int numTopics) {
+		LabelAlphabet ret = new LabelAlphabet();
+		for (int i = 0; i < numTopics; i++)
+			ret.lookupIndex("topic"+i);
+		return ret;
+	}
+
 	public ModifiedSimpleLDA(LDAConfiguration conf) {
-		super(conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), 
-				conf.getAlpha(LDAConfiguration.ALPHA_DEFAULT)*conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), 
-				conf.getBeta(LDAConfiguration.BETA_DEFAULT), 
-				new Randoms(conf.getSeed(LDAConfiguration.SEED_DEFAULT)));
+		//		super(conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), 
+		//				conf.getAlpha(LDAConfiguration.ALPHA_DEFAULT)*conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), 
+		//				conf.getBeta(LDAConfiguration.BETA_DEFAULT), 
+		//				new Randoms(conf.getSeed(LDAConfiguration.SEED_DEFAULT)));
+		
+		this.data = new ArrayList<TopicAssignment>();
+		this.topicAlphabet = newLabelAlphabet (conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT));
+		this.numTopics = topicAlphabet.size();
+
+		double alphaConf = conf.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
+		this.alphaSum = alphaConf*conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT);
+		//this.alpha = alphaSum / numTopics;
+		this.alpha = new double[numTopics];
+		for (int i = 0; i < alpha.length; i++) {
+			alpha[i] = alphaConf;
+		}
+		this.beta = conf.getBeta(LDAConfiguration.BETA_DEFAULT);
+		this.random = new Randoms(conf.getSeed(LDAConfiguration.SEED_DEFAULT));
+		
+		oneDocTopicCounts = new int[numTopics];
+		tokensPerTopic = new int[numTopics];
+		
+		formatter = NumberFormat.getInstance();
+		formatter.setMaximumFractionDigits(5);
+		
 		this.config = conf;
 		setRandomSeed(conf.getSeed(LDAConfiguration.SEED_DEFAULT));
 		printLogLikelihood = false;
@@ -77,8 +149,176 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 
 	@Override
 	public void setRandomSeed(int seed) {
-		super.setRandomSeed(seed);
+		random = new Randoms(seed);
 		startSeed = seed;
+	}
+
+	protected void sampleTopicsForOneDoc (FeatureSequence tokenSequence,
+			FeatureSequence topicSequence) {
+
+		int[] oneDocTopics = topicSequence.getFeatures();
+
+		int[] currentTypeTopicCounts;
+		int type, oldTopic, newTopic;
+		int docLength = tokenSequence.getLength();
+
+		int[] localTopicCounts = new int[numTopics];
+
+		//		populate topic counts
+		for (int position = 0; position < docLength; position++) {
+			localTopicCounts[oneDocTopics[position]]++;
+		}
+
+		double score, sum;
+		double[] topicTermScores = new double[numTopics];
+
+		//	Iterate over the positions (words) in the document 
+		for (int position = 0; position < docLength; position++) {
+			type = tokenSequence.getIndexAtPosition(position);
+			oldTopic = oneDocTopics[position];
+
+			// Grab the relevant row from our two-dimensional array
+			currentTypeTopicCounts = typeTopicCounts[type];
+
+			//	Remove this token from all counts. 
+			localTopicCounts[oldTopic]--;
+			tokensPerTopic[oldTopic]--;
+			assert(tokensPerTopic[oldTopic] >= 0) : "old Topic " + oldTopic + " below 0";
+			currentTypeTopicCounts[oldTopic]--;
+
+			// Now calculate and add up the scores for each topic for this word
+			sum = 0.0;
+
+			// Here's where the math happens! Note that overall performance is 
+			//  dominated by what you do in this loop.
+			for (int topic = 0; topic < numTopics; topic++) {
+				score =
+						(alpha[topic] + localTopicCounts[topic]) *
+						((beta + currentTypeTopicCounts[topic]) /
+								(betaSum + tokensPerTopic[topic]));
+				sum += score;
+				topicTermScores[topic] = score;
+			}
+
+			// Choose a random point between 0 and the sum of all topic scores
+			double sample = random.nextUniform() * sum;
+
+			// Figure out which topic contains that point
+			newTopic = -1;
+			while (sample > 0.0) {
+				newTopic++;
+				sample -= topicTermScores[newTopic];
+			}
+
+			// Make sure we actually sampled a topic
+			if (newTopic == -1) {
+				throw new IllegalStateException ("SimpleLDA: New topic not sampled.");
+			}
+
+			// Put that new topic into the counts
+			oneDocTopics[position] = newTopic;
+			localTopicCounts[newTopic]++;
+			tokensPerTopic[newTopic]++;
+			currentTypeTopicCounts[newTopic]++;
+		}
+	}
+
+	public double modelLogLikelihood() {
+		double logLikelihood = 0.0;
+
+		// The likelihood of the model is a combination of a 
+		// Dirichlet-multinomial for the words in each topic
+		// and a Dirichlet-multinomial for the topics in each
+		// document.
+
+		// The likelihood function of a dirichlet multinomial is
+		//	 Gamma( sum_i alpha_i )	 prod_i Gamma( alpha_i + N_i )
+		//	prod_i Gamma( alpha_i )	  Gamma( sum_i (alpha_i + N_i) )
+
+		// So the log likelihood is 
+		//	logGamma ( sum_i alpha_i ) - logGamma ( sum_i (alpha_i + N_i) ) + 
+		//	 sum_i [ logGamma( alpha_i + N_i) - logGamma( alpha_i ) ]
+
+		// Do the documents first
+
+		int[] topicCounts = new int[numTopics];
+		double[] topicLogGammas = new double[numTopics];
+		int[] docTopics;
+
+		for (int topic=0; topic < numTopics; topic++) {
+			topicLogGammas[ topic ] = Dirichlet.logGamma( alpha[topic] );
+		}
+
+		for (int doc=0; doc < data.size(); doc++) {
+			LabelSequence topicSequence = (LabelSequence) data.get(doc).topicSequence;
+
+			docTopics = topicSequence.getFeatures();
+
+			for (int token=0; token < docTopics.length; token++) {
+				topicCounts[ docTopics[token] ]++;
+			}
+
+			for (int topic=0; topic < numTopics; topic++) {
+				if (topicCounts[topic] > 0) {
+					logLikelihood += (Dirichlet.logGamma(alpha[topic] + topicCounts[topic]) -
+							topicLogGammas[ topic ]);
+				}
+			}
+
+			// subtract the (count + parameter) sum term
+			logLikelihood -= Dirichlet.logGamma(alphaSum + docTopics.length);
+
+			Arrays.fill(topicCounts, 0);
+		}
+
+		// add the parameter sum term
+		logLikelihood += data.size() * Dirichlet.logGamma(alphaSum);
+
+		// And the topics
+
+		// Count the number of type-topic pairs
+		int nonZeroTypeTopics = 0;
+
+		for (int type=0; type < numTypes; type++) {
+			// reuse this array as a pointer
+
+			topicCounts = typeTopicCounts[type];
+
+			for (int topic = 0; topic < numTopics; topic++) {
+				if (topicCounts[topic] == 0) { continue; }
+
+				nonZeroTypeTopics++;
+				logLikelihood += Dirichlet.logGamma(beta + topicCounts[topic]);
+
+				if (Double.isNaN(logLikelihood)) {
+					System.out.println(topicCounts[topic]);
+					System.exit(1);
+				}
+			}
+		}
+
+		for (int topic=0; topic < numTopics; topic++) {
+			logLikelihood -= 
+					Dirichlet.logGamma( (beta * numTopics) +
+							tokensPerTopic[ topic ] );
+			if (Double.isNaN(logLikelihood)) {
+				System.out.println("after topic " + topic + " " + tokensPerTopic[ topic ]);
+				System.exit(1);
+			}
+
+		}
+
+		logLikelihood += 
+				(Dirichlet.logGamma(beta * numTopics)) -
+				(Dirichlet.logGamma(beta) * nonZeroTypeTopics);
+
+		if (Double.isNaN(logLikelihood)) {
+			System.out.println("at the end");
+			System.exit(1);
+		}
+
+
+		return logLikelihood;
 	}
 
 	public int getStartSeed() {
@@ -92,12 +332,12 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	public void setTestSet(InstanceList testSet) {
 		this.testSet = testSet;
 	}
-	
+
 	protected SparseDirichlet createDirichletSampler() {
 		SparseDirichletSamplerBuilder db = instantiateSparseDirichletSamplerBuilder(config.getDirichletSamplerBuilderClass(LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_BULDER_DEFAULT));
 		return db.build(this);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	protected SparseDirichletSamplerBuilder instantiateSparseDirichletSamplerBuilder(String samplerBuilderClassName) {
 		@SuppressWarnings("rawtypes")
@@ -121,8 +361,6 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			throw new IllegalArgumentException(e);
 		}
 	}
-		
-	protected static Logger logger = MalletLogger.getLogger(SimpleLDA.class.getName());
 
 	public void setShowTopicsInterval(int interval) {
 		showTopicsInterval = interval;
@@ -164,6 +402,33 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 				LDAUtils.logLikelihoodToFile(logLik,iteration,tw,loggingPath,logger);
 			}
 		}
+	}
+
+	// 
+	// Methods for displaying and saving results
+	//
+
+	public String topWords (int numWords) {
+
+		StringBuilder output = new StringBuilder();
+
+		IDSorter[] sortedWords = new IDSorter[numTypes];
+
+		for (int topic = 0; topic < numTopics; topic++) {
+			for (int type = 0; type < numTypes; type++) {
+				sortedWords[type] = new IDSorter(type, typeTopicCounts[type][topic]);
+			}
+
+			Arrays.sort(sortedWords);
+
+			output.append(topic + "\t" + tokensPerTopic[topic] + "\t");
+			for (int i=0; i < numWords; i++) {
+				output.append(alphabet.lookupObject(sortedWords[i].getID()) + " ");
+			}
+			output.append("\n");
+		}
+
+		return output.toString();
 	}
 
 	/**
@@ -208,7 +473,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		}
 		return indicators;
 	}
-	
+
 	@Override
 	public void setZIndicators(int[][] zIndicators) {
 		throw new NotImplementedException("Setting start values is not implemented yet! :(");
@@ -226,14 +491,14 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 
 	@Override
 	public ArrayList<TopicAssignment> getDataset() {
-		return super.getData();
+		return getData();
 	}
-	
+
 	@Override
 	public int[][] getDeltaStatistics() {
 		throw new NotImplementedException("Delta statistics is not implemented yet! :(");	
 	}
-	
+
 	@Override
 	public int[] getTopTypeFrequencyIndices() {
 		return typeFrequencyIndex;
@@ -248,7 +513,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	public int[] getTypeFrequencies() {
 		return typeCounts;
 	}
-	
+
 	@Override
 	public int getCorpusSize() {
 		int corpusWordCount = 0;
@@ -260,7 +525,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		}
 		return corpusWordCount;
 	}
-	
+
 	@Override
 	public int[][] getDocumentTopicMatrix() {
 		int [][] res = new int[data.size()][];
@@ -285,7 +550,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		}
 		return res;
 	}
-	
+
 	protected int sum(int[] vector) {
 		int sum = 0;
 		for (int i = 0; i < vector.length; i++) {
@@ -303,7 +568,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		}
 		return sum;
 	}
-	
+
 	/* 
 	 * Updates the vector tokensPerTopic used in modelLogLikelihood
 	 */
@@ -353,10 +618,10 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 					(FeatureSequence) data.get(docIdx).instance.getData();
 			LabelSequence topicSequence =
 					(LabelSequence) data.get(docIdx).topicSequence;
-	
+
 			int docLength = tokenSequence.getLength();
 			int [] oneDocTopics = topicSequence.getFeatures();
-	
+
 			docTopicMeans[docIdx] = calcZBar(numTopics, docLength, oneDocTopics);
 		}
 		return docTopicMeans;
@@ -384,7 +649,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		}
 		return docTopicMeans;
 	}
-	
+
 	/**
 	 * Returns an estimate of theta
 	 * @return estimate of theta
@@ -409,10 +674,10 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 					(FeatureSequence) data.get(docIdx).instance.getData();
 			LabelSequence topicSequence =
 					(LabelSequence) data.get(docIdx).topicSequence;
-	
+
 			int docLength = tokenSequence.getLength();
 			int [] oneDocTopics = topicSequence.getFeatures();
-	
+
 			thetaEstimate[docIdx] = calcThetaEstimate(numTopics, alpha, docLength, oneDocTopics);
 		}
 		return thetaEstimate;
@@ -451,7 +716,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		}
 		return thetaEstimate;
 	}
-	
+
 	static double [] calcThetaEstimate(int numTopics, double alpha, int docLength, int[] oneDocTopics) {
 		double [] thetaEstimate = new double[numTopics];
 		double[] localTopicCounts = new double[numTopics];
@@ -460,7 +725,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			int topicInd = oneDocTopics[position];
 			localTopicCounts[topicInd]++;
 		}
-		
+
 		double normalizer = 0.0;
 		for (int k = 0; k < numTopics; k++) {
 			normalizer += localTopicCounts[k] + alpha;
@@ -478,7 +743,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		}
 		return thetaEstimate;
 	}
-	
+
 	/**
 	 * Returns an estimate of theta, this differs from <code>getZBar</code> in that it will never
 	 * contain zeros for any topic (unless it gets an abnormal alpha = 0)
@@ -495,10 +760,10 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 					(FeatureSequence) data.get(docIdx).instance.getData();
 			LabelSequence topicSequence =
 					(LabelSequence) data.get(docIdx).topicSequence;
-	
+
 			int docLength = tokenSequence.getLength();
 			int [] oneDocTopics = topicSequence.getFeatures();
-	
+
 			thetaEstimate[docIdx] = calcThetaEstimate(numTopics, alpha, docLength, oneDocTopics);
 		}
 		return thetaEstimate;
@@ -508,7 +773,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 
 	@Override
 	public void preIteration() {
-		
+
 	}
 
 	@Override
@@ -518,24 +783,24 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 
 	@Override
 	public void preSample() {
-		
+
 	}
 
 	@Override
 	public void postSample() {
-		
+
 	}
 
 	@Override
 	public void postZ() {
-		
+
 	}
 
 	@Override
 	public void preZ() {
-		
+
 	}
-	
+
 	/** 
 	 * THIS IS WORK IN PROGRESS, NOT FINISHED IMPLEMENTED, DO NOT USE!
 	 *  Gather statistics on the size of documents 
@@ -554,18 +819,18 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			if (seqLen > maxTokens)
 				maxTokens = seqLen;
 			totalTokens += seqLen;
-			
+
 			if(docLenCnts.get(seqLen) == null) {
 				docLenCnts.put(seqLen,0); 
 			}
 			docLenCnts.put(seqLen,docLenCnts.get(seqLen) + 1);
-			
+
 			for (int position = 0; position < tokens.getLength(); position++) {
 				int type = tokens.getIndexAtPosition(position);
 				typeTotals[ type ]++;
 			}
 		}
-		
+
 		for (int type = 0; type < numTypes; type++) {
 			if (typeTotals[type] > maxTypeCount) { maxTypeCount = typeTotals[type]; }
 		}
@@ -579,11 +844,11 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 				docLengthCounts[i] = docLenCnts.get(i);
 		}
 		topicDocCounts = new int[numTopics][maxTokens + 1];
-		
+
 		betaSum = beta * numTypes;
 		histogramsInitialized = true;
 	}
-	
+
 	public void optimizeAlpha(WorkerRunnable[] runnables) {
 		if(!histogramsInitialized) throw new IllegalStateException("initializeHistograms has not been called beefore calling optimizeAlpha!");
 		// First clear the sufficient statistic histograms
@@ -593,7 +858,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 			Arrays.fill(topicDocCounts[topic], 0);
 		}
 
-		
+
 		for (int thread = 0; thread < runnables.length; thread++) {
 			int[][] sourceTopicCounts = runnables[thread].getTopicDocCounts();
 
@@ -629,17 +894,17 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 
 		if (usingSymmetricAlpha) {
 			alphaSum = Dirichlet.learnSymmetricConcentration(topicDocCounts[0],
-															 docLengthCounts,
-															 numTopics,
-															 alphaSum);
-			//for (int topic = 0; topic < numTopics; topic++) {
-				//alpha[topic] = alphaSum / numTopics;
-				alpha = alphaSum / numTopics;
-			//}
+					docLengthCounts,
+					numTopics,
+					alphaSum);
+			for (int topic = 0; topic < numTopics; topic++) {
+				alpha[topic] = alphaSum / numTopics;
+				//alpha = alphaSum / numTopics;
+			}
 		}
 		else {
-			throw new UnsupportedOperationException("Assymetric alpha not implemented yet!");
-			//alphaSum = Dirichlet.learnParameters(alpha, topicDocCounts, docLengthCounts, 1.001, 1.0, 1);
+			//throw new UnsupportedOperationException("Assymetric alpha not implemented yet!");
+			alphaSum = Dirichlet.learnParameters(alpha, topicDocCounts, docLengthCounts, 1.001, 1.0, 1);
 		}
 	}
 
@@ -649,7 +914,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		//  tokens of the most frequent type were assigned to one topic,
 		//  we would need to store a maxTypeCount + 1 count.
 		int[] countHistogram = new int[maxTypeCount + 1];
-		
+
 		// Now count the number of type/topic pairs that have
 		//  each number of tokens.
 
@@ -662,7 +927,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 				index++;
 			}
 		}
-			
+
 		// Figure out how large we need to make the "observation lengths"
 		//  histogram.
 		int maxTopicSize = 0;
@@ -679,15 +944,15 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		}
 
 		betaSum = Dirichlet.learnSymmetricConcentration(countHistogram,
-														topicSizeHistogram,
-														numTypes,
-														betaSum);
+				topicSizeHistogram,
+				numTypes,
+				betaSum);
 		beta = betaSum / numTypes;
-		
+
 
 		logger.info("[beta: " + formatter.format(beta) + "] ");		
 	}
-	
+
 	@Override
 	public LDAConfiguration getConfiguration() {
 		return config;
@@ -705,7 +970,7 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 		}
 		this.testSet = testSet;
 	}
-	
+
 	@Override
 	public double getBeta() {
 		return beta;
@@ -715,9 +980,49 @@ public class ModifiedSimpleLDA extends SimpleLDA implements LDAGibbsSampler, Abo
 	public double[] getAlpha() {
 		double [] alphaVect = new double[numTopics];
 		for (int i = 0; i < alphaVect.length; i++) {
-			alphaVect[i] = alpha / numTopics;
+			alphaVect[i] = alpha[i];
 		}
 		return alphaVect;
 	}
+
+	public void addInstances (InstanceList training) {
+
+		alphabet = training.getDataAlphabet();
+		numTypes = alphabet.size();
+
+		betaSum = beta * numTypes;
+
+		typeTopicCounts = new int[numTypes][numTopics];
+
+		for (Instance instance : training) {
+
+			FeatureSequence tokens = (FeatureSequence) instance.getData();
+			LabelSequence topicSequence =
+					new LabelSequence(topicAlphabet, new int[ tokens.size() ]);
+
+			int[] topics = topicSequence.getFeatures();
+			for (int position = 0; position < tokens.size(); position++) {
+
+				int topic = random.nextInt(numTopics);
+				topics[position] = topic;
+				tokensPerTopic[topic]++;
+
+				int type = tokens.getIndexAtPosition(position);
+				typeTopicCounts[type][topic]++;
+			}
+
+			TopicAssignment t = new TopicAssignment (instance, topicSequence);
+			data.add (t);
+		}
+
+	}
+
+	public Alphabet getAlphabet() { return alphabet; }
+	public LabelAlphabet getTopicAlphabet() { return topicAlphabet; }
+	public int getNumTopics() { return numTopics; }
+	public ArrayList<TopicAssignment> getData() { return data; }
+	public int[][] getTypeTopicCounts() { return typeTopicCounts; }
+	public int[] getTopicTotals() { return tokensPerTopic; }
+
 
 }

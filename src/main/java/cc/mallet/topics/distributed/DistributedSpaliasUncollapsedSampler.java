@@ -495,7 +495,7 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 			final int [][] batch = createBatch(docIndices);
 			ActorRef sampler = samplerCores.get(samplerIdx++);
 			System.out.println("Telling: " + sampler + " to configure!");
-			sampler.tell(new DocumentSamplerConfig(numTopics, numTypes, alpha, 
+			sampler.tell(new DocumentSamplerConfig(numTopics, numTypes, alphaSum / numTopics, 
 					beta, resultsSize, myBatch++, docIndices, sendPartials), inbox.getRef());
 			Object reply;
 			try {
@@ -863,7 +863,7 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 		int[] docTopics;
 
 		for (int topic=0; topic < numTopics; topic++) {
-			topicLogGammas[ topic ] = Dirichlet.logGammaStirling( alpha );
+			topicLogGammas[ topic ] = Dirichlet.logGammaStirling( alpha[topic] );
 		}
 
 		for (int doc=0; doc < data.size(); doc++) {
@@ -877,7 +877,7 @@ public class DistributedSpaliasUncollapsedSampler extends ModifiedSimpleLDA impl
 
 			for (int topic=0; topic < numTopics; topic++) {
 				if (topicCounts[topic] > 0) {
-					logLikelihood += (Dirichlet.logGammaStirling(alpha + topicCounts[topic]) -
+					logLikelihood += (Dirichlet.logGammaStirling(alpha[topic] + topicCounts[topic]) -
 							topicLogGammas[ topic ]);
 				}
 			}

@@ -165,7 +165,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			if(wordTopicIndicatorProposal!=oldTopic) {
 				// If we drew a new topic indicator, do MH step for Word proposal
 				double pi_w = calculateWordAcceptanceProbability(localTopicCounts_not_i, type, oldTopic,
-						wordTopicIndicatorProposal, topicCountBetaHat, typeTopicCounts, phi, alpha, beta);
+						wordTopicIndicatorProposal, topicCountBetaHat, typeTopicCounts, phi, alpha[oldTopic], beta);
 				
 				if(pi_w > 1){
 					localTopicCounts[oldTopic]--;
@@ -192,13 +192,13 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			// Document-Topic Proposal  
 			// #####################################
 			 
-			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + (numTopics*alpha));
+			double u_i = ThreadLocalRandom.current().nextDouble() * (oneDocTopics.length + alphaSum);
 			
 			int docTopicIndicatorProposal = -1;
 			if(u_i < oneDocTopics.length) {
 				docTopicIndicatorProposal = oneDocTopics[(int) u_i];
 			} else {
-				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / (numTopics*alpha)) * numTopics);
+				docTopicIndicatorProposal = (int) (((u_i - oneDocTopics.length) / alphaSum) * numTopics);
 			}
 			
 			// Make sure we actually sampled a valid topic
@@ -209,7 +209,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			if(docTopicIndicatorProposal!=oldTopic) {
 				// If we drew a new topic indicator, do MH step for Document proposal
 				double pi_d = calculateDocumentAcceptanceProbability(localTopicCounts, localTopicCounts_not_i, type,
-						oldTopic, docTopicIndicatorProposal, phi, alpha);
+						oldTopic, docTopicIndicatorProposal, phi, alpha[oldTopic]);
 				// Calculate MH acceptance Min.(1,ratio) but as an if else
 				if (pi_d > 1){
 					newTopic = docTopicIndicatorProposal;
