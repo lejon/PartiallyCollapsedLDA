@@ -64,6 +64,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private String dirichletSamplerBuilderClassName = LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_BULDER_DEFAULT;
 	private int aliasPoissonThreshold = LDAConfiguration.ALIAS_POISSON_DEFAULT_THRESHOLD;
 	private String fileRegex;
+	private Integer hyperparamOptimInterval;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -682,6 +683,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	public void setDocumentTopicDiagnosticsOutputFilename(String documentTopicDiagnosticsOutputFilename) {
 		this.documentTopicDiagnosticsOutputFilename = documentTopicDiagnosticsOutputFilename;
+	}
+
+	public Integer getHyperparamOptimInterval(int defaultValue) {
+		return hyperparamOptimInterval == null ? defaultValue : hyperparamOptimInterval;
+	}
+
+	public void setHyperparamOptimInterval(Integer hyperparamOptimInterval) {
+		this.hyperparamOptimInterval = hyperparamOptimInterval;
 	}
 
 }

@@ -446,4 +446,9 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		String ext = getStringProperty("file_regex");
 		return (ext == null || ext.length() == 0) ? string : ext;
 	}
+
+	@Override
+	public Integer getHyperparamOptimInterval(int defaultValue) {
+		return getInteger("hyperparam_optim_interval",defaultValue);
+	}
 }

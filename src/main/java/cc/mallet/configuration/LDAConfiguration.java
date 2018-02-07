@@ -186,4 +186,6 @@ public interface LDAConfiguration {
 	public boolean saveDocumentTopicDiagnostics();
 
 	public String getDocumentTopicDiagnosticsOutputFilename();
+
+	public Integer getHyperparamOptimInterval(int defaultValue);
 }

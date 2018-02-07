@@ -1012,5 +1012,10 @@ public class TopicMassExperiment {
 		public String getDocumentTopicDiagnosticsOutputFilename() {
 			return pc.getDocumentTopicDiagnosticsOutputFilename();
 		}
+		
+		public Integer getHyperparamOptimInterval(int defaultValue) {
+			return pc.getHyperparamOptimInterval(defaultValue);
+		}
+
 	}
 }

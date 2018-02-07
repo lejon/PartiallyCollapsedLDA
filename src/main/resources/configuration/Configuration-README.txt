@@ -5,10 +5,16 @@
 ## get a list of the sub-configs listed in this variable. The program 
 ## then MUST "activate" using activateSubconfig(conf) the subconfig that 
 ## it wants to run
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#################### SUBCONFIG NAMES CANNOT CONTAIN THE "." CHARACTER!! ####################  
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 configs = uncollapsed_parallel_adaptive, uncollapsed_parallel
 
 ### Subconfig, one config file can have several sub-configs
 ### sub-configs are activated in the code
+
 [uncollapsed_parallel_adaptive]
 
 ## Title: will be printed in the summary output of each run
@@ -164,7 +170,30 @@ debug = 0
 
 log_document_density = true
 log_type_topic_density = true
+
+# Save the a file with the document topic means (can include zeros)
 save_doc_topic_means = true
+doc_topic_mean_filename = doc_topic_means.csv
+
+# Save the a file with document topic theta estimates (will not include zeros)
+# Unlike Phi means which are sampled with thinning, theta means is just a simple
+# average of the topic counts in the last iteration divided by the number of 
+# tokens in the document thus there is not theta_burnin or theta_thinning
+save_doc_theta_estimate = true
+doc_topic_theta_filename = doc_topic_theta.csv
+
+save_phi_means = true
+phi_mean_filename = phi_means.csv
+
+
+save_term_frequencies = true
+term_frequencies_filename = term_frequencies.txt
+
+rare_threshold = 50
+
+# Save the vocabulary (order matches the Phi matrix) 
+save_vocabulary = true
+vocabulary_filename = lda_vocab.txt
 
 # Log Phi: Calculate the Ratio of Zeros in Phi (so should really be called Phi Sparsity I guess)
 log_phi_density = true
@@ -213,3 +242,8 @@ sparse_dirichlet_sampler_builder_name = cc.mallet.types.PolyaUrnDirichletSampler
 # from that directory (and its subdirs). file_regex is a regular expression
 # for which filenames to match, for .txt files, the regex should be .*\.txt$ 
 file_regex = .*\.txt$
+
+
+# Optimize hyperparameters alpha and beta every 'hyperparam_optim_interval' iteration
+# -1 means no hyperparameter opitimization
+hyperparam_optim_interval = 100
