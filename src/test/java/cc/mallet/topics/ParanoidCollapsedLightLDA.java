@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.topics.CollapsedLightLDA.LightLDADocSamplingContext;
 import cc.mallet.types.InstanceList;
 
 public class ParanoidCollapsedLightLDA extends CollapsedLightLDA {

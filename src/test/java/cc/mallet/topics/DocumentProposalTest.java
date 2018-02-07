@@ -2,7 +2,6 @@ package cc.mallet.topics;
 
 import static org.junit.Assert.assertTrue;
 
-import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 

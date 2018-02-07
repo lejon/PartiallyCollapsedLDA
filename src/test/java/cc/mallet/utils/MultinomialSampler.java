@@ -1,7 +1,6 @@
 package cc.mallet.utils;
 
 import java.util.Arrays;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.math3.stat.inference.ChiSquareTest;
