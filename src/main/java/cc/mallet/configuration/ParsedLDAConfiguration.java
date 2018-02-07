@@ -451,4 +451,11 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public Integer getHyperparamOptimInterval(int defaultValue) {
 		return getInteger("hyperparam_optim_interval",defaultValue);
 	}
+
+	@Override
+	public boolean useSymmetricAlpha(boolean defaultAlpha) {
+		String key = "symmetric_alpha";
+		Boolean symAlpha = getBooleanPropertyOrNull(key);
+		return symAlpha == null ? defaultAlpha : symAlpha;
+	}
 }

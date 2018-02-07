@@ -1017,5 +1017,10 @@ public class TopicMassExperiment {
 			return pc.getHyperparamOptimInterval(defaultValue);
 		}
 
+		@Override
+		public boolean useSymmetricAlpha(boolean symmetricAlpha) {
+			return pc.useSymmetricAlpha(symmetricAlpha);
+		}
+
 	}
 }

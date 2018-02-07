@@ -100,13 +100,13 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	
 
 	@Override
-	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
 
 		final int docLength = tokens.getLength();
-		if(docLength==0) return;
+		if(docLength==0) return null;
 		
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
@@ -242,6 +242,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			// Make sure the "_i" version is also up to date!
 			localTopicCounts_not_i[newTopic]++;
 		}
+		return localTopicCounts;
 	}
 
 

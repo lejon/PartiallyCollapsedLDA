@@ -36,6 +36,8 @@ public interface LDAConfiguration {
 	public static final String SPARSE_DIRICHLET_SAMPLER_BULDER_DEFAULT = "cc.mallet.types.DefaultSparseDirichletSamplerBuilder";
 	public static final int ALIAS_POISSON_DEFAULT_THRESHOLD = 100;
 	public static final String FILE_REGEX_DEFAULT = ".*\\.txt$";
+	public static final int HYPERPARAM_OPTIM_INTERVAL_DEFAULT = -1;
+	public static final boolean SYMMETRIC_ALPHA_DEFAULT = false;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -188,4 +190,6 @@ public interface LDAConfiguration {
 	public String getDocumentTopicDiagnosticsOutputFilename();
 
 	public Integer getHyperparamOptimInterval(int defaultValue);
+
+	public boolean useSymmetricAlpha(boolean symmetricAlpha);
 }

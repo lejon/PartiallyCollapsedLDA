@@ -16,7 +16,7 @@ public class EfficientUncollapsedParallelLDA extends UncollapsedParallelLDA impl
 	}
 
 	@Override
-	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected double[] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
@@ -24,7 +24,7 @@ public class EfficientUncollapsedParallelLDA extends UncollapsedParallelLDA impl
 		int type, oldTopic, newTopic;
 
 		final int docLength = tokens.getLength();
-		if(docLength==0) return;
+		if(docLength==0) return null;
 		
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
@@ -113,6 +113,7 @@ public class EfficientUncollapsedParallelLDA extends UncollapsedParallelLDA impl
 			increment(myBatch, newTopic, type);
 			//System.out.println("(Batch=" + myBatch + ") Incremented: topic=" + newTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][newTopic][type]);		
 		}
+		return localTopicCounts;
 	}
 
 }

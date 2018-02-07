@@ -247,3 +247,6 @@ file_regex = .*\.txt$
 # Optimize hyperparameters alpha and beta every 'hyperparam_optim_interval' iteration
 # -1 means no hyperparameter opitimization
 hyperparam_optim_interval = 100
+
+# Use a symmetric alpha or allow it to be non-symmetric due to hyper parameter optimization
+symmetric_alpha = true | false

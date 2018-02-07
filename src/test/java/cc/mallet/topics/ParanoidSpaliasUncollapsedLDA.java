@@ -59,9 +59,9 @@ public class ParanoidSpaliasUncollapsedLDA extends SpaliasUncollapsedParallelLDA
 	}
 
 	@Override
-	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx)  {
+	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx)  {
 		//SamplingResult res = super.sampleTopicAssignmentsParallel(tokenSequence, oneDocTopics, myBatch);
-		super.sampleTopicAssignmentsParallel(ctx);
+		return super.sampleTopicAssignmentsParallel(ctx);
 		// THIS CANNOT BE ENSURED with a job stealing implementation
 		//ensureConsistentTopicTypeCountDelta(batchLocalTopicTypeUpdates, myBatch);
 		//return res;

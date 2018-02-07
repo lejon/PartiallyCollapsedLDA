@@ -186,7 +186,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	}
 
 	@Override
-	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
@@ -194,7 +194,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		int type, oldTopic, newTopic;
 
 		final int docLength = tokens.getLength();
-		if(docLength==0) return;
+		if(docLength==0) return null;
 		
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
@@ -304,6 +304,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 			//System.out.println("(Batch=" + myBatch + ") Incremented: topic=" + newTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][newTopic][type]);		
 		}
 		//System.out.println("Ratio: " + ((double)numPrior/(double)numLikelihood));
+		return localTopicCounts;
 	}
 
 	double calcCumSum(int type, double[] localTopicCounts, int[] nonZeroTopics, int nonZeroTopicCnt, double[] cumsum) {

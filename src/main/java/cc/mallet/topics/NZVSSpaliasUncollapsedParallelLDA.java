@@ -181,7 +181,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 	}
 	
 	@Override
-	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
@@ -189,7 +189,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 		int type, oldTopic, newTopic;
 
 		final int docLength = tokens.getLength();
-		if(docLength==0) return;
+		if(docLength==0) return null;
 		
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
@@ -339,6 +339,7 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 			//System.out.println("(Batch=" + myBatch + ") Incremented: topic=" + newTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][newTopic][type]);		
 		}
 		//System.out.println("Ratio: " + ((double)numPrior/(double)numLikelihood));
+		return localTopicCounts;
 	}
 
 	/*

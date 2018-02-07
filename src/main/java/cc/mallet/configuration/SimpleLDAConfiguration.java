@@ -65,6 +65,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private int aliasPoissonThreshold = LDAConfiguration.ALIAS_POISSON_DEFAULT_THRESHOLD;
 	private String fileRegex;
 	private Integer hyperparamOptimInterval;
+	private boolean symmetricAlpha;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -692,5 +693,15 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	public void setHyperparamOptimInterval(Integer hyperparamOptimInterval) {
 		this.hyperparamOptimInterval = hyperparamOptimInterval;
 	}
+
+	@Override
+	public boolean useSymmetricAlpha(boolean defaultAlpha) {
+		return symmetricAlpha;
+	}
+	
+	public void setUseSymmetricAlpha(boolean symmetricAlpha) {
+		this.symmetricAlpha = symmetricAlpha;
+	}
+
 
 }

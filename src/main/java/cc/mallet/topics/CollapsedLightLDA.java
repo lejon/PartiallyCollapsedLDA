@@ -299,6 +299,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		aliasTables = new WalkerAliasTable[numTypes];
 		// typeNorm    = new double[numTypes];
 		typeCounts = new int[numTypes];
+		typeTotals = new int[numTypes];
 		batchLocalTopicTypeUpdates = new AtomicInteger[numTopics][numTypes];
 		for (int i = 0; i < batchLocalTopicTypeUpdates.length; i++) {
 			for (int j = 0; j < batchLocalTopicTypeUpdates[i].length; j++) {

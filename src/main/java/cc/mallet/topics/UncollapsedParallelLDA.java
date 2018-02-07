@@ -10,6 +10,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -76,7 +77,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	TIntIntHashMap [] globalDeltaNUpdates;
 
 	AtomicInteger [][] batchLocalTopicTypeUpdates;
-
+	
 	int corpusWordCount = 0;
 
 	// Matrix M of topic-token assignments
@@ -145,6 +146,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			globalDeltaNUpdates[i] = new TIntIntHashMap();
 		}
 		
+		usingSymmetricAlpha = config.useSymmetricAlpha(LDAConfiguration.SYMMETRIC_ALPHA_DEFAULT);
 		savePhiMeans = config.savePhiMeans(LDAConfiguration.SAVE_PHI_MEAN_DEFAULT);
 		phiBurnIn    = (int)(((double) config.getPhiBurnInPercent(LDAConfiguration.PHI_BURN_IN_DEFAULT) / 100)
 						             * config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT)); 
@@ -317,6 +319,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		targetAlphabet = training.getTargetAlphabet();
 		numTypes = alphabet.size();
 		typeCounts = new int[numTypes];
+		typeTotals = new int[numTypes];
 		batchLocalTopicTypeUpdates = new AtomicInteger[numTopics][numTypes];
 		for (int i = 0; i < batchLocalTopicTypeUpdates.length; i++) {
 			for (int j = 0; j < batchLocalTopicTypeUpdates[i].length; j++) {
@@ -331,10 +334,22 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		// Transpose of the above
 		typeTopicCounts       = new int [numTypes][numTopics];
 
+		Map<Integer,Integer> docLenCnts = new java.util.HashMap<Integer, Integer>();
+		
+
 		// Looping over the new instances to initialize the topic assignment randomly
 		for (Instance instance : training) {
 			FeatureSequence tokens = (FeatureSequence) instance.getData();
 			int docLength = tokens.size();
+
+			if (docLength > longestDocLength)
+				longestDocLength = docLength;
+			
+			if(docLenCnts.get(docLength) == null) {
+				docLenCnts.put(docLength,0); 
+			}
+			docLenCnts.put(docLength,docLenCnts.get(docLength) + 1);
+
 			corpusWordCount += docLength;
 			LabelSequence topicSequence =
 					new LabelSequence(topicAlphabet, new int[ docLength ]);
@@ -346,6 +361,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				topics[position] = topic;
 
 				int type = tokens.getIndexAtPosition(position);
+				typeTotals[ type ]++;
 				typeCounts[type] += 1;
 				updateTypeTopicCount(type, topic, 1);
 			}
@@ -354,6 +370,30 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			TopicAssignment t = new TopicAssignment (instance, topicSequence);
 			data.add (t);
 		}
+		
+		for (int type = 0; type < numTypes; type++) {
+			if (typeTotals[type] > maxTypeCount) { maxTypeCount = typeTotals[type]; }
+		}
+		
+		// Below structures should only be used if hyperparameter optimization is turned on
+		if(config.getHyperparamOptimInterval(LDAConfiguration.HYPERPARAM_OPTIM_INTERVAL_DEFAULT)>0) {
+			topicDocCounts = new int[numTopics][longestDocLength + 1];
+			
+			documentTopicHistogram = new AtomicInteger[numTopics][longestDocLength + 1];
+			for (int i = 0; i < documentTopicHistogram.length; i++) {
+				for (int j = 0; j < documentTopicHistogram[i].length; j++) {
+					documentTopicHistogram[i][j] = new AtomicInteger();
+				}
+			}
+			
+			docLengthCounts = new int[longestDocLength + 1];
+			for (int i = 0; i < docLengthCounts.length; i++) {
+				if(docLenCnts.get(i)!=null)
+					docLengthCounts[i] = docLenCnts.get(i);
+			}
+		}
+		
+		betaSum = beta * numTypes;
 
 		typeFrequencyIndex = IndexSorter.getSortedIndices(typeCounts);
 		typeFrequencyCumSum = calcTypeFrequencyCumSum(typeFrequencyIndex,typeCounts);
@@ -436,6 +476,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		double docDensity = -1;
 		double phiDensity;
 		Stats stats;
+		int optimizeInterval = config.getHyperparamOptimInterval(LDAConfiguration.HYPERPARAM_OPTIM_INTERVAL_DEFAULT);
 	
 		int numParticles = 100;
 
@@ -473,6 +514,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 
 		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
+			if(optimizeInterval > 1  && iteration % optimizeInterval == 0) {
+				saveHistStats = true;
+			}
 			preIteration();
 			currentIteration = iteration;
 			//if((iteration%100)==0) System.out.println("Iteration: " + iteration);
@@ -560,6 +604,19 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					topIndices = LDAUtils.getTopWordIndices(nWords, numTypes, numTopics, typeTopicCounts, alphabet);
 				}
 				LDAUtils.writeBinaryDoubleMatrixIndices(phi, iteration, binOutput.getAbsolutePath() + "/Phi_KxV", topIndices);
+			}
+			
+			if( optimizeInterval > 1 && iteration % optimizeInterval == 0) {
+				optimizeAlpha();
+				optimizeBeta();
+				
+				// Reset counts
+				for (int i = 0; i < documentTopicHistogram.length; i++) {
+					for (int j = 0; j < documentTopicHistogram[i].length; j++) {
+						documentTopicHistogram[i][j].set(0);
+					}
+				}
+				saveHistStats = false;
 			}
 
 			kdDensities.set(0);
@@ -975,7 +1032,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 							(FeatureSequence) data.get(docIdx).instance.getData();
 					LabelSequence topicSequence =
 							(LabelSequence) data.get(docIdx).topicSequence;
-					sampleTopicAssignmentsParallel (new UncollapsedLDADocSamplingContext(tokenSequence, topicSequence, myBatch, docIdx));
+					double [] docTopicHist = sampleTopicAssignmentsParallel (
+							new UncollapsedLDADocSamplingContext(tokenSequence, topicSequence, myBatch, docIdx));
+					if(docTopicHist!=null && saveHistStats)
+						updateGlobalHistogram(docTopicHist);
 				}
 			}
 			else {
@@ -986,6 +1046,12 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				int endDoc2 = endDoc;
 				invokeAll(new RecursiveDocumentSampler(startDoc1,endDoc1,myBatch + 1,limit),
 						new RecursiveDocumentSampler(startDoc2,endDoc2,myBatch + 2,limit));
+			}
+		}
+
+		private void updateGlobalHistogram(double[] docTopicHist) {
+			for (int topic = 0; topic < docTopicHist.length; topic++) {				
+				documentTopicHistogram[topic][(int)docTopicHist[topic]].incrementAndGet();
 			}
 		}
 	}
@@ -1052,7 +1118,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		System.out.println();System.out.println();
 	}
 
-	protected void sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
@@ -1060,7 +1126,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		int type, oldTopic, newTopic;
 
 		final int docLength = tokens.getLength();
-		if(docLength==0) return;
+		if(docLength==0) return null;
 
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
@@ -1130,6 +1196,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			 */
 			increment(myBatch,newTopic,type);
 		}
+		return localTopicCounts;
 	}
 
 	protected void increment(int myBatch, int newTopic, int type) {
