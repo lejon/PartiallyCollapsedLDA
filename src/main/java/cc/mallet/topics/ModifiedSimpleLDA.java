@@ -92,7 +92,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	protected InstanceList testSet = null; 
 	protected int currentIteration = 0;
 
-	// Used for random scan in subclass
+	// Used for random scan in subclass, number of occurences of each type in the corpus
 	protected int [] typeCounts;
 	// A vector of type indices sorted so the first element contains the index of the
 	// type that occurs most in the corpus and so on in descending order
@@ -104,8 +104,6 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	public int[] docLengthCounts; // histogram of document sizes
 	public int[][] topicDocCounts; // histogram of document/topic counts, indexed by <topic index, sequence position index>
 	boolean usingSymmetricAlpha = true;
-	// The number of times each type appears in the corpus
-	int[] typeTotals;
 	// The max over typeTotals, used for beta optimization
 	int maxTypeCount;
 	

@@ -319,7 +319,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		targetAlphabet = training.getTargetAlphabet();
 		numTypes = alphabet.size();
 		typeCounts = new int[numTypes];
-		typeTotals = new int[numTypes];
 		batchLocalTopicTypeUpdates = new AtomicInteger[numTopics][numTypes];
 		for (int i = 0; i < batchLocalTopicTypeUpdates.length; i++) {
 			for (int j = 0; j < batchLocalTopicTypeUpdates[i].length; j++) {
@@ -361,7 +360,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				topics[position] = topic;
 
 				int type = tokens.getIndexAtPosition(position);
-				typeTotals[ type ]++;
 				typeCounts[type] += 1;
 				updateTypeTopicCount(type, topic, 1);
 			}
@@ -372,7 +370,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 		
 		for (int type = 0; type < numTypes; type++) {
-			if (typeTotals[type] > maxTypeCount) { maxTypeCount = typeTotals[type]; }
+			if (typeCounts[type] > maxTypeCount) { maxTypeCount = typeCounts[type]; }
 		}
 		
 		// Below structures should only be used if hyperparameter optimization is turned on
