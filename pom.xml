@@ -70,7 +70,8 @@
 	<!-- v5.2.1: Test set + held out LL calc + Topic Model Diagnostics -->
 	<!-- v5.2.2: Small refactoring -->
 	<!-- v6.0.0: Hyper parameter optimization support added -->
-	<version>6.0.0</version>
+	<!-- v6.0.1: Fixed bug which caused PolyaUrn not to set the correct Phi when called from sampleZGivenPhi. -->
+	<version>6.0.1</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
