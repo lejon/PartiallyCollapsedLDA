@@ -18,6 +18,7 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
@@ -31,12 +32,13 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
 	private ExecutorService tableBuilderExecutor;
 	
-	
 	// #### Sparsity handling
 	// Jagged array containing the topics that are non-zero for each type
 	int [][] nonZeroTypeTopicIdxs = null;
 	// How many indices  are zero for each type, i.e the column count for the zeroTypeTopicIdxs array
 	int [] nonZeroTypeTopicColIdxs = null;
+	
+	boolean staticPhiAliasTableIsBuild = false;
 	
 	public PolyaUrnSpaliasLDA(LDAConfiguration config) {
 		super(config);
@@ -47,11 +49,20 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		alphabet = training.getDataAlphabet();
 		numTypes = alphabet.size();
 		nonZeroTypeTopicIdxs = new int[numTypes][numTopics];
-		phitrans    = new double[numTypes][numTopics];
 		nonZeroTypeTopicColIdxs = new int[numTypes];
+		
 		aliasTables = new WalkerAliasTable[numTypes];
 		typeNorm    = new double[numTypes];
+		phitrans    = new double[numTypes][numTopics];
+
 		super.addInstances(training);
+	}
+	
+	@Override
+	public void preSample() {
+		super.preSample();
+		int poolSize = 2; // Parallel alias table pool (why 2?)
+		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
 	}
 	
 	protected SparseDirichlet createDirichletSampler() {
@@ -59,13 +70,13 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		return db.build(this);
 	}
 	
-	class ParallelTableBuilder implements Callable<TableBuildResult> {
+	class ParallelTableBuilder implements Callable<WalkerAliasTableBuildResult> {
 		int type;
 		public ParallelTableBuilder(int type) {
 			this.type = type;
 		}
 		@Override
-		public TableBuildResult call() {
+		public WalkerAliasTableBuildResult call() {
 			double [] probs = new double[numTopics];
 			double typeMass = 0; // Type prior mass
 			double [] phiType =  phitrans[type]; 
@@ -83,41 +94,18 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 				aliasTables[type].reGenerateAliasTable(probs, typeMass);
 			}
 				
-			return new TableBuildResult(type, aliasTables[type], typeMass);
+			return new WalkerAliasTableBuildResult(type, aliasTables[type], typeMass);
 		}   
 	}
 
-	static class TableBuildResult {
-		public int type;
-		public WalkerAliasTable table;
-		public double typeNorm;
-		public TableBuildResult(int type, WalkerAliasTable table, double typeNorm) {
-			super();
-			this.type = type;
-			this.table = table;
-			this.typeNorm = typeNorm;
-		}
-	}
-
 	@Override
-	public void preSample() {
-		super.preSample();
-		int poolSize = 2; // Parallel alias table pool (why 2?)
-		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
+	public void preIteration() {	
+		doPreIterationTableBuilding();
+		super.preIteration();
 	}
 
-	public static void transpose(double[][] matrix, double [][] transpose) {
-		int rows = matrix.length;
-		int cols = matrix[0].length;
-		for (int row = 0; row < rows; row++)
-			for (int col = 0; col < cols; col++)
-				transpose[col][row] = matrix[row][col];
-	}
-
-	@Override
-	public void preIteration() {
-		
-		transpose(phi, phitrans);
+	protected void doPreIterationTableBuilding() {
+		LDAUtils.transpose(phi, phitrans);
 		
 		List<ParallelTableBuilder> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
@@ -136,10 +124,10 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			}			
 		}
 		
-		List<Future<TableBuildResult>> results;
+		List<Future<WalkerAliasTableBuildResult>> results;
 		try {
 			results = tableBuilderExecutor.invokeAll(builders);
-			for (Future<TableBuildResult> result : results) {
+			for (Future<WalkerAliasTableBuildResult> result : results) {
 				aliasTables[result.get().type] = result.get().table;
 				typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
 			}
@@ -150,26 +138,21 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			e.printStackTrace();
 			System.exit(-1);
 		}
-		super.preIteration();
 	}
+	
+	public void preIterationGivenPhi() {
+		if(!staticPhiAliasTableIsBuild) {
+			doPreIterationTableBuilding();
+			super.preIterationGivenPhi();
+			staticPhiAliasTableIsBuild = true;
+		}
+	}
+
 
 	@Override
 	public void prePhi() {
 		super.prePhi();
 		Arrays.fill(nonZeroTypeTopicColIdxs,0);
-		//for (int type = 0; type < numTypes; type++) {
-			// Should not be needed, since we just overwrite previous iteration result
-			//Arrays.fill(nonZeroTypeTopicIdxs[type],0);
-		//}
-	}
-
-	@Override
-	public void postIteration() {
-		//System.out.println("Used prior: " + toPrior.get() + " / " + corpusWordCount);
-		//toPrior.set(0);
-		//System.out.println("Used typeSparseness (" + config.getVariableSelectionPrior(vsPriorDefault) + "): " + usedTypeSparsness.get());
-		//usedTypeSparsness.set(0);
-		super.postIteration();
 	}
 
 	@Override
@@ -486,11 +469,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		return nonZeroTopicCnt;
 	}	
 	
-	@Override
-	protected void samplePhi() {
-		super.samplePhi();
-	}
-
 	/**
 	 * Samples new Phi's using variable selection. 
 	 * 

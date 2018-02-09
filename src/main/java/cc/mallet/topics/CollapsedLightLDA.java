@@ -1,8 +1,5 @@
 package cc.mallet.topics;
 
-import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntIntProcedure;
-
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -25,7 +22,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.topics.SpaliasUncollapsedParallelLDA.TableBuildResult;
 import cc.mallet.topics.randomscan.document.BatchBuilderFactory;
 import cc.mallet.topics.randomscan.document.DocumentBatchBuilder;
 import cc.mallet.topics.randomscan.topic.TopicIndexBuilder;
@@ -43,6 +39,8 @@ import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.Stats;
 import cc.mallet.util.WalkerAliasTable;
+import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntIntProcedure;
 
 
 public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSampler {
@@ -517,7 +515,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	}
 
 	class TypeTopicTableBuilderFactory implements TableBuilderFactory {
-		public Callable<TableBuildResult> instance(int type) {
+		public Callable<WalkerAliasTableBuildResult> instance(int type) {
 			return new TypeTopicParallelTableBuilder(type, nonZeroTypeTopicCnt, nonZeroTypeTopics, 
 					typeTopicCounts, topicCountBetaHat, aliasTables, numTopics);
 		}
@@ -530,7 +528,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	public void preIteration() {
 		
 		
-		List<Callable<TableBuildResult>> builders = new ArrayList<>();
+		List<Callable<WalkerAliasTableBuildResult>> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
 		if(topicTypeIndices!=null) {
 			// The topicIndexBuilder supports having different types per topic,
@@ -547,10 +545,10 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 			}
 		}
 		
-		List<Future<TableBuildResult>> results;
+		List<Future<WalkerAliasTableBuildResult>> results;
 		try {
 			results = tableBuilderExecutor.invokeAll(builders);
-			for (Future<TableBuildResult> result : results) {
+			for (Future<WalkerAliasTableBuildResult> result : results) {
 				aliasTables[result.get().type] = result.get().table;
 				// typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
 			}

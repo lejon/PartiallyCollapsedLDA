@@ -1434,6 +1434,14 @@ public class LDAUtils {
 		return transpose;
 	}
 	
+	public static void transpose(double[][] matrix, double [][] transpose) {
+		int rows = matrix.length;
+		int cols = matrix[0].length;
+		for (int row = 0; row < rows; row++)
+			for (int col = 0; col < cols; col++)
+				transpose[col][row] = matrix[row][col];
+	}
+	
 	public static double calculateMatrixDensity(int[][] matrix) {
 		double nonZero = 0.0;
 		for (int type = 0; type < matrix.length; type++) {

@@ -152,7 +152,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 						             * config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT)); 
 		phiMeanThin  = config.getPhiMeanThin(LDAConfiguration.PHI_THIN_DEFAULT);
 	}
-
+	
 	public int[][] getTopIndices() {
 		return topIndices;
 	}
@@ -183,46 +183,28 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 	public void printMMatrix() {
 		int [][] ttCounts = getTypeTopicCounts();
-		String res = "Type Topic Counts:\n";
-		res += "Topic:   ";
-		for (int topic = 0; topic < ttCounts[0].length; topic++) {
-			res += String.format("%02d, ",topic);
-		}
-		res += "\n";
-		res += "-----------------------------------------------------------\n";
-
-		for (int i = 0; i < ttCounts.length; i++) {
-			res += "[" + String.format("%02d",i) + "=" + alphabet.lookupObject(i) + "]: ";
-			for (int j = 0; j < ttCounts[i].length; j++) {
-				if(ttCounts[i][j]==0) {
-					res += "    ";
-				} else {
-					res += String.format("%02d, ", ttCounts[i][j]);
-				}
-			}
-			res += "\n";
-		}
-		System.out.println(res);
+		printMMatrix(ttCounts,"Type Topic Counts:\n");
 	}
 
 	public void printMMatrix(int [][] matrix, String heading) {
-		String res = heading + ":\n";
-		res += "Topic:   ";
+		StringBuffer res = new StringBuffer();
+		res.append(heading + ":\n");
+		res.append("Topic:   ");
 		for (int topic = 0; topic < matrix[0].length; topic++) {
-			res += String.format("%02d, ",topic);
+			res.append(String.format("%02d, ",topic));
 		}
-		res += "\n";
-		res += "-----------------------------------------------------------\n";
+		res.append("\n");
+		res.append("-----------------------------------------------------------\n");
 		for (int topic = 0; topic < matrix.length; topic++) {
-			res += "[" + String.format("%02d",topic) + "=" + alphabet.lookupObject(topic) + "]: ";
+			res.append("[" + String.format("%02d",topic) + "=" + alphabet.lookupObject(topic) + "]: ");
 			for (int type = 0; type < matrix[topic].length; type++) {
 				if(matrix[topic][type]==0) {
-					res += "    ";
+					res.append("    ");
 				} else {
-					res += String.format("%02d, ", matrix[topic][type]);
+					res.append(String.format("%02d, ", matrix[topic][type]));
 				}
 			}
-			res += "\n";
+			res.append("\n");
 		}
 		System.out.println(res);
 	}
@@ -666,7 +648,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 			logger.finer("\nIteration " + iteration);
 			logger.finer("--------------------");
-
+			
 			// Occasionally print more information
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
 				logLik = modelLogLikelihood();	

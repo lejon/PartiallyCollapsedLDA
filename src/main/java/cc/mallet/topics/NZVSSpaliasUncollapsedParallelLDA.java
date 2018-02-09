@@ -20,6 +20,7 @@ import cc.mallet.types.VSDirichlet;
 import cc.mallet.types.VariableSelectionDirichlet;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IntArraySortUtils;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
@@ -68,13 +69,13 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 		super.addInstances(training);
 	}
 
-	class ParallelTableBuilder implements Callable<TableBuildResult> {
+	class ParallelTableBuilder implements Callable<WalkerAliasTableBuildResult> {
 		int type;
 		public ParallelTableBuilder(int type) {
 			this.type = type;
 		}
 		@Override
-		public TableBuildResult call() {
+		public WalkerAliasTableBuildResult call() {
 			double [] probs = new double[numTopics];
 			double typeMass = 0; // Type prior mass
 			double [] phiType =  phitrans[type]; 
@@ -88,20 +89,8 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 				aliasTables[type].reGenerateAliasTable(probs, typeMass);
 			}
 				
-			return new TableBuildResult(type, aliasTables[type], typeMass);
+			return new WalkerAliasTableBuildResult(type, aliasTables[type], typeMass);
 		}   
-	}
-
-	static class TableBuildResult {
-		public int type;
-		public WalkerAliasTable table;
-		public double typeNorm;
-		public TableBuildResult(int type, WalkerAliasTable table, double typeNorm) {
-			super();
-			this.type = type;
-			this.table = table;
-			this.typeNorm = typeNorm;
-		}
 	}
 
 	@Override
@@ -111,18 +100,10 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
 	}
 
-	public static void transpose(double[][] matrix, double [][] transpose) {
-		int rows = matrix.length;
-		int cols = matrix[0].length;
-		for (int row = 0; row < rows; row++)
-			for (int col = 0; col < cols; col++)
-				transpose[col][row] = matrix[row][col];
-	}
-
 	@Override
 	public void preIteration() {
 		
-		transpose(phi, phitrans);
+		LDAUtils.transpose(phi, phitrans);
 		
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
 		List<ParallelTableBuilder> builders = new ArrayList<>();
@@ -139,10 +120,10 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 				builders.add(new ParallelTableBuilder(type));
 			}			
 		}
-		List<Future<TableBuildResult>> results;
+		List<Future<WalkerAliasTableBuildResult>> results;
 		try {
 			results = tableBuilderExecutor.invokeAll(builders);
-			for (Future<TableBuildResult> result : results) {
+			for (Future<WalkerAliasTableBuildResult> result : results) {
 				aliasTables[result.get().type] = result.get().table;
 				typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
 			}

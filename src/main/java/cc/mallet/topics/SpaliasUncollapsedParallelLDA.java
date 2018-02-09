@@ -13,6 +13,7 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 
@@ -26,22 +27,12 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
 	private ExecutorService tableBuilderExecutor;
 	
-	protected TableBuilderFactory tbFactory = new PhiAlphaTableBuilderFactory();
-	
 	boolean staticPhiAliasTableIsBuild = false;
 
 	public SpaliasUncollapsedParallelLDA(LDAConfiguration config) {
 		super(config);
 	}
 	
-	public static void transpose(double[][] matrix, double [][] transpose) {
-		int rows = matrix.length;
-		int cols = matrix[0].length;
-		for (int row = 0; row < rows; row++)
-			for (int col = 0; col < cols; col++)
-				transpose[col][row] = matrix[row][col];
-	}
-
 	@Override
 	public void addInstances(InstanceList training) {
 		super.addInstances(training);
@@ -50,19 +41,13 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		phitrans    = new double[numTypes][numTopics];
 	}
 	
-	class PhiAlphaTableBuilderFactory implements TableBuilderFactory {
-		public Callable<TableBuildResult> instance(int type) {
-			return new PhiAlphaParallelTableBuilder(type);
-		}
-	}
-
-	class PhiAlphaParallelTableBuilder implements Callable<TableBuildResult> {
+	class PhiAlphaParallelTableBuilder implements Callable<WalkerAliasTableBuildResult> {
 		int type;
 		public PhiAlphaParallelTableBuilder(int type) {
 			this.type = type;
 		}
 		@Override
-		public TableBuildResult call() {
+		public WalkerAliasTableBuildResult call() {
 			double [] probs = new double[numTopics];
 			double typeMass = 0; // Type prior mass
 			double [] phiType =  phitrans[type]; 
@@ -76,20 +61,8 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 				aliasTables[type].reGenerateAliasTable(probs, typeMass);
 			}
 				
-			return new TableBuildResult(type, aliasTables[type], typeMass);
+			return new WalkerAliasTableBuildResult(type, aliasTables[type], typeMass);
 		}   
-	}
-
-	static class TableBuildResult {
-		public int type;
-		public WalkerAliasTable table;
-		public double typeNorm;
-		public TableBuildResult(int type, WalkerAliasTable table, double typeNorm) {
-			super();
-			this.type = type;
-			this.table = table;
-			this.typeNorm = typeNorm;
-		}
 	}
 
 	@Override
@@ -101,10 +74,22 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 
 	@Override
 	public void preIteration() {
-		
-		transpose(phi, phitrans);
-		
-		List<Callable<TableBuildResult>> builders = new ArrayList<>();
+		doPreIterationTableBuling();
+		super.preIteration();
+	}
+	
+	public void preIterationGivenPhi() {
+		if(!staticPhiAliasTableIsBuild) {
+			doPreIterationTableBuling();
+			super.preIterationGivenPhi();
+			staticPhiAliasTableIsBuild = true;
+		}
+	}
+
+	protected void doPreIterationTableBuling() {
+		LDAUtils.transpose(phi, phitrans);
+
+		List<Callable<WalkerAliasTableBuildResult>> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
 		if(topicTypeIndices!=null) {
 			// The topicIndexBuilder supports having different types per topic,
@@ -112,19 +97,19 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 			// since it will be the same for all topics
 			int [] typesToSample = topicTypeIndices[0];
 			for (int typeIdx = 0; typeIdx < typesToSample.length; typeIdx++) {
-				builders.add(tbFactory.instance(typesToSample[typeIdx]));
+				builders.add(new PhiAlphaParallelTableBuilder(typesToSample[typeIdx]));
 			}
 			// if the topicIndexBuilder returns null it means sample ALL types
 		} else {
 			for (int type = 0; type < numTypes; type++) {
-				builders.add(tbFactory.instance(type));
+				builders.add(new PhiAlphaParallelTableBuilder(type));
 			}
 		}
-		
-		List<Future<TableBuildResult>> results;
+
+		List<Future<WalkerAliasTableBuildResult>> results;
 		try {
 			results = tableBuilderExecutor.invokeAll(builders);
-			for (Future<TableBuildResult> result : results) {
+			for (Future<WalkerAliasTableBuildResult> result : results) {
 				aliasTables[result.get().type] = result.get().table;
 				typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
 			}
@@ -134,48 +119,6 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		} catch (ExecutionException e) {
 			e.printStackTrace();
 			System.exit(-1);
-		}
-		super.preIteration();
-	}
-	
-	public void preIterationGivenPhi() {
-		if(!staticPhiAliasTableIsBuild) {
-			transpose(phi, phitrans);
-
-			List<Callable<TableBuildResult>> builders = new ArrayList<>();
-			final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
-			if(topicTypeIndices!=null) {
-				// The topicIndexBuilder supports having different types per topic,
-				// this is currently not used, so we can just pick the first topic
-				// since it will be the same for all topics
-				int [] typesToSample = topicTypeIndices[0];
-				for (int typeIdx = 0; typeIdx < typesToSample.length; typeIdx++) {
-					builders.add(tbFactory.instance(typesToSample[typeIdx]));
-				}
-				// if the topicIndexBuilder returns null it means sample ALL types
-			} else {
-				for (int type = 0; type < numTypes; type++) {
-					builders.add(tbFactory.instance(type));
-				}
-			}
-
-			List<Future<TableBuildResult>> results;
-			try {
-				results = tableBuilderExecutor.invokeAll(builders);
-				for (Future<TableBuildResult> result : results) {
-					aliasTables[result.get().type] = result.get().table;
-					typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-				System.exit(-1);
-			} catch (ExecutionException e) {
-				e.printStackTrace();
-				System.exit(-1);
-			}
-			super.preIterationGivenPhi();
-			
-			staticPhiAliasTableIsBuild = true;
 		}
 	}
 

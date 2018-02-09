@@ -2,11 +2,10 @@ package cc.mallet.topics;
 
 import java.util.concurrent.Callable;
 
-import cc.mallet.topics.SpaliasUncollapsedParallelLDA.TableBuildResult;
 import cc.mallet.util.OptimizedGentleAliasMethodDynamicSize;
 import cc.mallet.util.WalkerAliasTable;
 
-class TypeTopicParallelTableBuilder implements Callable<TableBuildResult> {
+class TypeTopicParallelTableBuilder implements Callable<WalkerAliasTableBuildResult> {
 	int type;
 	int [] nonZeroTypeTopicCnt;
 	int [][] nonZeroTypeTopics;
@@ -26,7 +25,7 @@ class TypeTopicParallelTableBuilder implements Callable<TableBuildResult> {
 		this.numTopics = numTopics;
 	}
 	@Override
-	public TableBuildResult call() {
+	public WalkerAliasTableBuildResult call() {
 		/* Nonsparse solution
 		double [] probs = new double[numTopics];
 		double typeMass = 0; // Type prior mass
@@ -51,7 +50,7 @@ class TypeTopicParallelTableBuilder implements Callable<TableBuildResult> {
 			aliasTables[type].reGenerateAliasTable(probs, typeMass);
 		}
 			
-		return new TableBuildResult(type, aliasTables[type], typeMass);
+		return new WalkerAliasTableBuildResult(type, aliasTables[type], typeMass);
 	}   
 	
 	/*class TypeTopicParallelTableBuilder implements Callable<TableBuildResult> {

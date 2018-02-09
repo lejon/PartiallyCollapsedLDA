@@ -45,11 +45,10 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 
 	public LightPCLDA(LDAConfiguration config) {
 		super(config);
-		tbFactory = new PhiTableBuilderFactory();
 	}
 	
 	class PhiTableBuilderFactory implements TableBuilderFactory {
-		public Callable<TableBuildResult> instance(int type) {
+		public Callable<WalkerAliasTableBuildResult> instance(int type) {
 			return new PhiParallelTableBuilder(type);
 		}
 	}
@@ -60,13 +59,13 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 	 * The alias table is build only from Phi in LightPCLDA vs. phi*alpha in ordinary PCLDA
 	 *
 	 */
-	class PhiParallelTableBuilder implements Callable<TableBuildResult> {
+	class PhiParallelTableBuilder implements Callable<WalkerAliasTableBuildResult> {
 		int type;
 		public PhiParallelTableBuilder(int type) {
 			this.type = type;
 		}
 		@Override
-		public TableBuildResult call() {
+		public WalkerAliasTableBuildResult call() {
 			double [] probs = new double[numTopics];
 			double typeMass = 0; // Type prior mass
 			double [] phiType =  phitrans[type]; 
@@ -80,7 +79,7 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 				aliasTables[type].reGenerateAliasTable(probs, typeMass);
 			}
 				
-			return new TableBuildResult(type, aliasTables[type], typeMass);
+			return new WalkerAliasTableBuildResult(type, aliasTables[type], typeMass);
 		}   
 	}
 

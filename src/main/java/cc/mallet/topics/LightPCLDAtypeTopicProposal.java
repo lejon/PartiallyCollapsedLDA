@@ -35,8 +35,6 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	
 	public LightPCLDAtypeTopicProposal(LDAConfiguration config) {
 		super(config);
-		tbFactory = new TypeTopicTableBuilderFactory();
-		
 	}
 	
 
@@ -72,7 +70,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	
 	
 	class TypeTopicTableBuilderFactory implements TableBuilderFactory {
-		public Callable<TableBuildResult> instance(int type) {
+		public Callable<WalkerAliasTableBuildResult> instance(int type) {
 			return new TypeTopicParallelTableBuilder(type, nonZeroTypeTopicCnt, nonZeroTypeTopics, 
 					typeTopicCounts, topicCountBetaHat, aliasTables, numTopics);
 		}
