@@ -89,6 +89,32 @@ public class LDAUtils {
 	//		return new InstanceList (new SerialPipes(pipeList));
 	//	}
 	
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet) { 		
+		int maxBufSize = 10000;
+		SimpleTokenizerLarge tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
+		
+		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
+		Alphabet alphabet = null;
+		if(dataAlphabet==null) {
+			alphabet = new Alphabet();
+		} else {
+			alphabet = dataAlphabet;
+		}
+
+		CharSequenceLowercase csl = new CharSequenceLowercase();
+		StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
+
+		Target2Label ttl = new Target2Label ();
+		
+		pipes.add(csl);
+		pipes.add(tokenizer);
+		pipes.add(sl2fs);
+		pipes.add(ttl);
+
+		Pipe serialPipe = new SerialPipes(pipes);
+		return serialPipe;
+	}
+	
 	public static InstanceList loadDataset(LDAConfiguration config, String dataset_fn) throws FileNotFoundException {
 		return loadDataset(config, dataset_fn, null);
 	}
