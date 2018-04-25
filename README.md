@@ -18,7 +18,7 @@ Magnusson, M., Jonsson, L., Villani, M., & Broman, D. (2017). Sparse Partially C
 }
 ```
 
-Alexander Terenin, Måns Magnusson, Leif Jonsson, and David Draper. “Polya Urn Latent Dirichlet Allocation: a doubly sparse massively parallel sampler”. In: Accepted for publication in IEEE Transactions on Pattern Analysis and Machine Intelligence. 2017.
+Alexander Terenin, Måns Magnusson, Leif Jonsson, and David Draper. “Polya Urn Latent Dirichlet Allocation: a doubly sparse massively parallel sampler”. Accepted for publication in IEEE Transactions on Pattern Analysis and Machine Intelligence. 2017.
 
 ```
 @inproceedings{jonsson:2018,
