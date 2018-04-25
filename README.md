@@ -4,7 +4,7 @@
 
 PC-LDA
 =====
-Repo for our Partially Collapsed ParallelLDA implementation described in the article 
+Repo for our Partially Collapsed ParallelLDA implementation described in the articles 
 
 Magnusson, M., Jonsson, L., Villani, M., & Broman, D. (2017). Sparse Partially Collapsed MCMC for Parallel Inference in Topic Models. Journal of Computational and Graphical Statistics.
 
@@ -17,6 +17,22 @@ Magnusson, M., Jonsson, L., Villani, M., & Broman, D. (2017). Sparse Partially C
   publisher={Taylor \& Francis}
 }
 ```
+
+Alexander Terenin, Måns Magnusson, Leif Jonsson, and David Draper. “Polya Urn Latent Dirichlet Allocation: a doubly sparse massively par- allel sampler”. In: Accepted for publication in IEEE Transactions on Pattern Analysis and Machine Intelligence. 2017.
+
+```
+@inproceedings{jonsson:2018,
+	author={{Terenin}, Alexander and {Magnusson}, M{\aa}ns and {Jonsson}, 
+	Leif and {Draper}, David},
+	title={Polya Urn Latent Dirichlet Allocation: a doubly sparse massively 
+	parallel sampler},
+	booktitle={Accepted for publication in IEEE Transactions on Pattern Analysis and 
+	Machine Intelligence},
+	year={2017},
+	shorthand={\RN{6}}
+}
+```
+
 
 The toolkit is Open Source Software, and is released under the Common Public License. You are welcome to use the code under the terms of the license for research or commercial purposes, however please acknowledge its use with a citation:
   Magnusson, Jonsson, Villani, Broman.  "Parallelizing LDA using Partially Collapsed Gibbs Sampling."
