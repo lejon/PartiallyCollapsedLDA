@@ -4,9 +4,9 @@
 
 PC-LDA
 =====
-Repo for our Partially Collapsed ParallelLDA implementation described in the articles 
+Repo for our Partially Collapsed Parallel LDA implementations described in the articles: 
 
-Magnusson, M., Jonsson, L., Villani, M., & Broman, D. (2017). Sparse Partially Collapsed MCMC for Parallel Inference in Topic Models. Journal of Computational and Graphical Statistics.
+Måns Magnusson, Leif Jonsson, Mattias Villani, and David Broman. (2017). Sparse Partially Collapsed MCMC for Parallel Inference in Topic Models. Journal of Computational and Graphical Statistics.
 
 ```
 @article{magnusson2017sparse,
