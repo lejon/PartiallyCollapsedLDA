@@ -27,12 +27,9 @@ Alexander Terenin, Måns Magnusson, Leif Jonsson, and David Draper. “Polya Ur
 	title={Polya Urn Latent Dirichlet Allocation: a doubly sparse massively 
 	parallel sampler},
 	booktitle={Accepted for publication in IEEE Transactions on Pattern Analysis and 
-	Machine Intelligence},
-	year={2017},
-	shorthand={\RN{6}}
+	Machine Intelligence}
 }
 ```
-
 
 The toolkit is Open Source Software, and is released under the Common Public License. You are welcome to use the code under the terms of the license for research or commercial purposes, however please acknowledge its use with a citation:
   Magnusson, Jonsson, Villani, Broman.  "Parallelizing LDA using Partially Collapsed Gibbs Sampling."
