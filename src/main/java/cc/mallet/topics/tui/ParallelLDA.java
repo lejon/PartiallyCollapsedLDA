@@ -19,6 +19,7 @@ import cc.mallet.topics.LDASamplerWithPhi;
 import cc.mallet.topics.LightPCLDA;
 import cc.mallet.topics.LightPCLDAtypeTopicProposal;
 import cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA;
+import cc.mallet.topics.PoissonPolyaUrnHLDA;
 import cc.mallet.topics.PolyaUrnSpaliasLDA;
 import cc.mallet.topics.SerialCollapsedLDA;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
@@ -319,6 +320,11 @@ public class ParallelLDA {
 		case "polyaurn": {
 			model = new PolyaUrnSpaliasLDA(config);
 			System.out.println("PolyaUrnSpaliasLDA Parallell LDA.");
+			break;
+		}
+		case "ppu_hlda": {
+			model = new PoissonPolyaUrnHLDA(config);
+			System.out.println("PoissonPolyaUrnHLDA Parallell LDA.");
 			break;
 		}
 		case "spalias_priors": {

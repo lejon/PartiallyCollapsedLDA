@@ -1022,5 +1022,10 @@ public class TopicMassExperiment {
 			return pc.useSymmetricAlpha(symmetricAlpha);
 		}
 
+		@Override
+		public double getHDPGamma(double gammaDefault) {
+			return pc.getHDPGamma(gammaDefault);
+		}
+
 	}
 }

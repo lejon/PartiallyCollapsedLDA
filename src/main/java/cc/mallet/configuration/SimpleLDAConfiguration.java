@@ -66,6 +66,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private String fileRegex;
 	private Integer hyperparamOptimInterval;
 	private boolean symmetricAlpha;
+	private double hdpGgamma = LDAConfiguration.HDP_GAMMA_DEFAULT;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -703,5 +704,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 		this.symmetricAlpha = symmetricAlpha;
 	}
 
+	@Override
+	public double getHDPGamma(double gammaDefault) {
+		return hdpGgamma;
+	}
 
+	public void setHdpGgamma(double hdpGgamma) {
+		this.hdpGgamma = hdpGgamma;
+	}
 }

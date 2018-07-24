@@ -38,6 +38,7 @@ public interface LDAConfiguration {
 	public static final String FILE_REGEX_DEFAULT = ".*\\.txt$";
 	public static final int HYPERPARAM_OPTIM_INTERVAL_DEFAULT = -1;
 	public static final boolean SYMMETRIC_ALPHA_DEFAULT = false;
+	public static final double HDP_GAMMA_DEFAULT = NO_TOPICS_DEFAULT;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -192,4 +193,6 @@ public interface LDAConfiguration {
 	public Integer getHyperparamOptimInterval(int defaultValue);
 
 	public boolean useSymmetricAlpha(boolean symmetricAlpha);
+
+	public double getHDPGamma(double gammaDefault);
 }

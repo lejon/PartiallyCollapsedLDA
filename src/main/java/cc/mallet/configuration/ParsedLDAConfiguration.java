@@ -458,4 +458,10 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		Boolean symAlpha = getBooleanPropertyOrNull(key);
 		return symAlpha == null ? defaultAlpha : symAlpha;
 	}
+	
+	@Override
+	public double getHDPGamma(double gammaDefault) {
+		return getDouble("hdp_gamma",gammaDefault);
+	}
+
 }
