@@ -89,6 +89,10 @@ public class LDAUtils {
 	//		return new InstanceList (new SerialPipes(pipeList));
 	//	}
 	
+	public static Pipe buildSerialPipe(String stoplistFile) {
+		return buildSerialPipe(stoplistFile, null);
+	}
+	
 	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet) { 		
 		int maxBufSize = 10000;
 		SimpleTokenizerLarge tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);

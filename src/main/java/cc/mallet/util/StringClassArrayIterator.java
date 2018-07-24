@@ -15,14 +15,31 @@ import cc.mallet.types.Instance;
 public class StringClassArrayIterator implements Iterator<Instance> {
 
 	String[] data;
-	int index;
-	String className; 
+	int index = 0;
+	String [] classNames; 
+
+	public StringClassArrayIterator (String[] data)
+	{
+		this.data = data;
+		this.index = 0;
+		this.classNames = new String[]{"no_class"};
+	}
 	
 	public StringClassArrayIterator (String[] data, String className)
 	{
 		this.data = data;
 		this.index = 0;
-		this.className = className;
+		this.classNames = new String[]{className};
+	}
+	
+	public StringClassArrayIterator (String[] data, String [] classNames)
+	{
+		if(classNames.length != 1 && data.length != classNames.length) {
+			throw new IllegalArgumentException("data.length != classNames.length when classNames.length != 1");
+		}
+		this.data = data;
+		this.index = 0;
+		this.classNames = classNames;
 	}
 
 	public Instance next ()
@@ -30,7 +47,10 @@ public class StringClassArrayIterator implements Iterator<Instance> {
 		URI uri = null;
 		try { uri = new URI ("array:" + index); }
 		catch (Exception e) { e.printStackTrace(); throw new IllegalStateException(); }
-		return new Instance (data[index++], className, uri, null);
+		int cl_idx = classNames.length == 1 ? 0 : index;
+		Instance i = new Instance (data[index], classNames[cl_idx], uri, null);
+		index++;
+		return i;
 	}
 
 	public boolean hasNext ()	{	return index < data.length;	}

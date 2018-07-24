@@ -71,7 +71,8 @@
 	<!-- v5.2.2: Small refactoring -->
 	<!-- v6.0.0: Hyper parameter optimization support added -->
 	<!-- v6.0.1: Fixed bug which caused PolyaUrn not to set the correct Phi when called from sampleZGivenPhi. -->
-	<version>6.0.1</version>
+	<!-- v6.0.2: Added some convenience facilities for loading instances from string data -->
+	<version>6.0.2</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
