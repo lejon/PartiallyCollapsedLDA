@@ -114,19 +114,14 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 		return ret;
 	}
 
-	public ModifiedSimpleLDA(LDAConfiguration conf) {
-		//		super(conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), 
-		//				conf.getAlpha(LDAConfiguration.ALPHA_DEFAULT)*conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), 
-		//				conf.getBeta(LDAConfiguration.BETA_DEFAULT), 
-		//				new Randoms(conf.getSeed(LDAConfiguration.SEED_DEFAULT)));
-		
+	public ModifiedSimpleLDA(LDAConfiguration conf) {		
 		this.data = new ArrayList<TopicAssignment>();
 		this.topicAlphabet = newLabelAlphabet (conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT));
 		this.numTopics = topicAlphabet.size();
 
 		double alphaConf = conf.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
 		this.alphaSum = alphaConf*conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT);
-		//this.alpha = alphaSum / numTopics;
+
 		this.alpha = new double[numTopics];
 		for (int i = 0; i < alpha.length; i++) {
 			alpha[i] = alphaConf;
@@ -483,7 +478,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	public int getNoTopics() {
 		return numTopics;
 	}
-
+	
 	@Override
 	public int getCurrentIteration() {
 		return currentIteration;
