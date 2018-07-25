@@ -101,6 +101,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 	SparseDirichlet dirichletSampler;
 	protected boolean savePhiMeans = true;
+	protected int hyperparameterOptimizationInterval;
 
 	
 	public UncollapsedParallelLDA(LDAConfiguration config) {
@@ -456,7 +457,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		double docDensity = -1;
 		double phiDensity;
 		Stats stats;
-		int optimizeInterval = config.getHyperparamOptimInterval(LDAConfiguration.HYPERPARAM_OPTIM_INTERVAL_DEFAULT);
+		hyperparameterOptimizationInterval = config.getHyperparamOptimInterval(LDAConfiguration.HYPERPARAM_OPTIM_INTERVAL_DEFAULT);
 	
 		int numParticles = 100;
 
@@ -494,12 +495,12 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 
 		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
-			if(optimizeInterval > 1  && iteration % optimizeInterval == 0) {
+			currentIteration = iteration;
+			if(hyperparameterOptimizationInterval > 1  && iteration % hyperparameterOptimizationInterval == 0) {
 				saveHistStats = true;
 			}
 			preIteration();
-			currentIteration = iteration;
-			//if((iteration%100)==0) System.out.println("Iteration: " + iteration);
+
 			// Saves timestamp
 			long iterationStart = System.currentTimeMillis();
 			for (int i = 0; i < zTimings.length; i++) {
@@ -586,7 +587,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				LDAUtils.writeBinaryDoubleMatrixIndices(phi, iteration, binOutput.getAbsolutePath() + "/Phi_KxV", topIndices);
 			}
 			
-			if( optimizeInterval > 1 && iteration % optimizeInterval == 0) {
+			if( hyperparameterOptimizationInterval > 1 && iteration % hyperparameterOptimizationInterval == 0) {
 				optimizeAlpha();
 				optimizeBeta();
 				
