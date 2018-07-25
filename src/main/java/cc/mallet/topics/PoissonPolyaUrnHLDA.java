@@ -12,6 +12,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.apache.commons.math3.distribution.BinomialDistribution;
+import org.apache.commons.math3.distribution.PoissonDistribution;
+
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
@@ -31,6 +34,12 @@ import cc.mallet.util.WalkerAliasTable;
 public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASamplerWithPhi{
 
 	private static final long serialVersionUID = 1L;
+	double gamma;
+	double [] alphaG;
+	int [][] document_freq_counts;
+	boolean [] active_topics;
+	double alphaCoef;
+	DocTopicTokenFreqTable docTopicTokenFreqTable; 
 	
 	protected double[][] phitrans;
 
@@ -48,6 +57,25 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 
 	public PoissonPolyaUrnHLDA(LDAConfiguration config) {
 		super(config);
+		
+		gamma = config.getHDPGamma(LDAConfiguration.HDP_GAMMA_DEFAULT);
+		
+		alphaCoef = config.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
+		
+		// Initialize G to give same effect as symmetic alpha
+		alphaG = new double[numTopics];
+		for (int i = 0; i < alpha.length; i++) {
+			alphaG[i] = 1;
+		}
+		
+		// We should NOT do hyperparameter optimization of alpha or beta in the HDP
+		hyperparameterOptimizationInterval = -1;
+		
+		active_topics = new boolean[numTopics];
+		for (int i = 0; i < active_topics.length; i++) {
+			active_topics[i] = true;
+		}
+		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
 	}
 	
 	@Override
@@ -87,7 +115,9 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 			double typeMass = 0; // Type prior mass
 			double [] phiType =  phitrans[type]; 
 			for (int topic = 0; topic < numTopics; topic++) {
-				typeMass += probs[topic] = phiType[topic] * alpha[topic];
+				// In the HDP the sampled G takes the place of the alpha vector in LDA but
+				// it is still multiplied with the LDA alpha scalar
+				typeMass += probs[topic] = phiType[topic] * alphaCoef * alphaG[topic];
 				if(phiType[topic]!=0) {
 					int newSize = nonZeroTypeTopicColIdxs[type]++;
 					nonZeroTypeTopicIdxs[type][newSize] = topic;
@@ -110,6 +140,15 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		super.preIteration();
 	}
 
+	@Override
+	public void postIteration() {
+		System.out.println("Freq table: " + docTopicTokenFreqTable);
+		System.out.println("Active topics" + Arrays.toString(active_topics));
+		
+		// Reset frequency table
+		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+	}
+	
 	protected void doPreIterationTableBuilding() {
 		LDAUtils.transpose(phi, phitrans);
 
@@ -165,7 +204,28 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		super.postSample();
 		tableBuilderExecutor.shutdown();
 	}
+	
+	protected int getNrActiveTopics() {
+		int nrActive = 0;
+		for (int topic = 0; topic < active_topics.length; topic++) {
+			if(active_topics[topic]) {
+				nrActive++;
+			}
+		}	
+		return nrActive;
+	}
 
+	@Override
+	public void postZ() {
+		super.postZ();
+		
+		// Remove any empty topics
+		int [] emptyTopics = docTopicTokenFreqTable.getEmptyTopics();
+		for (int i = 0; i < emptyTopics.length; i++) {
+			active_topics[i] = false;
+		}
+	}
+	
 	@Override
 	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
@@ -317,9 +377,15 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 			 * topic assignment z
 			 */
 			increment(myBatch, newTopic, type);
-			//System.out.println("(Batch=" + myBatch + ") Incremented: topic=" + newTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][newTopic][type]);		
+			
+			// Update the document topic count table
+			for (int topic = 0; topic < numTopics; topic++) {
+				if(localTopicCounts[topic]!=0) {
+					docTopicTokenFreqTable.increment(topic,(int)localTopicCounts[topic]);
+				}
+			}
 		}
-		//System.out.println("Ratio: " + ((double)numPrior/(double)numLikelihood));
+
 		return localTopicCounts;
 	}
 
@@ -442,7 +508,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 	}	
 
 	/**
-	 * Samples new Phi's using variable selection. 
+	 * Samples new Phi's.
 	 * 
 	 * @param indices
 	 * @param topicTypeIndices
@@ -450,6 +516,16 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 	 */
 	@Override
 	public void loopOverTopics(int [] indices, int[][] topicTypeIndices, double[][] phiMatrix) {
+		
+		for (int topic : indices) {
+			// Set this topic to zero if it is inactive
+			if(!active_topics[topic]) {
+				for (int i = 0; i < phiMatrix[topic].length; i++) {
+					phiMatrix[topic] = new double[numTypes];
+				}
+			}
+		}
+		
 		long beforeSamplePhi = System.currentTimeMillis();		
 		for (int topic : indices) {
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
@@ -468,6 +544,29 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 			pw.close();
 		}
 	}
+
+	protected int sampleL(int topic, double gamma, int maxDocLen, DocTopicTokenFreqTable docTopicTokenFreqTable) {
+		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
+		
+		// Sum over c_j_k
+		int lSum = 0;
+		for(int j = 1; j < maxDocLen; j++) {
+			int trials = 0;
+			if( freqHist.length > j ) {				
+				trials = freqHist[j];
+			}
+			double p = gamma / (gamma + j - 1);
+			BinomialDistribution c_j_k = new BinomialDistribution(trials, p);
+			lSum += c_j_k.sample();
+		}
+		return lSum;
+	}	
+	
+	protected int sampleNrTopics(double gamma) {
+		PoissonDistribution pois_gamma = new PoissonDistribution(gamma);
+		return pois_gamma.sample(); 
+	}
+	
 
 	@Override
 	public LDAConfiguration getConfiguration() {
