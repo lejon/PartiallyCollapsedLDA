@@ -34,12 +34,16 @@ import cc.mallet.util.WalkerAliasTable;
 public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASamplerWithPhi{
 
 	private static final long serialVersionUID = 1L;
+
 	double gamma;
 	double [] alphaG;
 	int [][] document_freq_counts;
 	boolean [] active_topics;
 	double alphaCoef;
 	DocTopicTokenFreqTable docTopicTokenFreqTable; 
+	int nrStartTopics;
+	int maxTopics;
+	List<Integer> activeTopicHistory = new ArrayList<Integer>();
 	
 	protected double[][] phitrans;
 
@@ -59,7 +63,13 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		super(config);
 		
 		gamma = config.getHDPGamma(LDAConfiguration.HDP_GAMMA_DEFAULT);
+		nrStartTopics = config.getHDPNrStartTopics(LDAConfiguration.HDP_START_TOPICS_DEFAULT);
 		
+		System.out.println("HDP Start topics: " + nrStartTopics);
+		
+		// In the HDP the number of topics we are initialized with is 
+		// taken as the maxNumber of topics possible
+		maxTopics = numTopics;
 		alphaCoef = config.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
 		
 		// Initialize G to give same effect as symmetic alpha
@@ -71,8 +81,10 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		// We should NOT do hyperparameter optimization of alpha or beta in the HDP
 		hyperparameterOptimizationInterval = -1;
 		
+		// Initialize the number of active topics to nrStartTopics
 		active_topics = new boolean[numTopics];
-		for (int i = 0; i < active_topics.length; i++) {
+
+		for (int i = 0; i < nrStartTopics; i++) {
 			active_topics[i] = true;
 		}
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
@@ -92,11 +104,37 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		super.addInstances(training);
 	}
 
+	
+	/* When we initialize Z we have to limit the topic indicators
+	 * to nrStartTopics
+	 * 
+	 * @see cc.mallet.topics.UncollapsedParallelLDA#initialDrawTopicIndicator()
+	 */
+	@Override
+	int initialDrawTopicIndicator() {
+		return random.nextInt(nrStartTopics);
+	}
+
+	/* When we initialize phi we have to limit the topic indicators
+	 * to nrStartTopics
+	 */
+	@Override
+	public void initialSamplePhi(int [] topicIndices, double[][] phiMatrix) {
+		int [] hdpStartTopicIndices = new int[nrStartTopics];
+		for (int i = 0; i < nrStartTopics; i++) {
+			topicIndices[i] = i;
+		}
+		super.initialSamplePhi(hdpStartTopicIndices, phi);
+	}
+
 	@Override
 	public void preSample() {
 		super.preSample();
 		int poolSize = 2;
 		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
+		// Now all structures should be initialized with numTopics
+		// now set numTopics to the number of topics we want to start with
+		setNumTopics(nrStartTopics);
 	}
 
 	protected SparseDirichlet createDirichletSampler() {
@@ -124,11 +162,13 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 				}
 			}
 
-			if(aliasTables[type]==null) {
+			// In HDP num topics keep changing, so so does probs, so
+			// we have to completely re-build them... for now...
+			//if(aliasTables[type]==null) {
 				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
-			} else {
-				aliasTables[type].reGenerateAliasTable(probs, typeMass);
-			}
+			//} else {
+			//	aliasTables[type].reGenerateAliasTable(probs, typeMass);
+			//}
 
 			return new WalkerAliasTableBuildResult(type, aliasTables[type], typeMass);
 		}   
@@ -142,8 +182,17 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 
 	@Override
 	public void postIteration() {
-		System.out.println("Freq table: " + docTopicTokenFreqTable);
-		System.out.println("Active topics" + Arrays.toString(active_topics));
+		System.out.println("Freq table: \n" + docTopicTokenFreqTable);
+		
+		// Finish G sampling, i.e normalize G
+		double sumG = 0.0;
+		for (int i = 0; i < alphaG.length; i++) {			
+			sumG += alphaG[i];
+		}
+		for (int i = 0; i < alphaG.length; i++) {			
+			alphaG[i] /= sumG;
+		}
+		System.out.println("Alpha G: " + Arrays.toString(alphaG));
 		
 		// Reset frequency table
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
@@ -205,25 +254,25 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		tableBuilderExecutor.shutdown();
 	}
 	
-	protected int getNrActiveTopics() {
-		int nrActive = 0;
-		for (int topic = 0; topic < active_topics.length; topic++) {
-			if(active_topics[topic]) {
-				nrActive++;
-			}
-		}	
-		return nrActive;
-	}
-
 	@Override
 	public void postZ() {
 		super.postZ();
 		
-		// Remove any empty topics
-		int [] emptyTopics = docTopicTokenFreqTable.getEmptyTopics();
-		for (int i = 0; i < emptyTopics.length; i++) {
-			active_topics[i] = false;
-		}
+		// Resample the number of topics to use 
+		activeTopicHistory.add(numTopics);
+		int activeInData = updateNrActiveTopics(docTopicTokenFreqTable.getEmptyTopics(), active_topics, numTopics);
+		System.out.println("Active topics: " + Arrays.toString(active_topics));
+		System.out.println("Nr Topics in data: " + activeInData);
+		
+		int newNumTopics = activeInData+ sampleNrTopics(gamma); 
+		if(newNumTopics>maxTopics) 
+			throw new IndexOutOfBoundsException("New sampled number of topics (" 
+					+ newNumTopics 
+					+ ") iexceeds maxTopics (" + maxTopics + ")");
+		
+		
+		setNumTopics(newNumTopics);
+		System.out.println("Nr active Topics: " + numTopics);
 	}
 	
 	@Override
@@ -516,18 +565,38 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 	 */
 	@Override
 	public void loopOverTopics(int [] indices, int[][] topicTypeIndices, double[][] phiMatrix) {
-		
+		int [] activeIndices = new int[indices.length];
+		int numActive = 0;
 		for (int topic : indices) {
 			// Set this topic to zero if it is inactive
 			if(!active_topics[topic]) {
 				for (int i = 0; i < phiMatrix[topic].length; i++) {
 					phiMatrix[topic] = new double[numTypes];
 				}
+			} else {
+				activeIndices[numActive++] = topic;
 			}
 		}
 		
 		long beforeSamplePhi = System.currentTimeMillis();		
-		for (int topic : indices) {
+		for (int topicIdx = 0; topicIdx < numActive; topicIdx++) {
+			int topic = activeIndices[topicIdx];
+			// First part of G sampling, rest (normalization) must be done 
+			// in postIteration when all G_k has been sampled
+			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable);
+			if(l_k == 0.0) {
+				System.out.println("Freq table: \n" + docTopicTokenFreqTable);
+				System.err.println("Zero sampled for topic " + topic);
+				System.err.println("Rev hist: " + Arrays.toString(docTopicTokenFreqTable.getReverseCumulativeSum(topic)));
+				System.err.println("Active topics: " + Arrays.toString(active_topics));
+				System.err.println("Active indices: " + Arrays.toString(activeIndices));
+				System.err.println("Empty topics: \n" + Arrays.toString(docTopicTokenFreqTable.getEmptyTopics()));
+			}
+			System.out.println("[" + topic + "] Sampled l_k: " + l_k);
+			PoissonDistribution pois_gamma = new PoissonDistribution(l_k);
+			int eta_k = pois_gamma.sample(); 
+			alphaG[topic] = eta_k;
+			
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
 			VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
 			phiMatrix[topic] = res.getPhi();
@@ -550,12 +619,12 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		
 		// Sum over c_j_k
 		int lSum = 0;
-		for(int j = 1; j < maxDocLen; j++) {
+		for(int j = 0; j < maxDocLen; j++) {
 			int trials = 0;
 			if( freqHist.length > j ) {				
 				trials = freqHist[j];
 			}
-			double p = gamma / (gamma + j - 1);
+			double p = gamma / (gamma + j);
 			BinomialDistribution c_j_k = new BinomialDistribution(trials, p);
 			lSum += c_j_k.sample();
 		}
@@ -564,10 +633,13 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 	
 	protected int sampleNrTopics(double gamma) {
 		PoissonDistribution pois_gamma = new PoissonDistribution(gamma);
-		return pois_gamma.sample(); 
+		int sample = pois_gamma.sample();
+		
+		System.out.println("Sampled: " + sample + " additional topics...");
+		
+		return sample; 
 	}
 	
-
 	@Override
 	public LDAConfiguration getConfiguration() {
 		return config;
@@ -576,5 +648,28 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 	@Override
 	public int getNoTypes() {
 		return numTypes;
+	}
+
+	protected int updateNrActiveTopics(int[] emptyTopics, boolean [] active_topics, int numTopics) {
+		int nrActiveTopics = 0;
+		
+		int eIdx = 0;
+		// Update up to numTopics
+		for (int i = 0; i < numTopics; i++) {
+			if(eIdx < emptyTopics.length && i==emptyTopics[eIdx]) {
+				active_topics[i] = false;
+				eIdx++;
+			} else {
+				nrActiveTopics++;
+				active_topics[i] = true;
+			}
+		}
+		
+		// Rest is inactive
+		for (int i = numTopics; i < active_topics.length; i++) {
+			active_topics[i] = false;			
+		}
+
+		return nrActiveTopics;
 	}
 }

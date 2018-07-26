@@ -463,5 +463,11 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public double getHDPGamma(double gammaDefault) {
 		return getDouble("hdp_gamma",gammaDefault);
 	}
+	
+	@Override
+	public int getHDPNrStartTopics(int defaultValue) {
+		return getInteger("hdp_nr_start_topics",defaultValue);
+	}
+
 
 }

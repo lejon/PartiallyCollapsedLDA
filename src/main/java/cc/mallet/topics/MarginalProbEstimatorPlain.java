@@ -77,9 +77,6 @@ public class MarginalProbEstimatorPlain implements Serializable {
 			smoothingOnlyMass += alpha[topic] * beta / (tokensPerTopic[topic] + betaSum);
 			cachedCoefficients[topic] =  alpha[topic] / (tokensPerTopic[topic] + betaSum);
 		}
-		
-		System.err.println("Using Topic Evaluator with: " + numTopics + " topics");
-
 	}
 
 	public int[] getTokensPerTopic() { return tokensPerTopic; }
@@ -212,7 +209,7 @@ public class MarginalProbEstimatorPlain implements Serializable {
 				
 					topicTermMass = 0.0;
 				
-					while (index < currentTypeTopicCounts.length) {
+					while (index < numTopics) {
 						currentTopic = index;
 						currentValue = currentTypeTopicCounts[index];
 					
@@ -351,7 +348,7 @@ public class MarginalProbEstimatorPlain implements Serializable {
 			
 			topicTermMass = 0.0;
 			
-			while (index < currentTypeTopicCounts.length) {
+			while (index < numTopics) {
 				currentTopic = index;
 				currentValue = currentTypeTopicCounts[index];
 				
@@ -370,7 +367,7 @@ public class MarginalProbEstimatorPlain implements Serializable {
 			   index = 0;
 			   int displayCount = 0;
 				
-			   while (index < currentTypeTopicCounts.length) {
+			   while (index < numTopics) {
 				   currentTopic = index;
 				   currentValue = currentTypeTopicCounts[index];
 	

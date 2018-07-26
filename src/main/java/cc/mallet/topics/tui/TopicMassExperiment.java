@@ -1027,5 +1027,10 @@ public class TopicMassExperiment {
 			return pc.getHDPGamma(gammaDefault);
 		}
 
+		@Override
+		public int getHDPNrStartTopics(int defaultValue) {
+			return pc.getHDPNrStartTopics(defaultValue);
+		}
+
 	}
 }

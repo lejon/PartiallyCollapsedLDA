@@ -26,7 +26,7 @@ public class DocTopicTokenFreqTable {
 
 	public void increment(int topic, int tokenFreq) {
 		if(topic<0||topic>=numTopics) {
-			throw new IndexOutOfBoundsException("DocTopicTokenFreqTable only contains " + numTopics);
+			throw new IndexOutOfBoundsException("DocTopicTokenFreqTable only contains " + numTopics + " topics. " + topic + " is out of range");
 		}
 		if(docTokenFreqMap[topic].get(tokenFreq)==null) {
 			docTokenFreqMap[topic].put(tokenFreq, new AtomicInteger(0));
@@ -61,8 +61,9 @@ public class DocTopicTokenFreqTable {
 
 	public String toString() {
 		String str = "";
-		for (int i = 0; i < docTokenFreqMap.length; i++) {	
-			Int2ObjectSortedMap<AtomicInteger> countTable = docTokenFreqMap[i];
+		for (int topic = 0; topic < docTokenFreqMap.length; topic++) {	
+			Int2ObjectSortedMap<AtomicInteger> countTable = docTokenFreqMap[topic];
+			str += "\t[" + topic + "]: ";
 			for (int key : countTable.keySet()) {
 				str += "(" + key + "=>" + countTable.get(key).get() + "),"; 
 			}

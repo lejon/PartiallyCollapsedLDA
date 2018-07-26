@@ -478,6 +478,10 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	public int getNoTopics() {
 		return numTopics;
 	}
+
+	public void setNumTopics(int newNumTopics) {
+		numTopics = newNumTopics;
+	}
 	
 	@Override
 	public int getCurrentIteration() {

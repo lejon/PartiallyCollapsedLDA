@@ -339,7 +339,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			int[] topics = topicSequence.getFeatures();
 			for (int position = 0; position < docLength; position++) {
 				// Sampling a random topic assignment
-				int topic = random.nextInt(numTopics);
+				int topic = initialDrawTopicIndicator();
 				topics[position] = topic;
 
 				int type = tokens.getIndexAtPosition(position);
@@ -395,6 +395,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		bb.calculateBatch();
 		tbb = TopicBatchBuilderFactory.get(config, this);
 		topicIndexBuilder = TopicIndexBuilderFactory.get(config,this);
+	}
+
+	int initialDrawTopicIndicator() {
+		return random.nextInt(numTopics);
 	}
 
 	protected void updateTypeTopicCount(int type, int topic, int count) {
@@ -459,10 +463,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		Stats stats;
 		hyperparameterOptimizationInterval = config.getHyperparamOptimInterval(LDAConfiguration.HYPERPARAM_OPTIM_INTERVAL_DEFAULT);
 	
-		int numParticles = 100;
-
 		MarginalProbEstimatorPlain evaluator = null;
-
 		if(testSet != null) {
 			evaluator = new MarginalProbEstimatorPlain(numTopics,
 					alpha, alphaSum,
@@ -473,6 +474,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		
 		Double heldOutLL = null;
 		
+		int numParticles = 100;
 		if(logTypeTopicDensity || logDocumentDensity || logPhiDensity) {
 			density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 			docDensity = kdDensities.get() / (double) numTopics / data.size();
@@ -495,6 +497,15 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 
 		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
+			// In the HDP the numTopics change
+			if(testSet != null) {
+				evaluator = new MarginalProbEstimatorPlain(numTopics,
+						alpha, alphaSum,
+						beta,
+						typeTopicCounts, 
+						tokensPerTopic);
+			}
+
 			currentIteration = iteration;
 			if(hyperparameterOptimizationInterval > 1  && iteration % hyperparameterOptimizationInterval == 0) {
 				saveHistStats = true;
