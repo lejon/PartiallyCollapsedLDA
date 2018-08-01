@@ -1222,7 +1222,7 @@ public class LDAUtils {
 			int[] topicCounts = typeTopicCounts[type];
 
 			int index = 0;
-			while (index < topicCounts.length &&
+			while (index < numTopics &&
 					topicCounts[index] > 0) {
 
 				int topic = topicCounts[index] & topicMask;
@@ -1259,7 +1259,7 @@ public class LDAUtils {
 			int[] topicCounts = typeTopicCounts[type];
 
 			int index = 0;
-			while (index < topicCounts.length) {
+			while (index < numTopics) {
 
 				int topic = index;
 				int count = topicCounts[index];

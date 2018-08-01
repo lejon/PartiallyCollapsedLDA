@@ -66,13 +66,15 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 
 	/**
 	 * Normal approximation of Poisson draw. Should only be used when meanPoisson is
-	 * large enough for the normal approximation to be valid.
+	 * large enough for the normal approximation to be valid. 
 	 * 
 	 * @param meanPoisson
 	 * @return
 	 */
 	public static long nextPoissonNormalApproximation(double meanPoisson) {
-		return Math.round(Math.sqrt(meanPoisson) * ThreadLocalRandom.current().nextGaussian() + (meanPoisson));
+		long sample = Math.round(Math.sqrt(meanPoisson) * ThreadLocalRandom.current().nextGaussian() + (meanPoisson));
+		if(sample<0) sample = 0;
+		return sample;
 	}
 	
 	/**

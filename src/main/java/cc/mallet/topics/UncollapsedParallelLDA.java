@@ -414,6 +414,24 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 	}
 
+	protected void moveTopic(int oldTopic, int newTopic, int resetValue) {
+		for(int type = 0; type < numTypes; type++) {
+			topicTypeCountMapping[newTopic][type] = topicTypeCountMapping[oldTopic][type];
+			topicTypeCountMapping[oldTopic][type] = resetValue;
+			typeTopicCounts[type][newTopic] = typeTopicCounts[type][oldTopic];
+			typeTopicCounts[type][oldTopic] = resetValue;
+			tokensPerTopic[newTopic] = tokensPerTopic[oldTopic];
+			tokensPerTopic[oldTopic] = 0;
+			if(topicTypeCountMapping[newTopic][type]<0) {
+				System.err.println("Emergency print!");
+				debugPrintMMatrix();
+				throw new IllegalArgumentException("Negative count for topic: " + newTopic 
+						+ "! Count: " + topicTypeCountMapping[newTopic][type] + " type:" 
+						+ alphabet.lookupObject(type) + "(" + type + ")");
+			}
+		}
+	}
+
 
 	private double[] calcTypeFrequencyCumSum(int[] typeFrequencyIndex,int[] typeCounts) {
 		double [] result = new double[typeCounts.length];
@@ -1173,7 +1191,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			} 
 
 			// Make sure we actually sampled a valid topic
-			if (newTopic < 0 || newTopic > numTopics) {
+			if (newTopic < 0 || newTopic >= numTopics) {
 				throw new IllegalStateException ("UncollapsedParallelLDA: New valid topic not sampled.");
 			}
 

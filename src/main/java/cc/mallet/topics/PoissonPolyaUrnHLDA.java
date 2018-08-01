@@ -20,6 +20,7 @@ import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
+import cc.mallet.types.PolyaUrnDirichlet;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
@@ -40,7 +41,10 @@ import it.unimi.dsi.fastutil.ints.IntSet;
  * decrease we have to keep track of this and re-map topics with too high
  * topic indicator. This might be solvable in other ways more efficiently, 
  * by only setting the probability of those topics to zero in Phi this might
- * be implemented later. 
+ * be implemented later.
+ * 
+ * The number of new topics are sampled just after the Z sampling in the 
+ * postZ method. Here the typeTopic matrix is alsuo updated.
  * 
  * @author Leif Jonsson
  *
@@ -443,12 +447,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		IntSet keys = topicMappingTable.keySet();
 		for (int oldTopicPos : keys) {
 			int newTopicPos = topicMappingTable.get(oldTopicPos);
-			for(int type = 0; type < numTypes; type++) {
-				// Move the topic indicator from the old to the vew position
-				updateTypeTopicCount(type,newTopicPos,typeTopicCounts[type][oldTopicPos]);
-				// Reset the old position
-				updateTypeTopicCount(type,oldTopicPos,0);
-			}
+			moveTopic(oldTopicPos, newTopicPos, 0);
 		}
 	}
 
@@ -466,7 +465,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 	 */
 	static protected Int2IntArrayMap createTopicTranslationTable(int numTopics, int newNumTopics, int activeInData, boolean[] activeTopics) {
 		int diff = newNumTopics - activeInData;
-		if(diff<1) throw new IndexOutOfBoundsException("New number of topics is not smaller than numTopics, no need to create mapping table.");
+		if(!(newNumTopics<numTopics)) throw new IndexOutOfBoundsException("New number of topics is not smaller than numTopics, no need to create mapping table.");
 		int [] freeSpacesInRange = new int[newNumTopics];
 		int nrFreeAssigned = 0;
 		for (int i = 0; i < newNumTopics; i++) {
@@ -624,8 +623,8 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 			}
 
 			// Make sure we actually sampled a valid topic
-			if (newTopic < 0 || newTopic > numTopics) {
-				throw new IllegalStateException ("SpaliasUncollapsedParallelLDA: New valid topic not sampled (" + newTopic + ").");
+			if (newTopic < 0 || newTopic >= numTopics) {
+				throw new IllegalStateException ("Poisson Polya Urn HDP: New valid topic not sampled (" + newTopic + ").");
 			}
 
 			// Put that new topic into the counts
@@ -848,19 +847,40 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 			if( freqHist.length > j ) {				
 				trials = freqHist[j];
 			}
-			double p = gamma / (gamma + j);
-			BinomialDistribution c_j_k = new BinomialDistribution(trials, p);
-			lSum += c_j_k.sample();
+			// As soon as we see zero, we know the rest will be 
+			// zero and not contribute to the sum, so we can exit.
+			if(trials==0) break;
+			int bsample = 0;
+			// Only sample if trials != 0, otherwise sample = 0;
+			if(trials != 0) {
+				double p = gamma / (gamma + j);
+				// If suitable, use normal approximation to binomial
+				if(trials * p >= 5 && trials * (1-p) >= 5) {
+					double meanNormal = trials * p;
+					double variance = trials * p * (1-p); 
+					bsample = (int) Math.round(Math.sqrt(variance) * ThreadLocalRandom.current().nextGaussian() + meanNormal);
+				} else {
+					BinomialDistribution c_j_k = new BinomialDistribution(trials, p);
+					bsample = c_j_k.sample();
+				}
+			}
+			//System.err.println("Binomial sample: Trials: " + trials + " probability: " + p + " => " + bsample);
+			lSum += bsample;
 		}
 		return lSum;
 	}	
 	
 	protected int sampleNrTopics(double gamma) {
-		PoissonDistribution pois_gamma = new PoissonDistribution(gamma);
-		int sample = pois_gamma.sample();
-		
-		System.out.println("Sampled: " + sample + " additional topics...");
-		
+		int sample = -1;
+		if(gamma<1000) {
+			PoissonDistribution pois_gamma = new PoissonDistribution(gamma);
+			sample = pois_gamma.sample();
+		} else {
+			long lsample = PolyaUrnDirichlet.nextPoissonNormalApproximation(gamma);
+			if(lsample>Integer.MAX_VALUE) throw new IllegalArgumentException("Nr topics sampled is TOOO large");
+			sample = (int) lsample;
+		}
+		//System.out.println("Sampled: " + sample + " additional topics...");
 		return sample; 
 	}
 	
