@@ -497,15 +497,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 
 		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
-			// In the HDP the numTopics change
-			if(testSet != null) {
-				evaluator = new MarginalProbEstimatorPlain(numTopics,
-						alpha, alphaSum,
-						beta,
-						typeTopicCounts, 
-						tokensPerTopic);
-			}
-
 			currentIteration = iteration;
 			if(hyperparameterOptimizationInterval > 1  && iteration % hyperparameterOptimizationInterval == 0) {
 				saveHistStats = true;
@@ -533,6 +524,15 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			long zSamplingTokenUpdateTime = endTypeTopicUpdate - iterationStart;
 			logger.finer("Time for updating type-topic counts: " + 
 					(endTypeTopicUpdate - beforeSync) + "ms\t");
+			
+			// In the HDP the numTopics can change after the Z sampling 
+			if(testSet != null) {
+				evaluator = new MarginalProbEstimatorPlain(numTopics,
+						alpha, alphaSum,
+						beta,
+						typeTopicCounts, 
+						tokensPerTopic);
+			}
 
 			//long beforeSamplePhi = System.currentTimeMillis();
 			prePhi();
