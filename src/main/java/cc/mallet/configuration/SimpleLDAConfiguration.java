@@ -67,7 +67,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private Integer hyperparamOptimInterval;
 	private boolean symmetricAlpha;
 	private double hdpGgamma = LDAConfiguration.HDP_GAMMA_DEFAULT;
-	private int hdpNrStartTopics;
+	private int hdpNrStartTopics = LDAConfiguration.HDP_START_TOPICS_DEFAULT;
 
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,

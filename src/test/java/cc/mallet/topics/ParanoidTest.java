@@ -118,6 +118,48 @@ public class ParanoidTest {
 	}
 	
 	@Test
+	public void testParanoidPoissonPolyaUrn() throws IOException {	
+		String whichModel = "HDP";
+		Integer numBatches = 6;
+
+		Integer numIter = 10;
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
+				numBatches);
+
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("Using dataset: " + dataset_fn);
+		System.out.println("Scheme: " + whichModel);
+		LoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("TestRuns");
+		config.setLoggingUtil(lu);
+
+		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
+				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+
+		LDAGibbsSampler model = new ParanoidPoissonPolyaUrnHDP(config);
+		System.out.println(
+				String.format("Poisson Parallell HDP (%d batches).", 
+						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		model.addInstances(instances);
+
+		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+		System.out.println("_____________________________\n");
+
+		// Runs the model
+		System.out.println("Starting:" + new Date());
+		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+		System.out.println("Finished:" + new Date());
+
+		System.out.println("I am done!");
+	}
+	
+	@Test
 	public void testParanoidLightLDAtypeTopicProposal() throws IOException {	
 		String whichModel = "uncollapsed_lightttp_paranoid";
 		Integer numBatches = 6;
