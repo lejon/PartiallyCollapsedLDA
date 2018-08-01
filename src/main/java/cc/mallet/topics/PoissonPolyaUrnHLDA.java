@@ -588,7 +588,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 
 			// Document and type sparsity removed all (but one?) topics, just use the prior contribution
 			if(nonZeroTopicCntAdjusted==0) {
-				newTopic = (int) Math.floor(u * this.numTopics); // uniform (0,1)
+				newTopic = (int) Math.floor(u * numTopics); // uniform (0,1)
 			} else {
 				double [] phiType =  phitrans[type]; 
 				int topic = nonZeroTopicsAdjusted[0];
@@ -787,9 +787,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		for (int topic : indices) {
 			// Set this topic to zero if it is inactive
 			if(!activeTopics[topic]) {
-				for (int i = 0; i < phiMatrix[topic].length; i++) {
-					phiMatrix[topic] = new double[numTypes];
-				}
+				phiMatrix[topic] = new double[numTypes];
 			} else {
 				activeIndices[numActive++] = topic;
 			}

@@ -414,10 +414,13 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 	}
 
-	protected void moveTopic(int oldTopic, int newTopic, int resetValue) {
+	protected void moveTopic(int oldTopic, int newTopic, int resetValue) {		
+		topicTypeCountMapping[newTopic] = topicTypeCountMapping[oldTopic];
+		topicTypeCountMapping[oldTopic] = new int[numTypes];
+		if(resetValue!=0) {
+			Arrays.fill(topicTypeCountMapping[oldTopic], resetValue);
+		} 
 		for(int type = 0; type < numTypes; type++) {
-			topicTypeCountMapping[newTopic][type] = topicTypeCountMapping[oldTopic][type];
-			topicTypeCountMapping[oldTopic][type] = resetValue;
 			typeTopicCounts[type][newTopic] = typeTopicCounts[type][oldTopic];
 			typeTopicCounts[type][oldTopic] = resetValue;
 			tokensPerTopic[newTopic] = tokensPerTopic[oldTopic];
