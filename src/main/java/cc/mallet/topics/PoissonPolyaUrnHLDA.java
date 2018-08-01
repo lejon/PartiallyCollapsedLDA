@@ -16,6 +16,7 @@ import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.apache.commons.math3.distribution.PoissonDistribution;
 
 import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
@@ -30,6 +31,17 @@ import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
+ * This is a parallel implementation of the Poisson Polya Urn HDP
+ * 
+ * What this class adds on top of the PolyaUrn LDA is additional sampling
+ * of the number of topics to use in each iteration. Since the number of
+ * topics potentially change in each iteration we have to keep track of this.
+ * It is not a problem when the number of topics increase, but when they
+ * decrease we have to keep track of this and re-map topics with too high
+ * topic indicator. This might be solvable in other ways more efficiently, 
+ * by only setting the probability of those topics to zero in Phi this might
+ * be implemented later. 
+ * 
  * @author Leif Jonsson
  *
  */
@@ -186,7 +198,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 
 	@Override
 	public void postIteration() {
-		System.out.println("Freq table: \n" + docTopicTokenFreqTable);
+		//System.out.println("Freq table: \n" + docTopicTokenFreqTable);
 		
 		// Finish G sampling, i.e normalize G
 		double sumG = 0.0;
@@ -196,7 +208,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		for (int i = 0; i < alphaG.length; i++) {			
 			alphaG[i] /= sumG;
 		}
-		System.out.println("Alpha G: " + Arrays.toString(alphaG));
+		//System.out.println("Alpha G: " + Arrays.toString(alphaG));
 		
 		// Reset frequency table
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
@@ -265,8 +277,8 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		// Resample the number of topics to use 
 		activeTopicHistory.add(numTopics);
 		int activeInData = updateNrActiveTopics(docTopicTokenFreqTable.getEmptyTopics(), activeTopics, numTopics);
-		System.out.println("Active topics: " + Arrays.toString(activeTopics));
-		System.out.println("Nr Topics in data: " + activeInData);
+		//System.out.println("Active topics: " + Arrays.toString(activeTopics));
+		//System.out.println("Nr Topics in data: " + activeInData);
 		
 		int newNumTopics = activeInData + sampleNrTopics(gamma); 
 		if(newNumTopics>maxTopics) 
@@ -284,9 +296,142 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 			topicMappingTable = null;
 		}
 		
+		System.out.println("Topic stats: Nr Topics:" + numTopics + "\t Active in data: " + activeInData + "\t Topic diff: " + (newNumTopics - numTopics));
 		setNumTopics(newNumTopics);
-		System.out.println("Nr active Topics: " + numTopics);
 	}
+	
+	/* 
+	 * Uses AD-LDA logLikelihood calculation
+	 *  
+	 * Here we override SimpleLDA's original likelihood calculation and use the
+	 * AD-LDA logLikelihood calculation. 
+	 * With this approach all models likelihoods are calculated the same way
+	 */
+	@Override
+	public double modelLogLikelihood() {
+		double logLikelihood = 0.0;
+		//int nonZeroTopics;
+
+		// The likelihood of the model is a combination of a 
+		// Dirichlet-multinomial for the words in each topic
+		// and a Dirichlet-multinomial for the topics in each
+		// document.
+
+		// The likelihood function of a dirichlet multinomial is
+		//	 Gamma( sum_i alpha_i )	 prod_i Gamma( alpha_i + N_i )
+		//	prod_i Gamma( alpha_i )	  Gamma( sum_i (alpha_i + N_i) )
+
+		// So the log likelihood is 
+		//	logGamma ( sum_i alpha_i ) - logGamma ( sum_i (alpha_i + N_i) ) + 
+		//	 sum_i [ logGamma( alpha_i + N_i) - logGamma( alpha_i ) ]
+
+		// Do the documents first
+
+		int[] topicCounts = new int[numTopics];
+		double[] topicLogGammas = new double[numTopics];
+		int[] docTopics;
+
+		for (int topic=0; topic < numTopics; topic++) {
+			topicLogGammas[ topic ] = Dirichlet.logGammaStirling( alpha[topic] );
+		}
+
+		for (int doc=0; doc < data.size(); doc++) {
+			LabelSequence topicSequence =	(LabelSequence) data.get(doc).topicSequence;
+
+			docTopics = topicSequence.getFeatures();
+			
+			// Since in the HDP the numTopics can change between iterations, here we may need 
+			// to re-map topic indicators with too high values from the previous iteration
+			// the same way that is done in the Z sampling
+			for (int topicInd = 0; topicInd < docTopics.length; topicInd++) {
+				int topic = docTopics[topicInd];
+				if(topic>=numTopics) {
+					docTopics[topicInd] = topicMappingTable.get(topic);
+				}
+			}
+			
+			for (int token=0; token < docTopics.length; token++) {
+				topicCounts[ docTopics[token] ]++;
+			}
+
+			for (int topic=0; topic < numTopics; topic++) {
+				if (topicCounts[topic] > 0) {
+					logLikelihood += (Dirichlet.logGammaStirling(alpha[topic] + topicCounts[topic]) -
+							topicLogGammas[ topic ]);
+				}
+			}
+
+			// subtract the (count + parameter) sum term
+			logLikelihood -= Dirichlet.logGammaStirling(alphaSum + docTopics.length);
+
+			Arrays.fill(topicCounts, 0);
+		}
+
+		// add the parameter sum term
+		logLikelihood += data.size() * Dirichlet.logGammaStirling(alphaSum);
+
+		// And the topics
+
+		// Count the number of type-topic pairs that are not just (logGamma(beta) - logGamma(beta))
+		int nonZeroTypeTopics = 0;
+
+		for (int type=0; type < numTypes; type++) {
+			// reuse this array as a pointer
+
+			topicCounts = typeTopicCounts[type];
+
+			for (int topic = 0; topic < numTopics; topic++) {
+				if (topicCounts[topic] == 0) { continue; }
+
+				nonZeroTypeTopics++;
+				logLikelihood += Dirichlet.logGammaStirling(beta + topicCounts[topic]);
+
+				if (Double.isNaN(logLikelihood)) {
+					System.err.println("NaN in log likelihood calculation: " + topicCounts[topic]);
+					System.exit(1);
+				} 
+				else if (Double.isInfinite(logLikelihood)) {
+					logger.warning("infinite log likelihood");
+					System.exit(1);
+				}
+			}
+		}
+
+		for (int topic=0; topic < numTopics; topic++) {
+			logLikelihood -= 
+					Dirichlet.logGammaStirling( (beta * numTypes) +
+							tokensPerTopic[ topic ] );
+
+			if (Double.isNaN(logLikelihood)) {
+				logger.info("NaN after topic " + topic + " " + tokensPerTopic[ topic ]);
+				return 0;
+			}
+			else if (Double.isInfinite(logLikelihood)) {
+				logger.info("Infinite value after topic " + topic + " " + tokensPerTopic[ topic ]);
+				return 0;
+			}
+
+		}
+
+		// logGamma(|V|*beta) for every topic
+		logLikelihood += 
+				Dirichlet.logGammaStirling(beta * numTypes) * numTopics;
+
+		// logGamma(beta) for all type/topic pairs with non-zero count
+		logLikelihood -=
+				Dirichlet.logGammaStirling(beta) * nonZeroTypeTopics;
+
+		if (Double.isNaN(logLikelihood)) {
+			logger.info("at the end");
+		}
+		else if (Double.isInfinite(logLikelihood)) {
+			logger.info("Infinite value beta " + beta + " * " + numTypes);
+			return 0;
+		}
+
+		return logLikelihood;
+	}
+
 	
 	/**
 	 * Re-arranges the topics in the typeTopic matrix (and its transpose) according
@@ -658,14 +803,14 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 			// in postIteration when all G_k has been sampled
 			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable);
 			if(l_k == 0.0) {
-				System.out.println("Freq table: \n" + docTopicTokenFreqTable);
+				System.err.println("Freq table: \n" + docTopicTokenFreqTable);
 				System.err.println("Zero sampled for topic " + topic);
 				System.err.println("Rev hist: " + Arrays.toString(docTopicTokenFreqTable.getReverseCumulativeSum(topic)));
 				System.err.println("Active topics: " + Arrays.toString(activeTopics));
 				System.err.println("Active indices: " + Arrays.toString(activeIndices));
 				System.err.println("Empty topics: \n" + Arrays.toString(docTopicTokenFreqTable.getEmptyTopics()));
 			}
-			System.out.println("[" + topic + "] Sampled l_k: " + l_k);
+			//System.out.println("[" + topic + "] Sampled l_k: " + l_k);
 			PoissonDistribution pois_gamma = new PoissonDistribution(l_k);
 			int eta_k = pois_gamma.sample(); 
 			alphaG[topic] = eta_k;
