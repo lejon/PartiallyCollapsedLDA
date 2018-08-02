@@ -808,9 +808,14 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 				System.err.println("Active indices: " + Arrays.toString(activeIndices));
 				System.err.println("Empty topics: \n" + Arrays.toString(docTopicTokenFreqTable.getEmptyTopics()));
 			}
-			//System.out.println("[" + topic + "] Sampled l_k: " + l_k);
-			PoissonDistribution pois_gamma = new PoissonDistribution(l_k);
-			int eta_k = pois_gamma.sample(); 
+			int eta_k; 
+			if(l_k>100) {
+				eta_k = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(l_k);
+			} else {				
+				PoissonDistribution pois_gamma = new PoissonDistribution(l_k);
+				eta_k = pois_gamma.sample();
+			}
+			
 			alphaG[topic] = eta_k;
 			
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
