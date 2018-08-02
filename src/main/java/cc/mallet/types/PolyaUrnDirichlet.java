@@ -73,7 +73,8 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 	 */
 	public static long nextPoissonNormalApproximation(double meanPoisson) {
 		long sample = Math.round(Math.sqrt(meanPoisson) * ThreadLocalRandom.current().nextGaussian() + (meanPoisson));
-		if(sample<0) sample = 0;
+		if(sample<0) 
+			System.err.println("WARNING: PolyaUrnDirichlet.nextPoissonNormalApproximation drew negative value! Normal approximation should only be used if mean is large is enough. Mean was: " + meanPoisson);
 		return sample;
 	}
 	

@@ -152,6 +152,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		phiBurnIn    = (int)(((double) config.getPhiBurnInPercent(LDAConfiguration.PHI_BURN_IN_DEFAULT) / 100)
 						             * config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT)); 
 		phiMeanThin  = config.getPhiMeanThin(LDAConfiguration.PHI_THIN_DEFAULT);
+		hyperparameterOptimizationInterval = config.getHyperparamOptimInterval(LDAConfiguration.HYPERPARAM_OPTIM_INTERVAL_DEFAULT);
 	}
 	
 	public int[][] getTopIndices() {
@@ -168,7 +169,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	@Override
 	public int[][] getTypeTopicCounts() { 
 		int [][] tTCounts = new int[numTypes][numTopics];
-		for (int topic = 0; topic < topicTypeCountMapping.length; topic++) {
+		for (int topic = 0; topic < numTopics; topic++) {
 			for (int type = 0; type < topicTypeCountMapping[topic].length; type++) {
 				tTCounts[type][topic] = topicTypeCountMapping[topic][type];
 			}
@@ -246,7 +247,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		int sumtotalTopicType = 0;
 		int [] topicTypeTTCount = new int [numTopics]; 
 		
-		for (int topic = 0; topic < topicTypeCounts.length; topic++ ) {
+		for (int topic = 0; topic < numTopics; topic++ ) {
 			for (int type = 0; type < topicTypeCounts[topic].length; type++ ) { 
 				{
 					int count = topicTypeCounts[topic][type];
@@ -270,7 +271,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		if(sumtotalTopicType != corpusWordCount) {
 			throw new IllegalArgumentException("TopicTypeCounts does not sum to nr. types! Sumtotal: " + sumtotalTopicType + " no.types: " + corpusWordCount);
 		}
-		for (int i = 0; i < tokensPerTopic.length; i++) {
+		for (int i = 0; i < numTopics; i++) {
 			if(tokensPerTopic[i]!=topicTypeTTCount[i]) {
 				throw new IllegalArgumentException("topicTypeTTCount[" + i + "] does not match global tokensPerTopic[" + i + "]");
 			}
@@ -482,7 +483,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		double docDensity = -1;
 		double phiDensity;
 		Stats stats;
-		hyperparameterOptimizationInterval = config.getHyperparamOptimInterval(LDAConfiguration.HYPERPARAM_OPTIM_INTERVAL_DEFAULT);
 	
 		MarginalProbEstimatorPlain evaluator = null;
 		if(testSet != null) {

@@ -270,6 +270,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 
 	@Override
 	public void postSample() {
+		setNumTopics(activeTopicHistory.get(activeTopicHistory.size()-1));
 		super.postSample();
 		tableBuilderExecutor.shutdown();
 	}

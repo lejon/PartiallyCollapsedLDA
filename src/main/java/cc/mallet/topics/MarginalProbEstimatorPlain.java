@@ -236,6 +236,7 @@ public class MarginalProbEstimatorPlain implements Serializable {
 						}
 					
 						newTopic = i;
+						if(newTopic>=numTopics) throw new IllegalStateException("Sampled invalid topic: " + newTopic);
 					}
 					else {
 						sample -= topicTermMass;
@@ -253,6 +254,7 @@ public class MarginalProbEstimatorPlain implements Serializable {
 							
 								if (sample <= 0.0) {
 									newTopic = topic;
+									if(newTopic>=numTopics) throw new IllegalStateException("Sampled invalid topic: " + newTopic);
 									break;
 								}
 							}
@@ -271,6 +273,7 @@ public class MarginalProbEstimatorPlain implements Serializable {
 						
 							while (sample > 0.0) {
 								newTopic++;
+								if(newTopic>=numTopics) throw new IllegalStateException("Sampled invalid topic: " + newTopic);
 								sample -= alpha[newTopic] / 
 									(tokensPerTopic[newTopic] + betaSum);
 							}
@@ -415,6 +418,7 @@ public class MarginalProbEstimatorPlain implements Serializable {
 				}
 					
 				newTopic = i;
+				if(newTopic>=numTopics) throw new IllegalStateException("Sampled invalid topic: " + newTopic);
 			}
 			else {
 				sample -= topicTermMass;
@@ -432,6 +436,7 @@ public class MarginalProbEstimatorPlain implements Serializable {
 							
 						if (sample <= 0.0) {
 							newTopic = topic;
+							if(newTopic>=numTopics) throw new IllegalStateException("Sampled invalid topic: " + newTopic);
 							break;
 						}
 					}
@@ -450,6 +455,7 @@ public class MarginalProbEstimatorPlain implements Serializable {
 						
 					while (sample > 0.0) {
 						newTopic++;
+						if(newTopic>=numTopics) throw new IllegalStateException("Sampled invalid topic: " + newTopic);
 						sample -= alpha[newTopic] / 
 							(tokensPerTopic[newTopic] + betaSum);
 					}
@@ -462,7 +468,7 @@ public class MarginalProbEstimatorPlain implements Serializable {
 				System.err.println("sampling error: "+ origSample + " " + 
 								   sample + " " + smoothingOnlyMass + " " + 
 								   topicBetaMass + " " + topicTermMass);
-				newTopic = numTopics-1; // TODO is this appropriate
+				throw new IllegalStateException("Sampled invalid topic: " + newTopic);
 			}
 				
 			// Put that new topic into the counts
