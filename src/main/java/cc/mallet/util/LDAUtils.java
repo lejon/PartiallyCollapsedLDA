@@ -1575,6 +1575,18 @@ public class LDAUtils {
 		}
 	}
 
+	public static void writeString(String string, String fileName) {
+		File file = new File(fileName);
+		try (FileWriter fw = new FileWriter(file, false); 
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter pw  = new PrintWriter(bw)) {
+			pw.println(string);
+		} catch (IOException e) {
+			throw new IllegalArgumentException("File " + file.getName()
+					+ " is unwritable : " + e.toString());
+		}
+	}
+	
 	public static void writeIntArray(int[] iarr, String fileName) {
 		File file = new File(fileName);
 		try (FileWriter fw = new FileWriter(file, false); 

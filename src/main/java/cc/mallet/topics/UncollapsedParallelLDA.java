@@ -434,6 +434,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 						+ alphabet.lookupObject(type) + "(" + type + ")");
 			}
 		}
+		
+		double [] tmpTopic = phi[newTopic];
+		phi[newTopic] = phi[oldTopic];
+		phi[oldTopic] = tmpTopic;
 	}
 
 

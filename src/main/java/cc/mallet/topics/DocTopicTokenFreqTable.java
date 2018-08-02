@@ -19,8 +19,8 @@ public class DocTopicTokenFreqTable {
 		this.numTopics = numTopics;
 		docTokenFreqMap = new Int2ObjectSortedMap[numTopics]; 
 		// Initialize
-		for (int i = 0; i < docTokenFreqMap.length; i++) {			
-			docTokenFreqMap[i] =  Int2ObjectSortedMaps.synchronize(new Int2ObjectAVLTreeMap<AtomicInteger>());
+		for (int topic = 0; topic < numTopics; topic++) {			
+			docTokenFreqMap[topic] =  Int2ObjectSortedMaps.synchronize(new Int2ObjectAVLTreeMap<AtomicInteger>());
 		}
 	}
 
@@ -88,6 +88,12 @@ public class DocTopicTokenFreqTable {
 
 	public int getNumTopics() {
 		return numTopics;
+	}
+
+	public void moveTopic(int oldTopicPos, int newTopicPos) {
+		Int2ObjectSortedMap<AtomicInteger> tmp = docTokenFreqMap[newTopicPos];
+		docTokenFreqMap[newTopicPos] = docTokenFreqMap[oldTopicPos];
+		docTokenFreqMap[oldTopicPos] = tmp;
 	}
 
 }

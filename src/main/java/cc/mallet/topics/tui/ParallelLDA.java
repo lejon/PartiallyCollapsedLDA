@@ -3,6 +3,7 @@ package cc.mallet.topics.tui;
 import java.io.File;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import cc.mallet.configuration.ParsedLDAConfiguration;
 import cc.mallet.topics.ADLDA;
 import cc.mallet.topics.CollapsedLightLDA;
 import cc.mallet.topics.EfficientUncollapsedParallelLDA;
+import cc.mallet.topics.HDPSamplerWithPhi;
 import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.LDASamplerWithPhi;
 import cc.mallet.topics.LightPCLDA;
@@ -264,13 +266,29 @@ public class ParallelLDA {
 								model.getTypeTopicMatrix(),  
 								config.getBeta(LDAConfiguration.BETA_DEFAULT),
 								model.getAlphabet())));
-				System.out.println("KR1 re-weighted words are: \n" + 
-						LDAUtils.formatTopWords(LDAUtils.getK1ReWeightedWords(20, 
-								model.getAlphabet().size(), 
-								model.getNoTopics(), 
-								model.getTypeTopicMatrix(),  
-								config.getBeta(LDAConfiguration.BETA_DEFAULT),
-								model.getAlphabet())));
+//				System.out.println("KR1 re-weighted words are: \n" + 
+//						LDAUtils.formatTopWords(LDAUtils.getK1ReWeightedWords(20, 
+//								model.getAlphabet().size(), 
+//								model.getNoTopics(), 
+//								model.getTypeTopicMatrix(),  
+//								config.getBeta(LDAConfiguration.BETA_DEFAULT),
+//								model.getAlphabet())));
+				
+				if(model instanceof HDPSamplerWithPhi) {
+					HDPSamplerWithPhi modelWithPhi = (HDPSamplerWithPhi) model;
+					System.out.println("Topic Occurence Count:");
+					System.out.println(Arrays.toString(modelWithPhi.getTopicOcurrenceCount()));
+					LDAUtils.writeIntArray(modelWithPhi.getTopicOcurrenceCount(), lgDir.getAbsolutePath() + "/TopicOccurenceCount.csv");
+					System.out.println("Active topics:");
+					List<Integer> activeTopicHistoryList = modelWithPhi.getActiveTopicHistory();
+					System.out.println(activeTopicHistoryList);
+					LDAUtils.writeString(activeTopicHistoryList.toString().substring(1, activeTopicHistoryList.toString().length()-1), lgDir.getAbsolutePath() + "/ActiveTopics.csv");
+					System.out.println("Active topics in data:");
+					List<Integer> activeTopicInDataHistory = modelWithPhi.getActiveTopicInDataHistory();
+					System.out.println(activeTopicInDataHistory);
+					LDAUtils.writeString(activeTopicInDataHistory.toString().substring(1, activeTopicInDataHistory.toString().length()-1), 
+							lgDir.getAbsolutePath() + "/ActiveTopicsInData.csv");
+				}
 				
 				System.out.println("I am done!");
 			}

@@ -49,7 +49,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
  * @author Leif Jonsson
  *
  */
-public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASamplerWithPhi{
+public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSamplerWithPhi {
 
 	private static final long serialVersionUID = 1L;
 
@@ -62,6 +62,8 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 	int nrStartTopics;
 	int maxTopics;
 	List<Integer> activeTopicHistory = new ArrayList<Integer>();
+	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
+	int [] topicOcurrenceCount;
 	
 	protected double[][] phitrans;
 
@@ -116,6 +118,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		numTypes = alphabet.size();
 		nonZeroTypeTopicIdxs = new int[numTypes][numTopics];
 		nonZeroTypeTopicColIdxs = new int[numTypes];
+		topicOcurrenceCount = new int[numTopics];
 
 		aliasTables = new WalkerAliasTable[numTypes];
 		typeNorm    = new double[numTypes];
@@ -281,7 +284,8 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		
 		// Resample the number of topics to use 
 		activeTopicHistory.add(numTopics);
-		int activeInData = updateNrActiveTopics(docTopicTokenFreqTable.getEmptyTopics(), activeTopics, numTopics);
+		int activeInData = updateNrActiveTopics(docTopicTokenFreqTable.getEmptyTopics(), activeTopics, topicOcurrenceCount, numTopics);
+		activeTopicInDataHistory.add(activeInData);
 		//System.out.println("Active topics: " + Arrays.toString(activeTopics));
 		//System.out.println("Nr Topics in data: " + activeInData);
 		
@@ -296,12 +300,12 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		// This table is needed when we sample Z, to re-map topics
 		if(newNumTopics<numTopics) {
 			topicMappingTable = createTopicTranslationTable(numTopics, newNumTopics, activeInData, activeTopics);
-			reArrangeTopics(topicMappingTable);
+			reArrangeTopics(topicMappingTable, activeTopics, docTopicTokenFreqTable);
 		} else {
 			topicMappingTable = null;
 		}
 		
-		System.out.println("Topic stats: Nr Topics:" + numTopics + "\t Active in data: " + activeInData + "\t Topic diff: " + (newNumTopics - numTopics));
+		//System.out.println("Topic stats: Nr Topics:" + numTopics + "\t Active in data: " + activeInData + "\t Topic diff: " + (newNumTopics - numTopics));
 		setNumTopics(newNumTopics);
 	}
 	
@@ -444,11 +448,24 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 	 * 
 	 * @param topicMappingTable
 	 */
-	protected void reArrangeTopics(Int2IntArrayMap topicMappingTable) {
+	protected void reArrangeTopics(Int2IntArrayMap topicMappingTable, boolean [] activeTopics, DocTopicTokenFreqTable docTopicTokenFreqTable) {
 		IntSet keys = topicMappingTable.keySet();
 		for (int oldTopicPos : keys) {
 			int newTopicPos = topicMappingTable.get(oldTopicPos);
 			moveTopic(oldTopicPos, newTopicPos, 0);
+			
+			// Update topic occurrence 
+			int tmpCnt = topicOcurrenceCount[newTopicPos];
+			topicOcurrenceCount[newTopicPos] = topicOcurrenceCount[oldTopicPos];
+			topicOcurrenceCount[oldTopicPos] = tmpCnt;
+			
+			// Update active topics
+			boolean tmpActive = activeTopics[newTopicPos];
+			activeTopics[newTopicPos] = activeTopics[oldTopicPos];
+			activeTopics[oldTopicPos] = tmpActive;
+			
+			// Update doc freq table
+			docTopicTokenFreqTable.moveTopic(oldTopicPos,newTopicPos);
 		}
 	}
 
@@ -898,7 +915,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		return numTypes;
 	}
 
-	protected int updateNrActiveTopics(int[] emptyTopics, boolean [] active_topics, int numTopics) {
+	protected int updateNrActiveTopics(int[] emptyTopics, boolean [] active_topics, int[] topicOcurrenceCount, int numTopics) {
 		int nrActiveTopics = 0;
 		
 		int eIdx = 0;
@@ -910,6 +927,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 			} else {
 				nrActiveTopics++;
 				active_topics[i] = true;
+				topicOcurrenceCount[i]++;
 			}
 		}
 		
@@ -919,5 +937,29 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements LDASa
 		}
 
 		return nrActiveTopics;
+	}
+
+	public int[] getTopicOcurrenceCount() {
+		return topicOcurrenceCount;
+	}
+
+	public void setTopicOcurrenceCount(int[] topicOcurrenceCount) {
+		this.topicOcurrenceCount = topicOcurrenceCount;
+	}
+
+	public List<Integer> getActiveTopicHistory() {
+		return activeTopicHistory;
+	}
+
+	public void setActiveTopicHistory(List<Integer> activeTopicHistory) {
+		this.activeTopicHistory = activeTopicHistory;
+	}
+
+	public List<Integer> getActiveTopicInDataHistory() {
+		return activeTopicInDataHistory;
+	}
+
+	public void setActiveTopicInDataHistory(List<Integer> activeInDataTopicHistory) {
+		this.activeTopicInDataHistory = activeInDataTopicHistory;
 	}
 }

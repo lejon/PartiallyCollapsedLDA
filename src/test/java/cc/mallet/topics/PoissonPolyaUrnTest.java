@@ -33,18 +33,18 @@ public class PoissonPolyaUrnTest {
 		for (int i = 0; i < nrLoops; i++) {
 			int poissonSample; 
 			poissonSample = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(50);
-			if(poissonSample<0) throw new IndexOutOfBoundsException("Poisson sample cannot be smaller than 0, was "+ poissonSample);
+			if(poissonSample<0) poissonSample = 0;
 			int numTopics = poissonSample;
 			if(numTopics<3) numTopics = 3;
 			//System.out.println("numTopics = " + numTopics);
 			poissonSample = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(20);
-			if(poissonSample<0) throw new IndexOutOfBoundsException("Poisson sample cannot be smaller than 0, was "+ poissonSample);
+			if(poissonSample<0) poissonSample = 1;
 			int newNumTopics = numTopics - poissonSample;
 			if(newNumTopics<0) newNumTopics = numTopics-1;
 			if(newNumTopics==numTopics) newNumTopics = numTopics-1;
 			//System.out.println("newNumTopics = " + newNumTopics);
 			poissonSample = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(10);
-			if(poissonSample<0) throw new IndexOutOfBoundsException("Poisson sample cannot be smaller than 0, was "+ poissonSample);
+			if(poissonSample<0) poissonSample = 0;
 			int activeInData = newNumTopics - poissonSample;
 			if(activeInData<0) activeInData = newNumTopics-1;
 			//System.out.println("activeInData = " + activeInData);
