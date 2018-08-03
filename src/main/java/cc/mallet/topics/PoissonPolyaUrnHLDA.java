@@ -305,7 +305,10 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 			topicMappingTable = null;
 		}
 		
-		//System.out.println("Topic stats: Nr Topics:" + numTopics + "\t Active in data: " + activeInData + "\t Topic diff: " + (newNumTopics - numTopics));
+		if (showTopicsInterval > 0 && currentIteration % showTopicsInterval == 0) {
+			System.err.println("Topic stats: Nr Topics:" + numTopics + "\t Active in data: " + activeInData + "\t Topic diff: " + (newNumTopics - numTopics));
+		}
+
 		setNumTopics(newNumTopics);
 	}
 	
