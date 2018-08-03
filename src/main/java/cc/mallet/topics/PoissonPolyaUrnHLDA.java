@@ -662,11 +662,12 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 			 */
 			increment(myBatch, newTopic, type);
 			
-			// Update the document topic count table
-			for (int topic = 0; topic < numTopics; topic++) {
-				if(localTopicCounts[topic]!=0) {
-					docTopicTokenFreqTable.increment(topic,(int)localTopicCounts[topic]);
-				}
+		}
+
+		// Update the document topic count table
+		for (int topic = 0; topic < numTopics; topic++) {
+			if(localTopicCounts[topic]!=0) {
+				docTopicTokenFreqTable.increment(topic,(int)localTopicCounts[topic]);
 			}
 		}
 
