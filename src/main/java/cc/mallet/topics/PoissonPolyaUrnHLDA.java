@@ -55,7 +55,6 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 
 	double gamma;
 	double [] alphaG;
-	int [][] documentFreqCounts;
 	boolean [] activeTopics;
 	double alphaCoef;
 	DocTopicTokenFreqTable docTopicTokenFreqTable; 
@@ -458,14 +457,12 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 			moveTopic(oldTopicPos, newTopicPos, 0);
 			
 			// Update topic occurrence 
-			int tmpCnt = topicOcurrenceCount[newTopicPos];
 			topicOcurrenceCount[newTopicPos] = topicOcurrenceCount[oldTopicPos];
-			topicOcurrenceCount[oldTopicPos] = tmpCnt;
+			topicOcurrenceCount[oldTopicPos] = 0;
 			
 			// Update active topics
-			boolean tmpActive = activeTopics[newTopicPos];
-			activeTopics[newTopicPos] = activeTopics[oldTopicPos];
-			activeTopics[oldTopicPos] = tmpActive;
+			activeTopics[newTopicPos] = true;
+			activeTopics[oldTopicPos] = false;
 			
 			// Update doc freq table
 			docTopicTokenFreqTable.moveTopic(oldTopicPos,newTopicPos);

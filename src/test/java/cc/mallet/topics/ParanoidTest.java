@@ -122,9 +122,11 @@ public class ParanoidTest {
 		String whichModel = "HDP";
 		Integer numBatches = 6;
 
-		Integer numIter = 10;
+		Integer numIter = 50;
 		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter,
 				numBatches);
+		
+		config.setNoTopics(100);
 
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
