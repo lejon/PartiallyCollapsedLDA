@@ -4,11 +4,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.Arrays;
 import java.util.Random;
 
+import org.apache.commons.math3.distribution.BinomialDistribution;
+import org.apache.commons.math3.stat.inference.ChiSquareTest;
 import org.junit.Test;
 
 import cc.mallet.types.PolyaUrnDirichlet;
+import cc.mallet.util.WalkerAliasTable;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 
 public class PoissonPolyaUrnTest {
@@ -112,6 +116,148 @@ public class PoissonPolyaUrnTest {
 		} catch (Exception e) {
 		}
 	}
+		
+	@Test
+	public void testBinomialAliasUsingCounts() {
+		// Setup draws
+		int noDraws = 500_000;
+		int [] trialss = {2, 10, 20, 50, 100};
+		double [] probs = {0.01, 0.1, 0.5};
+		
+		int samplesLen = 1000;
+		for (int trials : trialss) {	
+			for (double prob : probs) {
+				long [] samplesAlias = new long[samplesLen]; 
+				long [] samplesB = new long[samplesLen]; 
+				WalkerAliasTable table = PoissonPolyaUrnHLDA.constructBinomialAliasTable(trials, prob);
+
+				BinomialDistribution binDist = new BinomialDistribution(trials, prob);
+				for (int i = 0; i < noDraws; i++) {
+					samplesAlias[table.generateSample()]++;
+					int binSample = binDist.sample(); 
+					samplesB[binSample]++;
+				}
+				
+				int [] rg = findSeqRange(samplesB);
+
+				int smallestIdx = rg[0];
+				int largestIdx = rg[1];
+				
+//				System.out.println("Smallest: "+ smallestIdx);
+//				System.out.println("Largest: "+ largestIdx);
+//				System.out.println("Value at Largest: " + samplesB[largestIdx]);
+//				
+//				System.out.println("Alias:" + Arrays.toString(samplesAlias));
+//				System.out.println("Binom:" + Arrays.toString(samplesB));
+
+				int obsLen = largestIdx - smallestIdx;
+//				System.out.println("Obs. Len.: " + obsLen);
+				// Adapt to the test preconditions
+				long [] obsAlias = new long[obsLen];
+				long [] obsBin = new long[obsLen];
+				for (int i = smallestIdx; i < largestIdx; i++) {
+					obsAlias[i-smallestIdx] = samplesAlias[i];
+					obsBin[i-smallestIdx] = samplesB[i];
+				}
+				
+//				System.out.println("Alias:" + Arrays.toString(obsAlias));
+//				System.out.println("Binom:" + Arrays.toString(obsBin));
+				
+				ChiSquareTest cs = new ChiSquareTest();
+				double test1 = cs.chiSquareTestDataSetsComparison(obsBin, obsAlias);
+//				System.out.println(test1);
+				assertTrue(test1 > 0.01);
+//				System.out.println();
+			}
+		}
+	}
+	
+	/* Find the longest sequence of consecutive non-zero values in an array */
+	int [] findSeqRange(long [] array) {
+		int maxSequenceStartIndex = 0;
+        int maxSequenceLength = 0;
+        int currentSequenceStartIndex = 0;
+        int currentSequenceLength = 0;
+        for (int i = 0; i < array.length; i++)
+        {
+            if(array[i] == 0)
+            {
+                if(currentSequenceLength > maxSequenceLength)
+                {
+                    maxSequenceLength = currentSequenceLength;
+                    maxSequenceStartIndex = currentSequenceStartIndex;
+                }
+                currentSequenceStartIndex = i + 1;
+                currentSequenceLength = 0;
+            }
+            else
+            {
+                currentSequenceLength++;
+            }
+        }
+		
+        if(currentSequenceLength > maxSequenceLength)
+        {
+            maxSequenceStartIndex = currentSequenceStartIndex;
+            maxSequenceLength = currentSequenceLength;
+        }
+        int maxSequenceEndIndex = maxSequenceStartIndex + maxSequenceLength;
+
+		return new int [] {maxSequenceStartIndex, maxSequenceEndIndex};
+	}
+
+	@Test
+	public void testBinomialAliasUsingProbs() {
+		// Setup draws
+		int noDraws = 500_000;
+		int tableLength = 200;
+		int [] trialss = {15, 20, 50, 100};
+		double [] probs = {0.01, 0.1, 0.5, 0.75};
+		
+		for (int trials : trialss) {	
+			for (double prob : probs) {
+				long [] samplesAlias = new long[tableLength]; 
+				int maxIdx = 0;
+				WalkerAliasTable table = PoissonPolyaUrnHLDA.constructBinomialAliasTable(trials, prob);
+
+				double [] trialProbabilities = new double [tableLength];
+				for (int i = 1; i < tableLength; i++) {
+					BinomialDistribution binDistCalc = new BinomialDistribution(trials, prob);
+					for (int j = 0; j < tableLength; j++) {
+						trialProbabilities[j] =  binDistCalc.probability(j);
+						if(trialProbabilities[j]>0.00000000001) {
+							maxIdx = j+1;
+						}
+					}
+				}
+
+				for (int i = 0; i < noDraws; i++) {
+					samplesAlias[table.generateSample()]++; 
+				}
+								
+				// Adapt to the test preconditions
+				long [] obsAlias = new long[maxIdx];
+				double [] possibleProbs = new double[maxIdx];
+				for (int i = 0; i < maxIdx; i++) {
+					obsAlias[i] = samplesAlias[i];
+					possibleProbs[i] = trialProbabilities[i];
+				}
+				
+				ChiSquareTest cs = new ChiSquareTest();
+				double test1 = cs.chiSquareTest(possibleProbs,obsAlias);
+				double alpha = 0.01;
+				if(test1 <= alpha) {
+					System.out.println("Trials: " + trials + " prob: " + prob);
+					System.out.println("Probs:" + Arrays.toString(possibleProbs));
+					System.out.println("Alias:" + Arrays.toString(obsAlias));
+					System.out.println(test1);
+					System.out.println();
+				}
+				assertTrue(test1 > alpha);
+			}
+		}
+	}
+
 
 
 }
