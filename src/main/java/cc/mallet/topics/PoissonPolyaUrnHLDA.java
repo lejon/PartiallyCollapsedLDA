@@ -288,7 +288,11 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		//System.out.println("Active topics: " + Arrays.toString(activeTopics));
 		//System.out.println("Nr Topics in data: " + activeInData);
 		
-		int newNumTopics = activeInData + sampleNrTopics(gamma); 
+		int newNumTopics = activeInData + sampleNrTopics(gamma);
+		// If we are at the lower bound and ended up negative
+		// keep the old or get less than active in data, use active in data
+		if(newNumTopics<5 || newNumTopics < activeInData) newNumTopics = activeInData;
+		
 		if(newNumTopics>maxTopics) 
 			throw new IndexOutOfBoundsException("New sampled number of topics (" 
 					+ newNumTopics 
@@ -903,6 +907,8 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 			sample = (int) lsample;
 		}
 		//System.out.println("Sampled: " + sample + " additional topics...");
+		double u = ThreadLocalRandom.current().nextDouble();
+		if(u>0.5) sample *= -1;
 		return sample; 
 	}
 	
