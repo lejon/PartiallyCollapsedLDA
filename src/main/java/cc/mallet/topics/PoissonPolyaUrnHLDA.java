@@ -331,14 +331,11 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		//System.out.println("Nr Topics in data: " + activeInData);
 		
 		int newNumTopics = activeInData + sampleNrTopics(gamma);
-		// If we are at the lower bound and ended up negative
-		// keep the old or get less than active in data, use active in data
-		if(newNumTopics<5 || newNumTopics < activeInData) newNumTopics = activeInData;
 		
-		if(newNumTopics>maxTopics) 
+		if(newNumTopics < 1 || newNumTopics>maxTopics) 
 			throw new IndexOutOfBoundsException("New sampled number of topics (" 
 					+ newNumTopics 
-					+ ") exceeds maxTopics (" + maxTopics + ") exiting");
+					+ ") less than 1 or exceeds maxTopics (" + maxTopics + ") exiting");
 		
 		// If the new number of topics is smaller than the previous we may need to re-map some
 		// active topic indicators with values higher than the new numTopics down to lower values
@@ -351,7 +348,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		}
 		
 		if (showTopicsInterval > 0 && currentIteration % showTopicsInterval == 0) {
-			System.err.println("Topic stats: Nr Topics:" + numTopics + "\t Active in data: " + activeInData + "\t Topic diff: " + (newNumTopics - numTopics));
+			System.err.println("Topic stats: Nr Topics:" + numTopics + "\t New topics: " + newNumTopics + "\t Active in data: " + activeInData + "\t Topic diff: " + (newNumTopics - numTopics));
 		}
 
 		setNumTopics(newNumTopics);
@@ -864,6 +861,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 			// First part of G sampling, rest (normalization) must be done 
 			// in postIteration when all G_k has been sampled
 			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable);
+			System.out.println("l_" + topic + " = " + l_k);
 			if(l_k == 0.0) {
 				System.err.println("Freq table: \n" + docTopicTokenFreqTable);
 				System.err.println("Zero sampled for topic " + topic);
@@ -927,19 +925,19 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 				if(trials == 1) {
 //					countBernBin.incrementAndGet();
 					bsample = ThreadLocalRandom.current().nextDouble() < p ? 1 : 0;
-				// If ther trials is less than the binomial alias table, use sums of Bernoulli	
-				} else if(trials < BINOMIAL_TABLE_START_IDX) {
-//					countBernSumBin.incrementAndGet();
-					for(int numTrials = 0; numTrials < BINOMIAL_TABLE_START_IDX; numTrials++) {						
-						bsample += ThreadLocalRandom.current().nextDouble() < p ? 1 : 0;
-					}
-				// If suitable, use normal approximation to binomial
+					// If suitable, use normal approximation to binomial
 				} else if(trials * p >= 5 && trials * (1-p) >= 5) {
 //					countNormalBin.incrementAndGet();
 					//System.out.println("Normal approx");
 					double meanNormal = trials * p;
 					double variance = trials * p * (1-p); 
 					bsample = (int) Math.round(Math.sqrt(variance) * ThreadLocalRandom.current().nextGaussian() + meanNormal);
+					// If the trials is less than the binomial alias table, use sums of Bernoulli	
+				} else if(trials < BINOMIAL_TABLE_START_IDX) {
+//					countBernSumBin.incrementAndGet();
+					for(int numTrials = 0; numTrials < trials; numTrials++) {						
+						bsample += ThreadLocalRandom.current().nextDouble() < p ? 1 : 0;
+					}
 				// If, none of the above, draw from alias table
 				} else if(trials > BINOMIAL_TABLE_START_IDX && trials < binomialAliasEndIdx && docLength < BINOMIAL_TABLE_MAXWIDTH){
 //					countAliasBin.incrementAndGet();
@@ -970,8 +968,6 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 			sample = (int) lsample;
 		}
 		//System.out.println("Sampled: " + sample + " additional topics...");
-		double u = ThreadLocalRandom.current().nextDouble();
-		if(u>0.5) sample *= -1;
 		return sample; 
 	}
 	
