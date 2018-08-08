@@ -57,7 +57,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 	private static final long serialVersionUID = 1L;
 
 	double gamma;
-	double [] alphaG;
+	double [] psi;
 	boolean [] activeTopics;
 	double alphaCoef;
 	DocTopicTokenFreqTable docTopicTokenFreqTable; 
@@ -106,9 +106,9 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		alphaCoef = config.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
 		
 		// Initialize G to give same effect as symmetic alpha
-		alphaG = new double[numTopics];
+		psi = new double[numTopics];
 		for (int i = 0; i < alpha.length; i++) {
-			alphaG[i] = 1;
+			psi[i] = 1;
 		}
 		
 		// We should NOT do hyperparameter optimization of alpha or beta in the HDP
@@ -218,7 +218,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 			for (int topic = 0; topic < numTopics; topic++) {
 				// In the HDP the sampled G takes the place of the alpha vector in LDA but
 				// it is still multiplied with the LDA alpha scalar
-				typeMass += probs[topic] = phiType[topic] * alphaCoef * alphaG[topic];
+				typeMass += probs[topic] = phiType[topic] * alphaCoef * psi[topic];
 				if(phiType[topic]!=0) {
 					int newSize = nonZeroTypeTopicColIdxs[type]++;
 					nonZeroTypeTopicIdxs[type][newSize] = topic;
@@ -249,11 +249,11 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		
 		// Finish G sampling, i.e normalize G
 		double sumG = 0.0;
-		for (int i = 0; i < alphaG.length; i++) {			
-			sumG += alphaG[i];
+		for (int i = 0; i < psi.length; i++) {			
+			sumG += psi[i];
 		}
-		for (int i = 0; i < alphaG.length; i++) {			
-			alphaG[i] /= sumG;
+		for (int i = 0; i < psi.length; i++) {			
+			psi[i] /= sumG;
 		}
 		//System.out.println("Alpha G: " + Arrays.toString(alphaG));
 		
@@ -880,7 +880,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 				eta_k = pois_gamma.sample();
 			}
 			
-			alphaG[topic] = eta_k;
+			psi[topic] = eta_k;
 			
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
 			VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
