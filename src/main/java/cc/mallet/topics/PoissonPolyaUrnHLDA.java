@@ -44,7 +44,10 @@ import it.unimi.dsi.fastutil.ints.IntSet;
  * be implemented later.
  * 
  * The number of new topics are sampled just after the Z sampling in the 
- * postZ method. Here the typeTopic matrix is alsuo updated.
+ * postZ method. Here the typeTopic matrix is also updated.
+ * 
+ * In this particular version numTopics (possibly) change every iteration
+ * and phi and the typeTopic matrix is changed to reflect numTopics 
  * 
  * @author Leif Jonsson
  *

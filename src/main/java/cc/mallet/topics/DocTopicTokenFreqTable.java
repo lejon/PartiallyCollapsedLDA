@@ -10,6 +10,26 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
 
+/**
+ * A frequency table that holds a frequency table per topic.
+ * The frequency table tells how many documents that contain a
+ * set of frequencies per topic
+ * 
+ * I.e for topic 3, the map might be
+ * 
+ *  4 docs have 1 topic indicators of topic 3
+ * 10 docs have 2 topic indicators of topic 3
+ * 50 docs have 3 topic indicators of topic 3
+ * 
+ * I.e we have a histogram for topic 3
+ * 
+ * Y: Nr. documents that has X topic indicators:	 4	10	50	12	 7	3	1
+ * X: Nr. topic indicators of topic 3:			 	 1	 2	 3	 4	5	6
+ * 
+ * 
+ * @author Leif Jonsson
+ *
+ */
 public class DocTopicTokenFreqTable {
 
 	Int2ObjectSortedMap<AtomicInteger> [] docTokenFreqMap;
@@ -34,6 +54,15 @@ public class DocTopicTokenFreqTable {
 		docTokenFreqMap[topic].get(tokenFreq).incrementAndGet();
 	}
 
+	/**
+	 * Return the Reverse cumulative sum of document topic frequencies
+	 * 
+	 * This table allows us to answer the question:
+	 * "How many documents (Y) have more than X number of topic indicators for topic K"
+	 * 
+	 * @param topic Which topic frequency table to return
+	 * @return Reverse Cumulative Frequecy table
+	 */
 	public int [] getReverseCumulativeSum(int topic) {
 		Int2ObjectSortedMap<AtomicInteger> countTable = docTokenFreqMap[topic];
 
