@@ -38,7 +38,7 @@ public interface LDAConfiguration {
 	public static final String FILE_REGEX_DEFAULT = ".*\\.txt$";
 	public static final int HYPERPARAM_OPTIM_INTERVAL_DEFAULT = -1;
 	public static final boolean SYMMETRIC_ALPHA_DEFAULT = false;
-	public static final double HDP_GAMMA_DEFAULT = NO_TOPICS_DEFAULT;
+	public static final double HDP_GAMMA_DEFAULT = 5;
 	public static final int HDP_START_TOPICS_DEFAULT = NO_TOPICS_DEFAULT / 2;
 
 	public LoggingUtils getLoggingUtil();
