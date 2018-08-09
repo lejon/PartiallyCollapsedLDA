@@ -440,6 +440,31 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		phi[oldTopic] = tmpTopic;
 	}
 
+	protected void moveTopic(int oldTopic, int newTopic) {		
+		topicTypeCountMapping[newTopic] = topicTypeCountMapping[oldTopic];
+		topicTypeCountMapping[oldTopic] = new int[numTypes];
+		for(int type = 0; type < numTypes; type++) {
+			int tmpVal = typeTopicCounts[type][newTopic];
+			typeTopicCounts[type][newTopic] = typeTopicCounts[type][oldTopic];
+			typeTopicCounts[type][oldTopic] = tmpVal;
+			
+			int tmpCnt = tokensPerTopic[newTopic];
+			tokensPerTopic[newTopic] = tokensPerTopic[oldTopic];
+			tokensPerTopic[oldTopic] = tmpCnt;
+			if(topicTypeCountMapping[newTopic][type]<0) {
+				System.err.println("Emergency print!");
+				debugPrintMMatrix();
+				throw new IllegalArgumentException("Negative count for topic: " + newTopic 
+						+ "! Count: " + topicTypeCountMapping[newTopic][type] + " type:" 
+						+ alphabet.lookupObject(type) + "(" + type + ")");
+			}
+		}
+		
+		double [] tmpTopic = phi[newTopic];
+		phi[newTopic] = phi[oldTopic];
+		phi[oldTopic] = tmpTopic;
+	}
+
 
 	private double[] calcTypeFrequencyCumSum(int[] typeFrequencyIndex,int[] typeCounts) {
 		double [] result = new double[typeCounts.length];

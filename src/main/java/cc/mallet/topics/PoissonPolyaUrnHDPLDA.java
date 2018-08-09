@@ -5,6 +5,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -29,7 +31,6 @@ import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
-import it.unimi.dsi.fastutil.ints.IntSet;
 
 /**
  * This is a parallel implementation of the Poisson Polya Urn HDP
@@ -58,7 +59,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 
 	double gamma;
 	double [] psi;
-	boolean [] activeTopics;
+	List<Integer> activeTopics = new ArrayList<>();
 	double alphaCoef;
 	DocTopicTokenFreqTable docTopicTokenFreqTable; 
 	int nrStartTopics;
@@ -90,8 +91,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 
 	boolean staticPhiAliasTableIsBuild = false;
 
-	Int2IntArrayMap topicMappingTable;
-
 	public PoissonPolyaUrnHDPLDA(LDAConfiguration config) {
 		super(config);
 		
@@ -113,11 +112,8 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		// We should NOT do hyperparameter optimization of alpha or beta in the HDP
 		hyperparameterOptimizationInterval = -1;
 		
-		// Initialize the number of active topics to nrStartTopics
-		activeTopics = new boolean[numTopics];
-
 		for (int i = 0; i < nrStartTopics; i++) {
-			activeTopics[i] = true;
+			activeTopics.add(i);
 		}
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
 	}
@@ -196,7 +192,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
 		// Now all structures should be initialized with numTopics
 		// now set numTopics to the number of topics we want to start with
-		setNumTopics(nrStartTopics);
 	}
 
 	protected SparseDirichlet createDirichletSampler() {
@@ -248,10 +243,10 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		
 		// Finish G sampling, i.e normalize G
 		double sumG = 0.0;
-		for (int i = 0; i < psi.length; i++) {			
+		for (int i = 0; i < numTopics; i++) {			
 			sumG += psi[i];
 		}
-		for (int i = 0; i < psi.length; i++) {			
+		for (int i = 0; i < numTopics; i++) {			
 			psi[i] /= sumG;
 		}
 		//System.out.println("Alpha G: " + Arrays.toString(alphaG));
@@ -310,16 +305,55 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		super.prePhi();
 		Arrays.fill(nonZeroTypeTopicColIdxs,0);
 	}
+	
+	/**
+	 * Creates a table that maps the positions of active topics with topic to free
+	 * slots in the topic range [0-nrActiveTopics]. This is used to return a dense
+	 * representation of the type topic matrix and phi after sampling
+	 * 
+	 * @param numTopics
+	 * @param newNumTopics
+	 * @param activeTopics
+	 * @return
+	 */
+	static protected Int2IntArrayMap createTopicTranslationTable(int numTopics, List<Integer> activeTopics, int [] topicOccurence) {
+		Int2IntArrayMap translationTable = new Int2IntArrayMap();
+		
+		return translationTable;
+	}
+
+	/**
+	 * Re-arranges the topics in the typeTopic matrix based
+	 * on topicOccurence
+	 * 
+	 * @param topicMappingTable
+	 */
+	protected void reArrangeTopics(List<Integer> activeTopics,int [] topicOccurence) {
+
+		for (int i = 0; i < topicOccurence.length; i++) {
+			for (int j = 0; j < topicOccurence.length; j++) {
+				if(topicOccurence[j]<topicOccurence[i]) {
+					moveTopic(j, i);
+					int tmpOccurence = topicOcurrenceCount[i]; 
+					topicOcurrenceCount[i] = topicOcurrenceCount[j];
+					topicOcurrenceCount[j] = tmpOccurence;
+					
+					// Update doc freq table
+					docTopicTokenFreqTable.moveTopic(j,i);
+				}
+			}
+		}
+	}
 
 	@Override
 	public void postSample() {
-		setNumTopics(activeTopicHistory.get(activeTopicHistory.size()-1));
 		super.postSample();
 		tableBuilderExecutor.shutdown();
+		reArrangeTopics(activeTopics, topicOcurrenceCount);
 	}
 	
 	interface GammaDist {
-		int [] drawNewTopics(int nrTopics);
+		int [] drawNewTopics(int nrSamples, int range);
 	}
 	
 	class UniformGamma implements GammaDist {
@@ -331,10 +365,10 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		 * @return
 		 */
 		@Override
-		public int[] drawNewTopics(int nrTopics) {
+		public int[] drawNewTopics(int nrTopics, int range) {
 			int [] newTopics = new int[nrTopics];
 			for (int i = 0; i < newTopics.length; i++) {
-				newTopics[i] = ThreadLocalRandom.current().nextInt(nrTopics); 
+				newTopics[i] = ThreadLocalRandom.current().nextInt(range); 
 			}
 
 			return newTopics;
@@ -346,7 +380,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		super.postZ();
 		
 		// Resample the number of topics to use 
-		activeTopicHistory.add(numTopics);
+		activeTopicHistory.add(activeTopics.size());
 		int activeInData = updateNrActiveTopics(docTopicTokenFreqTable.getEmptyTopics(), activeTopics, topicOcurrenceCount, numTopics);
 		activeTopicInDataHistory.add(activeInData);
 		//System.out.println("Active topics: " + Arrays.toString(activeTopics));
@@ -354,64 +388,65 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		
 		// Draw \nu
 		int nrAddedTopics = sampleNrTopics(gamma);
+		//System.out.println("nrAddedTopics: " + nrAddedTopics);
 		
 		// Draw new topic numbers from Gamma
 		GammaDist gd = new UniformGamma();
-		int [] topicNumbers = gd.drawNewTopics(numTopics + nrAddedTopics);
-		System.out.println("Sampled topics: " + Arrays.toString(topicNumbers));
+		int [] topicNumbers = gd.drawNewTopics(nrAddedTopics, numTopics);
+		//System.out.println("Sampled topics: " + Arrays.toString(topicNumbers));
 
+		//System.out.println("Active topics before: " + activeTopics);
 		// Calculate which if drawn topics where new
 		int [] newTopics = calcNewTopics(activeTopics, topicNumbers);
-		System.out.println("New topics: " + Arrays.toString(newTopics));
+		for (int i = 0; i < newTopics.length; i++) {
+			activeTopics.add(newTopics[i]);
+		}
+		//System.out.println("New topics: " + Arrays.toString(newTopics));
+		//System.out.println("Active topics after : " + activeTopics);
 		
 		int nrNewTopics = newTopics.length;
-		int newNumTopics = numTopics + nrNewTopics;
+		int newNumTopics = activeTopics.size() + nrNewTopics;
 		
 		if(newNumTopics>maxTopics) 
 			throw new IndexOutOfBoundsException("New sampled number of topics (" 
 					+ newNumTopics 
 					+ ") exceeds maxTopics (" + maxTopics + ") exiting");
-		
-		// If the new number of topics is smaller than the previous we may need to re-map some
-		// active topic indicators with values higher than the new numTopics down to lower values
-		// This table is needed when we sample Z, to re-map topics
-		if(newNumTopics<numTopics) {
-			topicMappingTable = createTopicTranslationTable(numTopics, newNumTopics, activeInData, activeTopics);
-			reArrangeTopics(topicMappingTable, activeTopics, docTopicTokenFreqTable);
-		} else {
-			topicMappingTable = null;
-		}
-		
+				
 		if (showTopicsInterval > 0 && currentIteration % showTopicsInterval == 0) {
-			System.err.println("Topic stats: Nr Topics:" + numTopics + "\t New topics: " + newNumTopics + "\t Active in data: " + activeInData + "\t Topic diff: " + (newNumTopics - numTopics));
+			System.err.println("Topic stats: Active Topics:" + activeTopics.size() 
+			+ "\t New topics: " + newNumTopics 
+			+ "\t Active in data: " + activeInData 
+			+ "\t Topic diff: " + (activeTopicHistory.get(activeTopicHistory.size()-1) - activeTopics.size()));
 		}
 
-		System.out.println("New num topics: " + newNumTopics);
-		setNumTopics(newNumTopics);
-		psi = new double[numTopics];
+		//System.out.println("New num topics: " + newNumTopics);
 		// Add one to each of the newly drawn topics
-		for (int i = 0; i < numTopics; i++) {
+		for (int i = 0; i < topicNumbers.length; i++) {
 			psi[topicNumbers[i]]++;
 		}
 	}
 	
 	/** 
-	 * Calculate which of the newly sampled topics are actually new
+	 * Calculate which of the newly sampled topics are actually new. Only returns
+	 * unique indices, so if topic is new 6 occurs twice in topic numbers, it will
+	 * still only occur once in the output 
 	 * 
 	 * @param activeTopics
 	 * @param topicNumbers
 	 * @return array of not previously existing topics
 	 */
-	private int[] calcNewTopics(boolean[] activeTopics, int[] topicNumbers) {
-		int numNew = 0;
-		int [] tmpNew = new int [topicNumbers.length];
+	private int[] calcNewTopics(List<Integer> activeTopics, int[] topicNumbers) {
+		Set<Integer> topicSack = new TreeSet<Integer>();
 		for (int i = 0; i < topicNumbers.length; i++) {
-			if(topicNumbers[i]>numTopics) {
-				tmpNew[numNew++] = topicNumbers[i]; 
+			if(!activeTopics.contains(topicNumbers[i])) {
+				topicSack.add(topicNumbers[i]); 
 			}
 		}
-		int [] newTopics = new int[numNew];
-		System.arraycopy(tmpNew, 0, newTopics, 0, numNew);
+		int [] newTopics = new int[topicSack.size()];
+		int i = 0;
+		for (Integer topic : topicSack) {
+			newTopics[i++] = topic;
+		}
 		return newTopics;
 	}
 	
@@ -454,17 +489,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			LabelSequence topicSequence =	(LabelSequence) data.get(doc).topicSequence;
 
 			docTopics = topicSequence.getFeatures();
-			
-			// Since in the HDP the numTopics can change between iterations, here we may need 
-			// to re-map topic indicators with too high values from the previous iteration
-			// the same way that is done in the Z sampling
-			for (int topicInd = 0; topicInd < docTopics.length; topicInd++) {
-				int topic = docTopics[topicInd];
-				if(topic>=numTopics) {
-					docTopics[topicInd] = topicMappingTable.get(topic);
-				}
-			}
-			
+						
 			for (int token=0; token < docTopics.length; token++) {
 				topicCounts[ docTopics[token] ]++;
 			}
@@ -546,68 +571,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 
 		return logLikelihood;
 	}
-
 	
-	/**
-	 * Re-arranges the topics in the typeTopic matrix (and its transpose) according
-	 * to the topicMappingTable
-	 * 
-	 * @param topicMappingTable
-	 */
-	protected void reArrangeTopics(Int2IntArrayMap topicMappingTable, boolean [] activeTopics, DocTopicTokenFreqTable docTopicTokenFreqTable) {
-		IntSet keys = topicMappingTable.keySet();
-		for (int oldTopicPos : keys) {
-			int newTopicPos = topicMappingTable.get(oldTopicPos);
-			moveTopic(oldTopicPos, newTopicPos, 0);
-			
-			// Update topic occurrence 
-			topicOcurrenceCount[newTopicPos] = topicOcurrenceCount[oldTopicPos];
-			topicOcurrenceCount[oldTopicPos] = 0;
-			
-			// Update active topics
-			activeTopics[newTopicPos] = true;
-			activeTopics[oldTopicPos] = false;
-			
-			// Update doc freq table
-			docTopicTokenFreqTable.moveTopic(oldTopicPos,newTopicPos);
-		}
-	}
-
-	/**
-	 * Creates a table that maps the positions of old topics with topic indicators higher than
-	 * numTopics down on the range [0,numTopics]
-	 * 
-	 * This table is used in the Z sampling during the first pass when we create the local 
-	 * topic counts
-	 * 
-	 * @param numTopics
-	 * @param newNumTopics
-	 * @param activeTopics
-	 * @return
-	 */
-	static protected Int2IntArrayMap createTopicTranslationTable(int numTopics, int newNumTopics, int activeInData, boolean[] activeTopics) {
-		int diff = newNumTopics - activeInData;
-		if(!(newNumTopics<numTopics)) throw new IndexOutOfBoundsException("New number of topics is not smaller than numTopics, no need to create mapping table.");
-		int [] freeSpacesInRange = new int[newNumTopics];
-		int nrFreeAssigned = 0;
-		for (int i = 0; i < newNumTopics; i++) {
-			if(!activeTopics[i]) {
-				freeSpacesInRange[nrFreeAssigned++] = i;
-			}
-		}
-		
-		Int2IntArrayMap translationTable = new Int2IntArrayMap(diff);
-		
-		nrFreeAssigned = 0;
-		for (int i = newNumTopics; i < activeTopics.length; i++) {
-			if(activeTopics[i]) {
-				translationTable.put(i, freeSpacesInRange[nrFreeAssigned++]);
-			}
-		}
-		
-		return translationTable;
-	}
-
 	@Override
 	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
@@ -635,12 +599,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		int nonZeroTopicCnt = 0;
 		for (int position = 0; position < docLength; position++) {
 			int topicInd = oneDocTopics[position];
-			// If this is an old topicInd with topic >= numTopics we re-map it
-			// to its current position
-			if(topicInd>=numTopics) {
-				topicInd = topicMappingTable.get(topicInd);
-				oneDocTopics[position] = topicInd;
-			}
 			localTopicCounts[topicInd]++;
 			if(localTopicCounts[topicInd]==1) {
 				nonZeroTopicCnt = insert(topicInd, nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicCnt);
@@ -909,9 +867,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		int numActive = 0;
 		for (int topic : indices) {
 			// Set this topic to zero if it is inactive
-			if(!activeTopics[topic]) {
-				phiMatrix[topic] = new double[numTypes];
-			} else {
+			if(activeTopics.contains(topic)) {
 				activeIndices[numActive++] = topic;
 			}
 		}
@@ -919,24 +875,23 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		long beforeSamplePhi = System.currentTimeMillis();		
 		for (int topicIdx = 0; topicIdx < numActive; topicIdx++) {
 			int topic = activeIndices[topicIdx];
+			topicOcurrenceCount[topic]++;
 			// First part of G sampling, rest (normalization) must be done 
 			// in postIteration when all G_k has been sampled
 			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable);
-			System.out.println("l_" + topic + " = " + l_k);
-			if(l_k == 0.0) {
-				System.err.println("Freq table: \n" + docTopicTokenFreqTable);
-				System.err.println("Zero sampled for topic " + topic);
-				System.err.println("Rev hist: " + Arrays.toString(docTopicTokenFreqTable.getReverseCumulativeSum(topic)));
-				System.err.println("Active topics: " + Arrays.toString(activeTopics));
-				System.err.println("Active indices: " + Arrays.toString(activeIndices));
-				System.err.println("Empty topics: \n" + Arrays.toString(docTopicTokenFreqTable.getEmptyTopics()));
-			}
-			int eta_k; 
-			if(l_k>100) {
-				eta_k = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(l_k);
-			} else {				
-				PoissonDistribution pois_gamma = new PoissonDistribution(l_k);
-				eta_k = pois_gamma.sample();
+			//System.out.println("l_" + topic + " = " + l_k);
+			
+			// For new (not sampled by Z sampling) topics, the frequency will be 0, and l_k 
+			// will also be zero, but for those topics we have already added 1 to psi in 
+			// postZ
+			int eta_k = 0; 
+			if(l_k>0) {
+				if(l_k>100) {
+					eta_k = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(l_k);
+				} else {				
+					PoissonDistribution pois_gamma = new PoissonDistribution(l_k);
+					eta_k = pois_gamma.sample();
+				}
 			}
 			
 			psi[topic] += eta_k;
@@ -944,12 +899,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
 			VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
 			
-			// If we have to remap this topic, use the mapping table
-			if(topicMappingTable!=null && topicMappingTable.containsKey(topic)) {
-				phiMatrix[topicMappingTable.get(topic)] = res.getPhi();
-			} else {
-				phiMatrix[topic] = res.getPhi();
-			}
+			phiMatrix[topic] = res.getPhi();
 		}
 		long elapsedMillis = System.currentTimeMillis();
 		long threadId = Thread.currentThread().getId();
@@ -1044,28 +994,14 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return numTypes;
 	}
 
-	protected int updateNrActiveTopics(int[] emptyTopics, boolean [] active_topics, int[] topicOcurrenceCount, int numTopics) {
-		int nrActiveTopics = 0;
-		
-		int eIdx = 0;
-		// Update up to numTopics
-		for (int i = 0; i < numTopics; i++) {
-			if(eIdx < emptyTopics.length && i==emptyTopics[eIdx]) {
-				active_topics[i] = false;
-				eIdx++;
-			} else {
-				nrActiveTopics++;
-				active_topics[i] = true;
-				topicOcurrenceCount[i]++;
+	protected int updateNrActiveTopics(int[] emptyTopics, List<Integer> activeTopics, int[] topicOcurrenceCount, int numTopics) {
+		for (int i = 0; i < emptyTopics.length; i++) {
+			if(activeTopics.contains(emptyTopics[i])) {
+				int idx = activeTopics.indexOf(emptyTopics[i]);
+				activeTopics.remove(idx);
 			}
 		}
-		
-		// Rest is inactive
-		for (int i = numTopics; i < active_topics.length; i++) {
-			active_topics[i] = false;			
-		}
-
-		return nrActiveTopics;
+		return activeTopics.size();
 	}
 
 	public int[] getTopicOcurrenceCount() {
