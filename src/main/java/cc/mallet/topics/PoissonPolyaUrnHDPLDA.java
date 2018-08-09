@@ -33,22 +33,10 @@ import cc.mallet.util.WalkerAliasTable;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 
 /**
- * This is a parallel implementation of the Poisson Polya Urn HDP
+ * This is a parallel implementation of the Poisson Polya Urn HDP LDA
  * 
  * What this class adds on top of the PolyaUrn LDA is additional sampling
- * of the number of topics to use in each iteration. Since the number of
- * topics potentially change in each iteration we have to keep track of this.
- * It is not a problem when the number of topics increase, but when they
- * decrease we have to keep track of this and re-map topics with too high
- * topic indicator. This might be solvable in other ways more efficiently, 
- * by only setting the probability of those topics to zero in Phi this might
- * be implemented later.
- * 
- * The number of new topics are sampled just after the Z sampling in the 
- * postZ method. Here the typeTopic matrix is also updated.
- * 
- * In this particular version numTopics (possibly) change every iteration
- * and phi and the typeTopic matrix is changed to reflect numTopics 
+ * of the number of topics to use in each iteration. 
  * 
  * @author Leif Jonsson
  *
@@ -98,6 +86,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		nrStartTopics = config.getHDPNrStartTopics(LDAConfiguration.HDP_START_TOPICS_DEFAULT);
 		
 		System.out.println("HDP Start topics: " + nrStartTopics);
+		System.out.println("HDP gamma: " + gamma);
 		
 		// In the HDP the number of topics we are initialized with is 
 		// taken as the maxNumber of topics possible
@@ -219,13 +208,11 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 				}
 			}
 
-			// In HDP num topics keep changing, so so does probs, so
-			// we have to completely re-build them... for now...
-			//if(aliasTables[type]==null) {
+			if(aliasTables[type]==null) {
 				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
-			//} else {
-			//	aliasTables[type].reGenerateAliasTable(probs, typeMass);
-			//}
+			} else {
+				aliasTables[type].reGenerateAliasTable(probs, typeMass);
+			}
 
 			return new WalkerAliasTableBuildResult(type, aliasTables[type], typeMass);
 		}   
