@@ -173,7 +173,7 @@ public class PoissonPolyaUrnTest {
 	}
 	
 	/* Find the longest sequence of consecutive non-zero values in an array */
-	int [] findSeqRange(long [] array) {
+	public static int [] findSeqRange(long [] array) {
 		int maxSequenceStartIndex = 0;
         int maxSequenceLength = 0;
         int currentSequenceStartIndex = 0;
@@ -257,7 +257,4 @@ public class PoissonPolyaUrnTest {
 			}
 		}
 	}
-
-
-
 }
