@@ -180,6 +180,55 @@ public class WalkerAliasTableTest {
 	}
 	
 	@Test
+	public void testChiSqZeroProb0() {
+		double [] probs = {0.0/15.0, 5.0/15.0, 10.0/15.0};
+		walker.initTableNormalizedProbabilities(probs);
+		int noSamples = 1_000_000;
+		int [] samples = new int[noSamples];
+		for (int i = 0; i < samples.length; i++) {
+			samples[i] = walker.generateSample();
+		}
+		long [] cnts = new long[probs.length];
+		for (int i = 0; i < samples.length; i++) {
+			cnts[samples[i]]++;
+		}
+		assertEquals(0, cnts[0]);
+	}
+	
+	@Test
+	public void testChiSqZeroProb1() {
+		double [] probs = {5.0/15.0, 0.0/15.0, 10.0/15.0};
+		walker.initTableNormalizedProbabilities(probs);
+		int noSamples = 1_000_000;
+		int [] samples = new int[noSamples];
+		for (int i = 0; i < samples.length; i++) {
+			samples[i] = walker.generateSample();
+		}
+		long [] cnts = new long[probs.length];
+		for (int i = 0; i < samples.length; i++) {
+			cnts[samples[i]]++;
+		}
+		assertEquals(0, cnts[1]);
+	}
+
+	@Test
+	public void testChiSqZeroProb3() {
+		double [] probs = {10.0/15.0, 5.0/15.0, 0.0/15.0};
+		walker.initTableNormalizedProbabilities(probs);
+		int noSamples = 1_000_000;
+		int [] samples = new int[noSamples];
+		for (int i = 0; i < samples.length; i++) {
+			samples[i] = walker.generateSample();
+		}
+		long [] cnts = new long[probs.length];
+		for (int i = 0; i < samples.length; i++) {
+			cnts[samples[i]]++;
+		}
+		assertEquals(0, cnts[2]);
+	}
+
+	
+	@Test
 	public void testCompareMultinomialSampling() {
 		int dirichletDim = 1000;
 		Dirichlet distgen = new Dirichlet(dirichletDim);
@@ -190,17 +239,17 @@ public class WalkerAliasTableTest {
 		
 		// Generate samples from Alias table
 		int [] cnts = new int[probs.length];
-		long tstart = System.currentTimeMillis();
+//		long tstart = System.currentTimeMillis();
 		for (int i = 0; i < noSamples; i++) {
 			samples[i] = walker.generateSample();
 			cnts[samples[i]]++;
 		}
-		long tend = System.currentTimeMillis();
+//		long tend = System.currentTimeMillis();
 				
 		// Generate samples from plain multinomial sampler
-		long mstart = System.currentTimeMillis();
+//		long mstart = System.currentTimeMillis();
 		multinomialSampler(probs, noSamples);	
-		long mend = System.currentTimeMillis();
+//		long mend = System.currentTimeMillis();
 		
 		
 		int [] multiCnts = new int[probs.length];
@@ -215,11 +264,11 @@ public class WalkerAliasTableTest {
 			assertEquals(probs[i], ((double)multiCnts[i])/noSamples, epsilon);
 			assertEquals(multiCnts[i],cnts[i]);
 		}
-		System.out.println();
+		//System.out.println();
 
-		System.out.println("Alias Table sampling took: " + (tend-tstart) + " milliseconds");
-		System.out.println("Multinomial sampling took: " + (mend-mstart) + " milliseconds");
-		System.out.println("For " + noSamples + " samples and a " + dirichletDim + " dimensional Dirichlet...");
+		//System.out.println("Alias Table sampling took: " + (tend-tstart) + " milliseconds");
+		//System.out.println("Multinomial sampling took: " + (mend-mstart) + " milliseconds");
+		//System.out.println("For " + noSamples + " samples and a " + dirichletDim + " dimensional Dirichlet...");
 	}
 
 	int [] multinomialSampler(double[] probs, int noSamples) {
