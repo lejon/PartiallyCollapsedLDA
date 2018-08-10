@@ -159,9 +159,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		return topIndices;
 	}
 
-	@Override	
-	public int[] getTopicTotals() { return tokensPerTopic; }
-
 	@Override 
 	public int getCorpusSize() { return corpusWordCount;	}
 
@@ -344,7 +341,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				topics[position] = topic;
 
 				int type = tokens.getIndexAtPosition(position);
-				typeCounts[type] += 1;
 				updateTypeTopicCount(type, topic, 1);
 			}
 
@@ -424,8 +420,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		for(int type = 0; type < numTypes; type++) {
 			typeTopicCounts[type][newTopic] = typeTopicCounts[type][oldTopic];
 			typeTopicCounts[type][oldTopic] = resetValue;
+			int tmpTpT = tokensPerTopic[newTopic];
 			tokensPerTopic[newTopic] = tokensPerTopic[oldTopic];
-			tokensPerTopic[oldTopic] = 0;
+			tokensPerTopic[oldTopic] = tmpTpT;
 			if(topicTypeCountMapping[newTopic][type]<0) {
 				System.err.println("Emergency print!");
 				debugPrintMMatrix();
@@ -982,6 +979,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	/**
 	 * Samples rows of the phi matrix using the internal data structure for
 	 * token-topic assignments
+	 * 
+	 * WARNING: Assumes that the sufficient statistic, the type-topic counts,
+	 * are properly initialized  
 	 * 
 	 * @param	first	Index of the first row that should be generated
 	 * @param	size	Amount of rows to generate
