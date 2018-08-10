@@ -15,9 +15,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.math3.distribution.BinomialDistribution;
+//import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.apache.commons.math3.distribution.PoissonDistribution;
 
 import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.types.BinomialSampler;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
@@ -107,12 +109,13 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
 	}
 	
-	WalkerAliasTable [][] initBinomialAlias(int maxDocLen, double gamma) {
-		WalkerAliasTable [][] tables = new OptimizedGentleAliasMethod[BINOMIAL_TABLE_SIZE][BINOMIAL_TABLE_MAXWIDTH];
-		for (int i = 0; i < BINOMIAL_TABLE_SIZE; i++) {
-			for (int j = 0; j < BINOMIAL_TABLE_MAXWIDTH; j++) {
+	static WalkerAliasTable [][] initBinomialAlias(int maxDocLen, double gamma, 
+			int tableSize, int tableWidth, int tableStartIdx) {
+		WalkerAliasTable [][] tables = new OptimizedGentleAliasMethod[tableSize][tableWidth];
+		for (int i = 0; i < tableSize; i++) {
+			for (int j = 0; j < tableWidth; j++) {
 				double prob = gamma / (gamma + j);
-				tables[i][j] = constructBinomialAliasTable(BINOMIAL_TABLE_START_IDX + i, prob);
+				tables[i][j] = constructBinomialAliasTable(tableStartIdx + i, prob);
 			}
 		}
 		
@@ -148,7 +151,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		super.addInstances(training);
 		
 		// We now have longestDocLen
-		binomialTables = initBinomialAlias(longestDocLength, gamma);
+		binomialTables = initBinomialAlias(longestDocLength, gamma, BINOMIAL_TABLE_SIZE, BINOMIAL_TABLE_MAXWIDTH, BINOMIAL_TABLE_START_IDX);
 	}
 
 	
@@ -228,6 +231,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	public void postIteration() {
 		//System.out.println("Freq table: \n" + docTopicTokenFreqTable);
 		
+		//System.out.println("Psi: " + Arrays.toString(psi));
 		// Finish G sampling, i.e normalize G
 		double sumG = 0.0;
 		for (int i = 0; i < numTopics; i++) {			
@@ -406,6 +410,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			+ "\t Topic diff: " + (activeTopicHistory.get(activeTopicHistory.size()-1) - activeTopics.size()));
 		}
 
+		psi = new double[numTopics];
 		//System.out.println("New num topics: " + newNumTopics);
 		// Add one to each of the newly drawn topics
 		for (int i = 0; i < topicNumbers.length; i++) {
@@ -865,8 +870,8 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			topicOcurrenceCount[topic]++;
 			// First part of G sampling, rest (normalization) must be done 
 			// in postIteration when all G_k has been sampled
-			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable);
-			//System.out.println("l_" + topic + " = " + l_k);
+			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable, binomialTables);
+			//System.out.println("l_" + topic + " = " + l_k + " Topic Occurence:" + topicOcurrenceCount[topic]);
 			
 			// For new (not sampled by Z sampling) topics, the frequency will be 0, and l_k 
 			// will also be zero, but for those topics we have already added 1 to psi in 
@@ -901,61 +906,70 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 	}
 
-	protected int sampleL(int topic, double gamma, int maxDocLen, DocTopicTokenFreqTable docTopicTokenFreqTable) {
+	static protected int sampleL(int topic, double gamma, int maxDocLen, 
+			DocTopicTokenFreqTable docTopicTokenFreqTable, WalkerAliasTable [][] binomialTables) {
 		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
 		
 		// Sum over c_j_k
 		int lSum = 0;
-		for(int docLength = 0; docLength < maxDocLen; docLength++) {
-			int trials = 0;
-			if( freqHist.length > docLength ) {				
-				trials = freqHist[docLength];
+		for(int nrTopicIndicators = 1; nrTopicIndicators < maxDocLen; nrTopicIndicators++) {
+			int nrDocsWithMoreTopicIndicators = 0;
+			if( freqHist.length > nrTopicIndicators ) {				
+				nrDocsWithMoreTopicIndicators = freqHist[nrTopicIndicators-1];
 			}
+			//System.out.println("nrDocsWithMoreThanDoclengthTopicIndicators: " + nrDocsWithMoreThanDoclengthTopicIndicators  + " docLength: " + docLength);
 			// As soon as we see zero, we know the rest will be 
 			// zero and not contribute to the sum, so we can exit.
-			if(trials==0) break;
+			if(nrDocsWithMoreTopicIndicators==0) break;
 			int bsample = 0;
 			// Only sample if trials != 0, otherwise sample = 0;
-			if(trials != 0) {
-				int binomialAliasEndIdx = BINOMIAL_TABLE_START_IDX + BINOMIAL_TABLE_SIZE;
-
-				// We don't have -1 here since we are 0-indexed
-				double p = gamma / (gamma + docLength);
-				
-				if(trials == 1) {
-//					countBernBin.incrementAndGet();
-					bsample = ThreadLocalRandom.current().nextDouble() < p ? 1 : 0;
-					// If suitable, use normal approximation to binomial
-				} else if(trials * p >= 5 && trials * (1-p) >= 5) {
-//					countNormalBin.incrementAndGet();
-					//System.out.println("Normal approx");
-					double meanNormal = trials * p;
-					double variance = trials * p * (1-p); 
-					bsample = (int) Math.round(Math.sqrt(variance) * ThreadLocalRandom.current().nextGaussian() + meanNormal);
-					// If the trials is less than the binomial alias table, use sums of Bernoulli	
-				} else if(trials < BINOMIAL_TABLE_START_IDX) {
-//					countBernSumBin.incrementAndGet();
-					for(int numTrials = 0; numTrials < trials; numTrials++) {						
-						bsample += ThreadLocalRandom.current().nextDouble() < p ? 1 : 0;
-					}
-					// If, none of the above, draw from alias table
-				} else if(trials > BINOMIAL_TABLE_START_IDX && trials < binomialAliasEndIdx && docLength < BINOMIAL_TABLE_MAXWIDTH){
-//					countAliasBin.incrementAndGet();
-//					System.out.println("Alias table");
-					bsample = binomialTables[trials-BINOMIAL_TABLE_START_IDX][docLength].generateSample();
-				// And as a last resort, use exact Binomials. TODO: Look for faster implementation than Apache
-				} else {
-//					countExactBin.incrementAndGet();
-//					System.out.println("Exact: trials: " + trials + "\t" + docLength);
-					BinomialDistribution c_j_k = new BinomialDistribution(trials, p);
-					bsample = c_j_k.sample();
-				}
+			if(nrDocsWithMoreTopicIndicators != 0) {
+				double p = gamma / (gamma + nrTopicIndicators - 1);
+				bsample = sampleBinomial(nrDocsWithMoreTopicIndicators, p, nrTopicIndicators, binomialTables);
 			}
 			//System.err.println("Binomial sample: Trials: " + trials + " probability: " + p + " => " + bsample);
 			lSum += bsample;
 		}
 		return lSum;
 	}	
+		
+	protected static int sampleBinomial(int nrDocsWithMoreThanDoclengthTopicIndicators, double p, int docLength, WalkerAliasTable [][] binomialTables) {
+		int binomialAliasEndIdx = BINOMIAL_TABLE_START_IDX + BINOMIAL_TABLE_SIZE;
+		int bsample = 0;
+		if(nrDocsWithMoreThanDoclengthTopicIndicators == 1) {
+//			countBernBin.incrementAndGet();
+			bsample = ThreadLocalRandom.current().nextDouble() < p ? 1 : 0;
+			// If suitable, use normal approximation to binomial
+		} else if(nrDocsWithMoreThanDoclengthTopicIndicators * p >= 20 && nrDocsWithMoreThanDoclengthTopicIndicators * (1-p) >= 20) {
+//			countNormalBin.incrementAndGet();
+			//System.out.println("Normal approx");
+			double meanNormal = nrDocsWithMoreThanDoclengthTopicIndicators * p;
+			double variance = nrDocsWithMoreThanDoclengthTopicIndicators * p * (1-p); 
+			bsample = (int) Math.round(Math.sqrt(variance) * ThreadLocalRandom.current().nextGaussian() + meanNormal);
+			if(bsample<0) throw new IndexOutOfBoundsException("Sampled negative binomial (" + bsample + "): trials:" + nrDocsWithMoreThanDoclengthTopicIndicators + " p:" + p);
+			// If the trials is less than the binomial alias table, use sums of Bernoulli	
+		} else if(nrDocsWithMoreThanDoclengthTopicIndicators < BINOMIAL_TABLE_START_IDX) {
+//			countBernSumBin.incrementAndGet();
+			for(int numTrials = 0; numTrials < nrDocsWithMoreThanDoclengthTopicIndicators; numTrials++) {						
+				bsample += ThreadLocalRandom.current().nextDouble() < p ? 1 : 0;
+			}
+			// If, none of the above, draw from alias table
+		} else if(nrDocsWithMoreThanDoclengthTopicIndicators > BINOMIAL_TABLE_START_IDX 
+				&& nrDocsWithMoreThanDoclengthTopicIndicators < binomialAliasEndIdx 
+				&& docLength < BINOMIAL_TABLE_MAXWIDTH){
+//			countAliasBin.incrementAndGet();
+//			System.out.println("Alias table");
+			bsample = binomialTables[nrDocsWithMoreThanDoclengthTopicIndicators-BINOMIAL_TABLE_START_IDX][docLength].generateSample();
+		// And as a last resort, use exact Binomials. TODO: Look for faster implementation than Apache
+		} else {
+//			countExactBin.incrementAndGet();
+//			System.out.println("Exact: trials: " + trials + "\t" + docLength);
+			//BinomialDistribution c_j_k = new BinomialDistribution(nrDocsWithMoreThanDoclengthTopicIndicators, p);
+			//bsample = c_j_k.sample();
+			bsample = BinomialSampler.rbinom(nrDocsWithMoreThanDoclengthTopicIndicators,p);
+		}
+		return bsample;
+	}
 	
 	protected int sampleNrTopics(double gamma) {
 		int sample = -1;
