@@ -150,8 +150,8 @@ public class ParallelLDA {
 				
 				int requestedWords = config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT);
 				TopicModelDiagnosticsPlain tmd = new TopicModelDiagnosticsPlain(model, requestedWords);
-				System.out.println("Topic model diagnostics:");
-				System.out.println(tmd.toString());				
+				//System.out.println("Topic model diagnostics:");
+				//System.out.println(tmd.toString());				
 				
 				File lgDir = lu.getLogDir();
 				if(config.saveDocumentTopicMeans()) {
