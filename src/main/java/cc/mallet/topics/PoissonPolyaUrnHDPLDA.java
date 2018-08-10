@@ -15,6 +15,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.math3.distribution.BinomialDistribution;
+import org.apache.commons.math3.distribution.GeometricDistribution;
 //import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.apache.commons.math3.distribution.PoissonDistribution;
 
@@ -28,6 +29,7 @@ import cc.mallet.types.PolyaUrnDirichlet;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
+import cc.mallet.util.ArrayStringUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
@@ -57,7 +59,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	List<Integer> activeTopicHistory = new ArrayList<Integer>();
 	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
 	int [] topicOcurrenceCount;
-	WalkerAliasTable [][] binomialTables;
+	//WalkerAliasTable [][] binomialTables;
 	static final int BINOMIAL_TABLE_START_IDX = 50;
 	static final int BINOMIAL_TABLE_SIZE = 50;
 	static final int BINOMIAL_TABLE_MAXWIDTH = 200;
@@ -81,6 +83,10 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 
 	boolean staticPhiAliasTableIsBuild = false;
 
+	private Dirichlet phiDirichletPrior;
+	
+	int [] indexArr;
+
 	public PoissonPolyaUrnHDPLDA(LDAConfiguration config) {
 		super(config);
 		
@@ -95,9 +101,10 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		maxTopics = numTopics;
 		alphaCoef = config.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
 		
+		//TODO: Maybe init from some proper prior
 		psi = new double[numTopics];
-		for (int i = 0; i < alpha.length; i++) {
-			psi[i] = 1;
+		for (int i = 0; i < nrStartTopics; i++) {
+			psi[i] = 1 / nrStartTopics;
 		}
 		
 		// We should NOT do hyperparameter optimization of alpha or beta in the HDP
@@ -106,35 +113,40 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		for (int i = 0; i < nrStartTopics; i++) {
 			activeTopics.add(i);
 		}
+		
+		indexArr = new int[numTopics];
+		for (int i = 0; i < numTopics; i++) {
+			indexArr[i] = i;
+		}
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
 	}
 	
-	static WalkerAliasTable [][] initBinomialAlias(int maxDocLen, double gamma, 
-			int tableSize, int tableWidth, int tableStartIdx) {
-		WalkerAliasTable [][] tables = new OptimizedGentleAliasMethod[tableSize][tableWidth];
-		for (int i = 0; i < tableSize; i++) {
-			for (int j = 0; j < tableWidth; j++) {
-				double prob = gamma / (gamma + j);
-				tables[i][j] = constructBinomialAliasTable(tableStartIdx + i, prob);
-			}
-		}
-		
-		return tables;
-	}
-	
-	static WalkerAliasTable constructBinomialAliasTable(int trials, double prob) {
-		int tableLength = Math.max(100, 2*trials);
-		WalkerAliasTable table = null;
-		for (int i = 1; i < tableLength; i++) {
-			BinomialDistribution binDistCalc = new BinomialDistribution(trials, prob);
-			double [] trialProbabilities = new double [tableLength];
-			for (int j = 0; j < tableLength; j++) {
-				trialProbabilities[j] =  binDistCalc.probability(j);
-			}
-			table = new OptimizedGentleAliasMethod(trialProbabilities); 
-		}
-		return table;
-	}
+//	static WalkerAliasTable [][] initBinomialAlias(int maxDocLen, double gamma, 
+//			int tableSize, int tableWidth, int tableStartIdx) {
+//		WalkerAliasTable [][] tables = new OptimizedGentleAliasMethod[tableSize][tableWidth];
+//		for (int i = 0; i < tableSize; i++) {
+//			for (int j = 0; j < tableWidth; j++) {
+//				double prob = gamma / (gamma + j);
+//				tables[i][j] = constructBinomialAliasTable(tableStartIdx + i, prob);
+//			}
+//		}
+//		
+//		return tables;
+//	}
+//	
+//	static WalkerAliasTable constructBinomialAliasTable(int trials, double prob) {
+//		int tableLength = Math.max(100, 2*trials);
+//		WalkerAliasTable table = null;
+//		for (int i = 1; i < tableLength; i++) {
+//			BinomialDistribution binDistCalc = new BinomialDistribution(trials, prob);
+//			double [] trialProbabilities = new double [tableLength];
+//			for (int j = 0; j < tableLength; j++) {
+//				trialProbabilities[j] =  binDistCalc.probability(j);
+//			}
+//			table = new OptimizedGentleAliasMethod(trialProbabilities); 
+//		}
+//		return table;
+//	}
 	
 	@Override
 	public void addInstances(InstanceList training) {
@@ -147,11 +159,12 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		aliasTables = new WalkerAliasTable[numTypes];
 		typeNorm    = new double[numTypes];
 		phitrans    = new double[numTypes][numTopics];
+		phiDirichletPrior = new Dirichlet(numTypes, beta);
 
 		super.addInstances(training);
 		
 		// We now have longestDocLen
-		binomialTables = initBinomialAlias(longestDocLength, gamma, BINOMIAL_TABLE_SIZE, BINOMIAL_TABLE_MAXWIDTH, BINOMIAL_TABLE_START_IDX);
+//		binomialTables = initBinomialAlias(longestDocLength, gamma, BINOMIAL_TABLE_SIZE, BINOMIAL_TABLE_MAXWIDTH, BINOMIAL_TABLE_START_IDX);
 	}
 
 	
@@ -202,8 +215,8 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			double typeMass = 0; // Type prior mass
 			double [] phiType =  phitrans[type]; 
 			for (int topic = 0; topic < numTopics; topic++) {
-				// In the HDP the sampled G takes the place of the alpha vector in LDA but
-				// it is still multiplied with the LDA alpha scalar
+				// In the HDP the sampled psi takes the place of the alpha vector in LDA but
+				// it is still multiplied with the LDA alpha scalar (alphaCoef)
 				typeMass += probs[topic] = phiType[topic] * alphaCoef * psi[topic];
 				if(phiType[topic]!=0) {
 					int newSize = nonZeroTypeTopicColIdxs[type]++;
@@ -222,7 +235,11 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	}
 
 	@Override
-	public void preIteration() {	
+	public void preIteration() {
+		psi[0] = 0.0;
+		System.out.println("Pre : Psi (count): " + ArrayStringUtils.toStringFixedWidth(psi,10,7));
+		System.out.println("Pre : Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
+
 		doPreIterationTableBuilding();
 		super.preIteration();
 	}
@@ -231,7 +248,10 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	public void postIteration() {
 		//System.out.println("Freq table: \n" + docTopicTokenFreqTable);
 		
-		//System.out.println("Psi: " + Arrays.toString(psi));
+		System.out.println("Post: Psi (count): " + ArrayStringUtils.toStringFixedWidth(psi,10,7));
+		System.out.println("Post: Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
+		System.out.println("Post: Indices    : " + ArrayStringUtils.toStringFixedWidth(indexArr,10));
+		System.out.println();
 		// Finish G sampling, i.e normalize G
 		double sumG = 0.0;
 		for (int i = 0; i < numTopics; i++) {			
@@ -295,6 +315,9 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	public void prePhi() {
 		super.prePhi();
 		Arrays.fill(nonZeroTypeTopicColIdxs,0);
+		System.out.println("PPhi: Active Tcs : " + activeTopics);
+		System.out.println("PPhi: Psi (count): " + ArrayStringUtils.toStringFixedWidth(psi,10,7));
+		System.out.println("PPhi: Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
 	}
 	
 	/**
@@ -365,10 +388,34 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			return newTopics;
 		}		
 	}
+	
+	class GeometricGamma implements GammaDist {
+		GeometricDistribution dist;
+		
+		public GeometricGamma(double p) {
+			dist = new GeometricDistribution(p);
+		}
+		
+		/**
+		 * Draw new topic numbers from \Gamma
+		 * 
+		 * @param nrAddedTopics
+		 * @param numTopics
+		 * @return
+		 */
+		@Override
+		public int[] drawNewTopics(int nrTopics, int range) {
+			return dist.sample(nrTopics);
+		}		
+	}
+
 
 	@Override
 	public void postZ() {
 		super.postZ();
+		
+		// We update active topics here since we don't want to sample phi for inactive topics 
+		// unnecessarily.  
 		
 		// Resample the number of topics to use 
 		activeTopicHistory.add(activeTopics.size());
@@ -383,6 +430,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		
 		// Draw new topic numbers from Gamma
 		GammaDist gd = new UniformGamma();
+		//GammaDist gd = new GeometricGamma(1 / 1+gamma);
 		int [] topicNumbers = gd.drawNewTopics(nrAddedTopics, numTopics);
 		//System.out.println("Sampled topics: " + Arrays.toString(topicNumbers));
 
@@ -660,7 +708,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 
 			// Document and type sparsity removed all (but one?) topics, just use the prior contribution
 			if(nonZeroTopicCntAdjusted==0) {
-				newTopic = (int) Math.floor(u * numTopics); // uniform (0,1)
+				newTopic = activeTopics.get(ThreadLocalRandom.current().nextInt(activeTopics.size()));
 			} else {
 				double [] phiType =  phitrans[type]; 
 				int topic = nonZeroTopicsAdjusted[0];
@@ -762,6 +810,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	int sampleNewTopic(int type, int[] nonZeroTopics, int nonZeroTopicCnt, double sum, double[] cumsum, double u,
 			double u_sigma) {
 		int newTopic;
+		//System.out.println("typeNorm:" + typeNorm[type]);
 		if(u < (typeNorm[type]/(typeNorm[type] + sum))) {
 			//numPrior++;
 			newTopic = aliasTables[type].generateSample(u+((sum*u)/typeNorm[type])); // uniform (0,1)
@@ -772,6 +821,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			double u_lik = (u_sigma - typeNorm[type]);
 			int slot = SpaliasUncollapsedParallelLDA.findIdx(cumsum,u_lik,nonZeroTopicCnt);
 			newTopic = nonZeroTopics[slot];
+			//System.out.println("Sampled topic: " + newTopic);
 			// Make sure we actually sampled a valid topic
 		}
 		return newTopic;
@@ -858,7 +908,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		int [] activeIndices = new int[indices.length];
 		int numActive = 0;
 		for (int topic : indices) {
-			// Set this topic to zero if it is inactive
 			if(activeTopics.contains(topic)) {
 				activeIndices[numActive++] = topic;
 			}
@@ -867,10 +916,12 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		long beforeSamplePhi = System.currentTimeMillis();		
 		for (int topicIdx = 0; topicIdx < numActive; topicIdx++) {
 			int topic = activeIndices[topicIdx];
+			//System.out.println("Sampling topic: " + topic);
 			topicOcurrenceCount[topic]++;
 			// First part of G sampling, rest (normalization) must be done 
 			// in postIteration when all G_k has been sampled
-			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable, binomialTables);
+//			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable, binomialTables);
+			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable, null);
 			//System.out.println("l_" + topic + " = " + l_k + " Topic Occurence:" + topicOcurrenceCount[topic]);
 			
 			// For new (not sampled by Z sampling) topics, the frequency will be 0, and l_k 
@@ -888,10 +939,15 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			
 			psi[topic] += eta_k;
 			
-			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
-			VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
-			
-			phiMatrix[topic] = res.getPhi();
+			if(tokensPerTopic[topic]>0) {
+				int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
+				VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
+				phiMatrix[topic] = res.getPhi();
+			// If we have a newly sampled active topic, it won't have any type topic
+			// counts (tokensPerTopic[topic]<1), so we draw from the prior
+			} else {
+				phiMatrix[topic] = phiDirichletPrior.nextDistribution();
+			}
 		}
 		long elapsedMillis = System.currentTimeMillis();
 		long threadId = Thread.currentThread().getId();
@@ -954,12 +1010,12 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 				bsample += ThreadLocalRandom.current().nextDouble() < p ? 1 : 0;
 			}
 			// If, none of the above, draw from alias table
-		} else if(nrDocsWithMoreThanDoclengthTopicIndicators > BINOMIAL_TABLE_START_IDX 
-				&& nrDocsWithMoreThanDoclengthTopicIndicators < binomialAliasEndIdx 
-				&& docLength < BINOMIAL_TABLE_MAXWIDTH){
-//			countAliasBin.incrementAndGet();
-//			System.out.println("Alias table");
-			bsample = binomialTables[nrDocsWithMoreThanDoclengthTopicIndicators-BINOMIAL_TABLE_START_IDX][docLength].generateSample();
+//		} else if(nrDocsWithMoreThanDoclengthTopicIndicators > BINOMIAL_TABLE_START_IDX 
+//				&& nrDocsWithMoreThanDoclengthTopicIndicators < binomialAliasEndIdx 
+//				&& docLength < BINOMIAL_TABLE_MAXWIDTH){
+////			countAliasBin.incrementAndGet();
+////			System.out.println("Alias table");
+//			bsample = binomialTables[nrDocsWithMoreThanDoclengthTopicIndicators-BINOMIAL_TABLE_START_IDX][docLength].generateSample();
 		// And as a last resort, use exact Binomials. TODO: Look for faster implementation than Apache
 		} else {
 //			countExactBin.incrementAndGet();
@@ -999,10 +1055,14 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		for (int i = 0; i < emptyTopics.length; i++) {
 			if(activeTopics.contains(emptyTopics[i])) {
 				int idx = activeTopics.indexOf(emptyTopics[i]);
-				activeTopics.remove(idx);
+				resetTopic(activeTopics, idx);
 			}
 		}
 		return activeTopics.size();
+	}
+
+	void resetTopic(List<Integer> activeTopics, int idx) {
+		activeTopics.remove(idx);
 	}
 
 	public int[] getTopicOcurrenceCount() {

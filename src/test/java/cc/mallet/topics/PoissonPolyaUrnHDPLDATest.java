@@ -12,36 +12,36 @@ import cc.mallet.util.WalkerAliasTable;
 
 public class PoissonPolyaUrnHDPLDATest {
 
-	@Test
-	public void testSampleL() {
-		int numTopics = 5;
-		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
-		int numDocs = 3;
-		int [][] documentLocalTopicCounts = {{0,0,5,1,0}, {1,0,1,0,0},{3,0,1,1,0}};
-
-		for (int docNo = 0; docNo < numDocs; docNo++) {
-			int [] localTopicCounts = documentLocalTopicCounts[docNo];
-			for (int i = 0; i < numTopics; i++) {
-				if(localTopicCounts[i]!=0) {
-					docTopicTokenFreqTable.increment(i,(int)localTopicCounts[i]);
-				}
-			}
-		}
-
-		int topic = 0;
-		System.out.println("Freq table: \n" + docTopicTokenFreqTable);
-		System.out.println("Reverse cumsum 0: " + Arrays.toString(docTopicTokenFreqTable.getReverseCumulativeSum(topic)));
-		double gamma = 5;
-		WalkerAliasTable [][] binomialTables = PoissonPolyaUrnHDPLDA.initBinomialAlias(6, gamma, 50, 50, 50);
-		
-		int [] lSamples = new int[200];
-		for (int i = 0; i < 2000; i++) {
-			int l_k = PoissonPolyaUrnHDPLDA.sampleL(topic, gamma, 6, docTopicTokenFreqTable, binomialTables);
-			lSamples[l_k]++;
-		}
-		
-		System.out.println("Samples: " + Arrays.toString(lSamples));
-	}
+//	@Test
+//	public void testSampleL() {
+//		int numTopics = 5;
+//		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+//		int numDocs = 3;
+//		int [][] documentLocalTopicCounts = {{0,0,5,1,0}, {1,0,1,0,0},{3,0,1,1,0}};
+//
+//		for (int docNo = 0; docNo < numDocs; docNo++) {
+//			int [] localTopicCounts = documentLocalTopicCounts[docNo];
+//			for (int i = 0; i < numTopics; i++) {
+//				if(localTopicCounts[i]!=0) {
+//					docTopicTokenFreqTable.increment(i,(int)localTopicCounts[i]);
+//				}
+//			}
+//		}
+//
+//		int topic = 0;
+//		System.out.println("Freq table: \n" + docTopicTokenFreqTable);
+//		System.out.println("Reverse cumsum 0: " + Arrays.toString(docTopicTokenFreqTable.getReverseCumulativeSum(topic)));
+//		double gamma = 5;
+//		WalkerAliasTable [][] binomialTables = PoissonPolyaUrnHDPLDA.initBinomialAlias(6, gamma, 50, 50, 50);
+//		
+//		int [] lSamples = new int[200];
+//		for (int i = 0; i < 2000; i++) {
+//			int l_k = PoissonPolyaUrnHDPLDA.sampleL(topic, gamma, 6, docTopicTokenFreqTable, binomialTables);
+//			lSamples[l_k]++;
+//		}
+//		
+//		System.out.println("Samples: " + Arrays.toString(lSamples));
+//	}
 	
 	@Test
 	public void testPoissonSampleBinomial() {
