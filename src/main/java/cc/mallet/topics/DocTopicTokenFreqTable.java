@@ -61,7 +61,7 @@ public class DocTopicTokenFreqTable {
 	 * "How many documents (Y) have more than X number of topic indicators for topic K"
 	 * 
 	 * @param topic Which topic frequency table to return
-	 * @return Reverse Cumulative Frequecy table
+	 * @return Reverse Cumulative Frequency table
 	 */
 	public int [] getReverseCumulativeSum(int topic) {
 		Int2ObjectSortedMap<AtomicInteger> countTable = docTokenFreqMap[topic];
