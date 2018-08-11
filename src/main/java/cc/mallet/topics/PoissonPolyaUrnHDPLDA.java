@@ -104,7 +104,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		//TODO: Maybe init from some proper prior
 		psi = new double[numTopics];
 		for (int i = 0; i < nrStartTopics; i++) {
-			psi[i] = 1 / nrStartTopics;
+			psi[i] = 1.0 / nrStartTopics;
 		}
 		
 		// We should NOT do hyperparameter optimization of alpha or beta in the HDP
@@ -185,7 +185,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	public void initialSamplePhi(int [] topicIndices, double[][] phiMatrix) {
 		int [] hdpStartTopicIndices = new int[nrStartTopics];
 		for (int i = 0; i < nrStartTopics; i++) {
-			topicIndices[i] = i;
+			hdpStartTopicIndices[i] = i;
 		}
 		super.initialSamplePhi(hdpStartTopicIndices, phi);
 	}
