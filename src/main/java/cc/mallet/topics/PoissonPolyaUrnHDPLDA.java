@@ -56,9 +56,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	List<Integer> activeTopicHistory = new ArrayList<Integer>();
 	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
 	int [] topicOcurrenceCount;
-	static final int BINOMIAL_TABLE_START_IDX = 50;
-	static final int BINOMIAL_TABLE_SIZE = 50;
-	static final int BINOMIAL_TABLE_MAXWIDTH = 200;
+	GammaDist gd;
 //	AtomicInteger countBernBin = new AtomicInteger();
 //	AtomicInteger countBernSumBin = new AtomicInteger();
 //	AtomicInteger countExactBin = new AtomicInteger();
@@ -108,6 +106,10 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 		
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		
+		gd = new UniformGamma();
+		//GammaDist gd = new GeometricGamma(1.0 / (1+gamma));
+		//GammaDist gd = new GeometricGamma(0.05);
 	}
 		
 	@Override
@@ -383,9 +385,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		//System.out.println("nrAddedTopics: " + nrAddedTopics);
 		
 		// Draw new topic numbers from Gamma
-		GammaDist gd = new UniformGamma();
-		//GammaDist gd = new GeometricGamma(1.0 / (1+gamma));
-		//GammaDist gd = new GeometricGamma(0.05);
 		int [] topicNumbers = null;
 		if(nrAddedTopics>0) {
 			topicNumbers = gd.drawNewTopics(nrAddedTopics, numTopics);
