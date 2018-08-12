@@ -341,6 +341,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				topics[position] = topic;
 
 				int type = tokens.getIndexAtPosition(position);
+				typeCounts[type] += 1;
 				updateTypeTopicCount(type, topic, 1);
 			}
 
