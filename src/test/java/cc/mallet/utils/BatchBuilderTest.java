@@ -198,11 +198,11 @@ public class BatchBuilderTest {
 		config.activateSubconfig("demo-nips");
 		config.setBatchBuildingScheme(BatchBuilderFactory.EVEN_SPLIT);
 
-		System.out.println("Using Config: " + config.whereAmI());
+		//System.out.println("Using Config: " + config.whereAmI());
 
 		String dataset_fn = config.getDatasetFilename();
-		System.out.println("Using dataset: " + dataset_fn);
-		System.out.println("Scheme: " + whichModel);
+		//System.out.println("Using dataset: " + dataset_fn);
+		//System.out.println("Scheme: " + whichModel);
 
 		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
 				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
@@ -252,11 +252,11 @@ public class BatchBuilderTest {
 		double percentageSplit = 0.1;
 		config.setDocPercentageSplitSize(percentageSplit);
 
-		System.out.println("Using Config: " + config.whereAmI());
+		//System.out.println("Using Config: " + config.whereAmI());
 
 		String dataset_fn = config.getDatasetFilename();
-		System.out.println("Using dataset: " + dataset_fn);
-		System.out.println("Scheme: " + whichModel);
+		//System.out.println("Using dataset: " + dataset_fn);
+		//System.out.println("Scheme: " + whichModel);
 
 		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
 				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
@@ -309,21 +309,21 @@ public class BatchBuilderTest {
 						numDifferent>(percentageSplit*uncollapsed.getData().size()*0.1));
 			}
 
-			System.out.println("Batches are:");
+			//System.out.println("Batches are:");
 			for (int j = 0; j < iterationBatches.length; j++) {	
 				int [] docIndicies = iterationBatches[j];
-				System.out.println("Batch " + j + ": Size = " + docIndicies.length);
+				//System.out.println("Batch " + j + ": Size = " + docIndicies.length);
 				for (int k = 0; k < docIndicies.length; k++) {
 					if(docIsSeen[docIndicies[k]]) {
 						throw new IllegalStateException("The same document is in more than one batch, this is now allowed, since sampling count can go below 0!");
 					}
 					docIsSeen[docIndicies[k]] = true;
-					System.out.print(docIndicies[k] + ", ");
+					//System.out.print(docIndicies[k] + ", ");
 				}	
-				System.out.println();
+				//System.out.println();
 				sumdocs += docIndicies.length;
 			}
-			System.out.println();
+//			System.out.println();
 		}
 	}
 	
@@ -343,11 +343,11 @@ public class BatchBuilderTest {
 		double percentageSplit = 0.1;
 		config.setDocPercentageSplitSize(percentageSplit);
 
-		System.out.println("Using Config: " + config.whereAmI());
+//		System.out.println("Using Config: " + config.whereAmI());
 
 		String dataset_fn = config.getDatasetFilename();
-		System.out.println("Using dataset: " + dataset_fn);
-		System.out.println("Scheme: " + whichModel);
+//		System.out.println("Using dataset: " + dataset_fn);
+//		System.out.println("Scheme: " + whichModel);
 
 		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
 				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
@@ -448,11 +448,11 @@ public class BatchBuilderTest {
 		double [] percentageSplits = {0.1,0.2,0.3,0.4,0.5,0.7,0.8,1.0};
 		config.setFixedSplitSizeDoc(percentageSplits);
 
-		System.out.println("Using Config: " + config.whereAmI());
+//		System.out.println("Using Config: " + config.whereAmI());
 
 		String dataset_fn = config.getDatasetFilename();
-		System.out.println("Using dataset: " + dataset_fn);
-		System.out.println("Scheme: " + whichModel);
+//		System.out.println("Using dataset: " + dataset_fn);
+//		System.out.println("Scheme: " + whichModel);
 
 		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
 				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
@@ -513,24 +513,24 @@ public class BatchBuilderTest {
 			//System.out.println("Batches are:");
 			for (int j = 0; j < iterationBatches.length; j++) {
 				int [] docIndicies = iterationBatches[j];
-				System.out.println("Batch  " + j + " contains : " + docIndicies.length 
-						+ " documents (" + percentageSplits[percentageSplitPointer] + ") out of: " + instances.size());
+//				System.out.println("Batch  " + j + " contains : " + docIndicies.length 
+//						+ " documents (" + percentageSplits[percentageSplitPointer] + ") out of: " + instances.size());
 				//System.out.println("Batch " + j + ": Size = " + docIndicies.length);
 				for (int k = 0; k < docIndicies.length; k++) {
 					if(docIsSeen[docIndicies[k]]) {
 						throw new IllegalStateException("The same document is in more than one batch, this is now allowed, since sampling count can go below 0!");
 					}
 					docIsSeen[docIndicies[k]] = true;
-					System.out.print(docIndicies[k] + ", ");
+//					System.out.print(docIndicies[k] + ", ");
 				}	
-				System.out.println();
+//				System.out.println();
 				sumdocs += docIndicies.length;
 			}
 			//System.out.println();
 			
 			mockSampler.sample(1);
 			percentageSplitPointer = (percentageSplitPointer+1) % percentageSplits.length;
-			System.out.println("Lap " + i);
+//			System.out.println("Lap " + i);
 		}
 	}
 	
@@ -555,11 +555,11 @@ public class BatchBuilderTest {
 		double [] percentageSplits = {0.1,0.2,0.3,0.4,0.5,0.7,0.8,1.0};
 		config.setFixedSplitSizeDoc(percentageSplits);
 
-		System.out.println("Using Config: " + config.whereAmI());
+//		System.out.println("Using Config: " + config.whereAmI());
 
 		String dataset_fn = config.getDatasetFilename();
-		System.out.println("Using dataset: " + dataset_fn);
-		System.out.println("Scheme: " + whichModel);
+//		System.out.println("Using dataset: " + dataset_fn);
+//		System.out.println("Scheme: " + whichModel);
 
 		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
 				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
@@ -601,11 +601,11 @@ public class BatchBuilderTest {
 		double [] percentageSplits = {0.1,0.2,0.3,0.4,0.5,0.7,0.8,1.0};
 		config.setFixedSplitSizeDoc(percentageSplits);
 
-		System.out.println("Using Config: " + config.whereAmI());
+//		System.out.println("Using Config: " + config.whereAmI());
 
 		String dataset_fn = config.getDatasetFilename();
-		System.out.println("Using dataset: " + dataset_fn);
-		System.out.println("Scheme: " + whichModel);
+//		System.out.println("Using dataset: " + dataset_fn);
+//		System.out.println("Scheme: " + whichModel);
 
 		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
 				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
@@ -633,7 +633,7 @@ public class BatchBuilderTest {
 			ensureInIndices(idx, indices, maxIdxs);
 		}
 
-		System.out.println(maxIdxs + " was bigger than " + n);
+//		System.out.println(maxIdxs + " was bigger than " + n);
 	
 	}
 
