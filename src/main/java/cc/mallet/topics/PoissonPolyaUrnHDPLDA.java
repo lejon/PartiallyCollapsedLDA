@@ -14,7 +14,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.apache.commons.math3.distribution.GeometricDistribution;
 //import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.apache.commons.math3.distribution.PoissonDistribution;
@@ -29,7 +28,6 @@ import cc.mallet.types.PolyaUrnDirichlet;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
-import cc.mallet.util.ArrayStringUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
@@ -84,8 +82,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	boolean staticPhiAliasTableIsBuild = false;
 
 	private Dirichlet phiDirichletPrior;
-	
-	int [] indexArr;
 
 	public PoissonPolyaUrnHDPLDA(LDAConfiguration config) {
 		super(config);
@@ -100,8 +96,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		// taken as the maxNumber of topics possible
 		maxTopics = numTopics;
 		alphaCoef = config.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
-		
-		//TODO: Maybe init from some proper prior
+		  
 		psi = new double[numTopics];
 		for (int i = 0; i < nrStartTopics; i++) {
 			psi[i] = 1.0 / nrStartTopics;
@@ -114,10 +109,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			activeTopics.add(i);
 		}
 		
-		indexArr = new int[numTopics];
-		for (int i = 0; i < numTopics; i++) {
-			indexArr[i] = i;
-		}
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
 	}
 	
@@ -195,8 +186,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		super.preSample();
 		int poolSize = 2;
 		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
-		// Now all structures should be initialized with numTopics
-		// now set numTopics to the number of topics we want to start with
 	}
 
 	protected SparseDirichlet createDirichletSampler() {
@@ -236,9 +225,8 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 
 	@Override
 	public void preIteration() {
-		psi[0] = 0.0;
-		System.out.println("Pre : Psi (count): " + ArrayStringUtils.toStringFixedWidth(psi,10,7));
-		System.out.println("Pre : Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
+//		System.out.println("Pre : Psi (count): " + ArrayStringUtils.toStringFixedWidth(psi,10,7));
+//		System.out.println("Pre : Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
 
 		doPreIterationTableBuilding();
 		super.preIteration();
@@ -248,11 +236,11 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	public void postIteration() {
 		//System.out.println("Freq table: \n" + docTopicTokenFreqTable);
 		
-		System.out.println("Post: Psi (count): " + ArrayStringUtils.toStringFixedWidth(psi,10,7));
-		System.out.println("Post: Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
-		System.out.println("Post: Indices    : " + ArrayStringUtils.toStringFixedWidth(indexArr,10));
-		System.out.println();
-		// Finish G sampling, i.e normalize G
+//		System.out.println("Post: Psi (count): " + ArrayStringUtils.toStringFixedWidth(psi,10,7));
+//		System.out.println("Post: Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
+//		System.out.println("Post: Indices    : " + ArrayStringUtils.toStringFixedWidth(indexArr,10));
+//		System.out.println();
+		// Finish psi sampling, i.e normalize psi
 		double sumG = 0.0;
 		for (int i = 0; i < numTopics; i++) {			
 			sumG += psi[i];
@@ -315,9 +303,9 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	public void prePhi() {
 		super.prePhi();
 		Arrays.fill(nonZeroTypeTopicColIdxs,0);
-		System.out.println("PPhi: Active Tcs : " + activeTopics);
-		System.out.println("PPhi: Psi (count): " + ArrayStringUtils.toStringFixedWidth(psi,10,7));
-		System.out.println("PPhi: Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
+//		System.out.println("PPhi: Active Tcs : " + activeTopics);
+//		System.out.println("PPhi: Psi (count): " + ArrayStringUtils.toStringFixedWidth(psi,10,7));
+//		System.out.println("PPhi: Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
 	}
 	
 	/**
@@ -352,7 +340,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 					topicOcurrenceCount[i] = topicOcurrenceCount[j];
 					topicOcurrenceCount[j] = tmpOccurence;
 					
-					// Update doc freq table
 					docTopicTokenFreqTable.moveTopic(j,i);
 				}
 			}
@@ -421,7 +408,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		activeTopicHistory.add(activeTopics.size());
 		int activeInData = updateNrActiveTopics(docTopicTokenFreqTable.getEmptyTopics(), activeTopics, topicOcurrenceCount, numTopics);
 		activeTopicInDataHistory.add(activeInData);
-		//System.out.println("Active topics: " + Arrays.toString(activeTopics));
 		//System.out.println("Nr Topics in data: " + activeInData);
 		
 		// Draw \nu
@@ -430,8 +416,14 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		
 		// Draw new topic numbers from Gamma
 		GammaDist gd = new UniformGamma();
-		//GammaDist gd = new GeometricGamma(1 / 1+gamma);
-		int [] topicNumbers = gd.drawNewTopics(nrAddedTopics, numTopics);
+		//GammaDist gd = new GeometricGamma(1.0 / (1+gamma));
+		//GammaDist gd = new GeometricGamma(0.05);
+		int [] topicNumbers = null;
+		if(nrAddedTopics>0) {
+			topicNumbers = gd.drawNewTopics(nrAddedTopics, numTopics);
+		} else {
+			topicNumbers = new int [0];
+		}
 		//System.out.println("Sampled topics: " + Arrays.toString(topicNumbers));
 
 		//System.out.println("Active topics before: " + activeTopics);
@@ -452,10 +444,9 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 					+ ") exceeds maxTopics (" + maxTopics + ") exiting");
 				
 		if (showTopicsInterval > 0 && currentIteration % showTopicsInterval == 0) {
-			System.err.println("Topic stats: Active Topics:" + activeTopics.size() 
+			System.err.println("Active Topics: " + activeTopics.size() + "\t(diff=" + (activeTopics.size() - activeTopicHistory.get(activeTopicHistory.size()-1)) + ")" 
 			+ "\t New topics: " + newNumTopics 
-			+ "\t Active in data: " + activeInData 
-			+ "\t Topic diff: " + (activeTopicHistory.get(activeTopicHistory.size()-1) - activeTopics.size()));
+			+ "\t Active in data: " + activeInData);
 		}
 
 		psi = new double[numTopics];
@@ -810,7 +801,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	int sampleNewTopic(int type, int[] nonZeroTopics, int nonZeroTopicCnt, double sum, double[] cumsum, double u,
 			double u_sigma) {
 		int newTopic;
-		//System.out.println("typeNorm:" + typeNorm[type]);
 		if(u < (typeNorm[type]/(typeNorm[type] + sum))) {
 			//numPrior++;
 			newTopic = aliasTables[type].generateSample(u+((sum*u)/typeNorm[type])); // uniform (0,1)
@@ -918,8 +908,8 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			int topic = activeIndices[topicIdx];
 			//System.out.println("Sampling topic: " + topic);
 			topicOcurrenceCount[topic]++;
-			// First part of G sampling, rest (normalization) must be done 
-			// in postIteration when all G_k has been sampled
+			// First part of Psi sampling. Normalization must be done 
+			// in postIteration when all Phi_k has been sampled
 //			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable, binomialTables);
 			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable, null);
 			//System.out.println("l_" + topic + " = " + l_k + " Topic Occurence:" + topicOcurrenceCount[topic]);
@@ -991,7 +981,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		
 	protected static int sampleBinomial(int nrDocsWithMoreThanDoclengthTopicIndicators, double p, int docLength, WalkerAliasTable [][] binomialTables) {
 		int binomialAliasEndIdx = BINOMIAL_TABLE_START_IDX + BINOMIAL_TABLE_SIZE;
-		int bsample = 0;
+		int bsample = -1;
 		if(nrDocsWithMoreThanDoclengthTopicIndicators == 1) {
 //			countBernBin.incrementAndGet();
 			bsample = ThreadLocalRandom.current().nextDouble() < p ? 1 : 0;
@@ -999,9 +989,15 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		} else if(nrDocsWithMoreThanDoclengthTopicIndicators * p >= 20 && nrDocsWithMoreThanDoclengthTopicIndicators * (1-p) >= 20) {
 //			countNormalBin.incrementAndGet();
 			//System.out.println("Normal approx");
-			double meanNormal = nrDocsWithMoreThanDoclengthTopicIndicators * p;
-			double variance = nrDocsWithMoreThanDoclengthTopicIndicators * p * (1-p); 
-			bsample = (int) Math.round(Math.sqrt(variance) * ThreadLocalRandom.current().nextGaussian() + meanNormal);
+			int nrTries = 0;
+			// Although very rare, it can happen that with a normal mean of 20 we can sample a negative number
+			// retry for a couple of times
+			while(bsample<0 && nrTries < 5) {
+				double meanNormal = nrDocsWithMoreThanDoclengthTopicIndicators * p;
+				double variance = nrDocsWithMoreThanDoclengthTopicIndicators * p * (1-p); 
+				bsample = (int) Math.round(Math.sqrt(variance) * ThreadLocalRandom.current().nextGaussian() + meanNormal);
+				nrTries++;
+			}
 			if(bsample<0) throw new IndexOutOfBoundsException("Sampled negative binomial (" + bsample + "): trials:" + nrDocsWithMoreThanDoclengthTopicIndicators + " p:" + p);
 			// If the trials is less than the binomial alias table, use sums of Bernoulli	
 		} else if(nrDocsWithMoreThanDoclengthTopicIndicators < BINOMIAL_TABLE_START_IDX) {
@@ -1054,15 +1050,18 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	protected int updateNrActiveTopics(int[] emptyTopics, List<Integer> activeTopics, int[] topicOcurrenceCount, int numTopics) {
 		for (int i = 0; i < emptyTopics.length; i++) {
 			if(activeTopics.contains(emptyTopics[i])) {
-				int idx = activeTopics.indexOf(emptyTopics[i]);
-				resetTopic(activeTopics, idx);
+				int topic = activeTopics.indexOf(emptyTopics[i]);
+				resetTopic(activeTopics, topic);
 			}
 		}
 		return activeTopics.size();
 	}
 
-	void resetTopic(List<Integer> activeTopics, int idx) {
-		activeTopics.remove(idx);
+	void resetTopic(List<Integer> activeTopics, int topic) {
+		activeTopics.remove(topic);
+		// The next time this topic occurs (is sampled again) it
+		// is considered a completely "new" topic
+		topicOcurrenceCount[topic] = 0;
 	}
 
 	public int[] getTopicOcurrenceCount() {
