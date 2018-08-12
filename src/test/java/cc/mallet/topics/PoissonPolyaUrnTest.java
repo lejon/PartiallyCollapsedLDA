@@ -12,6 +12,7 @@ import org.apache.commons.math3.stat.inference.ChiSquareTest;
 import org.junit.Test;
 
 import cc.mallet.types.PolyaUrnDirichlet;
+import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 
@@ -36,18 +37,18 @@ public class PoissonPolyaUrnTest {
 		//int nrLoops = 10_000_000;
 		for (int i = 0; i < nrLoops; i++) {
 			int poissonSample; 
-			poissonSample = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(50);
+			poissonSample = (int) PolyaUrnDirichlet.nextPoisson(50);
 			if(poissonSample<0) poissonSample = 0;
 			int numTopics = poissonSample;
 			if(numTopics<3) numTopics = 3;
 			//System.out.println("numTopics = " + numTopics);
-			poissonSample = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(20);
+			poissonSample = (int) PolyaUrnDirichlet.nextPoisson(20);
 			if(poissonSample<0) poissonSample = 1;
 			int newNumTopics = numTopics - poissonSample;
 			if(newNumTopics<0) newNumTopics = numTopics-1;
 			if(newNumTopics==numTopics) newNumTopics = numTopics-1;
 			//System.out.println("newNumTopics = " + newNumTopics);
-			poissonSample = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(10);
+			poissonSample = (int) PolyaUrnDirichlet.nextPoisson(10);
 			if(poissonSample<0) poissonSample = 0;
 			int activeInData = newNumTopics - poissonSample;
 			if(activeInData<0) activeInData = newNumTopics-1;
@@ -116,6 +117,21 @@ public class PoissonPolyaUrnTest {
 		} catch (Exception e) {
 		}
 	}
+	
+	static WalkerAliasTable constructBinomialAliasTable(int trials, double prob) {
+		int tableLength = Math.max(100, 2*trials);
+		WalkerAliasTable table = null;
+		for (int i = 1; i < tableLength; i++) {
+			BinomialDistribution binDistCalc = new BinomialDistribution(trials, prob);
+			double [] trialProbabilities = new double [tableLength];
+			for (int j = 0; j < tableLength; j++) {
+				trialProbabilities[j] =  binDistCalc.probability(j);
+			}
+			table = new OptimizedGentleAliasMethod(trialProbabilities); 
+		}
+		return table;
+	}
+
 		
 	@Test
 	public void testBinomialAliasUsingCounts() {
@@ -129,7 +145,7 @@ public class PoissonPolyaUrnTest {
 			for (double prob : probs) {
 				long [] samplesAlias = new long[samplesLen]; 
 				long [] samplesB = new long[samplesLen]; 
-				WalkerAliasTable table = PoissonPolyaUrnHLDA.constructBinomialAliasTable(trials, prob);
+				WalkerAliasTable table = constructBinomialAliasTable(trials, prob);
 
 				BinomialDistribution binDist = new BinomialDistribution(trials, prob);
 				for (int i = 0; i < noDraws; i++) {
@@ -218,7 +234,7 @@ public class PoissonPolyaUrnTest {
 			for (double prob : probs) {
 				long [] samplesAlias = new long[tableLength]; 
 				int maxIdx = 0;
-				WalkerAliasTable table = PoissonPolyaUrnHLDA.constructBinomialAliasTable(trials, prob);
+				WalkerAliasTable table = constructBinomialAliasTable(trials, prob);
 
 				double [] trialProbabilities = new double [tableLength];
 				for (int i = 1; i < tableLength; i++) {
