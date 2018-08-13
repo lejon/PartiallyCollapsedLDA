@@ -879,6 +879,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return nonZeroTopicCnt;
 	}	
 
+	// TODO: (Mans) Go through the parameters and add to documentation?
 	/**
 	 * Samples new Phi's.
 	 * 
@@ -898,8 +899,10 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		
 		long beforeSamplePhi = System.currentTimeMillis();		
 		for (int topicIdx = 0; topicIdx < numActive; topicIdx++) {
-			int topic = activeIndices[topicIdx];
+			// TODO: (Mans) Can this be an OBOE or index error?
+			int topic = activeIndices[topicIdx]; 
 			//System.out.println("Sampling topic: " + topic);
+			// TODO: (Mans) What is this?
 			topicOcurrenceCount[topic]++;
 			// First part of Psi sampling. Normalization must be done 
 			// in postIteration when all Phi_k has been sampled
@@ -920,6 +923,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			
 			psi[topic] += eta_k;
 			
+			// TODO: (Mans) This is ordinary phi, right? Nothing new here?
 			if(tokensPerTopic[topic]>0) {
 				int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
 				VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
@@ -943,15 +947,18 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 	}
 
+	// TODO: (Mans) We should focus on this one.
 	static protected int sampleL(int topic, double gamma, int maxDocLen, 
 			DocTopicTokenFreqTable docTopicTokenFreqTable) {
 		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
 		
 		// Sum over c_j_k
 		int lSum = 0;
+		// TODO: (Mans) Maybe call nrTopicIndicators topicIndicatorPositionInDoc?
 		for(int nrTopicIndicators = 1; nrTopicIndicators < maxDocLen; nrTopicIndicators++) {
 			int nrDocsWithMoreTopicIndicators = 0;
 			if( freqHist.length > nrTopicIndicators ) {				
+				// TODO: (Mans) Why -1?
 				nrDocsWithMoreTopicIndicators = freqHist[nrTopicIndicators-1];
 			}
 			//System.out.println("nrDocsWithMoreThanDoclengthTopicIndicators: " + nrDocsWithMoreThanDoclengthTopicIndicators  + " docLength: " + docLength);
@@ -969,10 +976,12 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 		return lSum;
 	}	
-			
+	
+	
 	protected int sampleNrTopics(double gamma) {
 		int sample = -1;
-		if(gamma<1000) {
+		// TODO: (Mans) We should use the same? 100 here or use L as we used before to use the same approx everywhere.
+		if(gamma<1000) { 
 			PoissonDistribution pois_gamma = new PoissonDistribution(gamma);
 			sample = pois_gamma.sample();
 		} else {
@@ -994,6 +1003,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return numTypes;
 	}
 
+	// TODO: (Mans) Where is this used? Do we have test suites that cover this part?
 	protected int updateNrActiveTopics(int[] emptyTopics, List<Integer> activeTopics, int[] topicOcurrenceCount, int numTopics) {
 		for (int i = 0; i < emptyTopics.length; i++) {
 			if(activeTopics.contains(emptyTopics[i])) {
