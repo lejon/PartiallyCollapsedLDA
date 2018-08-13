@@ -942,16 +942,18 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 	}
 
-	
+	// TODO: Test Suite: SampleL for one document should have the antoniak distribution (see pdf in eq (9) in paper)
 	static protected int sampleL(int topic, double gamma, int maxDocLen, 
 			DocTopicTokenFreqTable docTopicTokenFreqTable) {
+		// freqHist is D(j, k = topic)
 		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
 		
 		// Sum over c_j_k
 		int lSum = 0;
-		// TODO: (Mans) Maybe call nrTopicIndicators topicIndicatorPositionInDoc?
+		// TODO: (Mans) Maybe call nrTopicIndicators topicIndicatorPositionJ?
+		// TODO: (Mans) Is this an OBOE? Why not nrTopicIndicators = 0 or <= maxDocLen		
 		for(int nrTopicIndicators = 1; nrTopicIndicators < maxDocLen; nrTopicIndicators++) {
-			int nrDocsWithMoreTopicIndicators = 0;
+			int nrDocsWithMoreTopicIndicators = 0; // TODO: (Mans) Why?
 			if( freqHist.length > nrTopicIndicators ) {				
 				// TODO: (Mans) Why -1?
 				nrDocsWithMoreTopicIndicators = freqHist[nrTopicIndicators-1];
@@ -964,6 +966,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			// Only sample if trials != 0, otherwise sample = 0;
 			if(nrDocsWithMoreTopicIndicators != 0) {
 				double p = gamma / (gamma + nrTopicIndicators - 1);
+				// TODO: (Mans) I found out this is wrong yesterday. It should be (\alpha Psi_k) / (\alpha Psi_k + nrTopicIndicators - 1)				
 				bsample = BinomialSampler.rbinom(nrDocsWithMoreTopicIndicators, p);
 			}
 			//System.err.println("Binomial sample: Trials: " + trials + " probability: " + p + " => " + bsample);
