@@ -47,15 +47,20 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	private static final long serialVersionUID = 1L;
 
 	double gamma;
-	double [] psi; // TODO: (Mans) This is capital Psi, right?
-	List<Integer> activeTopics = new ArrayList<>(); // TODO: (Mans) What is this?
-	double alphaCoef; // TODO: (Mans) This is \alpha?
+	double [] psi; // This is capital Psi in paper.
+	// activeTopics is the topics that can be sampled from in the next iteration of sampling topic indicators. 
+	List<Integer> activeTopics = new ArrayList<>();
+	// This is \alpha in paper, i.e. the concentration parameter within documents.
+	double alphaCoef; 
 	DocTopicTokenFreqTable docTopicTokenFreqTable; 
 	int nrStartTopics;
-	int maxTopics;
-	List<Integer> activeTopicHistory = new ArrayList<Integer>(); // TODO: (Mans) What is this?
-	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>(); // TODO: (Mans) What is this?
+	// numTopics is the same as K_max in paper, the maximum number of topics.
+	int maxTopics; // TODO: Remove?
+	// activeTopicHistory, activeTopicInDataHistory is only used for post analysis, not used in algorithm.
+	List<Integer> activeTopicHistory = new ArrayList<Integer>(); 
+	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
 	int [] topicOcurrenceCount;
+	// The prior Gamma distribution
 	GammaDist gd;
 //	AtomicInteger countBernBin = new AtomicInteger();
 //	AtomicInteger countBernSumBin = new AtomicInteger();
@@ -74,7 +79,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	int [][] nonZeroTypeTopicIdxs = null;
 	// How many indices  are zero for each type, i.e the column count for the zeroTypeTopicIdxs array
 	int [] nonZeroTypeTopicColIdxs = null;
-	// TODO: (Mans) This is our good old sparsity handling, right?
 
 	boolean staticPhiAliasTableIsBuild = false;
 
@@ -93,12 +97,11 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		// taken as the maxNumber of topics possible
 		maxTopics = numTopics;
 		alphaCoef = config.getAlpha(LDAConfiguration.ALPHA_DEFAULT); 
-		  
+		   
 		psi = new double[numTopics];
 		for (int i = 0; i < nrStartTopics; i++) {
 			psi[i] = 1.0 / nrStartTopics;
 		}
-		// TODO: (Mans) Check that psi sums to ~ 1?
 		
 		// We should NOT do hyperparameter optimization of alpha or beta in the HDP
 		hyperparameterOptimizationInterval = -1;
