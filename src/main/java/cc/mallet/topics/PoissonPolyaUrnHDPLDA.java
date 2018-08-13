@@ -56,9 +56,10 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	int nrStartTopics;
 	// numTopics is the same as K_max in paper, the maximum number of topics.
 	int maxTopics; // TODO: Remove?
-	// activeTopicHistory, activeTopicInDataHistory is only used for post analysis, not used in algorithm.
+	// activeTopicHistory, activeTopicInDataHistory,topicOcurrenceCount is only used for post analysis, not used in algorithm.
 	List<Integer> activeTopicHistory = new ArrayList<Integer>(); 
 	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
+	// topicOcurrenceCount stores how many times the topic has been active?
 	int [] topicOcurrenceCount;
 	// The prior Gamma distribution
 	GammaDist gd;
@@ -112,13 +113,12 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
 		
-		// TODO: (Mans) Is this how to set Gamma?
+		// Here we set Gamma, the prior base measure
 		gd = new UniformGamma();
 		//GammaDist gd = new GeometricGamma(1.0 / (1+gamma));
 		//GammaDist gd = new GeometricGamma(0.05);
 	}
 		
-	// TODO: (Mans) This is the same old data handling, I guess?
 	@Override
 	public void addInstances(InstanceList training) {
 		alphabet = training.getDataAlphabet();
@@ -138,7 +138,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	
 	/* When we initialize Z we have to limit the topic indicators
 	 * to nrStartTopics
-	 * // TODO: (Mans) Yes!
 	 * @see cc.mallet.topics.UncollapsedParallelLDA#initialDrawTopicIndicator()
 	 */
 	@Override
@@ -146,9 +145,8 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return random.nextInt(nrStartTopics);
 	}
 
-	/* When we initialize phi we have to limit the topic indicators
-	 * to nrStartTopics
-	 * // TODO: (Mans) What does this mean in phi-sense?
+	/* When we initialize phi only for the nrStartTopics
+	 * @param topicIndices a vector of length numTopics
 	 */
 	@Override
 	public void initialSamplePhi(int [] topicIndices, double[][] phiMatrix) {
@@ -171,7 +169,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return db.build(this);
 	}
 
-	// TODO: (Mans) This is the same way we allways build Alias tables, right? Did not check.
 	class ParallelTableBuilder implements Callable<WalkerAliasTableBuildResult> {
 		int type;
 		public ParallelTableBuilder(int type) {
@@ -219,10 +216,10 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 //		System.out.println("Post: Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
 //		System.out.println("Post: Indices    : " + ArrayStringUtils.toStringFixedWidth(indexArr,10));
 //		System.out.println();
-		
-		// TODO: (Mans) Do we want to do this post iteration? I guess this is a part of sampling Psi/l? I guess it is good to keep sampling eta together with normalizing.
-		
+				
 		// Finish psi sampling, i.e normalize psi
+		// This is a global parameter so normalization need to be done after eta_k has been sampled in parallel.
+		// TODO: move this to postPhi and change sumG to sumPsi/sumEta.
 		double sumG = 0.0;
 		for (int i = 0; i < numTopics; i++) {			
 			sumG += psi[i];
@@ -237,7 +234,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 //		System.out.println("Exact: " + countExactBin.get() + " Normal: " + countNormalBin.get() + " Table: " + countAliasBin.get() + " Bern: " + countBernBin.get() + " BernSum: " + countBernSumBin.get());
 	}
 	
-	// TODO: (Mans) I have not checked this.
+	// TODO: Could be removed if inherits from PolyaUrn LDA
 	protected void doPreIterationTableBuilding() {
 		LDAUtils.transpose(phi, phitrans);
 
@@ -274,7 +271,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 	}
 
-	// TODO: (Mans) What is this?
 	public void preIterationGivenPhi() {
 		if(!staticPhiAliasTableIsBuild) {
 			doPreIterationTableBuilding();
@@ -283,7 +279,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 	}
 
-	// TODO: (Mans) What is this? Why do we will arrays with 0oes?
+	// TODO: Inherits from PolyaUrnLDA
 	@Override
 	public void prePhi() {
 		super.prePhi();
@@ -293,7 +289,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 //		System.out.println("PPhi: Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
 	}
 	
-	// TODO: (Mans) I guess we are not using this? Can we comment it out or do something that make it clear that this is not used? 
 	/**
 	 * Creates a table that maps the positions of active topics with topic to free
 	 * slots in the topic range [0-nrActiveTopics]. This is used to return a dense
@@ -310,7 +305,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return translationTable;
 	}
 
-	// TODO: (Mans) What is this?
 	/**
 	 * Re-arranges the topics in the typeTopic matrix based
 	 * on topicOccurence
@@ -333,7 +327,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 	}
 
-	// TODO: (Mans) What is this?
 	@Override
 	public void postSample() {
 		super.postSample();
@@ -347,7 +340,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	}
 	
 	class UniformGamma implements GammaDist {
-		// TODO: (Mans) What is this? I do not understand why we need these parameters? We need to discuss this.
 		/**
 		 * Draw new topic numbers from \Gamma
 		 * 
@@ -355,10 +347,12 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		 * @param numTopics
 		 * @return
 		 */
+		// TODO: change nrTopics with nrSamples
 		@Override
 		public int[] drawNewTopics(int nrTopics, int range) {
 			int [] newTopics = new int[nrTopics];
 			for (int i = 0; i < newTopics.length; i++) {
+				// nextInt draws a uniform from (0, range-1)
 				newTopics[i] = ThreadLocalRandom.current().nextInt(range); 
 			}
 
@@ -373,7 +367,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			dist = new GeometricDistribution(p);
 		}
 		
-		// TODO: (Mans) What is this? Discuss parameter names?
 		/**
 		 * Draw new topic numbers from \Gamma
 		 * 
@@ -383,6 +376,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		 */
 		@Override
 		public int[] drawNewTopics(int nrTopics, int range) {
+			// TODO: change nrTopics with nrSamples
 			return dist.sample(nrTopics);
 		}		
 	}
@@ -396,10 +390,11 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		// unnecessarily.  
 		
 		// Resample the number of topics to use 
-		// TODO: (Mans) What is this? I do not understand.
-		activeTopicHistory.add(activeTopics.size());
+		activeTopicHistory.add(activeTopics.size()); // This is only used for log
+		// docTopicTokenFreqTable.getEmptyTopics() is the topics that never was sampled in sample of topic indicators/z.
+		// activeInData are topics that was actually sampled in the last iteration.
 		int activeInData = updateNrActiveTopics(docTopicTokenFreqTable.getEmptyTopics(), activeTopics, topicOcurrenceCount, numTopics);
-		activeTopicInDataHistory.add(activeInData);
+		activeTopicInDataHistory.add(activeInData); // This is only used for log
 		//System.out.println("Nr Topics in data: " + activeInData);
 		
 		// Draw \nu
@@ -409,19 +404,18 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		// Draw new topic numbers from Gamma
 		int [] topicNumbers = null;
 		if(nrAddedTopics>0) {
-			topicNumbers = gd.drawNewTopics(nrAddedTopics, numTopics); // TODO: (Mans) numTopics should be maxTopics? It is set as that above, but mabe use maxTopics for readability?
+			topicNumbers = gd.drawNewTopics(nrAddedTopics, numTopics); 
 		} else {
 			topicNumbers = new int [0];
 		}
 		//System.out.println("Sampled topics: " + Arrays.toString(topicNumbers));
 
 		//System.out.println("Active topics before: " + activeTopics);
-		// Calculate which if drawn topics where new
-		// TODO: (Mans) What is this?
+		// Calculate which if drawn topics where new, newTopic is new unique topics
 		int [] newTopics = calcNewTopics(activeTopics, topicNumbers);
 		for (int i = 0; i < newTopics.length; i++) {
 			activeTopics.add(newTopics[i]);
-		}
+		}		
 		//System.out.println("New topics: " + Arrays.toString(newTopics));
 		//System.out.println("Active topics after : " + activeTopics);
 		
@@ -439,10 +433,9 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			+ "\t Active in data: " + activeInData);
 		}
 
-		// TODO: (Mans) Psi should be a vector of length maxTopics?
 		psi = new double[numTopics];
 		//System.out.println("New num topics: " + newNumTopics);
-		// Add one to each of the newly drawn topics
+		// Add one to each of the newly drawn topics from prior first, later we add from Pois(l_k)		
 		for (int i = 0; i < topicNumbers.length; i++) {
 			psi[topicNumbers[i]]++;
 		}
@@ -457,7 +450,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	 * @param topicNumbers
 	 * @return array of not previously existing topics
 	 */
-	// TODO: (Mans) Can we go through this?
+	// TODO: Add test case if does not exist.
 	private int[] calcNewTopics(List<Integer> activeTopics, int[] topicNumbers) {
 		Set<Integer> topicSack = new TreeSet<Integer>();
 		for (int i = 0; i < topicNumbers.length; i++) {
@@ -480,7 +473,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	 * AD-LDA logLikelihood calculation. 
 	 * With this approach all models likelihoods are calculated the same way
 	 */
-	// TODO: (Mans) I skipped this for now.
+	// TODO: Check if needed.
 	@Override
 	public double modelLogLikelihood() {
 		double logLikelihood = 0.0;
@@ -760,7 +753,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return localTopicCounts;
 	}
 
-	// TODO: (Mans) Maybe add documentation here? Guessing this is the cumsum of the likelihood part in the sampling?
+	// TODO: Can be removed if inherited from other class.
 	double calcCumSum(int type, double[] localTopicCounts, int[] nonZeroTopics, int nonZeroTopicCnt, double[] cumsum) {
 		double [] phiType =  phitrans[type]; 
 		int topic = nonZeroTopics[0];
@@ -779,7 +772,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	}
 
 	
-	// TODO: (Mans) tl;dr
+	// TODO: Can be removed if inherited from other class.
 	/*
 	 * Sample a topic indicator
 	 * 
@@ -812,7 +805,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 		return newTopic;
 	}
-
+	// TODO: Can be removed if inherited from other class.
 	protected static int removeIfIn(int oldTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
 		if (nonZeroTopicCnt<1) {
 			return nonZeroTopicCnt;
@@ -828,7 +821,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 	}
 
-
+	// TODO: Can be removed if inherited from other class.
 	protected static int remove(int oldTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
 		if (nonZeroTopicCnt<1) {
 			throw new IllegalArgumentException ("SpaliasUncollapsedParallelLDA: Cannot remove, count is less than 1 => " + nonZeroTopicCnt);
@@ -840,14 +833,14 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		nonZeroTopicsBackMapping[nonZeroTopics[nonZeroIdx]] = nonZeroIdx;
 		return nonZeroTopicCnt;
 	}
-
+	// TODO: Can be removed if inherited from other class.
 	protected static int insert(int newTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
 		//// We have a new non-zero topic put it in the last empty slot and increase the count
 		nonZeroTopics[nonZeroTopicCnt] = newTopic;
 		nonZeroTopicsBackMapping[newTopic] = nonZeroTopicCnt;
 		return ++nonZeroTopicCnt;
 	}
-
+	// TODO: Can be removed if inherited from other class.
 	protected static int removeSorted(int oldTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
 		if (nonZeroTopicCnt<1) {
 			throw new IllegalArgumentException ("PolyaUrnLDA: Cannot remove, count is less than 1");
@@ -864,7 +857,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 		return nonZeroTopicCnt;
 	}
-
+	// TODO: Can be removed if inherited from other class.
 	protected static int insertSorted(int newTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
 		//// We have a new non-zero topic put it in the last empty slot
 		int slot = 0;
@@ -882,12 +875,12 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return nonZeroTopicCnt;
 	}	
 
-	// TODO: (Mans) Go through the parameters and add to documentation?
 	/**
 	 * Samples new Phi's.
 	 * 
-	 * @param indices
-	 * @param topicTypeIndices
+	 * 
+	 * @param indices the topics the thread should sample in parallel
+	 * @param topicTypeIndices Choose which elements in Phi top sample (random scan Gibbs sampling)
 	 * @param phiMatrix
 	 */
 	@Override
@@ -902,13 +895,11 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		
 		long beforeSamplePhi = System.currentTimeMillis();		
 		for (int topicIdx = 0; topicIdx < numActive; topicIdx++) {
-			// TODO: (Mans) Can this be an OBOE or index error?
 			int topic = activeIndices[topicIdx]; 
 			//System.out.println("Sampling topic: " + topic);
-			// TODO: (Mans) What is this?
 			topicOcurrenceCount[topic]++;
 			// First part of Psi sampling. Normalization must be done 
-			// in postIteration when all Phi_k has been sampled
+			// in postIteration when all Psi_k has been sampled
 			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable);
 			//System.out.println("l_" + topic + " = " + l_k + " Topic Occurence:" + topicOcurrenceCount[topic]);
 			
@@ -916,6 +907,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			// will also be zero, but for those topics we have already added 1 to psi in postZ
 			int eta_k = 0; 
 			if(l_k>0) {
+				// TODO: Use the same global parameter (L) for poisson instead of hardcoded 100
 				if(l_k>100) {
 					eta_k = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(l_k);
 				} else {				
@@ -926,7 +918,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			
 			psi[topic] += eta_k;
 			
-			// TODO: (Mans) This is ordinary phi, right? Nothing new here?
+			// Sample Phi
 			if(tokensPerTopic[topic]>0) {
 				int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
 				VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
@@ -950,7 +942,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 	}
 
-	// TODO: (Mans) We should focus on this one.
+	
 	static protected int sampleL(int topic, double gamma, int maxDocLen, 
 			DocTopicTokenFreqTable docTopicTokenFreqTable) {
 		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
@@ -984,6 +976,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	protected int sampleNrTopics(double gamma) {
 		int sample = -1;
 		// TODO: (Mans) We should use the same? 100 here or use L as we used before to use the same approx everywhere.
+		// TODO: Use the same parameter (L) instead of 1000
 		if(gamma<1000) { 
 			PoissonDistribution pois_gamma = new PoissonDistribution(gamma);
 			sample = pois_gamma.sample();
