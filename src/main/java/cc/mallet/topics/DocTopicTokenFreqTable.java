@@ -35,7 +35,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
  * Y: Nr. documents that has X topic indicators:	 4	10	50	12	 7	3	1
  * X: Nr. topic indicators of topic 3:			 	 1	 2	 3	 4	5	6
  * 
- // TODO: (Mans) I do not understand this.
  * 
  * @author Leif Jonsson
  *
