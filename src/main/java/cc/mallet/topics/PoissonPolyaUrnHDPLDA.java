@@ -48,6 +48,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 
 	double gamma;
 	double [] psi; // This is capital Psi in paper.
+	int [] eta;
 	// activeTopics is the topics that can be sampled from in the next iteration of sampling topic indicators. 
 	List<Integer> activeTopics = new ArrayList<>();
 	// This is \alpha in paper, i.e. the concentration parameter within documents.
@@ -55,7 +56,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	DocTopicTokenFreqTable docTopicTokenFreqTable; 
 	int nrStartTopics;
 	// numTopics is the same as K_max in paper, the maximum number of topics.
-	int maxTopics; // TODO: Remove?
 	// activeTopicHistory, activeTopicInDataHistory,topicOcurrenceCount is only used for post analysis, not used in algorithm.
 	List<Integer> activeTopicHistory = new ArrayList<Integer>(); 
 	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
@@ -94,11 +94,9 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		System.out.println("HDP Start topics: " + nrStartTopics);
 		System.out.println("HDP gamma: " + gamma);
 		
-		// In the HDP the number of topics we are initialized with is 
-		// taken as the maxNumber of topics possible
-		maxTopics = numTopics;
 		alphaCoef = config.getAlpha(LDAConfiguration.ALPHA_DEFAULT); 
-		   
+		
+		eta = new int[numTopics];
 		psi = new double[numTopics];
 		for (int i = 0; i < nrStartTopics; i++) {
 			psi[i] = 1.0 / nrStartTopics;
@@ -209,25 +207,30 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	}
 
 	@Override
-	public void postIteration() {
+	public void postPhi() {
+		super.postPhi();
 		//System.out.println("Freq table: \n" + docTopicTokenFreqTable);
 		
-//		System.out.println("Post: Psi (count): " + ArrayStringUtils.toStringFixedWidth(psi,10,7));
+		int [] indexArr = new int[numTopics];
+		for (int i = 0; i < indexArr.length; i++) {
+			indexArr[i] = i;
+		}
+//		System.out.println("Active Topics: " + activeTopics);
+//		System.out.println("Post: Eta (count): " + ArrayStringUtils.toStringFixedWidth(eta,10));
 //		System.out.println("Post: Topic count: " + ArrayStringUtils.toStringFixedWidth(tokensPerTopic,10));
 //		System.out.println("Post: Indices    : " + ArrayStringUtils.toStringFixedWidth(indexArr,10));
 //		System.out.println();
 				
 		// Finish psi sampling, i.e normalize psi
 		// This is a global parameter so normalization need to be done after eta_k has been sampled in parallel.
-		// TODO: move this to postPhi and change sumG to sumPsi/sumEta.
-		double sumG = 0.0;
+		double sumEta = 0.0;
 		for (int i = 0; i < numTopics; i++) {			
-			sumG += psi[i];
+			sumEta += eta[i];
 		}
 		for (int i = 0; i < numTopics; i++) {			
-			psi[i] /= sumG;
+			psi[i] = eta[i] / sumEta;
 		}
-		//System.out.println("Alpha G: " + Arrays.toString(alphaG));
+//		System.out.println("Psi: " + Arrays.toString(psi));
 		
 		// Reset frequency table
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
@@ -347,10 +350,9 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		 * @param numTopics
 		 * @return
 		 */
-		// TODO: change nrTopics with nrSamples
 		@Override
-		public int[] drawNewTopics(int nrTopics, int range) {
-			int [] newTopics = new int[nrTopics];
+		public int[] drawNewTopics(int nrSamples, int range) {
+			int [] newTopics = new int[nrSamples];
 			for (int i = 0; i < newTopics.length; i++) {
 				// nextInt draws a uniform from (0, range-1)
 				newTopics[i] = ThreadLocalRandom.current().nextInt(range); 
@@ -375,9 +377,8 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		 * @return
 		 */
 		@Override
-		public int[] drawNewTopics(int nrTopics, int range) {
-			// TODO: change nrTopics with nrSamples
-			return dist.sample(nrTopics);
+		public int[] drawNewTopics(int nrSamples, int range) {
+			return dist.sample(nrSamples);
 		}		
 	}
 
@@ -422,10 +423,10 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		int nrNewTopics = newTopics.length;
 		int newNumTopics = activeTopics.size() + nrNewTopics;
 		
-		if(newNumTopics>maxTopics) 
+		if(newNumTopics>numTopics) 
 			throw new IndexOutOfBoundsException("New sampled number of topics (" 
 					+ newNumTopics 
-					+ ") exceeds maxTopics (" + maxTopics + ") exiting");
+					+ ") exceeds maxTopics (" + numTopics + ") exiting");
 				
 		if (showTopicsInterval > 0 && currentIteration % showTopicsInterval == 0) {
 			System.err.println("Active Topics: " + activeTopics.size() + "\t(diff=" + (activeTopics.size() - activeTopicHistory.get(activeTopicHistory.size()-1)) + ")" 
@@ -433,11 +434,11 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			+ "\t Active in data: " + activeInData);
 		}
 
-		psi = new double[numTopics];
+		eta = new int[numTopics];
 		//System.out.println("New num topics: " + newNumTopics);
 		// Add one to each of the newly drawn topics from prior first, later we add from Pois(l_k)		
 		for (int i = 0; i < topicNumbers.length; i++) {
-			psi[topicNumbers[i]]++;
+			eta[topicNumbers[i]]++;
 		}
 	}
 	
@@ -900,8 +901,8 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			topicOcurrenceCount[topic]++;
 			// First part of Psi sampling. Normalization must be done 
 			// in postIteration when all Psi_k has been sampled
-			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable);
-			//System.out.println("l_" + topic + " = " + l_k + " Topic Occurence:" + topicOcurrenceCount[topic]);
+			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable, alphaCoef, psi[topic]);
+//			System.out.println("l_" + topic + " = " + l_k + " Topic Occurence:" + topicOcurrenceCount[topic]);
 			
 			// For new (not sampled by Z sampling) topics, the frequency will be 0, and l_k 
 			// will also be zero, but for those topics we have already added 1 to psi in postZ
@@ -916,7 +917,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 				}
 			}
 			
-			psi[topic] += eta_k;
+			eta[topic] += eta_k;
 			
 			// Sample Phi
 			if(tokensPerTopic[topic]>0) {
@@ -944,18 +945,16 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 
 	// TODO: Test Suite: SampleL for one document should have the antoniak distribution (see pdf in eq (9) in paper)
 	static protected int sampleL(int topic, double gamma, int maxDocLen, 
-			DocTopicTokenFreqTable docTopicTokenFreqTable) {
+			DocTopicTokenFreqTable docTopicTokenFreqTable, double alpha, double psi_k) {
 		// freqHist is D(j, k = topic)
 		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
 		
 		// Sum over c_j_k
 		int lSum = 0;
-		// TODO: (Mans) Maybe call nrTopicIndicators topicIndicatorPositionJ?
-		// TODO: (Mans) Is this an OBOE? Why not nrTopicIndicators = 0 or <= maxDocLen		
-		for(int nrTopicIndicators = 1; nrTopicIndicators < maxDocLen; nrTopicIndicators++) {
-			int nrDocsWithMoreTopicIndicators = 0; // TODO: (Mans) Why?
-			if( freqHist.length > nrTopicIndicators ) {				
-				// TODO: (Mans) Why -1?
+		for(int nrTopicIndicators = 1; nrTopicIndicators <= maxDocLen; nrTopicIndicators++) {
+			// nrDocsWithMoreTopicIndicators is number of documents assigned nrTopicIndicators (J in paper) topic indicators
+			int nrDocsWithMoreTopicIndicators = 0;
+			if( freqHist.length >= nrTopicIndicators ) {				
 				nrDocsWithMoreTopicIndicators = freqHist[nrTopicIndicators-1];
 			}
 			//System.out.println("nrDocsWithMoreThanDoclengthTopicIndicators: " + nrDocsWithMoreThanDoclengthTopicIndicators  + " docLength: " + docLength);
@@ -965,8 +964,18 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			int bsample = 0;
 			// Only sample if trials != 0, otherwise sample = 0;
 			if(nrDocsWithMoreTopicIndicators != 0) {
-				double p = gamma / (gamma + nrTopicIndicators - 1);
-				// TODO: (Mans) I found out this is wrong yesterday. It should be (\alpha Psi_k) / (\alpha Psi_k + nrTopicIndicators - 1)				
+				//double p = gamma / (gamma + nrTopicIndicators - 1);
+				double nom = (alpha  * psi_k);
+				double denom = ((alpha  * psi_k) + nrTopicIndicators - 1);
+				double p;
+				// 0 / 0 should => 1
+				if(nom==0.0 && denom == 0.0) {
+					p = 1;
+				} else {
+					p = nom / denom;
+				}
+				// Smooth out rounding errors...
+				if(p> 1) p = 1.0;				
 				bsample = BinomialSampler.rbinom(nrDocsWithMoreTopicIndicators, p);
 			}
 			//System.err.println("Binomial sample: Trials: " + trials + " probability: " + p + " => " + bsample);
@@ -1002,7 +1011,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return numTypes;
 	}
 
-	// TODO: (Mans) Where is this used? Do we have test suites that cover this part?
+	// TODO: Unit tests
 	protected int updateNrActiveTopics(int[] emptyTopics, List<Integer> activeTopics, int[] topicOcurrenceCount, int numTopics) {
 		for (int i = 0; i < emptyTopics.length; i++) {
 			if(activeTopics.contains(emptyTopics[i])) {
