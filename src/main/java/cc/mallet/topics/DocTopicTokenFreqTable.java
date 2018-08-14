@@ -39,8 +39,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
  * @author Leif Jonsson
  *
  */
-
-// TODO: (Mans) I guess this is a map/sparse representation that works in parallel?
 public class DocTopicTokenFreqTable {
 
 	Int2ObjectSortedMap<AtomicInteger> [] docTokenFreqMap;
@@ -79,7 +77,7 @@ public class DocTopicTokenFreqTable {
 	 * @param topic Which topic frequency table to return
 	 * @return Reverse Cumulative Frequency table
 	 */
-	// TODO: (Mans) Will this return a \max{n_d} long array?
+	// TODO: Fix test suite with example
 	public int [] getReverseCumulativeSum(int topic) {
 		Int2ObjectSortedMap<AtomicInteger> countTable = docTokenFreqMap[topic];
 
