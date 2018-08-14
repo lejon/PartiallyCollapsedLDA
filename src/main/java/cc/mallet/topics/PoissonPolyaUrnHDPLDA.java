@@ -950,12 +950,13 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		
 		// Sum over c_j_k
 		int lSum = 0;
-		// TODO: (Mans) Maybe call nrTopicIndicators topicIndicatorPositionJ?
-		// TODO: (Mans) Is this an OBOE? Why not nrTopicIndicators = 0 or <= maxDocLen		
-		for(int nrTopicIndicators = 1; nrTopicIndicators < maxDocLen; nrTopicIndicators++) {
-			int nrDocsWithMoreTopicIndicators = 0; // TODO: (Mans) Why?
+		// nrTopicIndicators is j in paper
+		// nrDocsWithMoreTopicIndicators is D(j,k = topic) in paper	
+		// TODO: nrTopicIndicators < maxDocLen should be nrTopicIndicators <= maxDocLen
+		for(int nrTopicIndicators = 1; nrTopicIndicators <= maxDocLen; nrTopicIndicators++) {
+			int nrDocsWithMoreTopicIndicators = 0;
+			// TODO: freqHist.length > nrTopicIndicators should be freqHist.length >= nrTopicIndicators
 			if( freqHist.length > nrTopicIndicators ) {				
-				// TODO: (Mans) Why -1?
 				nrDocsWithMoreTopicIndicators = freqHist[nrTopicIndicators-1];
 			}
 			//System.out.println("nrDocsWithMoreThanDoclengthTopicIndicators: " + nrDocsWithMoreThanDoclengthTopicIndicators  + " docLength: " + docLength);
