@@ -10,6 +10,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
 
+// TODO: (Mans) maybe specify that it is essentially a frequency of m_{k,d} and is a matrix of size \max{n_d} \times K
 /**
  * A frequency table that holds a frequency table per topic.
  * The frequency table tells how many documents that contain a
@@ -26,10 +27,13 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
  * Y: Nr. documents that has X topic indicators:	 4	10	50	12	 7	3	1
  * X: Nr. topic indicators of topic 3:			 	 1	 2	 3	 4	5	6
  * 
+ // TODO: (Mans) I do not understand this.
  * 
  * @author Leif Jonsson
  *
  */
+
+// TODO: (Mans) I guess this is a map/sparse representation that works in parallel?
 public class DocTopicTokenFreqTable {
 
 	Int2ObjectSortedMap<AtomicInteger> [] docTokenFreqMap;
@@ -63,6 +67,7 @@ public class DocTopicTokenFreqTable {
 	 * @param topic Which topic frequency table to return
 	 * @return Reverse Cumulative Frequency table
 	 */
+	// TODO: (Mans) Will this return a \max{n_d} long array?
 	public int [] getReverseCumulativeSum(int topic) {
 		Int2ObjectSortedMap<AtomicInteger> countTable = docTokenFreqMap[topic];
 
