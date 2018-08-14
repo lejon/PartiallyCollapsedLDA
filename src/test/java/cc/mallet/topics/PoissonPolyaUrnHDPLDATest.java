@@ -13,6 +13,48 @@ import cc.mallet.types.BinomialSampler;
 public class PoissonPolyaUrnHDPLDATest {
 
 	//	@Test
+	//	public void testSampleLOneDocAnalytic() {
+	//		int numTopics = 5;
+	//		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+	//		int numDocs = 1;
+	//		int [][] documentLocalTopicCounts = {{3,3,3,2,1}};
+	//
+	//		for (int docNo = 0; docNo < numDocs; docNo++) {
+	//			int [] localTopicCounts = documentLocalTopicCounts[docNo];
+	//			for (int i = 0; i < numTopics; i++) {
+	//				if(localTopicCounts[i]!=0) {
+	//					docTopicTokenFreqTable.increment(i,(int)localTopicCounts[i]);
+	//				}
+	//			}
+	//		}
+	//
+	//		int topic = 0;
+	//		System.out.println("Freq table: \n" + docTopicTokenFreqTable);
+	//		System.out.println("Reverse cumsum 0: " + Arrays.toString(docTopicTokenFreqTable.getReverseCumulativeSum(topic)));
+	//		double [] psi = {0.5,0.2,0.1,0.1,0.1}; // psi_k
+	//		double alpha = 1;	
+	//		// Mans comment: I have not done this correctly I think
+	//		WalkerAliasTable [][] binomialTables = PoissonPolyaUrnHDPLDA.initBinomialAlias(6, gamma, 50, 50, 50);
+	//		
+	//		// 		
+	//		// True values computed using the Anonika distribution (9) in paper
+	//		double [][] trueProp = {{0.53333333, 0.40000000, 0.06666667,0,0}, {0.75757576, 0.22727273, 0.01515152,0,0}, {0.865800866, 0.129870130, 0.0043290041, 0, 0}, {0.90909091, 0.09090909,0,0,0}, {1,0,0,0,0}};
+	//		int sampleSize = 10000;
+	//		for (int topicIdx = 0; topicIdx < numTopics; topicIdx++)
+	//			int [] lSamples = new int[200];
+	//			for (int i = 0; i < sampleSize; i++) {
+	//				// Mans comment: This need to use the correct parameters
+	//				int l_k = PoissonPolyaUrnHDPLDA.sampleL(topic, gamma, 6, docTopicTokenFreqTable, binomialTables);
+	//				lSamples[l_k]++;
+	//			}
+	//			double test1 = cs.chiSquareTestDataSetsComparison(lSamples, trueProp[topicIdx]*sampleSize);
+	//		}
+	//		System.out.println("Samples: " + Arrays.toString(lSamples));
+	//	}
+	
+	
+	
+	//	@Test
 	//	public void testSampleL() {
 	//		int numTopics = 5;
 	//		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
