@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
 
-// TODO: (Mans) maybe specify that it is essentially a frequency of m_{k,d} and is a matrix of size \max{n_d} \times K
 /**
  * A frequency table that holds a frequency table per topic.
  * The frequency table tells how many documents that contain a
@@ -21,19 +20,25 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
  *  4 docs have 1 topic indicators of topic 3
  * 10 docs have 2 topic indicators of topic 3
  * 50 docs have 3 topic indicators of topic 3
+ * 12 docs have 4 topic indicators of topic 3 
+ *  7 docs have 5 topic indicators of topic 3 
+ *  3 docs have 6 topic indicators of topic 3  
+ *  1 docs have 7 topic indicators of topic 3   
+ * 
+ *  A matrix Q_{kp} of size K \times \max{n_d}, wher k is topic and p is the m_dk frequency.
+ *     [ 0  0  0  0 0 0 0 ]
+ * Q = [ 0  0  0  0 0 0 0 ]
+ *     [ 4 10 50 12 7 3 1 ]
  * 
  * I.e we have a histogram for topic 3
  * 
  * Y: Nr. documents that has X topic indicators:	 4	10	50	12	 7	3	1
  * X: Nr. topic indicators of topic 3:			 	 1	 2	 3	 4	5	6
  * 
- // TODO: (Mans) I do not understand this.
  * 
  * @author Leif Jonsson
  *
  */
-
-// TODO: (Mans) I guess this is a map/sparse representation that works in parallel?
 public class DocTopicTokenFreqTable {
 
 	Int2ObjectSortedMap<AtomicInteger> [] docTokenFreqMap;
@@ -64,10 +69,15 @@ public class DocTopicTokenFreqTable {
 	 * This table allows us to answer the question:
 	 * "How many documents (Y) have more than X number of topic indicators for topic K"
 	 * 
+	 *  A matrix D(k,j) of size K \times \max{n_d}, where k is topic and j is the number of document with at least j topic indicators.
+	 * 
+         *          [ 0   0  0  0  0 0 0 ]
+         * D(k,j) = [ 0   0  0  0  0 0 0 ]
+         *          [ 87 83 73 23 11 4 1 ]
 	 * @param topic Which topic frequency table to return
 	 * @return Reverse Cumulative Frequency table
 	 */
-	// TODO: (Mans) Will this return a \max{n_d} long array?
+	// TODO: Fix test suite with example
 	public int [] getReverseCumulativeSum(int topic) {
 		Int2ObjectSortedMap<AtomicInteger> countTable = docTokenFreqMap[topic];
 
