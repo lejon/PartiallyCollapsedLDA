@@ -10,7 +10,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
 
-// TODO: (Mans) maybe specify that it is essentially a frequency of m_{k,d} and is a matrix of size \max{n_d} \times K
 /**
  * A frequency table that holds a frequency table per topic.
  * The frequency table tells how many documents that contain a
@@ -21,6 +20,11 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
  *  4 docs have 1 topic indicators of topic 3
  * 10 docs have 2 topic indicators of topic 3
  * 50 docs have 3 topic indicators of topic 3
+ * 
+ *  A matrix of size K \times \max{n_d}
+ * [ 0  0  0 ]
+ * [ 0  0  0 ] = Q
+ * [ 4 10 50 ]
  * 
  * I.e we have a histogram for topic 3
  * 
