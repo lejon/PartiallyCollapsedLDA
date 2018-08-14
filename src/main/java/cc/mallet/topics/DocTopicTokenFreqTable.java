@@ -71,6 +71,10 @@ public class DocTopicTokenFreqTable {
 	 * This table allows us to answer the question:
 	 * "How many documents (Y) have more than X number of topic indicators for topic K"
 	 * 
+	 *  A matrix Q_{kp} of size K \times \max{n_d}, wher k is topic and p is the m_dk frequency.
+         *          [ 0   0  0  0  0 0 0 ]
+         * D(k,j) = [ 0   0  0  0  0 0 0 ]
+         *          [ 87 83 73 23 11 4 1 ]
 	 * @param topic Which topic frequency table to return
 	 * @return Reverse Cumulative Frequency table
 	 */
