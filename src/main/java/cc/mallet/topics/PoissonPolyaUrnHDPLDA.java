@@ -951,9 +951,12 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		
 		// Sum over c_j_k
 		int lSum = 0;
+		// nrTopicIndicators is j in paper
+		// nrDocsWithMoreTopicIndicators is D(j,k = topic) in paper	
+		// TODO: nrTopicIndicators < maxDocLen should be nrTopicIndicators <= maxDocLen
 		for(int nrTopicIndicators = 1; nrTopicIndicators <= maxDocLen; nrTopicIndicators++) {
-			// nrDocsWithMoreTopicIndicators is number of documents assigned nrTopicIndicators (J in paper) topic indicators
 			int nrDocsWithMoreTopicIndicators = 0;
+			// TODO: freqHist.length > nrTopicIndicators should be freqHist.length >= nrTopicIndicators
 			if( freqHist.length >= nrTopicIndicators ) {				
 				nrDocsWithMoreTopicIndicators = freqHist[nrTopicIndicators-1];
 			}
@@ -1010,6 +1013,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	public int getNoTypes() {
 		return numTypes;
 	}
+
 
 	// TODO: Unit tests
 	protected int updateNrActiveTopics(int[] emptyTopics, List<Integer> activeTopics, int[] topicOcurrenceCount, int numTopics) {
