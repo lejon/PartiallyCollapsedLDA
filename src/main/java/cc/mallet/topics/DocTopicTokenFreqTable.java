@@ -20,11 +20,12 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
  *  4 docs have 1 topic indicators of topic 3
  * 10 docs have 2 topic indicators of topic 3
  * 50 docs have 3 topic indicators of topic 3
+ * 1  doc  have 4 topic indicators of topic 3 
  * 
- *  A matrix of size K \times \max{n_d}
- * [ 0  0  0 ]
- * [ 0  0  0 ] = Q
- * [ 4 10 50 ]
+ *  A matrix Q_{kp} of size K \times \max{n_d}, wher k is topic and p is the m_dk frequency.
+ *     [ 0  0  0 0 ]
+ * Q = [ 0  0  0 0 ]
+ *     [ 4 10 50 1 ]
  * 
  * I.e we have a histogram for topic 3
  * 
