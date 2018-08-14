@@ -1003,7 +1003,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return numTypes;
 	}
 
-	// TODO: (Mans) Where is this used? Do we have test suites that cover this part?
+	// TODO: Fix test suites that cover this part.
 	protected int updateNrActiveTopics(int[] emptyTopics, List<Integer> activeTopics, int[] topicOcurrenceCount, int numTopics) {
 		for (int i = 0; i < emptyTopics.length; i++) {
 			if(activeTopics.contains(emptyTopics[i])) {
