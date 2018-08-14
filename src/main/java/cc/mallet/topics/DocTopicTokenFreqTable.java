@@ -71,7 +71,8 @@ public class DocTopicTokenFreqTable {
 	 * This table allows us to answer the question:
 	 * "How many documents (Y) have more than X number of topic indicators for topic K"
 	 * 
-	 *  A matrix Q_{kp} of size K \times \max{n_d}, wher k is topic and p is the m_dk frequency.
+	 *  A matrix D(k,j) of size K \times \max{n_d}, where k is topic and j is the number of document with at least j topic indicators.
+	 * 
          *          [ 0   0  0  0  0 0 0 ]
          * D(k,j) = [ 0   0  0  0  0 0 0 ]
          *          [ 87 83 73 23 11 4 1 ]
