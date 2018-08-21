@@ -48,16 +48,15 @@ import static java.lang.Math.exp;
 
 public class BinomialSampler {
 
-	static double c, fm, npq, p1, p2, p3, p4, qn;
-	static double xl, xll, xlr, xm, xr;
-
-	static double psave = -1.0;
-	static int nsave = -1;
-	static int m;
 
 	public static int rbinom(double nin, double pp)
 	{
-		/* FIXME: These should become THREAD_specific globals : */
+		double c=0, fm=0, npq=0, p1=0, p2=0, p3=0, p4=0, qn=0;
+		double xl=0, xll=0, xlr=0, xm=0, xr=0;
+		
+		double psave = -1.0;
+		int nsave = -1;
+		int m = 0;
 
 
 		double f, f1, f2, u, v, w, w2, x, x1, x2, z, z2;
@@ -97,7 +96,7 @@ public class BinomialSampler {
 			if (np < 30.0) {
 				/* inverse cdf logic for mean less than 30 */
 				qn = pow(q, n);
-				return l_np_small(n, g, r);
+				return l_np_small(n, g, r, qn, psave);
 			} else {
 				ffm = np + p;
 				m = (int) ffm;
@@ -118,7 +117,7 @@ public class BinomialSampler {
 			}
 		} else if (n == nsave) {
 			if (np < 30.0)
-				return l_np_small(n, g, r);
+				return l_np_small(n, g, r, qn, psave);
 		}
 
 		/*-------------------------- np = n*p >= 30 : ------------------- */
@@ -205,7 +204,7 @@ public class BinomialSampler {
 		//		return (double)ix;
 	}
 
-	static int l_np_small(int n, double g, double r) {
+	static int l_np_small(int n, double g, double r, double qn, double psave) {
 		int ix;
 		for(;;) {
 			ix = 0;
