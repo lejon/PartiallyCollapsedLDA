@@ -901,7 +901,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			topicOcurrenceCount[topic]++;
 			// First part of Psi sampling. Normalization must be done 
 			// in postIteration when all Psi_k has been sampled
-			double l_k = sampleL(topic, gamma, longestDocLength, docTopicTokenFreqTable, alphaCoef, psi[topic]);
+			double l_k = sampleL(topic, longestDocLength, docTopicTokenFreqTable, alphaCoef, psi[topic]);
 //			System.out.println("l_" + topic + " = " + l_k + " Topic Occurence:" + topicOcurrenceCount[topic]);
 			
 			// For new (not sampled by Z sampling) topics, the frequency will be 0, and l_k 
@@ -943,8 +943,9 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		}
 	}
 
-	// TODO: Test Suite: SampleL for one document should have the antoniak distribution (see pdf in eq (9) in paper)
-	static protected int sampleL(int topic, double gamma, int maxDocLen, 
+	// See. PoissonPolyaUrnHDPLDATest.testSampleLOneDocAnalytic and testSampleLSimR: 
+	// SampleL for one document should have the antoniak distribution (see pdf in eq (9) in paper)
+	static protected int sampleL(int topic, int maxDocLen, 
 			DocTopicTokenFreqTable docTopicTokenFreqTable, double alpha, double psi_k) {
 		// freqHist is D(j, k = topic)
 		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
@@ -953,10 +954,8 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		int lSum = 0;
 		// nrTopicIndicators is j in paper
 		// nrDocsWithMoreTopicIndicators is D(j,k = topic) in paper	
-		// TODO: nrTopicIndicators < maxDocLen should be nrTopicIndicators <= maxDocLen
 		for(int nrTopicIndicators = 1; nrTopicIndicators <= maxDocLen; nrTopicIndicators++) {
 			int nrDocsWithMoreTopicIndicators = 0;
-			// TODO: freqHist.length > nrTopicIndicators should be freqHist.length >= nrTopicIndicators
 			if( freqHist.length >= nrTopicIndicators ) {				
 				nrDocsWithMoreTopicIndicators = freqHist[nrTopicIndicators-1];
 			}
