@@ -245,12 +245,10 @@ public class ParallelLDA {
 				out.close();
 
 				System.out.println("Top words are: \n" + 
-						LDAUtils.formatTopWords(LDAUtils.getTopRelevanceWords(20, 
+						LDAUtils.formatTopWords(LDAUtils.getTopWords(requestedWords, 
 								model.getAlphabet().size(), 
 								model.getNoTopics(), 
-								model.getTypeTopicMatrix(),  
-								config.getBeta(LDAConfiguration.BETA_DEFAULT),
-								config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
+								model.getTypeTopicMatrix(), 
 								model.getAlphabet())));
 				System.out.println("Relevance words are: \n" + 
 						LDAUtils.formatTopWords(LDAUtils.getTopRelevanceWords(20, 
