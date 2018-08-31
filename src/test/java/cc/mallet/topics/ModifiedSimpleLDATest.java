@@ -36,6 +36,7 @@ public class ModifiedSimpleLDATest {
 		}
 		for (int i = 0; i < thetaEstimate.length; i++) {
 			docSum += thetaEstimate[i];
+			assertTrue(thetaEstimate[i]!=0.0);
 			assertTrue(thetaEstimate[i]==(localTopicCounts[i] + alpha) / alphaSum);
 		}
 		assertEquals(1.0, docSum, 0.0000000001);
@@ -47,6 +48,7 @@ public class ModifiedSimpleLDATest {
 		double docSum = 0.0;
 		for (int i = 0; i < thetaEstimate.length; i++) {
 			docSum += thetaEstimate[i];
+			assertTrue(thetaEstimate[i]!=0.0);
 			assertTrue(thetaEstimate[i]==(localTopicCounts[i] + alphas[i]) / alphaSum);
 		}
 		assertEquals(1.0, docSum, 0.0000000001);
@@ -65,6 +67,7 @@ public class ModifiedSimpleLDATest {
 		double docSum = 0.0;
 		for (int i = 0; i < thetaEstimate.length; i++) {
 			docSum += thetaEstimate[i];
+			assertTrue(thetaEstimate[i]!=0.0);
 			assertTrue(thetaEstimate[i]==(localTopicCounts[i] + alphas[i]) / alphaSum);
 		}
 		assertEquals(1.0, docSum, 0.0000000001);
@@ -78,6 +81,7 @@ public class ModifiedSimpleLDATest {
 		double docSum = 0.0;
 		for (int i = 0; i < thetaEstimate.length; i++) {
 			docSum += thetaEstimate[i];
+			assertTrue(thetaEstimate[i]!=0.0);
 			assertTrue(thetaEstimate[i]==alpha/(numTopics*alpha));
 		}
 		assertEquals(1.0, docSum, 0.0000000001);
@@ -89,6 +93,7 @@ public class ModifiedSimpleLDATest {
 		double docSum = 0.0;
 		for (int i = 0; i < thetaEstimate.length; i++) {
 			docSum += thetaEstimate[i];
+			assertTrue(thetaEstimate[i]!=0.0);
 			assertTrue(thetaEstimate[i]==(localTopicCounts[i] + alphas[i]) / alphaSum);
 		}
 		assertEquals(1.0,docSum, 0.0000000001);
