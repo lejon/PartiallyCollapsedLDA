@@ -704,11 +704,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 		}
 
 		for (int k = 0; k < numTopics; k++) {
-			if(docLength==0) {
-				thetaEstimate[k] = 0.0;
-			} else {					
-				thetaEstimate[k] = (localTopicCounts[k] + alpha[k]) / normalizer;
-			}
+			thetaEstimate[k] = (localTopicCounts[k] + alpha[k]) / normalizer;
 			if(Double.isInfinite(thetaEstimate[k]) || Double.isNaN(thetaEstimate[k]) || thetaEstimate[k] < 0) { 
 				throw new IllegalStateException("theta estimate is broken: " + " Topic=" + k + " theta est=" + thetaEstimate[k]);  
 			}
@@ -731,11 +727,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 		}
 
 		for (int k = 0; k < numTopics; k++) {
-			if(docLength==0) {
-				thetaEstimate[k] = 0.0;
-			} else {					
-				thetaEstimate[k] = (localTopicCounts[k] + alpha) / normalizer;
-			}
+			thetaEstimate[k] = (localTopicCounts[k] + alpha) / normalizer;
 			if(Double.isInfinite(thetaEstimate[k]) || Double.isNaN(thetaEstimate[k]) || thetaEstimate[k] < 0) { 
 				throw new IllegalStateException("theta estimate is broken:" + " Topic=" + k + " theta est=" + thetaEstimate[k]);  
 			}
