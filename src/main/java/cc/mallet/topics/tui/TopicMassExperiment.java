@@ -1032,5 +1032,10 @@ public class TopicMassExperiment {
 			return pc.getHDPNrStartTopics(defaultValue);
 		}
 
+		@Override
+		public boolean logTokensPerTopic(boolean logTokensPerTopic) {
+			return pc.logTokensPerTopic(logTokensPerTopic);
+		}
+
 	}
 }

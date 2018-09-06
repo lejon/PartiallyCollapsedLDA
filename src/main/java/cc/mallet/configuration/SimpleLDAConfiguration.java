@@ -44,6 +44,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private boolean saveVocabulary;
 	private boolean printPhi;
 	private boolean measureTiming;
+	private boolean logTokensPerTopic = LDAConfiguration.LOG_TOKENS_PER_TOPIC;
 	private boolean logTypeTopicDensity;
 	private boolean logDocumentDensity;
 	private String experimentOutputDirectory;
@@ -721,5 +722,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	public void setHDPNrStartTopics(int defaultValue) {
 		this.hdpNrStartTopics = defaultValue;
+	}
+
+	@Override
+	public boolean logTokensPerTopic(boolean logTokensPerTopic) {
+		return logTokensPerTopic;
 	}
 }

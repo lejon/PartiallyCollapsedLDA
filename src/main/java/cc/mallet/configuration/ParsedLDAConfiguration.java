@@ -469,5 +469,9 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		return getInteger("hdp_nr_start_topics",defaultValue);
 	}
 
-
+	@Override
+	public boolean logTokensPerTopic(boolean logTokensPerTopic) {
+		String key = "log_tokens_per_topic";
+		return getBooleanProperty(key);
+	}
 }

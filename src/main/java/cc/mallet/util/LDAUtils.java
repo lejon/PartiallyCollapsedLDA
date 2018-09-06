@@ -1587,6 +1587,34 @@ public class LDAUtils {
 		}
 	}
 	
+	public static String toRowVectorString(int[] a) {
+        if (a == null)
+            return "null";
+        int iMax = a.length - 1;
+        if (iMax == -1)
+            return "";
+
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; ; i++) {
+            b.append(a[i]);
+            if (i == iMax)
+                return b.toString();
+            b.append(", ");
+        }
+    }
+	
+	public static void writeIntRowArray(int[] iarr, String fileName) {
+		File file = new File(fileName);
+		try (FileWriter fw = new FileWriter(file, true); 
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter pw  = new PrintWriter(bw)) {
+			pw.println(toRowVectorString(iarr));
+		} catch (IOException e) {
+			throw new IllegalArgumentException("File " + file.getName()
+					+ " is unwritable : " + e.toString());
+		}
+	}
+	
 	public static void writeIntArray(int[] iarr, String fileName) {
 		File file = new File(fileName);
 		try (FileWriter fw = new FileWriter(file, false); 

@@ -40,6 +40,7 @@ public interface LDAConfiguration {
 	public static final boolean SYMMETRIC_ALPHA_DEFAULT = false;
 	public static final double HDP_GAMMA_DEFAULT = 5;
 	public static final int HDP_START_TOPICS_DEFAULT = NO_TOPICS_DEFAULT / 2;
+	public static final boolean LOG_TOKENS_PER_TOPIC = false;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -198,4 +199,6 @@ public interface LDAConfiguration {
 	public double getHDPGamma(double gammaDefault);
 
 	public int getHDPNrStartTopics(int hdpStartTopicsDefault);
+
+	public boolean logTokensPerTopic(boolean logTokensPerTopic);
 }

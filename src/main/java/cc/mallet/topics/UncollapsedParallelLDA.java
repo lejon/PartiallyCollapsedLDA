@@ -506,6 +506,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		boolean logTypeTopicDensity = config.logTypeTopicDensity(LDAConfiguration.LOG_TYPE_TOPIC_DENSITY_DEFAULT);
 		boolean logDocumentDensity = config.logDocumentDensity(LDAConfiguration.LOG_DOCUMENT_DENSITY_DEFAULT);
 		boolean logPhiDensity = config.logPhiDensity(LDAConfiguration.LOG_PHI_DENSITY_DEFAULT);
+		boolean logTokensPerTopics = config.logTokensPerTopic(LDAConfiguration.LOG_TOKENS_PER_TOPIC);
 		double density;
 		double docDensity = -1;
 		double phiDensity;
@@ -630,6 +631,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 							density, docDensity, zTimings, countTimings,phiDensity);
 					}
 					LDAUtils.logStatsToFile(stats);
+				}
+				
+				if(logTokensPerTopics) {
+					LDAUtils.writeIntRowArray(tokensPerTopic, loggingPath +  "/tokens_per_topic.csv");
 				}
 			}
 
