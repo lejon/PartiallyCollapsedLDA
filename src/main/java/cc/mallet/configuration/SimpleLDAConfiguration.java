@@ -5,16 +5,16 @@ import cc.mallet.util.LoggingUtils;
 public class SimpleLDAConfiguration implements LDAConfiguration {
 	LoggingUtils logUtil;
 	private String scheme;
-	private Integer noTopics;
-	private Double alpha;
-	private Double beta;
-	private Double lambda;
-	private Integer noIters;
-	private Integer noBatches;
-	private Integer noTopicBatches;
-	private Integer rareThreshold;
-	private Integer tfIdfThreshold;
-	private Integer topicInterval;
+	private Integer noTopics       = LDAConfiguration.NO_TOPICS_DEFAULT;
+	private Double alpha           = LDAConfiguration.ALPHA_DEFAULT;
+	private Double beta            = LDAConfiguration.BETA_DEFAULT;
+	private Double lambda          = LDAConfiguration.LAMBDA_DEFAULT;
+	private Integer noIters        = LDAConfiguration.NO_ITER_DEFAULT;
+	private Integer noBatches      = LDAConfiguration.NO_BATCHES_DEFAULT;
+	private Integer noTopicBatches = LDAConfiguration.NO_TOPIC_BATCHES_DEFAULT;
+	private Integer rareThreshold  = LDAConfiguration.RARE_WORD_THRESHOLD;
+	private Integer tfIdfThreshold = LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT;
+	private Integer topicInterval  = LDAConfiguration.TOPIC_INTER_DEFAULT;
 	private Integer startDiagnostic;
 	private Integer seed = 0;
 	private boolean debug = false;
@@ -35,7 +35,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private double[] fixed_split_size_doc;
 	private int skipStep = 1;
 	private boolean savePhi;
-	private int phiBurnIn;
+	private int phiBurnIn = LDAConfiguration.PHI_BURN_IN_DEFAULT;
 	private String docLengthsFilename;
 	private boolean saveDocLengths;
 	private String termFrequencyFilename;
@@ -59,14 +59,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private String phiMeansOutputFilename;
 	private boolean keepConnectingPunctuation;
 	private String stoplistFilename;
-	private int nrTopWords = -1 ;
-	private int maxDocBufferSize = -1;
-	private int phiMeanThinDefault = -1;
+	private int nrTopWords = LDAConfiguration.NO_TOP_WORDS_DEFAULT;
+	private int maxDocBufferSize = LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT;
+	private int phiMeanThinDefault = LDAConfiguration.PHI_THIN_DEFAULT;
 	private String dirichletSamplerBuilderClassName = LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_BULDER_DEFAULT;
 	private int aliasPoissonThreshold = LDAConfiguration.ALIAS_POISSON_DEFAULT_THRESHOLD;
 	private String fileRegex;
-	private Integer hyperparamOptimInterval;
-	private boolean symmetricAlpha;
+	private Integer hyperparamOptimInterval  = LDAConfiguration.HYPERPARAM_OPTIM_INTERVAL_DEFAULT;
+	private boolean symmetricAlpha = LDAConfiguration.SYMMETRIC_ALPHA_DEFAULT;
 	private double hdpGgamma = LDAConfiguration.HDP_GAMMA_DEFAULT;
 	private int hdpNrStartTopics = LDAConfiguration.HDP_START_TOPICS_DEFAULT;
 
@@ -726,6 +726,6 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 
 	@Override
 	public boolean logTokensPerTopic(boolean logTokensPerTopic) {
-		return logTokensPerTopic;
+		return this.logTokensPerTopic;
 	}
 }
