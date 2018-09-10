@@ -91,6 +91,8 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 
 	Int2IntArrayMap topicMappingTable;
 
+	int poissonNormalApproxThreshold;
+
 	public PoissonPolyaUrnHLDA(LDAConfiguration config) {
 		super(config);
 		
@@ -103,6 +105,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		// taken as the maxNumber of topics possible
 		maxTopics = numTopics;
 		alphaCoef = config.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
+		poissonNormalApproxThreshold = config.getAliasPoissonThreshold(LDAConfiguration.ALIAS_POISSON_DEFAULT_THRESHOLD);
 		
 		// Initialize G to give same effect as symmetic alpha
 		psi = new double[numTopics];
@@ -841,7 +844,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 				System.err.println("Empty topics: \n" + Arrays.toString(docTopicTokenFreqTable.getEmptyTopics()));
 			}
 			int eta_k; 
-			if(l_k>100) {
+			if(l_k>poissonNormalApproxThreshold) {
 				eta_k = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(l_k);
 			} else {				
 				PoissonDistribution pois_gamma = new PoissonDistribution(l_k);
@@ -901,7 +904,7 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 	
 	protected int sampleNrTopics(double gamma) {
 		int sample = -1;
-		if(gamma<1000) {
+		if(gamma<poissonNormalApproxThreshold) {
 			PoissonDistribution pois_gamma = new PoissonDistribution(gamma);
 			sample = pois_gamma.sample();
 		} else {
