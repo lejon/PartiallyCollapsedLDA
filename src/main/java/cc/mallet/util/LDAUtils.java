@@ -93,7 +93,11 @@ public class LDAUtils {
 		return buildSerialPipe(stoplistFile, null);
 	}
 	
-	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet) { 		
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet) {
+		return buildSerialPipe(stoplistFile, dataAlphabet, null);
+	}
+	
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) { 		
 		int maxBufSize = 10000;
 		SimpleTokenizerLarge tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
 		
@@ -108,7 +112,14 @@ public class LDAUtils {
 		CharSequenceLowercase csl = new CharSequenceLowercase();
 		StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
 
-		Target2Label ttl = new Target2Label ();
+		LabelAlphabet tAlphabet = null;
+		if(targetAlphabet==null) {
+			tAlphabet = new LabelAlphabet();
+		} else {
+			tAlphabet = targetAlphabet;
+		}
+
+		Target2Label ttl = new Target2Label (tAlphabet);
 		
 		pipes.add(csl);
 		pipes.add(tokenizer);
@@ -179,8 +190,17 @@ public class LDAUtils {
 		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, true, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, null);
 	}
 	
+	public static InstanceList loadInstances(String inputFile, String stoplistFile, int pruneCount, Alphabet dataAlphabet) throws FileNotFoundException {
+		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, true, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, dataAlphabet);
+	}
+	
 	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers) throws FileNotFoundException {
 		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, null);
+	}
+
+	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers, 
+			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) throws FileNotFoundException {
+		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, keepNumbers,	maxBufSize, keepConnectors, dataAlphabet, null);
 	}
 	
 	/**
@@ -195,7 +215,8 @@ public class LDAUtils {
 	 * @return An InstanceList with the data in the input file
 	 * @throws FileNotFoundException
 	 */
-	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers, int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) throws FileNotFoundException {
+	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers, 
+			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
 		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
@@ -271,8 +292,15 @@ public class LDAUtils {
 		CharSequenceLowercase csl = new CharSequenceLowercase();
 		StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
 
-		Target2Label ttl = new Target2Label ();
-		
+		LabelAlphabet tAlphabet = null;
+		if(targetAlphabet==null) {
+			tAlphabet = new LabelAlphabet();
+		} else {
+			tAlphabet = targetAlphabet;
+		}
+
+		Target2Label ttl = new Target2Label (tAlphabet);
+
 		pipes.add(csl);
 		pipes.add(tokenizer);
 		pipes.add(sl2fs);
@@ -290,6 +318,11 @@ public class LDAUtils {
 		return loadInstancesKeep(inputFile, stoplistFile, keepCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, null);
 	}
 	
+	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, 
+			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) throws FileNotFoundException {
+		return loadInstancesKeep(inputFile, stoplistFile, keepCount, keepNumbers, 
+				maxBufSize, keepConnectors, dataAlphabet, null);
+	}
 	/**
 	 * Loads instances and keeps the <code>keepCount</code> number of words with 
 	 * the highest TF-IDF
@@ -303,7 +336,8 @@ public class LDAUtils {
 	 * @return An InstanceList with the data in the input file
 	 * @throws FileNotFoundException
 	 */
-	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) throws FileNotFoundException {
+	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, 
+			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
 		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
@@ -379,7 +413,14 @@ public class LDAUtils {
 		CharSequenceLowercase csl = new CharSequenceLowercase();
 		StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
 
-		Target2Label ttl = new Target2Label ();
+		LabelAlphabet tAlphabet = null;
+		if(targetAlphabet==null) {
+			tAlphabet = new LabelAlphabet();
+		} else {
+			tAlphabet = targetAlphabet;
+		}
+
+		Target2Label ttl = new Target2Label (tAlphabet);
 		
 		pipes.add(csl);
 		pipes.add(tokenizer);
@@ -1657,10 +1698,16 @@ public class LDAUtils {
 			Integer rareThreshold, boolean keepNumbers, int maxDocumentBufferSize, boolean keepConnectors, Alphabet alphabet) {
 			return loadInstanceDirectories(new String[] {directory}, fileRegex, stoplistFile, rareThreshold,
 				 keepNumbers, maxDocumentBufferSize, keepConnectors, alphabet);
-	}	
-
+	}
+	
 	public static InstanceList loadInstanceDirectories(String [] directories, final String fileRegex, String stoplistFile, Integer keepCount,
 			boolean keepNumbers, int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) {
+		return loadInstanceDirectories(directories, fileRegex, stoplistFile, keepCount,
+				keepNumbers, maxBufSize, keepConnectors, dataAlphabet, null);
+	}
+
+	public static InstanceList loadInstanceDirectories(String [] directories, final String fileRegex, String stoplistFile, Integer keepCount,
+			boolean keepNumbers, int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) {
 		
 		File [] fdirectories = new File[directories.length];
 		for (int i = 0; i < fdirectories.length; i++) {
@@ -1785,7 +1832,16 @@ public class LDAUtils {
 		pipes.add(reMatchPipe);
 		
 		pipes.add(sl2fs);
-		Target2Label ttl = new Target2Label ();
+
+		LabelAlphabet tAlphabet = null;
+		if(targetAlphabet==null) {
+			tAlphabet = new LabelAlphabet();
+		} else {
+			tAlphabet = targetAlphabet;
+		}
+
+		Target2Label ttl = new Target2Label (tAlphabet);
+
 		pipes.add(ttl);
 
 		Pipe serialPipe = new SerialPipes(pipes);
