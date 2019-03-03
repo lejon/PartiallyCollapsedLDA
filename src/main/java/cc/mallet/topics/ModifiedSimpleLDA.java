@@ -73,7 +73,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	
 	// Structures for hyperparameter optimization 
 	protected AtomicInteger [][] documentTopicHistogram;
-	protected int longestDocLength = 0;
+	protected int longestDocLength = -1;
 	protected boolean saveHistStats = false;
 
 	protected static volatile boolean abort = false;

@@ -28,7 +28,6 @@ import cc.mallet.types.PolyaUrnDirichlet;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
-import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
@@ -57,11 +56,13 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	DocTopicTokenFreqTable docTopicTokenFreqTable; 
 	int nrStartTopics;
 	// numTopics is the same as K_max in paper, the maximum number of topics.
+	
 	// activeTopicHistory, activeTopicInDataHistory,topicOcurrenceCount is only used for post analysis, not used in algorithm.
 	List<Integer> activeTopicHistory = new ArrayList<Integer>(); 
 	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
 	// topicOcurrenceCount stores how many times the topic has been active?
 	int [] topicOcurrenceCount;
+	
 	// The prior Gamma distribution
 	GammaDist gd;
 //	AtomicInteger countBernBin = new AtomicInteger();
@@ -69,8 +70,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 //	AtomicInteger countExactBin = new AtomicInteger();
 //	AtomicInteger countAliasBin = new AtomicInteger();
 //	AtomicInteger countNormalBin = new AtomicInteger();
-	
-	protected double[][] phitrans;
 
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
@@ -107,8 +106,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			activeTopics.add(i);
 		}
 		
-		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
-		
 		// Here we set Gamma, the prior base measure
 		//gd = new UniformGamma();
 		gd = new GeometricGamma(1.0 / (1+gamma));
@@ -128,10 +125,11 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 
 		aliasTables = new WalkerAliasTable[numTypes];
 		typeNorm    = new double[numTypes];
-		phitrans    = new double[numTypes][numTopics];
 		phiDirichletPrior = new Dirichlet(numTypes, beta);
 
 		super.addInstances(training);
+		
+		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,longestDocLength);
 	}
 
 	
@@ -177,12 +175,11 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		public WalkerAliasTableBuildResult call() {
 			double [] probs = new double[numTopics];
 			double typeMass = 0; // Type prior mass
-			double [] phiType =  phitrans[type]; 
 			for (int topic = 0; topic < numTopics; topic++) {
 				// In the HDP the sampled psi takes the place of the alpha vector in LDA but
 				// it is still multiplied with the LDA alpha scalar (alphaCoef)
-				typeMass += probs[topic] = phiType[topic] * alphaCoef * psiSampler.getPsi()[topic];
-				if(phiType[topic]!=0) {
+				typeMass += probs[topic] = phi[topic][type] * alphaCoef * psiSampler.getPsi()[topic];
+				if(phi[topic][type]!=0) {
 					int newSize = nonZeroTypeTopicColIdxs[type]++;
 					nonZeroTypeTopicIdxs[type][newSize] = topic;
 				}
@@ -226,13 +223,13 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		psiSampler.finalizeSampling();
 		
 		// Reset frequency table
-		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		docTopicTokenFreqTable.reset();
 //		System.out.println("Exact: " + countExactBin.get() + " Normal: " + countNormalBin.get() + " Table: " + countAliasBin.get() + " Bern: " + countBernBin.get() + " BernSum: " + countBernSumBin.get());
 	}
 	
 	// TODO: Could be removed if inherits from PolyaUrn LDA
 	protected void doPreIterationTableBuilding() {
-		LDAUtils.transpose(phi, phitrans);
+		//LDAUtils.transpose(phi, phitrans);
 
 		List<ParallelTableBuilder> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
@@ -440,6 +437,9 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		@Override
 		public void finalizeSampling() {
 			double [] betaPrime = new double[numTopics];
+			
+			// n = sum over l_k
+			
 //			System.out.println("Alpha: " + Arrays.toString(alpha));
 			// \Psi ~ GD(1,1,..,1, \gamma, \gamma, ..,\gamma)
 			// betaPrime = b_j (always gamma gamma) + sum_{j+1}{k+1} y_i (i.e l_k)
@@ -607,9 +607,13 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 					+ ") exceeds maxTopics (" + numTopics + ") exiting");
 				
 		if (showTopicsInterval > 0 && currentIteration % showTopicsInterval == 0) {
-			System.err.println("Active Topics: " + activeTopics.size() + "\t(diff=" + (activeTopics.size() - activeTopicHistory.get(activeTopicHistory.size()-1)) + ")" 
-			+ "\t New topics: " + newNumTopics 
-			+ "\t Active in data: " + activeInData);
+			System.err.println("Active Topics: " 
+					+ activeTopics.size() 
+					+ "\t(diff=" 
+					+ (activeTopics.size() 
+							- activeTopicHistory.get(activeTopicHistory.size()-1)) + ")" 
+							+ "\t New topics: " + newNumTopics 
+							+ "\t Active in data: " + activeInData);
 		}
 
 		//System.out.println("New num topics: " + newNumTopics);
@@ -865,16 +869,15 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			if(nonZeroTopicCntAdjusted==0) {
 				newTopic = activeTopics.get(ThreadLocalRandom.current().nextInt(activeTopics.size()));
 			} else {
-				double [] phiType =  phitrans[type]; 
 				int topic = nonZeroTopicsAdjusted[0];
-				double score = localTopicCounts[topic] * phiType[topic];
+				double score = localTopicCounts[topic] * phi[topic][type];
 				cumsum[0] = score;
 				// Now calculate and add up the scores for each topic for this word
 				// We build a cumsum indexed by topicIndex
 				int topicIdx = 1;
 				while ( topicIdx < nonZeroTopicCntAdjusted ) {
 					topic = nonZeroTopicsAdjusted[topicIdx];
-					score = localTopicCounts[topic] * phiType[topic];
+					score = localTopicCounts[topic] * phi[topic][type];
 					cumsum[topicIdx] = score + cumsum[topicIdx-1];
 					topicIdx++;
 				}
@@ -921,11 +924,9 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			
 		}
 
-		// Update the document topic count table
-		for (int topic = 0; topic < numTopics; topic++) {
-			if(localTopicCounts[topic]!=0) {
-				docTopicTokenFreqTable.increment(topic,(int)localTopicCounts[topic]);
-			}
+		// Update the document topic frequency count table
+		for (int tidx = 0; tidx < nonZeroTopicCnt; tidx++) {
+			docTopicTokenFreqTable.increment(nonZeroTopics[tidx],(int)localTopicCounts[nonZeroTopics[tidx]]);
 		}
 
 		return localTopicCounts;
@@ -933,16 +934,15 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 
 	// TODO: Can be removed if inherited from other class.
 	double calcCumSum(int type, double[] localTopicCounts, int[] nonZeroTopics, int nonZeroTopicCnt, double[] cumsum) {
-		double [] phiType =  phitrans[type]; 
 		int topic = nonZeroTopics[0];
-		double score = localTopicCounts[topic] * phiType[topic];
+		double score = localTopicCounts[topic] * phi[topic][type];
 		cumsum[0] = score;
 		// Now calculate and add up the scores for each topic for this word
 		// We build a cumsum indexed by topicIndex
 		int topicIdx = 1;
 		while ( topicIdx < nonZeroTopicCnt ) {
 			topic = nonZeroTopics[topicIdx];
-			score = localTopicCounts[topic] * phiType[topic];
+			score = localTopicCounts[topic] * phi[topic][type];
 			cumsum[topicIdx] = score + cumsum[topicIdx-1];
 			topicIdx++;
 		}
@@ -1129,21 +1129,19 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			if(nrDocsWithMoreTopicIndicators==0) break;
 			int bsample = 0;
 			// Only sample if trials != 0, otherwise sample = 0;
-			if(nrDocsWithMoreTopicIndicators != 0) {
-				//double p = gamma / (gamma + nrTopicIndicators - 1);
-				double nom = (alpha  * psi_k);
-				double denom = ((alpha  * psi_k) + nrTopicIndicators - 1);
-				double p;
-				// 0 / 0 should => 1
-				if(nom==0.0 && denom == 0.0) {
-					p = 1;
-				} else {
-					p = nom / denom;
-				}
-				// Smooth out rounding errors...
-				if(p> 1) p = 1.0;				
-				bsample = BinomialSampler.rbinom(nrDocsWithMoreTopicIndicators, p);
+			//double p = gamma / (gamma + nrTopicIndicators - 1);
+			double nom = (alpha  * psi_k);
+			double denom = ((alpha  * psi_k) + nrTopicIndicators - 1);
+			double p;
+			// 0 / 0 should => 1
+			if(nom==0.0 && denom == 0.0) {
+				p = 1;
+			} else {
+				p = nom / denom;
 			}
+			// Smooth out rounding errors...
+			if(p> 1) p = 1.0;				
+			bsample = BinomialSampler.rbinom(nrDocsWithMoreTopicIndicators, p);
 			//System.err.println("Binomial sample: Trials: " + trials + " probability: " + p + " => " + bsample);
 			lSum += bsample;
 		}

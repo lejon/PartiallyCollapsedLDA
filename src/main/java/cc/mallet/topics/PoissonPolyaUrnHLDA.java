@@ -24,7 +24,6 @@ import cc.mallet.types.PolyaUrnDirichlet;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
-import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
@@ -74,8 +73,6 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 //	AtomicInteger countExactBin = new AtomicInteger();
 //	AtomicInteger countAliasBin = new AtomicInteger();
 //	AtomicInteger countNormalBin = new AtomicInteger();
-	
-	protected double[][] phitrans;
 
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
@@ -122,7 +119,6 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		for (int i = 0; i < nrStartTopics; i++) {
 			activeTopics[i] = true;
 		}
-		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
 	}
 		
 	@Override
@@ -135,9 +131,10 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 
 		aliasTables = new WalkerAliasTable[numTypes];
 		typeNorm    = new double[numTypes];
-		phitrans    = new double[numTypes][numTopics];
 
 		super.addInstances(training);
+		
+		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,longestDocLength);
 	}
 
 	
@@ -187,12 +184,11 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		public WalkerAliasTableBuildResult call() {
 			double [] probs = new double[numTopics];
 			double typeMass = 0; // Type prior mass
-			double [] phiType =  phitrans[type]; 
 			for (int topic = 0; topic < numTopics; topic++) {
 				// In the HDP the sampled G takes the place of the alpha vector in LDA but
 				// it is still multiplied with the LDA alpha scalar
-				typeMass += probs[topic] = phiType[topic] * alphaCoef * psi[topic];
-				if(phiType[topic]!=0) {
+				typeMass += probs[topic] = phi[topic][type] * alphaCoef * psi[topic];
+				if(phi[topic][type]!=0) {
 					int newSize = nonZeroTypeTopicColIdxs[type]++;
 					nonZeroTypeTopicIdxs[type][newSize] = topic;
 				}
@@ -231,13 +227,11 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		//System.out.println("Alpha G: " + Arrays.toString(alphaG));
 		
 		// Reset frequency table
-		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		docTopicTokenFreqTable.reset();
 //		System.out.println("Exact: " + countExactBin.get() + " Normal: " + countNormalBin.get() + " Table: " + countAliasBin.get() + " Bern: " + countBernBin.get() + " BernSum: " + countBernSumBin.get());
 	}
 	
 	protected void doPreIterationTableBuilding() {
-		LDAUtils.transpose(phi, phitrans);
-
 		List<ParallelTableBuilder> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
 		if(topicTypeIndices!=null) {
@@ -623,17 +617,16 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 			// Document and type sparsity removed all (but one?) topics, just use the prior contribution
 			if(nonZeroTopicCntAdjusted==0) {
 				newTopic = (int) Math.floor(u * numTopics); // uniform (0,1)
-			} else {
-				double [] phiType =  phitrans[type]; 
+			} else { 
 				int topic = nonZeroTopicsAdjusted[0];
-				double score = localTopicCounts[topic] * phiType[topic];
+				double score = localTopicCounts[topic] * phi[topic][type];
 				cumsum[0] = score;
 				// Now calculate and add up the scores for each topic for this word
 				// We build a cumsum indexed by topicIndex
 				int topicIdx = 1;
 				while ( topicIdx < nonZeroTopicCntAdjusted ) {
 					topic = nonZeroTopicsAdjusted[topicIdx];
-					score = localTopicCounts[topic] * phiType[topic];
+					score = localTopicCounts[topic] * phi[topic][type];
 					cumsum[topicIdx] = score + cumsum[topicIdx-1];
 					topicIdx++;
 				}
@@ -690,17 +683,16 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		return localTopicCounts;
 	}
 
-	double calcCumSum(int type, double[] localTopicCounts, int[] nonZeroTopics, int nonZeroTopicCnt, double[] cumsum) {
-		double [] phiType =  phitrans[type]; 
+	double calcCumSum(int type, double[] localTopicCounts, int[] nonZeroTopics, int nonZeroTopicCnt, double[] cumsum) { 
 		int topic = nonZeroTopics[0];
-		double score = localTopicCounts[topic] * phiType[topic];
+		double score = localTopicCounts[topic] * phi[topic][type];
 		cumsum[0] = score;
 		// Now calculate and add up the scores for each topic for this word
 		// We build a cumsum indexed by topicIndex
 		int topicIdx = 1;
 		while ( topicIdx < nonZeroTopicCnt ) {
 			topic = nonZeroTopics[topicIdx];
-			score = localTopicCounts[topic] * phiType[topic];
+			score = localTopicCounts[topic] * phi[topic][type];
 			cumsum[topicIdx] = score + cumsum[topicIdx-1];
 			topicIdx++;
 		}

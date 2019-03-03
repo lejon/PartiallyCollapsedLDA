@@ -1,14 +1,9 @@
 package cc.mallet.topics;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.commons.lang.ArrayUtils;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMaps;
 
 /**
  * A frequency table that holds a frequency table per topic.
@@ -43,24 +38,39 @@ public class DocTopicTokenFreqTable {
 
 	Int2ObjectSortedMap<AtomicInteger> [] docTokenFreqMap;
 	int numTopics;
+	int maxFreq = -1;
+	boolean [] nonEmptyTopics;
 
-	public DocTopicTokenFreqTable(int numTopics) {
+	@SuppressWarnings("unchecked")
+	public DocTopicTokenFreqTable(int numTopics, int maxFreq) {
 		this.numTopics = numTopics;
-		docTokenFreqMap = new Int2ObjectSortedMap[numTopics]; 
-		// Initialize
+		this.maxFreq = maxFreq;
+		docTokenFreqMap = new Int2ObjectSortedMap[numTopics];
+		nonEmptyTopics = new boolean[numTopics];
+		// Initialize 
 		for (int topic = 0; topic < numTopics; topic++) {			
-			docTokenFreqMap[topic] =  Int2ObjectSortedMaps.synchronize(new Int2ObjectAVLTreeMap<AtomicInteger>());
+			//docTokenFreqMap[topic] =  Int2ObjectSortedMaps.synchronize(new Int2ObjectAVLTreeMap<AtomicInteger>());
+			docTokenFreqMap[topic] =  new Int2ObjectAVLTreeMap<AtomicInteger>();
+			for(int tokenFreq = 0; tokenFreq <= maxFreq; tokenFreq++) {
+				docTokenFreqMap[topic].put(tokenFreq, new AtomicInteger(0));
+			}
 		}
+	}
+	
+	public void reset() {
+		for (int topic = 0; topic < numTopics; topic++) {			
+			for(int tokenFreq = 0; tokenFreq <= maxFreq; tokenFreq++) {
+				docTokenFreqMap[topic].get(tokenFreq).set(0);
+			}
+		}		
 	}
 
 	public void increment(int topic, int tokenFreq) {
 		if(topic<0||topic>=numTopics) {
 			throw new IndexOutOfBoundsException("DocTopicTokenFreqTable only contains " + numTopics + " topics. " + topic + " is out of range");
 		}
-		if(docTokenFreqMap[topic].get(tokenFreq)==null) {
-			docTokenFreqMap[topic].put(tokenFreq, new AtomicInteger(0));
-		}
 		docTokenFreqMap[topic].get(tokenFreq).incrementAndGet();
+		nonEmptyTopics[topic] = tokenFreq > 0;
 	}
 
 	/**
@@ -70,10 +80,11 @@ public class DocTopicTokenFreqTable {
 	 * "How many documents (Y) have more than X number of topic indicators for topic K"
 	 * 
 	 *  A matrix D(k,j) of size K \times \max{n_d}, where k is topic and j is the number of document with at least j topic indicators.
+	 *  Where \max{n_d} is the length of the longest document in the corpus
 	 * 
-         *          [ 0   0  0  0  0 0 0 ]
-         * D(k,j) = [ 0   0  0  0  0 0 0 ]
-         *          [ 87 83 73 23 11 4 1 ]
+     *          [ 0   0  0  0  0 0 0 ]
+     * D(k,j) = [ 0   0  0  0  0 0 0 ]
+     *          [ 87 83 73 23 11 4 1 ]
 	 * @param topic Which topic frequency table to return
 	 * @return Reverse Cumulative Frequency table
 	 */
@@ -83,7 +94,7 @@ public class DocTopicTokenFreqTable {
 
 		int maxIdx = 0;
 		for (int key : countTable.keySet()) {
-			if(key>maxIdx) {
+			if(key>maxIdx && countTable.get(key).get()!=0) {
 				maxIdx = key; 
 			}
 		}
@@ -117,23 +128,32 @@ public class DocTopicTokenFreqTable {
 	}
 
 	public int[] getEmptyTopics() {
-		List<Integer> emptyTopics = new ArrayList<Integer>();
-		
-		for (int topic = 0; topic < numTopics; topic++) {
-			if(getReverseCumulativeSum(topic).length==0) {
-				emptyTopics.add(topic);
+		int emptyCnt = 0;
+		for(int i = 0; i < nonEmptyTopics.length; i++) {
+			if(!nonEmptyTopics[i]) {
+				emptyCnt++;
 			}
 		}
-		
-		int[] intArray = ArrayUtils.toPrimitive(emptyTopics.toArray(new Integer[0]));
-		return intArray;
 
+		int [] emptyTopics = new int[emptyCnt];
+		int cnt = 0;
+		for(int i = 0; i < nonEmptyTopics.length; i++) {
+			if(!nonEmptyTopics[i]) {
+				emptyTopics[cnt++] = i;
+			}
+		}
+		return emptyTopics;
 	}
-
+	
 	public int getNumTopics() {
 		return numTopics;
 	}
 
+	// TODO: This should be thread safe
+	// But it is hard to make it thread safe without introducing a global
+	// lock on the class, and we don't want to do that since that would
+	// degrade performance on increment and we don't want that
+	// WARNING: Not thread safe, should not be called from multiple threads
 	public void moveTopic(int oldTopicPos, int newTopicPos) {
 		Int2ObjectSortedMap<AtomicInteger> tmp = docTokenFreqMap[newTopicPos];
 		docTokenFreqMap[newTopicPos] = docTokenFreqMap[oldTopicPos];

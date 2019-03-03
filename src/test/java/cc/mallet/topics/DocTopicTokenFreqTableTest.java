@@ -12,7 +12,7 @@ public class DocTopicTokenFreqTableTest {
 	@Test
 	public void testEmptyTable() {
 		int numTopics = 3;
-		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,0);
 		
 		int [][] expectedReverseHist = {{}, {},{}};
 		
@@ -28,7 +28,7 @@ public class DocTopicTokenFreqTableTest {
 	@Test
 	public void testApi() {
 		int numTopics = 3;
-		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,2);
 		int [][] documentLocalTopicCounts = {{1,0,0}, {2,0,0}, {2,0,0}};
 		int numDocs = documentLocalTopicCounts.length;
 
@@ -53,7 +53,7 @@ public class DocTopicTokenFreqTableTest {
 	@Test
 	public void test3Docs() {
 		int numTopics = 3;
-		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,6);
 		int numDocs = 3;
 		int [][] documentLocalTopicCounts = {{0,5,1}, {1,1,0},{3,1,1}};
 
@@ -80,7 +80,7 @@ public class DocTopicTokenFreqTableTest {
 	@Test
 	public void testEmptyTopics() {
 		int numTopics = 5;
-		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,6);
 		int numDocs = 3;
 		int [][] documentLocalTopicCounts = {{0,0,5,1,0}, {1,0,1,0,0},{3,0,1,1,0}};
 
@@ -107,7 +107,7 @@ public class DocTopicTokenFreqTableTest {
 	@Test
 	public void testGetEmptyTopics() {
 		int numTopics = 5;
-		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,6);
 		int numDocs = 3;
 		int [][] documentLocalTopicCounts = {{0,0,5,1,0}, {1,0,1,0,0},{3,0,1,1,0}};
 

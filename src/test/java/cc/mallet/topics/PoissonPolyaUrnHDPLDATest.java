@@ -89,7 +89,7 @@ public class PoissonPolyaUrnHDPLDATest {
 	@Test
 	public void testSampleLOneDocAnalytic() {
 		int numTopics = 5;
-		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,12);
 		int numDocs = 1;
 		int [][] documentLocalTopicCounts = {{3,3,3,2,1}};
 		int maxDocLen = 0;
@@ -153,7 +153,7 @@ public class PoissonPolyaUrnHDPLDATest {
 	@Test
 	public void testSampleLSimR() {
 		int numTopics = 5;
-		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,7);
 		int [][] documentLocalTopicCounts = {{2,1,3,1,0}, {3,0,1,0,0}, {0,0,1,1,0}};
 		int numDocs = documentLocalTopicCounts.length;
 		int maxDocLen = 0;
@@ -276,7 +276,7 @@ public class PoissonPolyaUrnHDPLDATest {
 	@Test
 	public void testSampleL() {
 		int numTopics = 5;
-		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics);
+		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,6);
 		int numDocs = 3;
 		int [][] documentLocalTopicCounts = {{0,0,5,1,0}, {1,0,1,0,0},{3,0,1,1,0}};
 		int maxDocLen = 0;
