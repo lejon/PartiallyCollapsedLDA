@@ -12,6 +12,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.topics.tui.IterationListener;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
@@ -23,7 +24,8 @@ import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 
-public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGibbsSampler{
+//public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGibbsSampler, LDASamplerWithCallback {
+public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGibbsSampler {
 	
 	protected double[][] phitrans;
 
@@ -39,6 +41,8 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	int [] nonZeroTypeTopicColIdxs = null;
 	
 	boolean staticPhiAliasTableIsBuild = false;
+
+	private IterationListener iterListener;
 	
 	public PolyaUrnSpaliasLDA(LDAConfiguration config) {
 		super(config);
@@ -153,6 +157,19 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	public void prePhi() {
 		super.prePhi();
 		Arrays.fill(nonZeroTypeTopicColIdxs,0);
+	}
+	
+//	@Override
+//	public void setIterationCallback(IterationListener iterListener) {
+//		this.iterListener = iterListener;
+//	}
+
+	@Override
+	public void postIteration() {
+		super.postIteration();
+		if(iterListener!=null) {
+			iterListener.iterationCallback(this);
+		}
 	}
 
 	@Override

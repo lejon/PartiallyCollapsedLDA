@@ -102,6 +102,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	SparseDirichlet dirichletSampler;
 	protected boolean savePhiMeans = true;
 	protected int hyperparameterOptimizationInterval;
+	int documentSplitLimit;
 
 	
 	public UncollapsedParallelLDA(LDAConfiguration config) {
@@ -113,6 +114,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		zTimings = new long[1];
 		countTimings = new long[1];
 		noTopicBatches = config.getNoTopicBatches(LDAConfiguration.NO_TOPIC_BATCHES_DEFAULT);
+		documentSplitLimit = config.getDocumentSamplerSplitLimit(LDAConfiguration.DOCUMENT_SAMPLER_SPLIT_LIMIT_DEFAULT);
 
 		debug = config.getDebug();
 		this.batchIndexes = new int[config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)];
@@ -399,6 +401,15 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		return random.nextInt(numTopics);
 	}
 
+	/**
+	 * This method can only be called from threads working
+	 * on separate topics. It is not thread safe if several threads
+	 * work on the same topic
+	 * 
+	 * @param type
+	 * @param topic
+	 * @param count
+	 */
 	protected void updateTypeTopicCount(int type, int topic, int count) {
 		topicTypeCountMapping[topic][type] += count;
 		typeTopicCounts[type][topic] += count;
@@ -412,7 +423,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 	}
 
-	protected void moveTopic(int oldTopic, int newTopic, int resetValue) {		
+	protected void moveTopic(int oldTopic, int newTopic, int resetValue) {
 		topicTypeCountMapping[newTopic] = topicTypeCountMapping[oldTopic];
 		topicTypeCountMapping[oldTopic] = new int[numTypes];
 		if(resetValue!=0) {
@@ -421,9 +432,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		for(int type = 0; type < numTypes; type++) {
 			typeTopicCounts[type][newTopic] = typeTopicCounts[type][oldTopic];
 			typeTopicCounts[type][oldTopic] = resetValue;
-			int tmpTpT = tokensPerTopic[newTopic];
-			tokensPerTopic[newTopic] = tokensPerTopic[oldTopic];
-			tokensPerTopic[oldTopic] = tmpTpT;
 			if(topicTypeCountMapping[newTopic][type]<0) {
 				System.err.println("Emergency print!");
 				debugPrintMMatrix();
@@ -432,23 +440,24 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 						+ alphabet.lookupObject(type) + "(" + type + ")");
 			}
 		}
+		int tmpTpT = tokensPerTopic[newTopic];
+		tokensPerTopic[newTopic] = tokensPerTopic[oldTopic];
+		tokensPerTopic[oldTopic] = tmpTpT;
 		
 		double [] tmpTopic = phi[newTopic];
 		phi[newTopic] = phi[oldTopic];
 		phi[oldTopic] = tmpTopic;
 	}
 
-	protected void moveTopic(int oldTopic, int newTopic) {		
+	protected void moveTopic(int oldTopic, int newTopic) {
+		int [] tmpMapping = topicTypeCountMapping[newTopic]; 
 		topicTypeCountMapping[newTopic] = topicTypeCountMapping[oldTopic];
-		topicTypeCountMapping[oldTopic] = new int[numTypes];
+		topicTypeCountMapping[oldTopic] = tmpMapping;
 		for(int type = 0; type < numTypes; type++) {
 			int tmpVal = typeTopicCounts[type][newTopic];
 			typeTopicCounts[type][newTopic] = typeTopicCounts[type][oldTopic];
 			typeTopicCounts[type][oldTopic] = tmpVal;
 			
-			int tmpCnt = tokensPerTopic[newTopic];
-			tokensPerTopic[newTopic] = tokensPerTopic[oldTopic];
-			tokensPerTopic[oldTopic] = tmpCnt;
 			if(topicTypeCountMapping[newTopic][type]<0) {
 				System.err.println("Emergency print!");
 				debugPrintMMatrix();
@@ -457,6 +466,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 						+ alphabet.lookupObject(type) + "(" + type + ")");
 			}
 		}
+		int tmpCnt = tokensPerTopic[newTopic];
+		tokensPerTopic[newTopic] = tokensPerTopic[oldTopic];
+		tokensPerTopic[oldTopic] = tmpCnt;
 		
 		double [] tmpTopic = phi[newTopic];
 		phi[newTopic] = phi[oldTopic];
@@ -870,6 +882,12 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 	}
 
+	
+	/**
+	 * 'Call' is executed in parallel, but only one topic is touched per thread
+	 * so no two threads will update the same topic
+	 *
+	 */
 	class ParallelTopicUpdater implements Callable<Long> {
 		int topic;
 		public ParallelTopicUpdater(int topic) {
@@ -1062,7 +1080,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		double [][] resultMatrix;
 		int startDoc = -1;
 		int endDoc = -1;
-		int limit = 100;
+		int limit = 1000;
 		int myBatch = -1;
 
 		public RecursiveDocumentSampler(int startDoc, int endDoc, int batchId, int ll) {
@@ -1135,7 +1153,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	}*/
 
 	protected void loopOverBatches() {
-		RecursiveDocumentSampler dslr = new RecursiveDocumentSampler(0,data.size(),0,200);                
+		RecursiveDocumentSampler dslr = new RecursiveDocumentSampler(0,data.size(),0,documentSplitLimit);                
 		documentSamplerPool.invoke(dslr);
 	}
 

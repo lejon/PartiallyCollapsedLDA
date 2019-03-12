@@ -69,7 +69,9 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	private boolean symmetricAlpha = LDAConfiguration.SYMMETRIC_ALPHA_DEFAULT;
 	private double hdpGgamma = LDAConfiguration.HDP_GAMMA_DEFAULT;
 	private int hdpNrStartTopics = LDAConfiguration.HDP_START_TOPICS_DEFAULT;
-
+	private int documentSamplerSplitLimit = LDAConfiguration.DOCUMENT_SAMPLER_SPLIT_LIMIT_DEFAULT;
+	private double hdpKPercentile = LDAConfiguration.HDP_K_PERCENTILE;
+	
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
 			Integer noBatches, Integer rareThreshold, Integer topicInterval,
@@ -728,4 +730,19 @@ public class SimpleLDAConfiguration implements LDAConfiguration {
 	public boolean logTokensPerTopic(boolean logTokensPerTopic) {
 		return this.logTokensPerTopic;
 	}
+
+	@Override
+	public int getDocumentSamplerSplitLimit(int documentSamplerSplitLimitDefault) {
+		return documentSamplerSplitLimit;
+	}
+
+	public void setDocumentSamplerSplitLimit(int documentSamplerSplitLimitDefault) {
+		this.documentSamplerSplitLimit = documentSamplerSplitLimitDefault;
+	}
+	
+	@Override
+	public double getHDPKPercentile(double hdpKPercentile) {
+		return this.hdpKPercentile ;
+	}
+
 }

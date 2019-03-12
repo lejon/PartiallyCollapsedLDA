@@ -48,6 +48,7 @@ seed = -1 # -1 => use LSB of current time as seed
 topics = 20
 alpha = 1.0
 beta = 0.01
+hdp_gamma = 1
 
 ## Iterations: How many iterations to sample
 iterations = 8000
@@ -58,10 +59,11 @@ diagnostic_interval = -1
 
 ## Batches: How many threads to use for Z sampling, (more threads are allocated for sampling Phi and count Updates)
 ## DEPRICATED: NOT USED
+## there is a config variable ('document_sampler_split_limit') that controls the size limit of the fork/join
+## split. 
 #batches = 4
 
 ## Topic batches: How many threads for sampling Phi
-## DEPRICATED: NOT USED
 #topic_batches = 3
 
 ## Rare threshold: Min threshold for how many times a word must occur to be included in vocabulary
@@ -112,7 +114,7 @@ batch_building_scheme = utils.randomscan.document.FixedSplitBatchBuilder
 ## 	and then loops over these ratios for the rest of the iterations 
 fixed_split_size_doc   = 0.2, 0.2, 0.2, 0.2, 1.0
 
-### Topic index building shemes: Decides which words to sample in Phi
+### Topic index building schemes: Decides which words to sample in Phi
 ## DeltaNTopicIndexBuilder: Samples the words that changes in the Z sampling
 topic_index_building_scheme = utils.randomscan.topic.DeltaNTopicIndexBuilder
 
@@ -189,6 +191,7 @@ phi_mean_filename = phi_means.csv
 save_term_frequencies = true
 term_frequencies_filename = term_frequencies.txt
 
+# Words that occur less than rare_threshold is removed from the corpus
 rare_threshold = 50
 
 # Save the vocabulary (order matches the Phi matrix) 
@@ -250,3 +253,8 @@ hyperparam_optim_interval = 100
 
 # Use a symmetric alpha or allow it to be non-symmetric due to hyper parameter optimization
 symmetric_alpha = true | false
+
+# The size limit where the recursive sampler will not spawn more recursive tasks
+# if the document batch size is < than this value, that number of documents will
+# be handled by each document sampling task
+document_sampler_split_limit (default = 100)

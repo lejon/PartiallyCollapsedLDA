@@ -1,13 +1,13 @@
 package cc.mallet.types;
 
+import static java.lang.Math.abs;
+import static java.lang.Math.log;
+import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
+
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.math3.exception.NotANumberException;
-import static java.lang.Math.abs;
-import static java.lang.Math.log;
-import static java.lang.Math.sqrt;
-import static java.lang.Math.pow;
-import static java.lang.Math.exp;
 
 /*
  *  Mathlib : A C Library of Special Functions
@@ -67,7 +67,9 @@ public class BinomialSampler {
 		r = (int) nin;
 		if (Double.isInfinite(pp) ||
 				/* n=0, p=0, p=1 are not errors <TSL>*/
-				r < 0 || pp < 0. || pp > 1.) throw new NotANumberException();
+				r < 0 || pp < 0. || pp > 1.) {
+			throw new RuntimeException("The call rbinom(" + r + "," + pp + ") is invalid, argument combination is illegal.");
+		}
 
 		if (r == 0 || pp == 0.) return 0;
 		if (pp == 1.) return (int)r;

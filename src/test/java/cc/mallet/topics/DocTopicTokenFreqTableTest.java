@@ -1,6 +1,7 @@
 package cc.mallet.topics;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.Arrays;
 
@@ -130,5 +131,82 @@ public class DocTopicTokenFreqTableTest {
 			Assert.assertArrayEquals(expectedEmptyTopics, docTopicTokenFreqTable.getEmptyTopics());
 		}
 	}
+	
+	@Test
+	public void testReset() {
+		int numTopics = 5;
+		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,6);
+		int numDocs = 3;
+		
+		{
+			int [][] documentLocalTopicCounts = {{0,0,5,1,0}, {1,0,1,0,0},{3,0,1,1,0}};
+
+			for (int docNo = 0; docNo < numDocs; docNo++) {
+				int [] localTopicCounts = documentLocalTopicCounts[docNo];
+				for (int i = 0; i < numTopics; i++) {
+					if(localTopicCounts[i]!=0) {
+						docTopicTokenFreqTable.increment(i,(int)localTopicCounts[i]);
+					}
+				}
+			}
+
+			int [] expectedEmptyTopics = {1,4};
+
+			for (int topic = 0; topic < numTopics; topic++) {
+				//			System.out.println("Expected: " 
+				//					+ Arrays.toString(expectedReverseHist[topic]) 
+				//					+ " Actual: " 
+				//					+ Arrays.toString(docTopicTokenFreqTable.getReverseCumulativeSum(topic)));
+				Assert.assertArrayEquals(expectedEmptyTopics, docTopicTokenFreqTable.getEmptyTopics());
+			}
+		}
+		
+		docTopicTokenFreqTable.reset();
+		
+		{
+			int [][] documentLocalTopicCounts2 = {{0,5,0,0,1}, {1,1,0,0,4},{3,0,0,0,6}};
+
+			for (int docNo = 0; docNo < numDocs; docNo++) {
+				int [] localTopicCounts = documentLocalTopicCounts2[docNo];
+				for (int i = 0; i < numTopics; i++) {
+					if(localTopicCounts[i]!=0) {
+						docTopicTokenFreqTable.increment(i,(int)localTopicCounts[i]);
+					}
+				}
+			}
+
+			int [] expectedEmptyTopics = {2,3};
+
+			for (int topic = 0; topic < numTopics; topic++) {
+				Assert.assertArrayEquals(expectedEmptyTopics, docTopicTokenFreqTable.getEmptyTopics());
+			}
+		}
+
+	}
+	
+	
+	@Test
+	public void testFreqChange() {
+		int numTopics = 5;
+		DocTopicTokenFreqTable docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,6);
+		int numDocs = 1;
+		
+		int [][] documentLocalTopicCounts2 = {{7,0,0,0,3}};
+
+		for (int docNo = 0; docNo < numDocs; docNo++) {
+			int [] localTopicCounts = documentLocalTopicCounts2[docNo];
+			for (int i = 0; i < numTopics; i++) {
+				if(localTopicCounts[i]!=0) {
+					try {
+						docTopicTokenFreqTable.increment(i,(int)localTopicCounts[i]);
+					} catch(Exception e) {
+						return;
+					}
+					fail("Should throw exception since frequency of doc (7) exceeds max in table (6)");
+				}
+			}
+		}
+	}
+
 
 }

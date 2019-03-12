@@ -474,4 +474,14 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		String key = "log_tokens_per_topic";
 		return getBooleanProperty(key);
 	}
+
+	@Override
+	public int getDocumentSamplerSplitLimit(int documentSamplerSplitLimitDefault) {
+		return getInteger("document_sampler_split_limit",documentSamplerSplitLimitDefault);
+	}
+
+	@Override
+	public double getHDPKPercentile(double hdpKPercentile) {
+		return getDouble("hdp_k_percentile",hdpKPercentile);
+	}
 }

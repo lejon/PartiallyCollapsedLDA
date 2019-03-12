@@ -28,7 +28,7 @@ public class EvenSplitTopicBatchBuilder implements TopicBatchBuilder {
 	
 	@Override
 	public void calculateBatch() {
-		int numBatches = config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT);
+		int numBatches = config.getNoTopicBatches(LDAConfiguration.NO_TOPIC_BATCHES_DEFAULT);
 		numTopics = config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT);
 		topicBatchSizeArray = new int[numBatches];
 		topicBatchStartArray = new int[numBatches];

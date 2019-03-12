@@ -1379,6 +1379,24 @@ public class LDAUtils {
 		}
 		return result;
 	}
+	
+	public static String instanceToSvmLightString(Instance instance, int noWords) {
+		String result = "";
+		FeatureSequence features = (FeatureSequence) instance.getData();
+		noWords = (noWords > 0 ?  Math.min(noWords, features.size()) : features.size());
+		if(noWords==0) {
+			result += "0";
+		} else {
+			result += noWords + " ";
+			for (int i = 0; i < noWords; i++) {
+				result += features.getIndexAtPosition(i) + ":1";
+				if(i<(noWords-1)) {
+					result += " ";
+				}
+			}
+		}
+		return result;
+	}
 
 	public static int[][] getDocumentTopicCounts(ArrayList<TopicAssignment> data, int numTopics) {
 		return getDocumentTopicCounts(data, numTopics, data.size());
@@ -1504,7 +1522,17 @@ public class LDAUtils {
 		}
 		return transpose;
 	}
-	
+
+	public static int [][] transpose(int [][] matrix) {
+		int [][] transpose = new int[matrix[0].length][matrix.length];
+		for (int i = 0; i < matrix.length; i++) {
+			for (int j = 0; j < matrix[0].length; j++) {
+				transpose[j][i] = matrix [i][j];
+			}
+		}
+		return transpose;
+	}
+
 	public static void transpose(double[][] matrix, double [][] transpose) {
 		int rows = matrix.length;
 		int cols = matrix[0].length;

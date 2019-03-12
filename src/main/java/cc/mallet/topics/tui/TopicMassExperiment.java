@@ -1037,5 +1037,15 @@ public class TopicMassExperiment {
 			return pc.logTokensPerTopic(logTokensPerTopic);
 		}
 
+		@Override
+		public int getDocumentSamplerSplitLimit(int documentSamplerSplitLimitDefault) {
+			return pc.getDocumentSamplerSplitLimit(documentSamplerSplitLimitDefault);
+		}
+
+		@Override
+		public double getHDPKPercentile(double hdpKPercentile) {
+			return pc.getHDPKPercentile(hdpKPercentile);
+		}
+
 	}
 }

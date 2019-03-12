@@ -14,6 +14,14 @@ public class ParallelRandoms extends Randoms {
 	private static final long serialVersionUID = 2720201250960273621L;
 
 	/* (non-Javadoc)
+	 * @see cc.mallet.util.Randoms#nextGamma(double, double)
+	 */
+	@Override
+	public double nextGamma(double alpha, double beta) {
+		return rgamma(alpha, beta, 0);
+	}
+	
+	/* (non-Javadoc)
 	 * @see cc.mallet.util.Randoms#nextGamma(double, double, double)
 	 */
 	@Override

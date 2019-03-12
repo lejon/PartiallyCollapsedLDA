@@ -41,6 +41,8 @@ public interface LDAConfiguration {
 	public static final double HDP_GAMMA_DEFAULT = 5;
 	public static final int HDP_START_TOPICS_DEFAULT = NO_TOPICS_DEFAULT / 2;
 	public static final boolean LOG_TOKENS_PER_TOPIC = false;
+	public static final int DOCUMENT_SAMPLER_SPLIT_LIMIT_DEFAULT = 100;
+	public static final double HDP_K_PERCENTILE = .8;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -201,4 +203,8 @@ public interface LDAConfiguration {
 	public int getHDPNrStartTopics(int hdpStartTopicsDefault);
 
 	public boolean logTokensPerTopic(boolean logTokensPerTopic);
+
+	public int getDocumentSamplerSplitLimit(int documentSamplerSplitLimitDefault);
+
+	public double getHDPKPercentile(double hdpKPercentile);
 }
