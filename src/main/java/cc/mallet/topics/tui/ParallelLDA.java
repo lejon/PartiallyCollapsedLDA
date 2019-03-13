@@ -41,7 +41,7 @@ import cc.mallet.util.Timer;
 
 public class ParallelLDA implements IterationListener {
 	public static String PROGRAM_NAME = "ParallelLDA";
-	public static TopicMatrixPanel vis;
+	//public static TopicMatrixPanel vis;
 	private int printIter;
 
 	public static void main(String[] args) throws Exception {
@@ -137,7 +137,7 @@ public class ParallelLDA implements IterationListener {
 				if(model instanceof LDASamplerWithCallback) {
 					System.out.println("Setting callback...");
 					((LDASamplerWithCallback)model).setIterationCallback(this);
-					vis = new TopicMatrixPanel(900, 400, config.getNoTopics(-1) , 1);
+					//vis = new TopicMatrixPanel(900, 400, config.getNoTopics(-1) , 1);
 				}
 				
 				model.setRandomSeed(commonSeed);
@@ -444,9 +444,9 @@ public class ParallelLDA implements IterationListener {
 
 	@Override
 	public void iterationCallback(LDAGibbsSampler model) {
-		if(vis != null && printIter % 10 == 0) {
-			vis.setTopics(LDAUtils.transpose(model.getTypeTopicMatrix()));
-		}
-		printIter++;
+//		if(vis != null && printIter % 10 == 0) {
+//			vis.setTopics(LDAUtils.transpose(model.getTypeTopicMatrix()));
+//		}
+//		printIter++;
 	}
 }	
