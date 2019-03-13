@@ -110,6 +110,8 @@ public class DocTopicTokenFreqTable {
      * D(k,j) = [ 0   0  0  0  0 0 0 ]
      *          [ 87 83 73 23 11 4 1 ]
      *          
+     * Observe, index 0 in reverse cumultive sum is the number of documents that has more than ONE topic indicator allocated to it
+     *          
 	 * @param topic Which topic frequency table to return
 	 * @return Reverse Cumulative Frequency table
 	 */

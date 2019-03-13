@@ -1,4 +1,3 @@
-
 package cc.mallet.topics;
 
 import java.io.PrintWriter;
@@ -13,8 +12,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.math3.distribution.BetaDistribution;
-import org.apache.commons.math3.distribution.GeometricDistribution;
-import org.apache.commons.math3.distribution.PoissonDistribution;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.BinomialSampler;
@@ -23,7 +20,6 @@ import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.ParallelDirichlet;
-import cc.mallet.types.PolyaUrnDirichlet;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
@@ -60,6 +56,8 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends UncollapsedParallelLDA 
 	double alphaCoef; 
 	
 	DocTopicTokenFreqTable docTopicTokenFreqTable; 
+	int nrStartTopics;
+	
 	// numTopics is the same as K_max in paper, the maximum number of topics.
 	
 	// activeTopicHistory, activeTopicInDataHistory,topicOcurrenceCount is only used for post analysis, not used in algorithm.
@@ -99,6 +97,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends UncollapsedParallelLDA 
 		
 		gamma = config.getHDPGamma(LDAConfiguration.HDP_GAMMA_DEFAULT);
 		k_percentile = config.getHDPKPercentile(LDAConfiguration.HDP_K_PERCENTILE);
+		nrStartTopics = config.getHDPNrStartTopics(LDAConfiguration.HDP_START_TOPICS_DEFAULT);
 		
 		System.out.println("HDP gamma: " + gamma);
 		
@@ -134,6 +133,27 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends UncollapsedParallelLDA 
 		super.addInstances(training);
 		
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,longestDocLength);
+	}
+	
+	/* When we initialize Z we have to limit the topic indicators
+	 * to nrStartTopics
+	 * @see cc.mallet.topics.UncollapsedParallelLDA#initialDrawTopicIndicator()
+	 */
+	@Override
+	int initialDrawTopicIndicator() {
+		return random.nextInt(nrStartTopics);
+	}
+
+	/* When we initialize phi only for the nrStartTopics
+	 * @param topicIndices a vector of length numTopics
+	 */
+	@Override
+	public void initialSamplePhi(int [] topicIndices, double[][] phiMatrix) {
+		int [] hdpStartTopicIndices = new int[nrStartTopics];
+		for (int i = 0; i < nrStartTopics; i++) {
+			hdpStartTopicIndices[i] = i;
+		}
+		super.initialSamplePhi(hdpStartTopicIndices, phi);
 	}
 
 	@Override
@@ -277,105 +297,41 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends UncollapsedParallelLDA 
 		 * @param topic
 		 * @param sufficientStatistic
 		 */
-		void updateTopic(int topic, double sufficientStatistic);
+		void updateTopic(int topic, int sufficientStatistic);
 		void reset();
 		void finalizeSampling();
 		double [] getPsi();
 		void incrementTopic(int i);
 	}
-
-	class PoissonBasedPsiSampler implements PsiSampler {
-		double [] psi; // This is capital Psi in paper.
-		int [] eta;
-		public PoissonBasedPsiSampler() {
-			eta = new int[numTopics];
-			psi = new double[numTopics];
-			for (int i = 0; i < numTopics; i++) {
-				psi[i] = 1.0 / numTopics;
-			}
-		}
-		
-		@Override
-		public void reset() {
-			eta = new int[numTopics];
-		}
-		
-		/* (non-Javadoc)
-		 * @see cc.mallet.topics.PoissonPolyaUrnHDPLDA.PsiSampler#updateTopic(int, double)
-		 */
-		@Override
-		public void updateTopic(int topic, double l_k) {
-			// For new (not sampled by Z sampling) topics, the frequency will be 0, and l_k 
-			// will also be zero, but for those topics we have already added 1 to psi in postZ
-			int eta_k = 0; 
-			if(l_k>0) {
-				if(l_k>poissonNormalApproxThreshold) {
-					eta_k = (int) PolyaUrnDirichlet.nextPoissonNormalApproximation(l_k);
-				} else {				
-					PoissonDistribution pois_gamma = new PoissonDistribution(l_k);
-					eta_k = pois_gamma.sample();
-				}
-			}
-			
-			eta[topic] += eta_k;
-		}
-
-		@Override
-		public void finalizeSampling() {
-			// Finish psi sampling, i.e normalize psi
-			double sumEta = 0.0;
-			for (int i = 0; i < numTopics; i++) {			
-				sumEta += eta[i];
-			}
-			for (int i = 0; i < numTopics; i++) {			
-				psi[i] = eta[i] / sumEta;
-			}
-			// System.out.println("Psi: " + Arrays.toString(psi));
-		}
-		
-		@Override
-		public double [] getPsi() {
-			return psi;
-		}
-
-		@Override
-		public void incrementTopic(int topic) {
-			eta[topic]++;
-		}
-	}
 	
 	class GEMBasedPsiSampler implements PsiSampler {
 		double [] psi; // This is capital Psi in paper.
-		double [] alphaPrime; // Same notation as Wikipedia page on Generalized Dirichlet
-		double [] l;
+		int [] l;
 		double gamma;
 		
 		public GEMBasedPsiSampler(double gamma) {
 			this.gamma = gamma;
-			alphaPrime = new double[numTopics];
-			Arrays.fill(alphaPrime, 1);
-			l = new double[numTopics];
+			// TODO: numTopics - 1
+			l = new int[numTopics];
 			
 			psi = new double[numTopics];
-			for (int i = 0; i < numTopics; i++) {
-				psi[i] = 1.0 / numTopics;
+			for (int i = 0; i < nrStartTopics; i++) {
+				psi[i] = 1.0 / nrStartTopics;
 			}
 		}
 		
 		@Override
 		public void reset() {
-			alphaPrime = new double[numTopics];
-			Arrays.fill(alphaPrime, 1);
+			l = new int[numTopics];
 		}
 		
 		/* (non-Javadoc)
 		 * @see cc.mallet.topics.PoissonPolyaUrnHDPLDA.PsiSampler#updateTopic(int, double)
 		 */
 		@Override
-		public void updateTopic(int topic, double l_k) {
+		public void updateTopic(int topic, int l_k) {
 			// \Psi ~ GD(1,1,..,1, \gamma, \gamma, ..,\gamma)		
 			// alphaPrime_j = alpha_j (always 1) + y_j (i.e. l_k)
-			alphaPrime[topic] += l_k;
 			l[topic] = l_k;
 		}
 
@@ -398,7 +354,8 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends UncollapsedParallelLDA 
 			// Draw \nu_i ~ Beta(c_i,d_i) for all i...
 			double [] nu = new double[numTopics];
 			for (int topic = 0; topic < (numTopics-1); topic++) {
-				BetaDistribution betaDist = new BetaDistribution(alphaPrime[topic], betaPrime[topic]);
+				// TODO: Make sure that creating a new BetaDist will still give a proper Beta dist
+				BetaDistribution betaDist = new BetaDistribution(l[topic] + 1, betaPrime[topic]);
 				nu[topic] = betaDist.sample();
 			}
 			// ...except the final one, which is set to 1
@@ -412,12 +369,13 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends UncollapsedParallelLDA 
 				psi[topic] = nu[topic];
 				// This loop should be able to be optimized away by caching 
 				// already calculated nu[i] (1-nu[i-1]) (1-nu[i-2])... results
-				for (int j = topic-1; j > 0; j--) {
+				// If topic == 0, the psi[topic] should be nu[topic] 
+				for (int j = topic-1; j >= 0; j--) {
 					psi[topic] *= (1-nu[j]);
 				}
 				psiSum += psi[topic];
 			} 
-			psi[numTopics-1] = 1;
+			// TODO: test case psi sum == 1, always
 			
 			for (int i = 0; i < numTopics; i++) {
 				if(psi[i] < 0) {
@@ -469,45 +427,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends UncollapsedParallelLDA 
 			return newTopics;
 		}		
 	}
-	
-	class GeometricGamma implements GammaDist {
-		GeometricDistribution dist;
-		int rightTruncation = Integer.MAX_VALUE;
-		
-		public GeometricGamma(double p) {
-			dist = new GeometricDistribution(p);
-		}
-		
-		public GeometricGamma(double p, int max) {
-			rightTruncation = max;
-			dist = new GeometricDistribution(p);
-		}
-
-		/**
-		 * Draw new topic numbers from \Gamma
-		 * 
-		 * @param nrAddedTopics
-		 * @param numTopics
-		 * @return
-		 */
-		@Override
-		public int[] drawNewTopics(int nrSamples, int range) {
-			int [] res = dist.sample(nrSamples);
-			if(rightTruncation!=Integer.MAX_VALUE) {
-				for (int i = 0; i < res.length; i++) {
-					if(res[i]>=rightTruncation) {
-						for(int tries = 0; res[i]>=rightTruncation && tries < 5; tries++) {
-							res[i] = dist.sample();
-						}
-						if(res[i]>=rightTruncation) 
-							throw new IllegalStateException("Didn't manage to sample from gemoetric and get value less than " + rightTruncation);
-					}
-				}
-			}
-			return res;
-		}		
-	}
-
 
 	@Override
 	public void postZ() {
@@ -958,10 +877,12 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends UncollapsedParallelLDA 
 			//System.out.println("Sampling # topics: " + indices.length);
 			//System.out.println("Sampling topic: " + topic);
 			
+			// FIXEDTODO: Check if tokens per topic == 0 the l_l for that topic => 0
+			// Yep!
 			if(tokensPerTopic[topic]>0) {
 				// First part of Psi sampling. Normalization must be done 
 				// in postIteration when all Psi_k has been sampled
-				double l_k = sampleL(topic, longestDocLength, docTopicTokenFreqTable, alphaCoef, psiSampler.getPsi()[topic]);
+				int l_k = sampleL(topic, longestDocLength, docTopicTokenFreqTable, alphaCoef, psiSampler.getPsi()[topic]);
 				// System.out.println("l_" + topic + " = " + l_k + " Topic Occurence:" + topicOcurrenceCount[topic]);
 				
 				psiSampler.updateTopic(topic, l_k);
@@ -989,6 +910,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends UncollapsedParallelLDA 
 
 	// See. PoissonPolyaUrnHDPLDATest.testSampleLOneDocAnalytic and testSampleLSimR: 
 	// SampleL for one document should have the antoniak distribution (see pdf in eq (9) in paper)
+	// Very detailed code review (Måns and Leif) 2019-03-12, cross verified with unit tests 
 	static protected int sampleL(int topic, int maxDocLen, 
 			DocTopicTokenFreqTable docTopicTokenFreqTable, double alpha, double psi_k) {
 		if(psi_k<0) System.out.println("psi_k = " + psi_k);
