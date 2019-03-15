@@ -28,7 +28,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	private static final long serialVersionUID = 1L;
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
-	private ExecutorService tableBuilderExecutor;
+	ExecutorService tableBuilderExecutor;
 	
 	// #### Sparsity handling
 	// Jagged array containing the topics that are non-zero for each type
@@ -101,9 +101,15 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		doPreIterationTableBuilding();
 		super.preIteration();
 	}
+	
+	Callable<WalkerAliasTableBuildResult> getAliasTableBuilder(int type) {
+		return new ParallelTableBuilder(type);
+	}
 
 	protected void doPreIterationTableBuilding() {
-		List<ParallelTableBuilder> builders = new ArrayList<>();
+		//LDAUtils.transpose(phi, phitrans);
+
+		List<Callable<WalkerAliasTableBuildResult>> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
 		if(topicTypeIndices!=null) {
 			// The topicIndexBuilder supports having different types per topic,
@@ -111,15 +117,15 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			// since it will be the same for all topics
 			int [] typesToSample = topicTypeIndices[0];
 			for (int typeIdx = 0; typeIdx < typesToSample.length; typeIdx++) {
-				builders.add(new ParallelTableBuilder(typesToSample[typeIdx]));
+				builders.add(getAliasTableBuilder(typesToSample[typeIdx]));
 			}
 			// if the topicIndexBuilder returns null it means sample ALL types
 		} else {
 			for (int type = 0; type < numTypes; type++) {
-				builders.add(new ParallelTableBuilder(type));
+				builders.add(getAliasTableBuilder(type));
 			}			
 		}
-		
+
 		List<Future<WalkerAliasTableBuildResult>> results;
 		try {
 			results = tableBuilderExecutor.invokeAll(builders);
