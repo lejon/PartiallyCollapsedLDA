@@ -289,31 +289,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		}
 	}
 
-	
-	interface GammaDist {
-		int [] drawNewTopics(int nrSamples, int range);
-	}
-	
-	class UniformGamma implements GammaDist {
-		/**
-		 * Draw new topic numbers from \Gamma
-		 * 
-		 * @param nrAddedTopics
-		 * @param numTopics
-		 * @return
-		 */
-		@Override
-		public int[] drawNewTopics(int nrSamples, int range) {
-			int [] newTopics = new int[nrSamples];
-			for (int i = 0; i < newTopics.length; i++) {
-				// nextInt draws a uniform from (0, range-1)
-				newTopics[i] = ThreadLocalRandom.current().nextInt(range); 
-			}
-
-			return newTopics;
-		}		
-	}
-
 	@Override
 	public void postZ() {
 		super.postZ();
@@ -679,10 +654,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			// If we have a newly sampled active topic, it won't have any type topic
 			// counts (tokensPerTopic[topic]<1), so we draw from the prior
 			} else {
-				double u = ThreadLocalRandom.current().nextGaussian();
-				if(u > 0.9) {
-					phiMatrix[topic] = phiDirichletPrior.nextDistribution();
-				}
+				phiMatrix[topic] = phiDirichletPrior.nextDistribution();
 			}
 		}
 		long elapsedMillis = System.currentTimeMillis();
