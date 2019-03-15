@@ -68,9 +68,8 @@ public class LightPCLDA extends SpaliasUncollapsedParallelLDA {
 		public WalkerAliasTableBuildResult call() {
 			double [] probs = new double[numTopics];
 			double typeMass = 0; // Type prior mass
-			double [] phiType =  phitrans[type]; 
 			for (int topic = 0; topic < numTopics; topic++) {
-				typeMass += probs[topic] = phiType[topic];
+				typeMass += probs[topic] = phi[topic][type];
 			}
 			
 			if(aliasTables[type]==null) {

@@ -13,15 +13,11 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
-import cc.mallet.util.LDAUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 
 
 public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implements LDAGibbsSampler{
-	
-	protected double[][] phitrans;
-
 	private static final long serialVersionUID = 1L;
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
@@ -38,7 +34,6 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		super.addInstances(training);
 		aliasTables = new WalkerAliasTable[numTypes];
 		typeNorm    = new double[numTypes];
-		phitrans    = new double[numTypes][numTopics];
 	}
 	
 	class PhiAlphaParallelTableBuilder implements Callable<WalkerAliasTableBuildResult> {
@@ -50,9 +45,8 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		public WalkerAliasTableBuildResult call() {
 			double [] probs = new double[numTopics];
 			double typeMass = 0; // Type prior mass
-			double [] phiType =  phitrans[type]; 
 			for (int topic = 0; topic < numTopics; topic++) {
-				typeMass += probs[topic] = phiType[topic] * alpha[topic];
+				typeMass += probs[topic] = phi[topic][type] * alpha[topic];
 			}
 			
 			if(aliasTables[type]==null) {
@@ -87,8 +81,6 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	}
 
 	protected void doPreIterationTableBuling() {
-		LDAUtils.transpose(phi, phitrans);
-
 		List<Callable<WalkerAliasTableBuildResult>> builders = new ArrayList<>();
 		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
 		if(topicTypeIndices!=null) {
@@ -190,17 +182,16 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 			 */
 			decrement(myBatch, oldTopic, type);
 			//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
-			
-			double [] phiType =  phitrans[type]; 
+			 
 			int topic = nonZeroTopics[0];
-			double score = localTopicCounts[topic] * phiType[topic];
+			double score = localTopicCounts[topic] * phi[topic][type];
 			cumsum[0] = score;
 			// Now calculate and add up the scores for each topic for this word
 			// We build a cumsum indexed by topicIndex
 			int topicIdx = 1;
 			while ( topicIdx < nonZeroTopicCnt ) {
 				topic = nonZeroTopics[topicIdx];
-				score = localTopicCounts[topic] * phiType[topic];
+				score = localTopicCounts[topic] * phi[topic][type];
 				cumsum[topicIdx] = score + cumsum[topicIdx-1];
 				topicIdx++;
 			}
@@ -253,16 +244,15 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	double calcCumSum(int type, double[] localTopicCounts, int[] nonZeroTopics, int nonZeroTopicCnt, double[] cumsum) {
 		double score;
 		double sum;
-		double [] phiType =  phitrans[type]; 
 		int topic = nonZeroTopics[0];
-		score = localTopicCounts[topic] * phiType[topic];
+		score = localTopicCounts[topic] * phi[topic][type];
 		cumsum[0] = score;
 		// Now calculate and add up the scores for each topic for this word
 		// We build a cumsum indexed by topicIndex
 		int topicIdx = 1;
 		while ( topicIdx < nonZeroTopicCnt ) {
 			topic = nonZeroTopics[topicIdx];
-			score = localTopicCounts[topic] * phiType[topic];
+			score = localTopicCounts[topic] * phi[topic][type];
 			cumsum[topicIdx] = score + cumsum[topicIdx-1];
 			topicIdx++;
 		}

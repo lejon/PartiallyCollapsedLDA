@@ -251,17 +251,16 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 			 */
 			decrement(myBatch, oldTopic, type);
 			//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
-			
-			double [] phiType =  phitrans[type]; 
+			 
 			int topic = nonZeroTopics[0];
-			double score = localTopicCounts[topic] * phiType[topic];
+			double score = localTopicCounts[topic] * phi[topic][type];
 			cumsum[0] = score;
 			// Now calculate and add up the scores for each topic for this word
 			// We build a cumsum indexed by topicIndex
 			int topicIdx = 1;
 			while ( topicIdx < nonZeroTopicCnt ) {
 				topic = nonZeroTopics[topicIdx];
-				score = localTopicCounts[topic] * phiType[topic] * topicPriors[topic][type];
+				score = localTopicCounts[topic] * phi[topic][type] * topicPriors[topic][type];
 				cumsum[topicIdx] = score + cumsum[topicIdx-1];
 				topicIdx++;
 			}
