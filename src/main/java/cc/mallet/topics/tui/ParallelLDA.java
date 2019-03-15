@@ -41,8 +41,6 @@ import cc.mallet.util.Timer;
 
 public class ParallelLDA implements IterationListener {
 	public static String PROGRAM_NAME = "ParallelLDA";
-	//public static TopicMatrixPanel vis;
-	private int printIter;
 
 	public static void main(String[] args) throws Exception {
 		ParallelLDA plda = new ParallelLDA();
@@ -399,21 +397,21 @@ public class ParallelLDA implements IterationListener {
 			System.out.println("PolyaUrnSpaliasLDA Parallell LDA.");
 			break;
 		}
-		case "ppu_hlda": {
-			model = new PoissonPolyaUrnHLDA(config);
-			System.out.println("PoissonPolyaUrnHLDA Parallell LDA.");
-			break;
-		}
-		case "ppu_hdplda": {
-			model = new PoissonPolyaUrnHDPLDA(config);
-			System.out.println("PoissonPolyaUrnHLDA Parallell LDA.");
-			break;
-		}
-		case "ppu_hdplda_all_topics": {
-			model = new PoissonPolyaUrnHDPLDAInfiniteTopics(config);
-			System.out.println("PoissonPolyaUrnHLDA Parallell LDA.");
-			break;
-		}
+ 		case "ppu_hlda": {
+ 			model = new PoissonPolyaUrnHLDA(config);
+			System.out.println("PoissonPolyaUrnHLDA Parallell HDP.");
+ 			break;
+ 		}
+ 		case "ppu_hdplda": {
+ 			model = new PoissonPolyaUrnHDPLDA(config);
+			System.out.println("PoissonPolyaUrnHDPLDA Parallell HDP.");
+ 			break;
+ 		}
+ 		case "ppu_hdplda_all_topics": {
+ 			model = new PoissonPolyaUrnHDPLDAInfiniteTopics(config);
+			System.out.println("PoissonPolyaUrnHDPLDAInfiniteTopics Parallell HDP.");
+ 			break;
+ 		}
 		case "spalias_priors": {
 			model = new SpaliasUncollapsedParallelWithPriors(config);
 			System.out.println("SpaliasUncollapsed Parallell LDA with Priors.");
