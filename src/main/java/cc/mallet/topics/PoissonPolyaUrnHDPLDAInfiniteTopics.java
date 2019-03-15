@@ -247,7 +247,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		public void finalizeSampling() {
 			// n = sum over l_k
 			
-//			System.out.println("Alpha: " + Arrays.toString(alpha));
 			// \Psi ~ GD(1,1,..,1, \gamma, \gamma, ..,\gamma)
 			// betaPrime = b_j (always gamma gamma) + sum_{j+1}{k+1} y_i (i.e l_k)
 			// This must be wrong on the Wikipedia page since "k+1" does not make sense...
@@ -257,7 +256,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 					betaPrime[topic] += l[topic_l];
 				}
 			}
-//			System.out.println("Beta: " + Arrays.toString(beta));
+
 			// Draw \nu_i ~ Beta(c_i,d_i) for all i...
 			double [] nu = new double[numTopics];
 			for (int topic = 0; topic < (numTopics-1); topic++) {
@@ -268,8 +267,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			// ...except the final one, which is set to 1
 			nu[numTopics-1] = 1;
 						
-			// We don't need to reset psi, since we init it to nu[i]
-//			psi = new double[numTopics];
 			// Finish psi sampling
 			double psiSum = 0;
 			double oneMinusPsiProd = 1;
@@ -278,23 +275,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 				oneMinusPsiProd *= (1-nu[topic]); 
 				psiSum += psi[topic];
 			} 
-			psi[numTopics-1] = 1-psiSum;
-			
-			// TODO: test case psi sum == 1, always
-			
-			for (int i = 0; i < numTopics; i++) {
-				if(psi[i] < 0) {
-					System.out.println("Nu: " + Arrays.toString(nu));			
-					System.out.println("Psi sum: " + psiSum);
-					System.out.println("Psi: " + Arrays.toString(psi));
-				}
-			}
-
-//			psiSum = 0;
-//			for (int i = 0; i < numTopics; i++) {
-//				psiSum += psi[i];
-//			}			
-//			System.out.println(psiSum + " => Psi: " + Arrays.toString(psi));
+			psi[numTopics-1] = 1-psiSum;			
 		}
 		
 		@Override
