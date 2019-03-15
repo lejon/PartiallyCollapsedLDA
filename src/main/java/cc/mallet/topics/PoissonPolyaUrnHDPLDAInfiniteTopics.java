@@ -273,7 +273,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			// Finish psi sampling
 			double psiSum = 0;
 			double oneMinusPsiProd = 1;
-			for (int topic = 0; topic < numTopics; topic++) {
+			for (int topic = 0; topic < (numTopics-1); topic++) {
 				psi[topic] = nu[topic] * oneMinusPsiProd;
 				oneMinusPsiProd *= (1-nu[topic]); 
 				psiSum += psi[topic];
