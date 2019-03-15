@@ -2,10 +2,6 @@ package cc.mallet.topics;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectSortedMap;
-import it.unimi.dsi.fastutil.ints.IntSortedSet;
-
 /**
  * A structure that holds a frequency table per topic.
  * The frequency table tells us how many documents that contain a

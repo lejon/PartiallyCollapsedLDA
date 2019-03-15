@@ -5,9 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.math3.distribution.BetaDistribution;
@@ -19,8 +16,6 @@ import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.ParallelDirichlet;
-import cc.mallet.types.SparseDirichlet;
-import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LoggingUtils;
@@ -127,6 +122,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	 */
 	@Override
 	public void initialSamplePhi(int [] topicIndices, double[][] phiMatrix) {
+		// TODO: Need to sample all topics initially
 		int [] hdpStartTopicIndices = new int[nrStartTopics];
 		for (int i = 0; i < nrStartTopics; i++) {
 			hdpStartTopicIndices[i] = i;
@@ -255,10 +251,9 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			// \Psi ~ GD(1,1,..,1, \gamma, \gamma, ..,\gamma)
 			// betaPrime = b_j (always gamma gamma) + sum_{j+1}{k+1} y_i (i.e l_k)
 			// This must be wrong on the Wikipedia page since "k+1" does not make sense...
-			double [] betaPrime = new double[numTopics];
-			for (int topic = 0; topic < numTopics; topic++) {
-				betaPrime[topic] = gamma;
-				for (int topic_l = (topic+1); topic_l < numTopics; topic_l++) {
+			int [] betaPrime = new int[numTopics-1];
+			for (int topic = 0; topic < (numTopics-1); topic++) {
+				for (int topic_l = (topic+1); topic_l < (numTopics-1); topic_l++) {
 					betaPrime[topic] += l[topic_l];
 				}
 			}
@@ -267,7 +262,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			double [] nu = new double[numTopics];
 			for (int topic = 0; topic < (numTopics-1); topic++) {
 				// TODO: Make sure that creating a new BetaDist will still give a proper Beta dist
-				BetaDistribution betaDist = new BetaDistribution(l[topic] + 1, betaPrime[topic]);
+				BetaDistribution betaDist = new BetaDistribution(l[topic] + 1, gamma + (double) betaPrime[topic]);
 				nu[topic] = betaDist.sample();
 			}
 			// ...except the final one, which is set to 1
@@ -277,16 +272,15 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 //			psi = new double[numTopics];
 			// Finish psi sampling
 			double psiSum = 0;
-			for (int topic = 0; topic < (numTopics-1); topic++) {
+			double oneMinusPsiProd = 1;
+			for (int topic = 0; topic < numTopics; topic++) {
 				psi[topic] = nu[topic];
-				// This loop should be able to be optimized away by caching 
-				// already calculated nu[i] (1-nu[i-1]) (1-nu[i-2])... results
-				// If topic == 0, the psi[topic] should be nu[topic] 
-				for (int j = topic-1; j >= 0; j--) {
-					psi[topic] *= (1-nu[j]);
-				}
+				oneMinusPsiProd *= (1-nu[topic]); 
+				psi[topic] = nu[topic] * oneMinusPsiProd;
 				psiSum += psi[topic];
 			} 
+			psi[numTopics-1] = 1-psiSum;
+			
 			// TODO: test case psi sum == 1, always
 			
 			for (int i = 0; i < numTopics; i++) {
@@ -705,7 +699,10 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			// If we have a newly sampled active topic, it won't have any type topic
 			// counts (tokensPerTopic[topic]<1), so we draw from the prior
 			} else {
-				phiMatrix[topic] = phiDirichletPrior.nextDistribution();
+				double u = ThreadLocalRandom.current().nextGaussian();
+				if(u > 0.9) {
+					phiMatrix[topic] = phiDirichletPrior.nextDistribution();
+				}
 			}
 		}
 		long elapsedMillis = System.currentTimeMillis();
