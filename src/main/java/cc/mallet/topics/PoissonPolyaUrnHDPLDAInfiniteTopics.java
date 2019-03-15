@@ -274,9 +274,8 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			double psiSum = 0;
 			double oneMinusPsiProd = 1;
 			for (int topic = 0; topic < numTopics; topic++) {
-				psi[topic] = nu[topic];
-				oneMinusPsiProd *= (1-nu[topic]); 
 				psi[topic] = nu[topic] * oneMinusPsiProd;
+				oneMinusPsiProd *= (1-nu[topic]); 
 				psiSum += psi[topic];
 			} 
 			psi[numTopics-1] = 1-psiSum;
