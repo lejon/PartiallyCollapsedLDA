@@ -29,6 +29,16 @@ public class ParallelRandoms extends Randoms {
 		return rgamma(alpha, beta, lambda);
 	}
 	
+	public double nextBeta(double alpha, double beta) {
+		return rbeta(alpha, beta);
+	}
+	
+	public static double rbeta(double alpha, double beta) {
+		double x = rgamma(alpha, 1.0, 0);
+        double y = rgamma(beta, 1.0, 0);
+        return x / (x + y);
+	}
+	
 	/**
 	 * Draw gamma random covariate using Marsaglias fast algorithm
 	 * 

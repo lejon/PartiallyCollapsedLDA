@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.apache.commons.math3.distribution.BetaDistribution;
-
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.BinomialSampler;
 import cc.mallet.types.Dirichlet;
@@ -20,6 +18,7 @@ import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
+import cc.mallet.util.ParallelRandoms;
 
 /**
  * This is a parallel implementation of the Poisson Polya Urn HDP LDA
@@ -117,19 +116,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		return random.nextInt(nrStartTopics);
 	}
 
-	/* When we initialize phi only for the nrStartTopics
-	 * @param topicIndices a vector of length numTopics
-	 */
-	@Override
-	public void initialSamplePhi(int [] topicIndices, double[][] phiMatrix) {
-		// TODO: Need to sample all topics initially
-		int [] hdpStartTopicIndices = new int[nrStartTopics];
-		for (int i = 0; i < nrStartTopics; i++) {
-			hdpStartTopicIndices[i] = i;
-		}
-		super.initialSamplePhi(hdpStartTopicIndices, phi);
-	}
-
 	class ParallelTableBuilder implements Callable<WalkerAliasTableBuildResult> {
 		int type;
 		public ParallelTableBuilder(int type) {
@@ -219,7 +205,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		
 		public GEMBasedPsiSampler(double gamma) {
 			this.gamma = gamma;
-			// TODO: numTopics - 1
 			l = new int[numTopics];
 			
 			psi = new double[numTopics];
@@ -250,9 +235,9 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			// \Psi ~ GD(1,1,..,1, \gamma, \gamma, ..,\gamma)
 			// betaPrime = b_j (always gamma gamma) + sum_{j+1}{k+1} y_i (i.e l_k)
 			// This must be wrong on the Wikipedia page since "k+1" does not make sense...
-			int [] betaPrime = new int[numTopics-1];
+			long [] betaPrime = new long[numTopics-1];
 			for (int topic = 0; topic < (numTopics-1); topic++) {
-				for (int topic_l = (topic+1); topic_l < (numTopics-1); topic_l++) {
+				for (int topic_l = (topic+1); topic_l < numTopics; topic_l++) {
 					betaPrime[topic] += l[topic_l];
 				}
 			}
@@ -260,9 +245,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			// Draw \nu_i ~ Beta(c_i,d_i) for all i...
 			double [] nu = new double[numTopics];
 			for (int topic = 0; topic < (numTopics-1); topic++) {
-				// TODO: Make sure that creating a new BetaDist will still give a proper Beta dist
-				BetaDistribution betaDist = new BetaDistribution(l[topic] + 1, gamma + (double) betaPrime[topic]);
-				nu[topic] = betaDist.sample();
+				nu[topic] = ParallelRandoms.rbeta(l[topic] + 1, gamma + (double) betaPrime[topic]);
 			}
 			// ...except the final one, which is set to 1
 			nu[numTopics-1] = 1;
@@ -274,8 +257,16 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 				psi[topic] = nu[topic] * oneMinusPsiProd;
 				oneMinusPsiProd *= (1-nu[topic]); 
 				psiSum += psi[topic];
-			} 
-			psi[numTopics-1] = 1-psiSum;			
+			}
+			
+			//System.out.println("Psi=" + Arrays.toString(psi));
+			
+			// Take care of rounding errors
+			if(psiSum>1.0) {
+				psi[numTopics-1] = Double.MIN_VALUE;
+			} else {				
+				psi[numTopics-1] = 1-psiSum;			
+			}
 		}
 		
 		@Override
@@ -675,7 +666,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	// Very detailed code review (Måns and Leif) 2019-03-12, cross verified with unit tests 
 	static protected int sampleL(int topic, int maxDocLen, 
 			DocTopicTokenFreqTable docTopicTokenFreqTable, double alpha, double psi_k) {
-		if(psi_k<0) System.out.println("psi_k = " + psi_k);
+		if(psi_k<0) System.out.println("psi_k = " + psi_k + " topic = " + topic);
 		// freqHist is D(j, k = topic)
 		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
 		
