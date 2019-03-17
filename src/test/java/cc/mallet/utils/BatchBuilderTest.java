@@ -182,6 +182,16 @@ public class BatchBuilderTest {
 		public double[] getAlpha() {
 			return null;
 		}
+
+		@Override
+		public void abort() {
+			
+		}
+
+		@Override
+		public boolean getAbort() {
+			return false;
+		}
 	}
 
 	@Test

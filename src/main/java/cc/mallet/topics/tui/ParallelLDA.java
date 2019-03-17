@@ -34,6 +34,7 @@ import cc.mallet.topics.SpaliasUncollapsedParallelWithPriors;
 import cc.mallet.topics.TopicModelDiagnosticsPlain;
 import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.EclipseDetector;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.TeeStream;
@@ -41,12 +42,21 @@ import cc.mallet.util.Timer;
 
 public class ParallelLDA implements IterationListener {
 	public static String PROGRAM_NAME = "ParallelLDA";
+	public static Thread.UncaughtExceptionHandler exHandler;
+	protected static volatile boolean abort = false;
+	protected static volatile boolean normalShutdown = false;
+	static LDAGibbsSampler plda;
+	public static PrintWriter pw;
 
 	public static void main(String[] args) throws Exception {
 		ParallelLDA plda = new ParallelLDA();
 		plda.doSample(args);
 	}
 	
+	private static LDAGibbsSampler getCurrentSampler() {
+		return plda;
+	}
+		
 	public void doSample(String[] args) throws Exception {
 		if(args.length == 0) {
 			System.out.println("\n" + PROGRAM_NAME + ": No args given, you should typically call it along the lines of: \n" 
@@ -55,16 +65,53 @@ public class ParallelLDA implements IterationListener {
 					+ "java -jar PCPLDA-X.X.X.jar -run_cfg=src/main/resources/configuration/PLDAConfig.cfg\n");
 			System.exit(-1);
 		}
+		
+		
+		String [] newArgs = EclipseDetector.runningInEclipse(args);
+		// If we are not running in eclipse we can install the abort functionality
+		if(newArgs==null) {
+			final Thread mainThread = Thread.currentThread();
+			Runtime.getRuntime().addShutdownHook(new Thread() {
+				public void run() {
+					int waitTimeout = 4000;
+					if(!normalShutdown) {
+						System.err.println("Running shutdown hook: DOLDAClassifier Aborted! Waiting for shudown...");
+						abort = true;
+						if(getCurrentSampler()!=null) {
+							getCurrentSampler().abort();
+							try {
+								mainThread.join(waitTimeout);
+							} catch (InterruptedException e) {
+								System.err.println("Exception during Join..");
+								e.printStackTrace();
+							}
+						}
+					} 
+				}
+			});
+			// Else don't install it, but set args to be the one with "-runningInEclipse" removed
+		} else {
+			args = newArgs;
+		}
 
-		Thread.setDefaultUncaughtExceptionHandler(new Thread.
-				UncaughtExceptionHandler() {
+		exHandler = new Thread.UncaughtExceptionHandler() {
 			public void uncaughtException(Thread t, Throwable e) {
 				System.out.println(t + " throws exception: " + e);
 				e.printStackTrace();
+				if(pw != null) {
+					try {
+						e.printStackTrace(pw);
+						pw.close();
+					} catch (Exception e1) {
+						// Give up!
+					}
+				}
 				System.err.println("Main thread Exiting.");
 				System.exit(-1);
 			}
-		});
+		};
+		
+		Thread.setDefaultUncaughtExceptionHandler(exHandler);
 		
 		System.out.println("We have: " + Runtime.getRuntime().availableProcessors() 
 				+ " processors avaiable");
@@ -78,7 +125,7 @@ public class ParallelLDA implements IterationListener {
 					+ "Implementation-Version = " + implVer);
 		}
 		
-		LDACommandLineParser cp = new LDACommandLineParser(args);
+		LDACommandLineParser cp = new LDACommandLineParser(newArgs);
 		
 		// We have to create this temporary config because at this stage if we want to create a new config for each run
 		ParsedLDAConfiguration tmpconfig = (ParsedLDAConfiguration) ConfigFactory.getMainConfiguration(cp);			

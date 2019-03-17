@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.InstanceList;
 
-public interface LDAGibbsSampler {
+public interface LDAGibbsSampler extends AbortableSampler {
 	void setConfiguration(LDAConfiguration config);
 	LDAConfiguration getConfiguration();
 	void addInstances (InstanceList training);
