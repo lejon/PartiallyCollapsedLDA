@@ -153,7 +153,8 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		psiSampler.finalizeSampling();
 		
 		// Reset frequency table between iterations
-		docTopicTokenFreqTable.reset();
+		// Done in parallel in loopOverTopics
+		//docTopicTokenFreqTable.reset();
 	}
 	
 	Callable<WalkerAliasTableBuildResult> getAliasTableBuilder(int type) {
@@ -177,7 +178,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			}
 		}
 	}
-
+	
 	@Override
 	public void postSample() {
 		super.postSample();
@@ -201,6 +202,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	class GEMBasedPsiSampler implements PsiSampler {
 		double [] psi; // This is capital Psi in paper.
 		int [] l;
+		long lSum;
 		double gamma;
 		
 		public GEMBasedPsiSampler(double gamma) {
@@ -216,6 +218,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		@Override
 		public void reset() {
 			l = new int[numTopics];
+			lSum = 0;
 		}
 		
 		/* (non-Javadoc)
@@ -226,10 +229,22 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			// \Psi ~ GD(1,1,..,1, \gamma, \gamma, ..,\gamma)		
 			// alphaPrime_j = alpha_j (always 1) + y_j (i.e. l_k)
 			l[topic] = l_k;
+			lSum += l_k;
 		}
 
 		@Override
 		public void finalizeSampling() {
+			
+			if(lSum < data.size()) {
+				throw new ArrayIndexOutOfBoundsException("l ("+ lSum + ") is smaller than the number of documents in the corpus " 
+						+ "("+ data.size() + ")");
+			}
+			
+			if(lSum > getCorpusSize()) {
+				throw new ArrayIndexOutOfBoundsException("l ("+ lSum + ") is bigger than the number of tokens in the corpus " 
+						+ "("+ getCorpusSize() + ")");
+			}
+
 			// n = sum over l_k
 			
 			// \Psi ~ GD(1,1,..,1, \gamma, \gamma, ..,\gamma)
@@ -647,6 +662,10 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			} else {
 				phiMatrix[topic] = phiDirichletPrior.nextDistribution();
 			}
+			
+			// We won't use the table any more, so we reset the topic here
+			// so we don't have to loop over all in serial in postPhi
+			docTopicTokenFreqTable.reset(topic);
 		}
 		long elapsedMillis = System.currentTimeMillis();
 		long threadId = Thread.currentThread().getId();
@@ -664,8 +683,9 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	// See. PoissonPolyaUrnHDPLDATest.testSampleLOneDocAnalytic and testSampleLSimR: 
 	// SampleL for one document should have the antoniak distribution (see pdf in eq (9) in paper)
 	// Very detailed code review (Måns and Leif) 2019-03-12, cross verified with unit tests 
-	static protected int sampleL(int topic, int maxDocLen, 
-			DocTopicTokenFreqTable docTopicTokenFreqTable, double alpha, double psi_k) {
+	protected int sampleL(int topic, int maxDocLen, 
+			DocTopicTokenFreqTable docTopicTokenFreqTable, 
+			double alpha, double psi_k) {
 		if(psi_k<0) System.out.println("psi_k = " + psi_k + " topic = " + topic);
 		// freqHist is D(j, k = topic)
 		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
@@ -679,7 +699,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			if( freqHist.length >= nrTopicIndicators ) {				
 				nrDocsWithMoreTopicIndicators = freqHist[nrTopicIndicators-1];
 			}
-			//System.out.println("nrDocsWithMoreThanDoclengthTopicIndicators: " + nrDocsWithMoreThanDoclengthTopicIndicators  + " docLength: " + docLength);
+
 			// As soon as we see zero, we know the rest will be 
 			// zero and not contribute to the sum, so we can exit.
 			if(nrDocsWithMoreTopicIndicators==0) break;
@@ -698,9 +718,14 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			// Smooth out rounding errors...
 			if(p > 1) p = 1.0;				
 			bsample = BinomialSampler.rbinom(nrDocsWithMoreTopicIndicators, p);
-			//System.err.println("Binomial sample: Trials: " + trials + " probability: " + p + " => " + bsample);
 			lSum += bsample;
 		}
+		if(lSum > tokensPerTopic[topic]) {
+			throw new ArrayIndexOutOfBoundsException("l_" + topic 
+					+ " ("+ lSum + ") is bigger than # tokens assigned to topic " 
+					+ topic + "("+ tokensPerTopic[topic] + ") Iter: " + getCurrentIteration());
+		}
+		
 		return lSum;
 	}	
 		
