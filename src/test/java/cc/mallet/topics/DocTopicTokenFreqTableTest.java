@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.Arrays;
-
 import org.apache.commons.math3.stat.inference.ChiSquareTest;
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,8 +42,8 @@ public class DocTopicTokenFreqTableTest {
 			}
 		}
 
-		System.out.println("Table:" + docTopicTokenFreqTable);
-		System.out.println("Cumsum: " + Arrays.toString(docTopicTokenFreqTable.getReverseCumulativeSum(0)));
+		//System.out.println("Table:" + docTopicTokenFreqTable);
+		//System.out.println("Cumsum: " + Arrays.toString(docTopicTokenFreqTable.getReverseCumulativeSum(0)));
 		// Three documents have more than 1 (-1 = 0) topic indicators for the first topic (0) 
 		assertEquals(3,docTopicTokenFreqTable.getReverseCumulativeSum(0)[0]);
 		// Two documents have more than 2 (-1 = 1) topic indicators for the first topic (0)
@@ -161,12 +159,19 @@ public class DocTopicTokenFreqTableTest {
 				//					+ Arrays.toString(docTopicTokenFreqTable.getReverseCumulativeSum(topic)));
 				Assert.assertArrayEquals(expectedEmptyTopics, docTopicTokenFreqTable.getEmptyTopics());
 			}
+			
+			
+			int [][] expectedReverseHist = {{2,1,1}, {}, {3,1,1,1,1}, {2}, {}};
+			
+			for (int topic = 0; topic < numTopics; topic++) {
+				Assert.assertArrayEquals(expectedReverseHist[topic], docTopicTokenFreqTable.getReverseCumulativeSum(topic));
+			}
+
 		}
-		
 		docTopicTokenFreqTable.reset();
 		
 		{
-			int [][] documentLocalTopicCounts2 = {{0,5,0,0,1}, {1,1,0,0,4},{3,0,0,0,6}};
+			int [][] documentLocalTopicCounts2 = {{0,5,1,0,0}, {0,1,0,0,1},{0,1,1,0,3}};
 
 			for (int docNo = 0; docNo < numDocs; docNo++) {
 				int [] localTopicCounts = documentLocalTopicCounts2[docNo];
@@ -177,10 +182,16 @@ public class DocTopicTokenFreqTableTest {
 				}
 			}
 
-			int [] expectedEmptyTopics = {2,3};
+			int [] expectedEmptyTopics = {0,3};
 
 			for (int topic = 0; topic < numTopics; topic++) {
 				Assert.assertArrayEquals(expectedEmptyTopics, docTopicTokenFreqTable.getEmptyTopics());
+			}
+			
+			int [][] expectedReverseHist = {{}, {3,1,1,1,1}, {2}, {}, {2,1,1}};
+			
+			for (int topic = 0; topic < numTopics; topic++) {
+				Assert.assertArrayEquals(expectedReverseHist[topic], docTopicTokenFreqTable.getReverseCumulativeSum(topic));
 			}
 		}
 
