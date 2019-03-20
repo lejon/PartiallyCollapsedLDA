@@ -686,7 +686,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		postSample();
 
 	}
-
+	
 	/**
 	 * This method only samples Zbar given Phi, i.e it does not sample/update Phi
 	 * 
@@ -695,18 +695,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	public void sampleZGivenPhi(int iterations) {
 		preSample();
 
-		double logLik = modelLogLikelihood();	
-		String tw = topWords (wordsPerTopic);
-
 		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
 			preIterationGivenPhi();
 			currentIteration = iteration;
-			//if((iteration%100)==0) System.out.println("Iteration: " + iteration);
-			// Saves timestamp
-			long iterationStart = System.currentTimeMillis();
-			for (int i = 0; i < zTimings.length; i++) {
-				zTimings[i] = iterationStart;
-			}
 
 			// Sample z by dividing the corpus in batches
 			preZ();
@@ -728,8 +719,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			
 			// Occasionally print more information
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
-				logLik = modelLogLikelihood();	
-				tw = topWords (wordsPerTopic);
+				double logLik = modelLogLikelihood();	
+				String tw  = topWords (wordsPerTopic);
 				logger.info("<" + iteration + "> Log Likelihood: " + logLik);
 				logger.fine(tw);
 			}
@@ -737,8 +728,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			kdDensities.set(0);
 
 			postIterationGivenPhi();
-			//long iterEnd = System.currentTimeMillis();
-			//System.out.println("Iteration "+ currentIteration + " took: " + (iterEnd-iterStart) + " milliseconds...");
 		}
 
 		postSample();
