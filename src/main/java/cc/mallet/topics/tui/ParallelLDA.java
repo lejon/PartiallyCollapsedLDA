@@ -75,7 +75,7 @@ public class ParallelLDA implements IterationListener {
 				public void run() {
 					int waitTimeout = 4000;
 					if(!normalShutdown) {
-						System.err.println("Running shutdown hook: DOLDAClassifier Aborted! Waiting for shudown...");
+						System.err.println("Running shutdown hook: " + PROGRAM_NAME + " Aborted! Waiting for shudown...");
 						abort = true;
 						if(getCurrentSampler()!=null) {
 							getCurrentSampler().abort();
@@ -125,7 +125,7 @@ public class ParallelLDA implements IterationListener {
 					+ "Implementation-Version = " + implVer);
 		}
 		
-		LDACommandLineParser cp = new LDACommandLineParser(newArgs);
+		LDACommandLineParser cp = new LDACommandLineParser(args);
 		
 		// We have to create this temporary config because at this stage if we want to create a new config for each run
 		ParsedLDAConfiguration tmpconfig = (ParsedLDAConfiguration) ConfigFactory.getMainConfiguration(cp);			
@@ -358,6 +358,7 @@ public class ParallelLDA implements IterationListener {
 					+ "Implementation-Build = " + buildVer + ", " 
 					+ "Implementation-Version = " + implVer);
 			}
+			normalShutdown = true;
 		}
 	}
 
