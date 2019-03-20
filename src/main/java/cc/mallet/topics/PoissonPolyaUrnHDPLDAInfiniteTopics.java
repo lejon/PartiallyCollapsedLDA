@@ -69,9 +69,11 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 
 	boolean staticPhiAliasTableIsBuild = false;
 
-	private ParallelDirichlet phiDirichletPrior;
+	ParallelDirichlet phiDirichletPrior;
 
-	private double k_percentile;
+	double k_percentile;
+
+	boolean[] deceasedTopics;
 
 	public PoissonPolyaUrnHDPLDAInfiniteTopics(LDAConfiguration config) {
 		super(config);
@@ -89,6 +91,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		hyperparameterOptimizationInterval = -1;
 		
 		topicOcurrenceCount = new int[numTopics];
+		deceasedTopics = new boolean[numTopics];
 				
 		// Here we set Gamma, the prior base measure
 		//gd = new UniformGamma();
@@ -143,6 +146,36 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 
 			return new WalkerAliasTableBuildResult(type, aliasTables[type], typeMass);
 		}   
+	}
+	
+	/**
+	 * This method can only be called from threads working
+	 * on separate topics. It is not thread safe if several threads
+	 * work on the same topic
+	 * 
+	 * This is overridden from Uncollapsed since we need to book keep
+	 * when a topic (possibly temporarily) dies (i.e goes from having
+	 * tokens assigned to it to not having any). In this case
+	 * we sample Phi for that topic from the prior in loopOverTopics.
+	 * 
+	 * @param type
+	 * @param topic
+	 * @param count
+	 */
+	@Override
+	protected void updateTypeTopicCount(int type, int topic, int count) {
+		// Topic resurrected... yay! (not really)
+		if(tokensPerTopic[topic]==0 && deceasedTopics[topic]) {
+			// I.e if a topic has 0 tokens and it is changed it MUST increase
+			// since it cannot be negative, and if it was then previously deceased
+			// it is now resurrected
+			deceasedTopics[topic] = false;
+		}
+		super.updateTypeTopicCount(type, topic, count);
+		// Topic died... whimp...
+		if(tokensPerTopic[topic]==0) {
+			deceasedTopics[topic] = true;
+		}
 	}
 
 	@Override
@@ -310,7 +343,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		if (showTopicsInterval > 0 && currentIteration % showTopicsInterval == 0) {
 			System.err.println("Active in data: " + activeInData 
 					+ "\tK = " + calcK 
-					+ "\tEmpty topics (" + emptyTopics.length + "): " + Arrays.toString(emptyTopics));
+					+ "\tEmpty topics (" + emptyTopics.length + ")");
 		}
 
 		psiSampler.reset();
@@ -660,7 +693,10 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			// If we have a newly sampled active topic, it won't have any type topic
 			// counts (tokensPerTopic[topic]<1), so we draw from the prior
 			} else {
-				phiMatrix[topic] = phiDirichletPrior.nextDistribution();
+				if(deceasedTopics[topic]) {
+					phiMatrix[topic] = phiDirichletPrior.nextDistribution();
+					deceasedTopics[topic] = false;
+				}
 			}
 			
 			// We won't use the table any more, so we reset the topic here
