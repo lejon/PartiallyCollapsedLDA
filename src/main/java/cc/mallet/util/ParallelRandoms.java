@@ -152,7 +152,7 @@ public class ParallelRandoms extends Randoms {
 		while(true) {
 			do {x=gaussGen.get().nextGaussian(); v=1.0+c*x;} while(v<=0.0);
 			v=v*v*v; 
-			u=ThreadLocalRandom.current().nextDouble();
+			u=gaussGen.get().nextDouble();
 			if( u<(1.0-0.0331*(x*x)*(x*x)) ) return (d*v);
 			if( Math.log(u)<(0.5*x*x+d*(1.0-v+Math.log(v))) ) return (d*v);
 		}
