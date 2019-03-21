@@ -1,6 +1,6 @@
 package cc.mallet.topics;
 
-import java.util.concurrent.atomic.LongAdder;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A structure that holds a frequency table per topic.
@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.LongAdder;
  */
 public class DocTopicTokenFreqTable {
 
-	LongAdder [][] docTokenFreqMap;
+	AtomicInteger [][] docTokenFreqMap;
 	int numTopics;
 	int maxFreq = -1;
 	boolean [] nonEmptyTopics;
@@ -41,13 +41,13 @@ public class DocTopicTokenFreqTable {
 	public DocTopicTokenFreqTable(int numTopics, int maxFreq) {
 		this.numTopics = numTopics;
 		this.maxFreq = maxFreq;
-		docTokenFreqMap = new LongAdder[numTopics][maxFreq+1];
+		docTokenFreqMap = new AtomicInteger[numTopics][maxFreq+1];
 		nonEmptyTopics = new boolean[numTopics];
 		// Initialize 
 		for (int topic = 0; topic < numTopics; topic++) {			
 			//docTokenFreqMap[topic] =  Int2ObjectSortedMaps.synchronize(new Int2ObjectAVLTreeMap<AtomicInteger>());
 			for(int tokenFreq = 0; tokenFreq <= maxFreq; tokenFreq++) {
-				docTokenFreqMap[topic][tokenFreq] = new LongAdder();
+				docTokenFreqMap[topic][tokenFreq] = new AtomicInteger();
 			}
 		}
 	}
@@ -57,7 +57,7 @@ public class DocTopicTokenFreqTable {
 			if(nonEmptyTopics[topic]) {
 				nonEmptyTopics[topic] = false;
 				for(int tokenFreq = 0; tokenFreq <= maxFreq; tokenFreq++) {
-					docTokenFreqMap[topic][tokenFreq].reset();
+					docTokenFreqMap[topic][tokenFreq].set(0);
 				}
 			}
 		}
@@ -76,7 +76,7 @@ public class DocTopicTokenFreqTable {
 		if(nonEmptyTopics[topic]) {
 			nonEmptyTopics[topic] = false;
 			for(int tokenFreq = 0; tokenFreq <= maxFreq; tokenFreq++) {
-				docTokenFreqMap[topic][tokenFreq].reset();
+				docTokenFreqMap[topic][tokenFreq].set(0);
 			}
 		}
 	}
@@ -104,7 +104,7 @@ public class DocTopicTokenFreqTable {
 			throw new IndexOutOfBoundsException("DocTopicTokenFreqTable initiated with 'maxFreq' " + maxFreq 
 					+ "  but called with 'tokenFreq' " + tokenFreq + " is out of range");
 		}
-		docTokenFreqMap[topic][tokenFreq].increment();
+		docTokenFreqMap[topic][tokenFreq].getAndIncrement();
 		nonEmptyTopics[topic] = tokenFreq > 0;
 	}
 
@@ -128,7 +128,7 @@ public class DocTopicTokenFreqTable {
 	 */
 	// TODO: Fix test suite with example
 	public int [] getReverseCumulativeSum(int topic) {
-		LongAdder [] countTable = docTokenFreqMap[topic];
+		AtomicInteger [] countTable = docTokenFreqMap[topic];
 
 		int maxIdx = 0;
 		int [] map = new int[countTable.length]; 
@@ -155,7 +155,7 @@ public class DocTopicTokenFreqTable {
 	public String toString() {
 		String str = "";
 		for (int topic = 0; topic < docTokenFreqMap.length; topic++) {
-			LongAdder [] countTable = docTokenFreqMap[topic];
+			AtomicInteger [] countTable = docTokenFreqMap[topic];
 			str += "\t[" + topic + "]: ";
 			for(int tokenFreq = 0; tokenFreq <= maxFreq; tokenFreq++) {
 				str += "(" + tokenFreq + "=>" + countTable[tokenFreq].intValue() + "),"; 
@@ -193,7 +193,7 @@ public class DocTopicTokenFreqTable {
 	// degrade performance on increment and we don't want that
 	// WARNING: Not thread safe, should not be called from multiple threads
 	public void moveTopic(int oldTopicPos, int newTopicPos) {
-		LongAdder [] tmp = docTokenFreqMap[newTopicPos];
+		AtomicInteger [] tmp = docTokenFreqMap[newTopicPos];
 		docTokenFreqMap[newTopicPos] = docTokenFreqMap[oldTopicPos];
 		docTokenFreqMap[oldTopicPos] = tmp;
 		boolean et = nonEmptyTopics[newTopicPos];

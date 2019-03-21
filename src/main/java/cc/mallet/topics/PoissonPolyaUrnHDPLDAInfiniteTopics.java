@@ -537,7 +537,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		kdDensities.addAndGet(nonZeroTopicCnt);
 
 		double sum; // sigma_likelihood
-		double[] cumsum = new double[numTopics]; 
 		int [] nonZeroTopicsAdjusted;
 		int nonZeroTopicCntAdjusted;
 
@@ -600,6 +599,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			} else {
 				int topic = nonZeroTopicsAdjusted[0];
 				double score = localTopicCounts[topic] * phi[topic][type];
+				double[] cumsum = new double[numTopics]; 
 				cumsum[0] = score;
 				// Now calculate and add up the scores for each topic for this word
 				// We build a cumsum indexed by topicIndex
@@ -690,9 +690,15 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 				int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
 				VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
 				phiMatrix[topic] = res.getPhi();
-			// If we have a newly sampled active topic, it won't have any type topic
-			// counts (tokensPerTopic[topic]<1), so we draw from the prior
 			} else {
+				// If a topic has just deceased we draw Phi for that topic from the prior
+				// this is so called "retrospective sampling". In principle we go back in time
+				// and sample Phi "retrospectively" (well really it is the opposite"). 
+				// This means we can just ignore sampling
+				// non-active topics, and they will still have a proper distribution if
+				// during Z sampling it should be resurrected again. This gives a huge
+				// performance boost in Phi sampling, since we don't have to sample a bunch
+				// of Phi that is never used.
 				if(deceasedTopics[topic]) {
 					phiMatrix[topic] = phiDirichletPrior.nextDistribution();
 					deceasedTopics[topic] = false;

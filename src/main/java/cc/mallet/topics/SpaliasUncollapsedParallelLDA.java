@@ -345,7 +345,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	}
 
 	protected static int findIdx(double[] cumsum, double u, int maxIdx) {
-		if(cumsum.length<1000) {
+		if(cumsum.length<2000) {
 			return findIdxLinSentinel(cumsum,u,maxIdx);
 		} else {
 			return findIdxBin(cumsum,u,maxIdx);
