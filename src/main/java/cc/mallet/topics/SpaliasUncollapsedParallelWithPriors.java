@@ -190,7 +190,7 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 	
 	
 	@Override
-	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected LDADocSamplingResult sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
@@ -203,7 +203,7 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
 
-		double[] localTopicCounts = new double[numTopics];
+		int[] localTopicCounts = new int[numTopics];
 
 		// This vector contains the indices of the topics with non-zero entries.
 		// It has to be numTopics long since the non-zero topics come and go...
@@ -307,7 +307,7 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 			//System.out.println("(Batch=" + myBatch + ") Incremented: topic=" + newTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][newTopic][type]);		
 		}
 		//System.out.println("Ratio: " + ((double)numPrior/(double)numLikelihood));
-		return localTopicCounts;
+		return new LDADocSamplingResultSparseSimple(localTopicCounts,nonZeroTopicCnt,nonZeroTopics);
 	}
 	
 	/**

@@ -16,7 +16,7 @@ public class EfficientUncollapsedParallelLDA extends UncollapsedParallelLDA impl
 	}
 
 	@Override
-	protected double[] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected LDADocSamplingResult sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
@@ -29,13 +29,15 @@ public class EfficientUncollapsedParallelLDA extends UncollapsedParallelLDA impl
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
 		
-		double[] localTopicCounts = new double[numTopics];
-		// With a uniform alpha, 'fill' can be used
-		//Arrays.fill(localTopicCounts, alpha);
-		// With non uniform alpha, it should be filled accordingly
-		for (int i = 0; i < localTopicCounts.length; i++) {
-			localTopicCounts[i] = alpha[i];
-		}
+		int[] localTopicCounts = new int[numTopics];
+		
+		// TODO: This must be wrong 
+//		// With a uniform alpha, 'fill' can be used
+//		//Arrays.fill(localTopicCounts, alpha);
+//		// With non uniform alpha, it should be filled accordingly
+//		for (int i = 0; i < localTopicCounts.length; i++) {
+//			localTopicCounts[i] = alpha[i];
+//		}
 		
 		// Find the non-zero words and topic counts that we have in this document
 		for (int position = 0; position < docLength; position++) {
@@ -113,7 +115,7 @@ public class EfficientUncollapsedParallelLDA extends UncollapsedParallelLDA impl
 			increment(myBatch, newTopic, type);
 			//System.out.println("(Batch=" + myBatch + ") Incremented: topic=" + newTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][newTopic][type]);		
 		}
-		return localTopicCounts;
+		return new LDADocSamplingResultDense(localTopicCounts);
 	}
 
 }

@@ -98,7 +98,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	
 
 	@Override
-	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected LDADocSamplingResult sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
@@ -109,8 +109,8 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
 
-		double[] localTopicCounts = new double[numTopics];
-		double[] localTopicCounts_not_i = new double[numTopics];
+		int[] localTopicCounts = new int[numTopics];
+		int[] localTopicCounts_not_i = new int[numTopics];
 		
 		// Populate topic counts
 		int nonZeroTopicCnt = 0; // Only needed for statistics
@@ -240,11 +240,11 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 			// Make sure the "_i" version is also up to date!
 			localTopicCounts_not_i[newTopic]++;
 		}
-		return localTopicCounts;
+		return new LDADocSamplingResultDense(localTopicCounts);
 	}
 
 
-	public static double calculateDocumentAcceptanceProbability(double[] localTopicCounts, double[] localTopicCounts_not_i, int type,
+	public static double calculateDocumentAcceptanceProbability(int[] localTopicCounts, int[] localTopicCounts_not_i, int type,
 			int oldTopic, int docTopicIndicatorProposal, double[][] phi, double alpha) {
 		double n_d_zstar_not_i = localTopicCounts_not_i[docTopicIndicatorProposal];
 		double n_d_zi_not_i = localTopicCounts_not_i[oldTopic];
@@ -258,7 +258,7 @@ public class LightPCLDAtypeTopicProposal extends LightPCLDA {
 	}
 
 
-	public static double calculateWordAcceptanceProbability(double[] localTopicCounts_not_i, int type, int oldTopic,
+	public static double calculateWordAcceptanceProbability(int[] localTopicCounts_not_i, int type, int oldTopic,
 			int wordTopicIndicatorProposal, double[] topicCountBetaHat, int[][] typeTopicCounts, double[][] phi, double alpha, double beta) {
 		double n_d_zi_not_i = localTopicCounts_not_i[oldTopic];
 		double n_d_zstar_not_i = localTopicCounts_not_i[wordTopicIndicatorProposal];

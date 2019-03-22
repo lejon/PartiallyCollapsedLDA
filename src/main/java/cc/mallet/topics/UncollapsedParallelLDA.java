@@ -1087,8 +1087,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 							(FeatureSequence) data.get(docIdx).instance.getData();
 					LabelSequence topicSequence =
 							(LabelSequence) data.get(docIdx).topicSequence;
-					double [] docTopicHist = sampleTopicAssignmentsParallel (
-							new UncollapsedLDADocSamplingContext(tokenSequence, topicSequence, myBatch, docIdx));
+					int [] docTopicHist = sampleTopicAssignmentsParallel (
+							new UncollapsedLDADocSamplingContext(tokenSequence, 
+									topicSequence, myBatch, docIdx)).getLocalTopicCounts();
 					if(docTopicHist!=null && saveHistStats)
 						updateGlobalHistogram(docTopicHist);
 				}
@@ -1104,7 +1105,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			}
 		}
 
-		private void updateGlobalHistogram(double[] docTopicHist) {
+		private void updateGlobalHistogram(int[] docTopicHist) {
 			for (int topic = 0; topic < docTopicHist.length; topic++) {				
 				documentTopicHistogram[topic][(int)docTopicHist[topic]].incrementAndGet();
 			}
@@ -1173,7 +1174,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		System.out.println();System.out.println();
 	}
 
-	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected LDADocSamplingResult sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
@@ -1186,7 +1187,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
 
-		double[] localTopicCounts = new double[numTopics];
+		int[] localTopicCounts = new int[numTopics];
 
 		// Find the non-zero words and topic counts that we have in this document
 		for (int position = 0; position < docLength; position++) {
@@ -1251,7 +1252,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			 */
 			increment(myBatch,newTopic,type);
 		}
-		return localTopicCounts;
+		return new LDADocSamplingResultDense(localTopicCounts);
 	}
 
 	protected void increment(int myBatch, int newTopic, int type) {

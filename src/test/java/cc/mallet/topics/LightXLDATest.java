@@ -22,7 +22,7 @@ public class LightXLDATest {
 		double betaSum = beta * numTypes;
 		System.out.println("alpha: " + alpha + " beta: " + beta + " betaSum: " + betaSum);		
 		
-		double[] localTopicCounts = new double[numTopics];
+		int[] localTopicCounts = new int[numTopics];
 		for (int j = 0; j < documentTopics.length; j++) {	
 			localTopicCounts[documentTopics[j]] += 1;
 		}
@@ -98,7 +98,7 @@ public class LightXLDATest {
 		// If phi_i is used: pw2LightWordProbManual = 2.6131462 0.8757712 = cLightWordProbManual
 		// If phi_i is used: pw2LightWordProbManual = 0.4209629 1.2117754 = cLightDocProbManual
 		
-		double [] localTopicCounts_i = Arrays.copyOf(localTopicCounts, localTopicCounts.length);
+		int [] localTopicCounts_i = Arrays.copyOf(localTopicCounts, localTopicCounts.length);
 		System.out.println("documentTopics: " + Arrays.toString(documentTopics));
 		System.out.println("documentTypes: " + Arrays.toString(documentTypes));
 		System.out.println("wordTopicIndicatorProposal: " + Arrays.toString(wordTopicIndicatorProposal));

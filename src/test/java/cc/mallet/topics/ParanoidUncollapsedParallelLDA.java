@@ -55,7 +55,7 @@ public class ParanoidUncollapsedParallelLDA extends EfficientUncollapsedParallel
 	}
 
 	@Override
-	protected double [] sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
+	protected LDADocSamplingResult sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		//SamplingResult res = super.sampleTopicAssignmentsParallel(tokenSequence, oneDocTopics, myBatch);
 		return super.sampleTopicAssignmentsParallel(ctx);
 		// THIS CANNOT BE ENSURED with a job stealing implementation
