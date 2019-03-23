@@ -5,14 +5,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ThreadLocalRandom;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.BinomialSampler;
-import cc.mallet.types.Dirichlet;
-import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.LabelSequence;
 import cc.mallet.types.ParallelDirichlet;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IndexSorter;
@@ -58,17 +54,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	// topicOcurrenceCount stores how many times the topic has been active?
 	int [] topicOcurrenceCount;
 	
-	// The prior Gamma distribution
-	//GammaDist gd;
-//	AtomicInteger countBernBin = new AtomicInteger();
-//	AtomicInteger countBernSumBin = new AtomicInteger();
-//	AtomicInteger countExactBin = new AtomicInteger();
-//	AtomicInteger countAliasBin = new AtomicInteger();
-//	AtomicInteger countNormalBin = new AtomicInteger();
-//	AtomicInteger revCumSum = new AtomicInteger();
-
-	boolean staticPhiAliasTableIsBuild = false;
-
 	ParallelDirichlet phiDirichletPrior;
 
 	double k_percentile;
@@ -93,13 +78,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		topicOcurrenceCount = new int[numTopics];
 		deceasedTopics = new boolean[numTopics];
 				
-		// Here we set Gamma, the prior base measure
-		//gd = new UniformGamma();
-		//gd = new GeometricGamma(1.0 / (1+gamma));
-		//GammaDist gd = new GeometricGamma(1.0 / (1+gamma));
-		//GammaDist gd = new GeometricGamma(0.05);
-		
-		//psiSampler = new PoissonBasedPsiSampler();
 		psiSampler = new GEMBasedPsiSampler(gamma);
 	}
 		
@@ -184,10 +162,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 						
 		// This is a global parameter so normalization need to be done after psi_k has been sampled in parallel.
 		psiSampler.finalizeSampling();
-		
-		// Reset frequency table between iterations
-		// Done in parallel in loopOverTopics
-		//docTopicTokenFreqTable.reset();
 	}
 	
 	Callable<WalkerAliasTableBuildResult> getAliasTableBuilder(int type) {
@@ -377,129 +351,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		return ecdf;
 	}
 	
-	/* 
-	 * Uses AD-LDA logLikelihood calculation
-	 *  
-	 * Here we override SimpleLDA's original likelihood calculation and use the
-	 * AD-LDA logLikelihood calculation. 
-	 * With this approach all models likelihoods are calculated the same way
-	 */
-	// TODO: Check if needed.
-	@Override
-	public double modelLogLikelihood() {
-		double logLikelihood = 0.0;
-		//int nonZeroTopics;
-
-		// The likelihood of the model is a combination of a 
-		// Dirichlet-multinomial for the words in each topic
-		// and a Dirichlet-multinomial for the topics in each
-		// document.
-
-		// The likelihood function of a dirichlet multinomial is
-		//	 Gamma( sum_i alpha_i )	 prod_i Gamma( alpha_i + N_i )
-		//	prod_i Gamma( alpha_i )	  Gamma( sum_i (alpha_i + N_i) )
-
-		// So the log likelihood is 
-		//	logGamma ( sum_i alpha_i ) - logGamma ( sum_i (alpha_i + N_i) ) + 
-		//	 sum_i [ logGamma( alpha_i + N_i) - logGamma( alpha_i ) ]
-
-		// Do the documents first
-
-		int[] topicCounts = new int[numTopics];
-		double[] topicLogGammas = new double[numTopics];
-		int[] docTopics;
-
-		for (int topic=0; topic < numTopics; topic++) {
-			topicLogGammas[ topic ] = Dirichlet.logGammaStirling( alpha[topic] );
-		}
-
-		for (int doc=0; doc < data.size(); doc++) {
-			LabelSequence topicSequence =	(LabelSequence) data.get(doc).topicSequence;
-
-			docTopics = topicSequence.getFeatures();
-						
-			for (int token=0; token < docTopics.length; token++) {
-				topicCounts[ docTopics[token] ]++;
-			}
-
-			for (int topic=0; topic < numTopics; topic++) {
-				if (topicCounts[topic] > 0) {
-					logLikelihood += (Dirichlet.logGammaStirling(alpha[topic] + topicCounts[topic]) -
-							topicLogGammas[ topic ]);
-				}
-			}
-
-			// subtract the (count + parameter) sum term
-			logLikelihood -= Dirichlet.logGammaStirling(alphaSum + docTopics.length);
-
-			Arrays.fill(topicCounts, 0);
-		}
-
-		// add the parameter sum term
-		logLikelihood += data.size() * Dirichlet.logGammaStirling(alphaSum);
-
-		// And the topics
-
-		// Count the number of type-topic pairs that are not just (logGamma(beta) - logGamma(beta))
-		int nonZeroTypeTopics = 0;
-
-		for (int type=0; type < numTypes; type++) {
-			// reuse this array as a pointer
-
-			topicCounts = typeTopicCounts[type];
-
-			for (int topic = 0; topic < numTopics; topic++) {
-				if (topicCounts[topic] == 0) { continue; }
-
-				nonZeroTypeTopics++;
-				logLikelihood += Dirichlet.logGammaStirling(beta + topicCounts[topic]);
-
-				if (Double.isNaN(logLikelihood)) {
-					System.err.println("NaN in log likelihood calculation: " + topicCounts[topic]);
-					System.exit(1);
-				} 
-				else if (Double.isInfinite(logLikelihood)) {
-					logger.warning("infinite log likelihood");
-					System.exit(1);
-				}
-			}
-		}
-
-		for (int topic=0; topic < numTopics; topic++) {
-			logLikelihood -= 
-					Dirichlet.logGammaStirling( (beta * numTypes) +
-							tokensPerTopic[ topic ] );
-
-			if (Double.isNaN(logLikelihood)) {
-				logger.info("NaN after topic " + topic + " " + tokensPerTopic[ topic ]);
-				return 0;
-			}
-			else if (Double.isInfinite(logLikelihood)) {
-				logger.info("Infinite value after topic " + topic + " " + tokensPerTopic[ topic ]);
-				return 0;
-			}
-
-		}
-
-		// logGamma(|V|*beta) for every topic
-		logLikelihood += 
-				Dirichlet.logGammaStirling(beta * numTypes) * numTopics;
-
-		// logGamma(beta) for all type/topic pairs with non-zero count
-		logLikelihood -=
-				Dirichlet.logGammaStirling(beta) * nonZeroTypeTopics;
-
-		if (Double.isNaN(logLikelihood)) {
-			logger.info("at the end");
-		}
-		else if (Double.isInfinite(logLikelihood)) {
-			logger.info("Infinite value beta " + beta + " * " + numTypes);
-			return 0;
-		}
-
-		return logLikelihood;
-	}
-	
 	@Override
 	protected LDADocSamplingResult sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		LDADocSamplingResultSparse res = (LDADocSamplingResultSparse) super.sampleTopicAssignmentsParallel(ctx);
@@ -528,16 +379,11 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		int topicsToSample = indices.length;
 		for (int topicIdx = 0; topicIdx < topicsToSample; topicIdx++) {
 			int topic = indices[topicIdx];
-			//System.out.println("Sampling # topics: " + indices.length);
-			//System.out.println("Sampling topic: " + topic);
-			
-			// FIXEDTODO: Check if tokens per topic == 0 the l_l for that topic => 0
-			// Yep!
+
 			if(tokensPerTopic[topic]>0) {
 				// First part of Psi sampling. Normalization must be done 
 				// in postIteration when all Psi_k has been sampled
 				int l_k = sampleL(topic, longestDocLength, docTopicTokenFreqTable, alphaCoef, psiSampler.getPsi()[topic]);
-				// System.out.println("l_" + topic + " = " + l_k + " Topic Occurence:" + topicOcurrenceCount[topic]);
 				
 				psiSampler.updateTopic(topic, l_k);
 				int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
@@ -546,7 +392,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			} else {
 				// If a topic has just deceased we draw Phi for that topic from the prior
 				// this is so called "retrospective sampling". In principle we go back in time
-				// and sample Phi "retrospectively" (well really it is the opposite"). 
+				// and sample Phi "retrospectively" (well really it is the opposite). 
 				// This means we can just ignore sampling
 				// non-active topics, and they will still have a proper distribution if
 				// during Z sampling it should be resurrected again. This gives a huge
