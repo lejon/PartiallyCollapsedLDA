@@ -306,8 +306,8 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			}
 			
 			// Make sure we actually sampled a valid topic
-			if (newTopic < 0 || newTopic > numTopics) {
-				throw new IllegalStateException ("SpaliasUncollapsedParallelLDA: New valid topic not sampled (" + newTopic + ").");
+			if (newTopic < 0 || newTopic >= numTopics) {
+				throw new IllegalStateException ("SpaliasUncollapsedParallelLDA: Invalid topic sampled (" + newTopic + ").");
 			}
 
 			// Put that new topic into the counts

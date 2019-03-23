@@ -502,163 +502,16 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	
 	@Override
 	protected LDADocSamplingResult sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
-		FeatureSequence tokens = ctx.getTokens();
-		LabelSequence topics = ctx.getTopics();
-		int myBatch = ctx.getMyBatch();
+		LDADocSamplingResultSparse res = (LDADocSamplingResultSparse) super.sampleTopicAssignmentsParallel(ctx);
 
-		int type, oldTopic, newTopic;
-
-		final int docLength = tokens.getLength();
-		if(docLength==0) return null;
-
-		int [] tokenSequence = tokens.getFeatures();
-		int [] oneDocTopics = topics.getFeatures();
-
-		int[] localTopicCounts = new int[numTopics];
-
-		// This vector contains the indices of the topics with non-zero entries.
-		// It has to be numTopics long since the non-zero topics come and go...
-		int [] nonZeroTopics = new int[numTopics];
-
-		// So we can map back from a topic to where it is in nonZeroTopics vector
-		int [] nonZeroTopicsBackMapping = new int[numTopics];
-
-		// Populate topic counts
-		int nonZeroTopicCnt = 0;
-		for (int position = 0; position < docLength; position++) {
-			int topicInd = oneDocTopics[position];
-			localTopicCounts[topicInd]++;
-			if(localTopicCounts[topicInd]==1) {
-				nonZeroTopicCnt = insert(topicInd, nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicCnt);
-			}
-		}
-
-		//kdDensities[myBatch] += nonZeroTopicCnt;
-		kdDensities.addAndGet(nonZeroTopicCnt);
-
-		double sum; // sigma_likelihood
-		int [] nonZeroTopicsAdjusted;
-		int nonZeroTopicCntAdjusted;
-
-		//	Iterate over the words in the document
-		for (int position = 0; position < docLength; position++) {
-			type = tokenSequence[position];
-			oldTopic = oneDocTopics[position]; // z_position
-			localTopicCounts[oldTopic]--;
-
-			// Potentially update nonZeroTopics mapping
-			if(localTopicCounts[oldTopic]==0) {
-				nonZeroTopicCnt = remove(oldTopic, nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicCnt);
-			}
-
-			if(localTopicCounts[oldTopic]<0) 
-				throw new IllegalStateException("Counts cannot be negative! Count for topic:" 
-						+ oldTopic + " is: " + localTopicCounts[oldTopic]);
-
-			// Propagates the update to the topic-token assignments
-			/**
-			 * Used to subtract and add 1 to the local structure containing the number of times
-			 * each token is assigned to a certain topic. Called before and after taking a sample
-			 * topic assignment z
-			 */
-			decrement(myBatch, oldTopic, type);
-			//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
-
-			int nonZeroTypeCnt = nonZeroTypeTopicColIdxs[type];
-
-			/*nonZeroTopicCntAdjusted = intersection(zeroTypeTopicIdxs[type], nonZeroTypeCnt, 
-						nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicsAdjusted, nonZeroTopicCnt);	
-
-				String logstr = "Type NZ    : " + intVectorToString(zeroTypeTopicIdxs[type], fillCnt) 
-						+ "\nDoc NZ     : " + intVectorToString(nonZeroTopics, nonZeroTopicCnt) 
-						+ "\nAdjusted NZ: " + intVectorToString(nonZeroTopicsAdjusted, nonZeroTopicCntAdjusted);
-				System.out.println(logstr);
-
-				System.out.println("Type: " + fillCnt + " Topic: " + nonZeroTopicCnt + " Adjusted: " + nonZeroTopicCntAdjusted);
-				if(nonZeroTopicCntAdjusted < Math.min(fillCnt, nonZeroTopicCnt)) {
-					System.out.println("################### YAY!");
-				}*/
-
-			if(nonZeroTypeCnt < nonZeroTopicCnt) {
-				// INTERSECTION SHOULD IMPROVE perf since we use result both in cumsum and sample topic
-				// Intersection needs to b O(k) for it to improve perf, but unless we add more memory 
-				// requirements it becomes O(k log(k))
-				nonZeroTopicsAdjusted = nonZeroTypeTopicIdxs[type];
-				nonZeroTopicCntAdjusted = nonZeroTypeCnt;
-				//usedTypeSparsness.incrementAndGet();
-			} else {
-				nonZeroTopicsAdjusted = nonZeroTopics;
-				nonZeroTopicCntAdjusted = nonZeroTopicCnt;
-			}
-
-			double u = ThreadLocalRandom.current().nextDouble();
-
-			// Document and type sparsity removed all (but one?) topics, just use the prior contribution
-			if(nonZeroTopicCntAdjusted==0) {
-				newTopic = (int) Math.floor(u * this.numTopics); // uniform (0,1)
-			} else {
-				int topic = nonZeroTopicsAdjusted[0];
-				double score = localTopicCounts[topic] * phi[topic][type];
-				double[] cumsum = new double[numTopics]; 
-				cumsum[0] = score;
-				// Now calculate and add up the scores for each topic for this word
-				// We build a cumsum indexed by topicIndex
-				int topicIdx = 1;
-				while ( topicIdx < nonZeroTopicCntAdjusted ) {
-					topic = nonZeroTopicsAdjusted[topicIdx];
-					score = localTopicCounts[topic] * phi[topic][type];
-					cumsum[topicIdx] = score + cumsum[topicIdx-1];
-					topicIdx++;
-				}
-				sum = cumsum[topicIdx-1]; // sigma_likelihood
-
-				// Choose a random point between 0 and the sum of all topic scores
-				// The thread local random performs better in concurrent situations 
-				// than the standard random which is thread safe and incurs lock 
-				// contention
-				double u_sigma = u * (typeNorm[type] + sum);
-				// u ~ U(0,1)  
-				// u [0,1]
-				// u_sigma = u * (typeNorm[type] + sum)
-				// if u_sigma < typeNorm[type] -> prior
-				// u * (typeNorm[type] + sum) < typeNorm[type] => u < typeNorm[type] / (typeNorm[type] + sum)
-				// else -> likelihood
-				// u_prior = u_sigma / typeNorm[type] -> u_prior (0,1)
-				// u_likelihood = (u_sigma - typeNorm[type]) / sum  -> u_likelihood (0,1)
-
-				newTopic = sampleNewTopic(type, nonZeroTopicsAdjusted, nonZeroTopicCntAdjusted, sum, cumsum, u, u_sigma);
-			}
-
-			// Make sure we actually sampled a valid topic
-			if (newTopic < 0 || newTopic >= numTopics) {
-				throw new IllegalStateException ("Poisson Polya Urn HDP: New valid topic not sampled (" + newTopic + ").");
-			}
-
-			// Put that new topic into the counts
-			oneDocTopics[position] = newTopic;
-			localTopicCounts[newTopic]++;
-
-			// Potentially update nonZeroTopics mapping
-			if(localTopicCounts[newTopic]==1) {
-				nonZeroTopicCnt = insert(newTopic, nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicCnt);
-			}
-
-			// Propagates the update to the topic-token assignments
-			/**
-			 * Used to subtract and add 1 to the local structure containing the number of times
-			 * each token is assigned to a certain topic. Called before and after taking a sample
-			 * topic assignment z
-			 */
-			increment(myBatch, newTopic, type);
-			
-		}
-
+		int [] nonZeroTopics = res.getNonZeroIndices();
+		int [] localTopicCounts = res.getLocalTopicCounts();
 		// Update the document topic frequency count table
-		for (int topic = 0; topic < nonZeroTopicCnt; topic++) {
+		for (int topic = 0; topic < res.getNonZeroTopicCounts(); topic++) {
 			docTopicTokenFreqTable.increment(nonZeroTopics[topic],(int)localTopicCounts[nonZeroTopics[topic]]);
 		}
 
-		return new LDADocSamplingResultSparseSimple(localTopicCounts,nonZeroTopicCnt,nonZeroTopics);
+		return res;
 	}
 	
 	/**
