@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -94,22 +95,7 @@ public class ParallelLDA implements IterationListener {
 			args = newArgs;
 		}
 
-		exHandler = new Thread.UncaughtExceptionHandler() {
-			public void uncaughtException(Thread t, Throwable e) {
-				System.out.println(t + " throws exception: " + e);
-				e.printStackTrace();
-				if(pw != null) {
-					try {
-						e.printStackTrace(pw);
-						pw.close();
-					} catch (Exception e1) {
-						// Give up!
-					}
-				}
-				System.err.println("Main thread Exiting.");
-				System.exit(-1);
-			}
-		};
+		exHandler = buildExceptionHandler();
 		
 		Thread.setDefaultUncaughtExceptionHandler(exHandler);
 		
@@ -360,6 +346,59 @@ public class ParallelLDA implements IterationListener {
 			}
 			normalShutdown = true;
 		}
+	}
+
+	private UncaughtExceptionHandler buildExceptionHandler() {
+		return new Thread.UncaughtExceptionHandler() {
+			public void uncaughtException(Thread t, Throwable e) {
+				System.err.println(t + " throws exception: " + e);
+				if(e instanceof java.io.EOFException) {
+					// Ignore these errors since they seem to be due to a 
+					// Java bug which throws an error eventhough the class 
+					// loads, as below ...
+//                  Thread[main,5,main] throws exception: java.lang.NoClassDefFoundError: cc/mallet/topics/TopicModelDiagnosticsPlain
+//					java.lang.NoClassDefFoundError: cc/mallet/topics/TopicModelDiagnosticsPlain
+//					at cc.mallet.topics.tui.ParallelLDA.doSample(ParallelLDA.java:225)
+//					at cc.mallet.topics.tui.ParallelLDA.main(ParallelLDA.java:53)
+//				Caused by: java.lang.ClassNotFoundException: cc.mallet.topics.TopicModelDiagnosticsPlain
+//					at java.net.URLClassLoader$1.run(URLClassLoader.java:369)
+//					at java.net.URLClassLoader$1.run(URLClassLoader.java:361)
+//					at java.security.AccessController.doPrivileged(Native Method)
+//					at java.net.URLClassLoader.findClass(URLClassLoader.java:360)
+//					at java.lang.ClassLoader.loadClass(ClassLoader.java:424)
+//					at sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:308)
+//					at java.lang.ClassLoader.loadClass(ClassLoader.java:357)
+//					... 2 more
+//				Caused by: java.io.EOFException: Unexpected end of ZLIB input stream
+//					at java.util.zip.ZipFile$ZipFileInflaterInputStream.fill(ZipFile.java:418)
+//					at java.util.zip.InflaterInputStream.read(InflaterInputStream.java:158)
+//					at java.util.jar.Manifest$FastInputStream.fill(Manifest.java:441)
+//					at java.util.jar.Manifest$FastInputStream.readLine(Manifest.java:375)
+//					at java.util.jar.Manifest$FastInputStream.readLine(Manifest.java:409)
+//					at java.util.jar.Manifest.read(Manifest.java:210)
+//					at java.util.jar.Manifest.<init>(Manifest.java:69)
+//					at java.util.jar.JarFile.getManifestFromReference(JarFile.java:191)
+//					at java.util.jar.JarFile.getManifest(JarFile.java:172)
+//					at sun.misc.URLClassPath$JarLoader$2.getManifest(URLClassPath.java:780)
+//					at java.net.URLClassLoader.defineClass(URLClassLoader.java:422)
+//					at java.net.URLClassLoader.access$100(URLClassLoader.java:73)
+//					at java.net.URLClassLoader$1.run(URLClassLoader.java:367)
+					System.err.println("Ignoring it...");
+				} else {
+					e.printStackTrace();
+					if(pw != null) {
+						try {
+							e.printStackTrace(pw);
+							pw.close();
+						} catch (Exception e1) {
+							// Give up!
+						}
+					}
+					System.err.println("Main thread Exiting.");
+					System.exit(-1);
+				}
+			}
+		};
 	}
 
 	private void printHDPResults(LDAGibbsSampler model, File lgDir) {

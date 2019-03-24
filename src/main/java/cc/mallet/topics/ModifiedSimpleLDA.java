@@ -28,6 +28,11 @@ import cc.mallet.util.LDAUtils;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;
 
+/**
+ * Derivative of SimpleLDA, but with support for non-uniform alpha and beta
+ * 
+ * @author Leif Jonsson
+ */
 public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Serializable {
 
 	protected static Logger logger = MalletLogger.getLogger(ModifiedSimpleLDA.class.getName());
@@ -77,11 +82,6 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	protected boolean saveHistStats = false;
 
 	protected static volatile boolean abort = false;
-	/**
-	 * Derivative of SimpleLDA, but with support for non-uniform alpha and beta
-	 * 
-	 * @author Leif Jonsson
-	 */
 	private static final long serialVersionUID = 1L;
 	int startSeed;
 
