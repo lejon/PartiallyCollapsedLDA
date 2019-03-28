@@ -23,18 +23,22 @@ public class PolyaUrnDirichletFixedCoeffPoisson extends PolyaUrnDirichlet implem
 		// implements the Poisson Polya Urn
 		for (int i=0; i<distribution.length; i++) {
 			distribution[i] = fep.nextPoisson(counts[i]);
+			
 			sum += distribution[i];
 			if(distribution[i]!=0) {
 				resultingNonZeroIdxs[cnt++] = i;
 			}
 		}
 
-		for (int i=0; i<distribution.length; i++) {
-			distribution[i] /= sum;
-// With the Poisson it is allowed to have 0's
-//			if (distribution[i] <= 0) {
-//				distribution[i] = Double.MIN_VALUE;
-//			}			
+		if(sum>0) {
+			for (int i=0; i<distribution.length; i++) {
+				distribution[i] /= sum;
+
+				// With the Poisson it is allowed to have 0's
+				//			if (distribution[i] <= 0) {
+				//				distribution[i] = Double.MIN_VALUE;
+				//			}			
+			}
 		}
 
 		return new VSResult(distribution, Arrays.copyOf(resultingNonZeroIdxs,cnt));
