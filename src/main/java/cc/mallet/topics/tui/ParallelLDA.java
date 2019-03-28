@@ -309,7 +309,7 @@ public class ParallelLDA implements IterationListener {
 								model.getTypeTopicMatrix(), 
 								model.getAlphabet())));
 				System.out.println("Relevance words are: \n" + 
-						LDAUtils.formatTopWords(LDAUtils.getTopRelevanceWords(20, 
+						LDAUtils.formatTopWords(LDAUtils.getTopRelevanceWords(requestedWords, 
 								model.getAlphabet().size(), 
 								model.getNoTopics(), 
 								model.getTypeTopicMatrix(),  
