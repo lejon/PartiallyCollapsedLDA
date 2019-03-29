@@ -73,7 +73,8 @@
 	<!-- v6.0.1: Fixed bug which caused PolyaUrn not to set the correct Phi when called from sampleZGivenPhi. -->
 	<!-- v6.0.2: Added some convenience facilities for loading instances from string data -->
 	<!-- v7.0.0: Support for parallel HDP -->
-	<version>7.0.0</version>
+	<!-- v7.1.0: Pretty convinced we have a working implementation of the HDP now, and it is efficient -->
+	<version>7.1.0</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
