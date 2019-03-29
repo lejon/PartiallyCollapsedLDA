@@ -18,7 +18,8 @@ public class BinomialSamplerTest {
 		// Setup draws
 		int noDraws = 500_000;
 		int [] trialss = {2, 10, 20, 50, 100, 200};
-		double [] probs = {0.001, 0.01, 0.1, 0.5};
+		double alpha = 0.01;
+		double [] probs = {0.001, alpha, 0.1, 0.5};
 
 		int samplesLen = 1000;
 		for (int trials : trialss) {	
@@ -52,14 +53,13 @@ public class BinomialSamplerTest {
 
 				ChiSquareTest cs = new ChiSquareTest();
 				double test1 = cs.chiSquareTestDataSetsComparison(obsBin, obsSampler);
-				//				System.out.println(test1);
-				if(!(test1 > 0.01)) {
+				if(!(test1 > alpha)) {
 					System.out.println("Trials: " + trials + " prob:" + prob);
 					System.out.println("Obs: " + Arrays.toString(obsBin));
 					System.out.println("Sam: " + Arrays.toString(obsSampler));
+					System.out.println("P-value: " + test1);
 				}
-				assertTrue(test1 > 0.01);
-				//				System.out.println();
+				assertTrue(test1 > alpha);
 			}
 		}
 	}
@@ -269,7 +269,7 @@ public class BinomialSamplerTest {
 					System.out.println("Trials: " + trials + " prob: " + prob);
 					System.out.println("Probs:" + Arrays.toString(possibleProbs));
 					System.out.println("Sampler:" + Arrays.toString(obsBinomSampler));
-					System.out.println(test1);
+					System.out.println("P-value: " + test1);
 					System.out.println();
 				}
 				assertTrue(test1 > alpha);
