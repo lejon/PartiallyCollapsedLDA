@@ -68,12 +68,14 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		nrStartTopics = config.getHDPNrStartTopics(LDAConfiguration.HDP_START_TOPICS_DEFAULT);
 		
 		System.out.println("HDP gamma: " + gamma);
+		System.out.println("HDP start topics: " + nrStartTopics);
 		
 		alphaCoef = config.getAlpha(LDAConfiguration.ALPHA_DEFAULT); 
 		poissonNormalApproxThreshold = config.getAliasPoissonThreshold(LDAConfiguration.ALIAS_POISSON_DEFAULT_THRESHOLD); 
 				
 		// We should NOT do hyperparameter optimization of alpha or beta in the HDP
-		hyperparameterOptimizationInterval = -1;
+		// Let it be controlled by config setting
+		//hyperparameterOptimizationInterval = -1;
 		
 		topicOcurrenceCount = new int[numTopics];
 		deceasedTopics = new boolean[numTopics];
