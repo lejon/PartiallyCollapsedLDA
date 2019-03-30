@@ -325,7 +325,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		psiSampler.reset();
 	}
 	
-	static int calcK(double percentile, int [] tokensPerTopic) {
+	public static int calcK(double percentile, int [] tokensPerTopic) {
 		int [] sortedAllocation = Arrays.copyOf(tokensPerTopic, tokensPerTopic.length);
 		Arrays.sort(sortedAllocation);
 		int [] ecdf = calcEcdf(sortedAllocation);  
@@ -333,7 +333,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		return k95;
 	}
 
-	static int findPercentile(int[] ecdf, double percentile) {
+	public static int findPercentile(int[] ecdf, double percentile) {
 		double total = ecdf[ecdf.length-1];
 		for (int j = 0; j < ecdf.length; j++) {
 			if(ecdf[j]/total > percentile) {
@@ -343,7 +343,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		return ecdf.length;
 	}
 
-	static int[] calcEcdf(int[] sortedAllocation) {
+	public static int[] calcEcdf(int[] sortedAllocation) {
 		int [] ecdf = new int[sortedAllocation.length]; 
 		ecdf[0] = sortedAllocation[sortedAllocation.length-1];
 		for(int i = 1; i < sortedAllocation.length; i++) {
