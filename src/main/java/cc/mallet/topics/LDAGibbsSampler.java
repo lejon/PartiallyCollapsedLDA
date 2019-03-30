@@ -22,7 +22,7 @@ public interface LDAGibbsSampler extends AbortableSampler {
 	double [][] getZbar();
 	double[][] getThetaEstimate();
 	void setZIndicators(int[][] zIndicators);
-	ArrayList<TopicAssignment> getDataset();
+	InstanceList getDataset();
 	ArrayList<TopicAssignment> getData();
 	int[][] getDeltaStatistics();
 	int[] getTopTypeFrequencyIndices();

@@ -298,6 +298,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	 */
 	@Override
 	public void addInstances (InstanceList training) {
+		trainingData = training;
 		alphabet = training.getDataAlphabet();
 		targetAlphabet = training.getTargetAlphabet();
 		numTypes = alphabet.size();

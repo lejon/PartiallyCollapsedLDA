@@ -141,7 +141,7 @@ public class TestPerplexityDatasetBuilder {
 		model.addInstances(trainingSet);
 		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
 		
-		ArrayList<TopicAssignment> dataset = model.getDataset();
+		ArrayList<TopicAssignment> dataset = model.getData();
 		
 		int testDocIdx = originalInstances.size()-testSet.size();
 		System.out.println("Test docs start at:" + testDocIdx);

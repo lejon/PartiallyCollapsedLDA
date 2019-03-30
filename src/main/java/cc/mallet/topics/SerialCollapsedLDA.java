@@ -332,7 +332,7 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 	}
 
 	@Override
-	public ArrayList<TopicAssignment> getDataset() {
+	public ArrayList<TopicAssignment> getData() {
 		return data;
 	}
 	
@@ -468,5 +468,10 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 	@Override
 	public boolean getAbort() {
 		return abort;
+	}
+
+	@Override
+	public InstanceList getDataset() {
+		throw new NotImplementedException();
 	}
 }

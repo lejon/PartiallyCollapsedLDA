@@ -1,10 +1,8 @@
 package cc.mallet.topics.randomscan.topic;
 
-import java.util.ArrayList;
-
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.topics.LDAGibbsSampler;
-import cc.mallet.topics.TopicAssignment;
+import cc.mallet.types.InstanceList;
 
 public class EvenSplitTopicBatchBuilder implements TopicBatchBuilder {
 
@@ -13,7 +11,7 @@ public class EvenSplitTopicBatchBuilder implements TopicBatchBuilder {
 	int [][] topicBatches;
 	LDAGibbsSampler sampler;
 	LDAConfiguration config;
-	ArrayList<TopicAssignment> data;
+	InstanceList data;
 	int numTopics = -1; // Make sure things crash if the default is used, fail fast!
 
 	public EvenSplitTopicBatchBuilder(LDAConfiguration config, LDAGibbsSampler sampler) {

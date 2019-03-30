@@ -431,7 +431,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 	}
 
 	@Override
-	public ArrayList<TopicAssignment> getDataset() {
+	public ArrayList<TopicAssignment> getData() {
 		return data;
 	}
 
@@ -550,6 +550,11 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 	@Override
 	public boolean getAbort() {
 		return abort;
+	}
+
+	@Override
+	public InstanceList getDataset() {
+		throw new NotImplementedException();
 	}
 
 }

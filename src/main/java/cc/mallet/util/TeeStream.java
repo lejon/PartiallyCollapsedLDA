@@ -1,6 +1,5 @@
 package cc.mallet.util;
 import java.io.PrintStream;
-import java.io.File;
 public class TeeStream extends PrintStream {
     PrintStream out;
     public TeeStream(PrintStream out1, PrintStream out2) {

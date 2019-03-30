@@ -1,10 +1,8 @@
 package cc.mallet.topics.randomscan.document;
 
-import java.util.ArrayList;
-
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.topics.LDAGibbsSampler;
-import cc.mallet.topics.TopicAssignment;
+import cc.mallet.types.InstanceList;
 
 /**
  * 
@@ -21,7 +19,7 @@ public class FixedSplitBatchBuilder implements DocumentBatchBuilder {
 
 	LDAGibbsSampler sampler;
 	LDAConfiguration config;
-	ArrayList<TopicAssignment> data;
+	InstanceList data;
 
 	int[] batchSizeArray;
 	int [][] documentBatches;

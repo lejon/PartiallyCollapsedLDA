@@ -39,6 +39,9 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 
 	// the training instances and their topic assignments
 	protected ArrayList<TopicAssignment> data;  
+	
+	// The original training data
+	InstanceList trainingData;
 
 	// the alphabet for the input data
 	protected Alphabet alphabet; 
@@ -107,7 +110,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	// The max over typeTotals, used for beta optimization
 	int maxTypeCount;
 	
-	private static LabelAlphabet newLabelAlphabet (int numTopics) {
+	public static LabelAlphabet newTopicLabelAlphabet (int numTopics) {
 		LabelAlphabet ret = new LabelAlphabet();
 		for (int i = 0; i < numTopics; i++)
 			ret.lookupIndex("topic"+i);
@@ -116,7 +119,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 
 	public ModifiedSimpleLDA(LDAConfiguration conf) {		
 		this.data = new ArrayList<TopicAssignment>();
-		this.topicAlphabet = newLabelAlphabet (conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT));
+		this.topicAlphabet = newTopicLabelAlphabet (conf.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT));
 		this.numTopics = topicAlphabet.size();
 
 		double alphaConf = conf.getAlpha(LDAConfiguration.ALPHA_DEFAULT);
@@ -489,8 +492,8 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	}
 
 	@Override
-	public ArrayList<TopicAssignment> getDataset() {
-		return getData();
+	public InstanceList getDataset() {
+		return trainingData;
 	}
 
 	@Override
@@ -920,7 +923,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	}
 
 	public void addInstances (InstanceList training) {
-
+		trainingData = training;
 		alphabet = training.getDataAlphabet();
 		numTypes = alphabet.size();
 

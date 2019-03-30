@@ -290,7 +290,8 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	 * Imports the training instances and initializes the LDA model internals.
 	 */
 	@Override
-	public void addInstances (InstanceList training) {		
+	public void addInstances (InstanceList training) {	
+		trainingData = training;
 		alphabet = training.getDataAlphabet();
 		targetAlphabet = training.getTargetAlphabet();
 		numTypes = alphabet.size();
