@@ -429,7 +429,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	protected int sampleL(int topic, int maxDocLen, 
 			DocTopicTokenFreqTable docTopicTokenFreqTable, 
 			double alpha, double psi_k) {
-		if(psi_k<0) System.out.println("psi_k = " + psi_k + " topic = " + topic);
+		if(psi_k<0) throw new IllegalArgumentException("Non positive psi_k: " + psi_k);
 		// freqHist is D(j, k = topic)
 		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
 		

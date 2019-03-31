@@ -57,10 +57,12 @@ public class ParallelDirichlet extends Dirichlet {
 		}
 
 //		Normalize
-		for (int i=0; i<distribution.length; i++) {
-			distribution[i] /= sum;
-			if (distribution[i] <= 0) {
-				distribution[i] = Double.MIN_VALUE;
+		if(sum!=0) {
+			for (int i=0; i<distribution.length; i++) {
+				distribution[i] /= sum;
+				if (distribution[i] <= 0) {
+					distribution[i] = Double.MIN_VALUE;
+				}
 			}
 		}
 
