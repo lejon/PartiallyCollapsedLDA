@@ -503,7 +503,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		int[] docTopics;
 
 		for (int topic=0; topic < numTopics; topic++) {
-			topicLogGammas[ topic ] = Dirichlet.logGammaStirling( alpha[topic] );
+			topicLogGammas[ topic ] = Dirichlet.logGammaStirling( alpha[topic] * psiSampler.getPsi()[topic] );
 		}
 
 		for (int doc=0; doc < data.size(); doc++) {
@@ -517,7 +517,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 
 			for (int topic=0; topic < numTopics; topic++) {
 				if (topicCounts[topic] > 0) {
-					logLikelihood += (Dirichlet.logGammaStirling(alpha[topic] + topicCounts[topic]) -
+					logLikelihood += (Dirichlet.logGammaStirling(alpha[topic] * psiSampler.getPsi()[topic] + topicCounts[topic]) -
 							topicLogGammas[ topic ]);
 				}
 			}
