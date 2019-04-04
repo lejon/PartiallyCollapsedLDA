@@ -18,8 +18,8 @@ public class BinomialSamplerTest {
 		// Setup draws
 		int noDraws = 500_000;
 		int [] trialss = {2, 10, 20, 50, 100, 200};
-		double alpha = 0.01;
-		double [] probs = {0.001, alpha, 0.1, 0.5};
+		double alpha = 0.005;
+		double [] probs = {0.001, 0.01, 0.1, 0.5};
 
 		int samplesLen = 1000;
 		for (int trials : trialss) {	
@@ -53,6 +53,7 @@ public class BinomialSamplerTest {
 
 				ChiSquareTest cs = new ChiSquareTest();
 				double test1 = cs.chiSquareTestDataSetsComparison(obsBin, obsSampler);
+				//System.out.println("P-value: " + test1);
 				if(!(test1 > alpha)) {
 					System.out.println("Trials: " + trials + " prob:" + prob);
 					System.out.println("Obs: " + Arrays.toString(obsBin));
@@ -210,7 +211,8 @@ public class BinomialSamplerTest {
 
 				ChiSquareTest cs = new ChiSquareTest();
 				double test1 = cs.chiSquareTestDataSetsComparison(obsBin, obsBinomialSampler);
-				if(!(test1 > 0.01)) {
+				double alpha = 0.005;
+				if(!(test1 > alpha)) {
 					System.out.println("Test:" + test1);
 					System.out.println("Trials:" + trials);
 					System.out.println("Prob:" + prob);
@@ -240,31 +242,37 @@ public class BinomialSamplerTest {
 				int maxIdx = 0;
 
 				double [] trialProbabilities = new double [tableLength];
-				for (int i = 1; i < tableLength; i++) {
-					BinomialDistribution binDistCalc = new BinomialDistribution(trials, prob);
-					for (int j = 0; j < tableLength; j++) {
-						trialProbabilities[j] =  binDistCalc.probability(j);
-						if(trialProbabilities[j]>0.00000000001) {
-							maxIdx = j+1;
-						}
+				BinomialDistribution binDistCalc = new BinomialDistribution(trials, prob);
+				for (int j = 0; j < tableLength; j++) {
+					trialProbabilities[j] =  binDistCalc.probability(j);
+					if(trialProbabilities[j]>0.00000000001) {
+						maxIdx = j+1;
 					}
 				}
 
 				for (int i = 0; i < noDraws; i++) {
 					samplesB[BinomialSampler.rbinom(trials, prob)]++; 
 				}
+				
+				int [] rg = PoissonPolyaUrnTest.findSeqRange(samplesB);
+
+				int smallestIdx = rg[0];
+				int largestIdx = Math.min(rg[1],maxIdx);
+				
+				int obsLen = largestIdx - smallestIdx;
 
 				// Adapt to the test preconditions
-				long [] obsBinomSampler = new long[maxIdx];
-				double [] possibleProbs = new double[maxIdx];
-				for (int i = 0; i < maxIdx; i++) {
-					obsBinomSampler[i] = samplesB[i];
-					possibleProbs[i] = trialProbabilities[i];
+				long [] obsBinomSampler = new long[obsLen];
+				double [] possibleProbs = new double[obsLen];
+				for (int i = smallestIdx; i < largestIdx; i++) {
+					obsBinomSampler[i-smallestIdx] = samplesB[i];
+					possibleProbs[i-smallestIdx] = trialProbabilities[i];
 				}
 
 				ChiSquareTest cs = new ChiSquareTest();
 				double test1 = cs.chiSquareTest(possibleProbs,obsBinomSampler);
-				double alpha = 0.01;
+				double alpha = 0.005;
+				//System.out.println("P-value: " + test1);
 				if(test1 <= alpha) {
 					System.out.println("Trials: " + trials + " prob: " + prob);
 					System.out.println("Probs:" + Arrays.toString(possibleProbs));
