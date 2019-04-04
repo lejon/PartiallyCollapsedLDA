@@ -76,7 +76,8 @@
 	<!-- v7.1.0: Pretty convinced we have a working implementation of the HDP now, and it is efficient -->
 	<!-- v7.2.0: Some interface cleanups -->
 	<!-- v7.2.1: Bugfix in Dirichlet normalization -->
-	<version>7.2.1</version>
+	<!-- v7.2.2: Reduce sensitivity in Binomial sampler test -->
+	<version>7.2.2</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
