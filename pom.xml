@@ -77,7 +77,8 @@
 	<!-- v7.2.0: Some interface cleanups -->
 	<!-- v7.2.1: Bugfix in Dirichlet normalization -->
 	<!-- v7.2.2: Reduce sensitivity in Binomial sampler test -->
-	<version>7.2.2</version>
+	<!-- v7.2.3: Config updates + disable HDP LL -->
+	<version>7.2.3</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
