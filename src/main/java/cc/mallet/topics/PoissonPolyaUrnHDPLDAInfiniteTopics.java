@@ -8,9 +8,7 @@ import java.util.concurrent.Callable;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.BinomialSampler;
-import cc.mallet.types.Dirichlet;
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.LabelSequence;
 import cc.mallet.types.ParallelDirichlet;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IndexSorter;
@@ -213,7 +211,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	class GEMBasedPsiSampler implements PsiSampler {
 		double [] psi; // This is capital Psi in paper.
 		int [] l;
-		long lSum;
+		long lSum = -1;
 		double gamma;
 		
 		public GEMBasedPsiSampler(double gamma) {
@@ -221,9 +219,12 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			l = new int[numTopics];
 			
 			psi = new double[numTopics];
-			for (int i = 0; i < nrStartTopics; i++) {
-				psi[i] = 1.0 / nrStartTopics;
-			}
+			
+			// Init psi by drawing from prior
+			finalizeSampling();
+//			for (int i = 0; i < nrStartTopics; i++) {
+//				psi[i] = 1.0 / nrStartTopics;
+//			}
 		}
 		
 		@Override
@@ -245,13 +246,17 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 
 		@Override
 		public void finalizeSampling() {
-			
-			if(lSum < data.size()) {
+
+			// We want to sample from the Psi prior to init psi
+			// at that point we have to allow that lSum == -1
+			if(lSum > 0 && lSum < data.size()) {
 				throw new ArrayIndexOutOfBoundsException("l ("+ lSum + ") is smaller than the number of documents in the corpus " 
 						+ "("+ data.size() + ")");
 			}
 			
-			if(lSum > getCorpusSize()) {
+			// We want to sample from the Psi prior to init psi
+			// at that point we have to allow that lSum == -1
+			if(lSum > 0 && lSum > getCorpusSize()) {
 				throw new ArrayIndexOutOfBoundsException("l ("+ lSum + ") is bigger than the number of tokens in the corpus " 
 						+ "("+ getCorpusSize() + ")");
 			}
