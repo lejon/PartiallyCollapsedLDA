@@ -16,7 +16,7 @@ KOS blog entries:
 orig source: dailykos.com 
 D=3430 
 W=6906 
-N=467714 
+N=467,714 
 
 NYTimes news articles: 
 orig source: ldc.upenn.edu 

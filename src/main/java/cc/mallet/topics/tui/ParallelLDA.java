@@ -74,14 +74,16 @@ public class ParallelLDA implements IterationListener {
 			final Thread mainThread = Thread.currentThread();
 			Runtime.getRuntime().addShutdownHook(new Thread() {
 				public void run() {
-					int waitTimeout = 4000;
+					int waitTimeout = 300;
 					if(!normalShutdown) {
-						System.err.println("Running shutdown hook: " + PROGRAM_NAME + " Aborted! Waiting for shudown...");
+						System.err.println("Running shutdown hook: " + PROGRAM_NAME + " Aborted! Waiting max " 
+					+ waitTimeout + "(s) for shudown...");
 						abort = true;
 						if(getCurrentSampler()!=null) {
+							System.err.println("Calling sampler abort...");
 							getCurrentSampler().abort();
 							try {
-								mainThread.join(waitTimeout);
+								mainThread.join(waitTimeout * 1000);
 							} catch (InterruptedException e) {
 								System.err.println("Exception during Join..");
 								e.printStackTrace();
@@ -164,6 +166,7 @@ public class ParallelLDA implements IterationListener {
 				instances.getAlphabet().stopGrowth();
 
 				LDAGibbsSampler model = createModel(config, whichModel);
+				plda = model;
 				
 				if(model instanceof LDASamplerWithCallback) {
 					System.out.println("Setting callback...");
@@ -208,7 +211,6 @@ public class ParallelLDA implements IterationListener {
 				System.out.println("Finished:" + new Date());
 				
 				int requestedWords = config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT);
-				TopicModelDiagnosticsPlain tmd = new TopicModelDiagnosticsPlain(model, requestedWords);
 				//System.out.println("Topic model diagnostics:");
 				//System.out.println(tmd.toString());				
 				
@@ -219,6 +221,7 @@ public class ParallelLDA implements IterationListener {
 				}
 				
 				if(config.saveDocumentTopicDiagnostics()) {
+					TopicModelDiagnosticsPlain tmd = new TopicModelDiagnosticsPlain(model, requestedWords);
 					String docTopicDiagFn = config.getDocumentTopicDiagnosticsOutputFilename();
 					PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/" + docTopicDiagFn);
 					out.println(tmd.topicsToCsv());
