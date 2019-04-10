@@ -84,7 +84,8 @@ topic_interval = 100
 dn_diagnostic_interval = -1
 
 ## Start diagnostic:
-# Determines from which iteration Phi is printed to a binary file, when "print_phi" is set to true   
+# Determines from which iteration Phi is printed to a binary file, when "print_phi" is set to true
+# turn off by setting to -1   
 start_diagnostic = 500
 
 ## Measure Timing: If timing measurements should be done (takes time)

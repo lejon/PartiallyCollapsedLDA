@@ -26,7 +26,7 @@ public interface LDAConfiguration {
 	public static final String LOG_PHI_DENSITY_DEFAULT = null;
 	public static final int PHI_BURN_IN_DEFAULT = 0;
 	public static final int PHI_THIN_DEFAULT = 1;
-	public static final boolean SAVE_PHI_MEAN_DEFAULT = true;
+	public static final boolean SAVE_PHI_MEAN_DEFAULT = false;
 	public static final int TF_IDF_VOCAB_SIZE_DEFAULT = -1;
 	public static final int NO_TOP_WORDS_DEFAULT = 20;
 	public static final int MAX_DOC_BUFFFER_SIZE_DEFAULT = 10000;
