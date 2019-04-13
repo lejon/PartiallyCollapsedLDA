@@ -82,7 +82,8 @@
 	<!-- v7.2.5: Small cleanup of sample l. Start loop at nrTopicIndicators == 2 -->
 	<!-- v7.2.6: Calculate nominator in sample "l" on log scale to minimize risk of underflow -->
 	<!-- v8.0.0: Separated distributed version into separate repo -->
-	<version>8.0.0</version>
+	<!-- v8.0.1: Also calculate p in sample "l" on log scale to minimize risk of underflow -->
+	<version>8.0.1</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 

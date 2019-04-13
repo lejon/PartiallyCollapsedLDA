@@ -470,7 +470,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			if(nom==0.0 && denom == 0.0) {
 				p = 1;
 			} else {
-				p = nom / denom;
+				p = Math.exp(Math.log(nom) - Math.log(denom));
 			}
 			if(p > 1 || p<= 0.0) throw new IllegalArgumentException("p>1 || p <= 0.0: p (" + p + ") nrTopicIndicators:" 
 					+ nrTopicIndicators + " alpha: " + alpha
