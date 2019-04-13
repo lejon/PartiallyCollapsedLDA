@@ -18,7 +18,7 @@ Måns Magnusson, Leif Jonsson, Mattias Villani, and David Broman. (2017). Spars
 }
 ```
 
-Alexander Terenin, Måns Magnusson, Leif Jonsson, and David Draper. “Polya Urn Latent Dirichlet Allocation: a doubly sparse massively parallel sampler”. Accepted for publication in IEEE Transactions on Pattern Analysis and Machine Intelligence. 2017.
+Alexander Terenin, Måns Magnusson, Leif Jonsson, and David Draper. “Polya Urn Latent Dirichlet Allocation: a doubly sparse massively parallel sampler”. In IEEE Transactions on Pattern Analysis and Machine Intelligence. 2017.
 
 ```
 @inproceedings{jonsson:2018,
@@ -32,7 +32,7 @@ Alexander Terenin, Måns Magnusson, Leif Jonsson, and David Draper. “Polya Ur
 ```
 
 The toolkit is Open Source Software, and is released under the Common Public License. You are welcome to use the code under the terms of the license for research or commercial purposes, however please acknowledge its use with a citation:
-  Magnusson, Jonsson, Villani, Broman.  "Parallelizing LDA using Partially Collapsed Gibbs Sampling."
+  Terenin, Magnusson, Jonsson.  "Polya Urn Latent Dirichlet Allocation: a doubly sparse massively parallel sampler"
 
 The dataset (in the datasets folder) and the stopwords file (stopwords.txt, included in the repository) should be in the same folder as you run the sampler.
 
@@ -50,7 +50,10 @@ Please remember that this is a research prototype and the standard disclaimers a
 You will see printouts during unit tests, commented out code, old stuff not cleaned out yet etc.
  
 But the basic sampler is tested and evaluated in a scientific manner and we have gone to great pains to ensure that it is correct.
-The sampler that is referred to in the article as "PC sampler" or "PC-LDA" corresponds to the class 'cc.mallet.topics.SpaliasUncollapsedParallelLDA' in the code. The variable selection parts are implemented in the 'cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA' class.
+The sampler that is referred to in the article as "PC sampler" or "PC-LDA" corresponds to the class 
+'cc.mallet.topics.SpaliasUncollapsedParallelLDA' in the code for the sparse parallel and 
+'cc.mallet.topics.PolyaUrnSpaliasLDA' for the Polya Urn version. 
+The variable selection parts are implemented in the 'cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA' class.
 
 An example of a "main" class is cc.mallet.topics.tui.ParallelLDA
 
