@@ -79,7 +79,8 @@
 	<!-- v7.2.2: Reduce sensitivity in Binomial sampler test -->
 	<!-- v7.2.3: Config updates + disable HDP LL -->
 	<!-- v7.2.4: Sample Psi from prior -->
-	<version>7.2.4</version>
+	<!-- v7.2.5: Small cleanup of sample l. Start loop at nrTopicIndicators == 2 -->
+	<version>7.2.5</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 

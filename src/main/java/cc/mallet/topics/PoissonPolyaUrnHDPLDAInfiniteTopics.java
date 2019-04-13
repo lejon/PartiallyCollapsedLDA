@@ -161,7 +161,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	@Override
 	public void postPhi() {
 		super.postPhi();
-						
+
 		// This is a global parameter so normalization need to be done after psi_k has been sampled in parallel.
 		psiSampler.finalizeSampling();
 	}
@@ -441,20 +441,25 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		int [] freqHist = docTopicTokenFreqTable.getReverseCumulativeSum(topic);
 		
 		// Sum over c_j_k
-		int lSum = 0;
+		
+		// We skip the step where nrTopicIndicators==1, since we know that for this
+		// case p==1 and rbinom(1,X,1) == X i.e freqHist[0] 
+		// (i.e the number of documents in the corpus)
+		int lSum = freqHist[0];
 		// nrTopicIndicators is j in paper
 		// nrDocsWithMoreTopicIndicators is D(j,k = topic) in paper	
-		for(int nrTopicIndicators = 1; nrTopicIndicators <= maxDocLen; nrTopicIndicators++) {
+		for(int nrTopicIndicators = 2; nrTopicIndicators <= maxDocLen; nrTopicIndicators++) {
 			int nrDocsWithMoreTopicIndicators = 0;
 			if( freqHist.length >= nrTopicIndicators ) {				
 				nrDocsWithMoreTopicIndicators = freqHist[nrTopicIndicators-1];
 			}
 
-			// As soon as we see zero, we know the rest will be 
-			// zero and not contribute to the sum, so we can exit.
+			// As soon as we see zero, i.e 
+			// "how many documents have more than nrTopicIndicators allocated to topic == 0"
+			// we know the rest will be zero also since it is a reverse cumulative sum, and 
+			// thus not contribute to the sum, so we can exit.
 			if(nrDocsWithMoreTopicIndicators==0) break;
-			int bsample = 0;
-			// Only sample if trials != 0, otherwise sample = 0;
+
 			//double p = gamma / (gamma + nrTopicIndicators - 1);
 			double nom = (alpha  * psi_k);
 			double denom = ((alpha  * psi_k) + nrTopicIndicators - 1);
@@ -465,17 +470,16 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			} else {
 				p = nom / denom;
 			}
-			// Smooth out rounding errors...
-			if(p > 1) p = 1.0;				
-			bsample = BinomialSampler.rbinom(nrDocsWithMoreTopicIndicators, p);
-			lSum += bsample;
+			if(p > 1) throw new IllegalArgumentException("p>1: p (" + p + ") nrTopicIndicators:" 
+					+ nrTopicIndicators + " alpha: " + alpha
+					+ " psi_k: " + psi_k );	
+			lSum += BinomialSampler.rbinom(nrDocsWithMoreTopicIndicators, p);
 		}
 		if(lSum > tokensPerTopic[topic]) {
 			throw new ArrayIndexOutOfBoundsException("l_" + topic 
 					+ " ("+ lSum + ") is bigger than # tokens assigned to topic " 
 					+ topic + "("+ tokensPerTopic[topic] + ") Iter: " + getCurrentIteration());
 		}
-		
 		return lSum;
 	}	
 	
