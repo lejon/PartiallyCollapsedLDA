@@ -80,7 +80,8 @@
 	<!-- v7.2.3: Config updates + disable HDP LL -->
 	<!-- v7.2.4: Sample Psi from prior -->
 	<!-- v7.2.5: Small cleanup of sample l. Start loop at nrTopicIndicators == 2 -->
-	<version>7.2.5</version>
+	<!-- v7.2.6: Calculate nominator in sample "l" on log scale to minimize risk of underflow -->
+	<version>7.2.6</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
