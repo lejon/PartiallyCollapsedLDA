@@ -461,8 +461,10 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			if(nrDocsWithMoreTopicIndicators==0) break;
 
 			//double p = gamma / (gamma + nrTopicIndicators - 1);
-			double nom = (alpha  * psi_k);
-			double denom = ((alpha  * psi_k) + nrTopicIndicators - 1);
+			
+			// Calculate on log scale to reduce risk of underflow
+			double nom = Math.exp(Math.log(alpha) + Math.log(psi_k));
+			double denom = (nom + nrTopicIndicators - 1);
 			double p;
 			// 0 / 0 should => 1
 			if(nom==0.0 && denom == 0.0) {
@@ -470,7 +472,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			} else {
 				p = nom / denom;
 			}
-			if(p > 1) throw new IllegalArgumentException("p>1: p (" + p + ") nrTopicIndicators:" 
+			if(p > 1 || p<= 0.0) throw new IllegalArgumentException("p>1 || p <= 0.0: p (" + p + ") nrTopicIndicators:" 
 					+ nrTopicIndicators + " alpha: " + alpha
 					+ " psi_k: " + psi_k );	
 			lSum += BinomialSampler.rbinom(nrDocsWithMoreTopicIndicators, p);
