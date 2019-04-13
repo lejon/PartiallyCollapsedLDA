@@ -3,7 +3,6 @@ package cc.mallet.types;
 import java.util.Arrays;
 
 import gnu.trove.TIntArrayList;
-import scala.NotImplementedError;
 
 public class PolyaUrnDirichletFixedCoeffPoisson extends PolyaUrnDirichlet implements SparseDirichlet {
 
@@ -76,6 +75,6 @@ public class PolyaUrnDirichletFixedCoeffPoisson extends PolyaUrnDirichlet implem
 
 	@Override
 	public VSResult nextDistributionWithSparseness() {
-		throw new NotImplementedError();
+		throw new java.lang.UnsupportedOperationException();
 	}
 }

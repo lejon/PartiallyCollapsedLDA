@@ -6,7 +6,6 @@ import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.apache.commons.math3.util.FastMath;
 
 import gnu.trove.TIntArrayList;
-import scala.NotImplementedError;
 
 public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirichlet {
 
@@ -57,7 +56,7 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 
 	@Override
 	public VSResult nextDistributionWithSparseness() {
-		throw new NotImplementedError();
+		throw new java.lang.UnsupportedOperationException();
 	}
 	
 	public static long nextPoisson(double meanPoisson) {
