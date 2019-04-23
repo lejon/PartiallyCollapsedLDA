@@ -103,7 +103,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	protected boolean savePhiMeans = true;
 	protected int hyperparameterOptimizationInterval;
 	int documentSplitLimit;
-
+	
+	File abortFile = new File("abort");
 	
 	public UncollapsedParallelLDA(LDAConfiguration config) {
 		super(config);
@@ -680,6 +681,11 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			kdDensities.set(0);
 
 			postIteration();
+
+			if(abortFile.exists()) {
+				abort();
+			}
+
 			//long iterEnd = System.currentTimeMillis();
 			//System.out.println("Iteration "+ currentIteration + " took: " + (iterEnd-iterStart) + " milliseconds...");
 		}
