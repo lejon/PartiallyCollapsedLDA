@@ -5,11 +5,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ThreadLocalRandom;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.BinomialSampler;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.ParallelDirichlet;
+import cc.mallet.types.PolyaUrnDirichlet;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LoggingUtils;
@@ -399,17 +401,24 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 				VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
 				phiMatrix[topic] = res.getPhi();
 			} else {
-				// If a topic has just deceased we draw Phi for that topic from the prior
-				// this is so called "retrospective sampling". In principle we go back in time
-				// and sample Phi "retrospectively" (well really it is the opposite). 
-				// This means we can just ignore sampling
-				// non-active topics, and they will still have a proper distribution if
-				// during Z sampling it should be resurrected again. This gives a huge
-				// performance boost in Phi sampling, since we don't have to sample a bunch
-				// of Phi that is never used.
-				if(deceasedTopics[topic]) {
-					phiMatrix[topic] = phiDirichletPrior.nextDistribution();
-					deceasedTopics[topic] = false;
+				// Otherwise sample PPU from prior
+				
+				// (2) Draw \nu_k ~ Poisson(V * \beta)
+				long nu_k = PolyaUrnDirichlet.nextPoisson(numTypes * beta);
+				
+				long phiSum = 0;
+				long [] phiTopic = new long [numTypes];
+				for(int i = 0; i < nu_k; i++) {
+					int u = ThreadLocalRandom.current().nextInt(numTypes);
+					//(3) For i=1,..,\nu, choose a row and column in \Phi uniformly at random, and add 1 to it
+					phiTopic[u]++;
+					phiSum++;
+				}
+				// Normalize the rows
+				if(phiSum>0) {
+					for(int i = 0; i < phiMatrix[topic].length; i++) {
+						phiMatrix[topic][i] = phiTopic[i] / (double) phiSum;
+					}
 				}
 			}
 			
