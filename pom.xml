@@ -84,7 +84,8 @@
 	<!-- v8.0.0: Separated distributed version into separate repo -->
 	<!-- v8.0.1: Also calculate p in sample "l" on log scale to minimize risk of underflow -->
 	<!-- v8.0.2: Bugfix that ensures that PolyaUrn handles zero length documents properly -->
-	<version>8.0.2</version>
+	<!-- v8.0.3: Replaced broken retrospective sampler -->
+	<version>8.0.3</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
