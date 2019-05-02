@@ -5,13 +5,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ThreadLocalRandom;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.BinomialSampler;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.ParallelDirichlet;
-import cc.mallet.types.PolyaUrnDirichlet;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LoggingUtils;
@@ -391,35 +389,20 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		for (int topicIdx = 0; topicIdx < topicsToSample; topicIdx++) {
 			int topic = indices[topicIdx];
 
+			VariableSelectionResult res;
 			if(tokensPerTopic[topic]>0) {
 				// First part of Psi sampling. Normalization must be done 
 				// in postIteration when all Psi_k has been sampled
 				int l_k = sampleL(topic, longestDocLength, docTopicTokenFreqTable, alphaCoef, psiSampler.getPsi()[topic]);
-				
 				psiSampler.updateTopic(topic, l_k);
+				
 				int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
-				VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
+				res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
 				phiMatrix[topic] = res.getPhi();
 			} else {
-				// Otherwise sample PPU from prior
-				
-				// (2) Draw \nu_k ~ Poisson(V * \beta)
-				long nu_k = PolyaUrnDirichlet.nextPoisson(numTypes * beta);
-				
-				long phiSum = 0;
-				long [] phiTopic = new long [numTypes];
-				for(int i = 0; i < nu_k; i++) {
-					int u = ThreadLocalRandom.current().nextInt(numTypes);
-					//(3) For i=1,..,\nu, choose a row and column in \Phi uniformly at random, and add 1 to it
-					phiTopic[u]++;
-					phiSum++;
-				}
-				// Normalize the rows
-				if(phiSum>0) {
-					for(int i = 0; i < phiMatrix[topic].length; i++) {
-						phiMatrix[topic][i] = phiTopic[i] / (double) phiSum;
-					}
-				}
+				res = dirichletSampler.nextDistributionWithSparseness(phiMatrix[topic],beta);
+				phiMatrix[topic] = res.getPhi();
+				//phiMatrix[topic] = dirichletSampler.nextDistribution();
 			}
 			
 			// We won't use the table any more, so we reset the topic here
@@ -481,9 +464,16 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 			} else {
 				p = Math.exp(Math.log(nom) - Math.log(denom));
 			}
-			if(p > 1 || p<= 0.0) throw new IllegalArgumentException("p>1 || p <= 0.0: p (" + p + ") nrTopicIndicators:" 
+//			if(p > 1 || p<= 0.0) throw new IllegalArgumentException("p>1 || p <= 0.0: p (" + p + ") nrTopicIndicators:" 
+//					+ nrTopicIndicators + " alpha: " + alpha
+//					+ " psi_k: " + psi_k );
+			if(p > 1 || p<= 0.0) { 
+				System.err.println("p>1 || p <= 0.0: p (" + p + ") nrTopicIndicators:" 
 					+ nrTopicIndicators + " alpha: " + alpha
-					+ " psi_k: " + psi_k );	
+					+ " psi_k: " + psi_k );
+				p = Double.MIN_VALUE;
+			}
+
 			lSum += BinomialSampler.rbinom(nrDocsWithMoreTopicIndicators, p);
 		}
 		if(lSum > tokensPerTopic[topic]) {
