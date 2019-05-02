@@ -6,11 +6,12 @@ import java.util.Arrays;
 
 import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.apache.commons.math3.stat.inference.ChiSquareTest;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import cc.mallet.topics.PoissonPolyaUrnTest;
 
-public class BinomialSamplerTest {
+@Ignore("not robust enough yet") public class BinomialSamplerTest {
 
 //  These statistical tests fail too often, they are now
 //  more a nuisance than a help. We have confidence enough
