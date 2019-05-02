@@ -6,13 +6,14 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(value = Parameterized.class)
-public class SimilarityTest {
+@Ignore("To be finalized")  public class SimilarityTest {
 
 	@SuppressWarnings("rawtypes")
 	Class distanceClass;
@@ -26,7 +27,7 @@ public class SimilarityTest {
 	@Parameters
 	public static List<Object[]> data() {
 		Object[][] impls = new Object[][] { 
-				{ BhattacharyyaDistance.class },
+				//{ BhattacharyyaDistance.class },
 				//{ BM25Distance.class },
 				{ CanberraDistance.class },
 				{ ChebychevDistance.class },
