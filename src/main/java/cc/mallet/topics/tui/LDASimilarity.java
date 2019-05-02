@@ -9,22 +9,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import org.apache.commons.math3.ml.distance.ManhattanDistance;
-
 import cc.mallet.configuration.ConfigFactory;
 import cc.mallet.configuration.Configuration;
 import cc.mallet.configuration.LDACommandLineParser;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.ParsedLDAConfiguration;
-import cc.mallet.similarity.CosineDistance;
 import cc.mallet.similarity.LDADistancer;
 import cc.mallet.topics.LDASamplerWithPhi;
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.types.CrossValidationIterator;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.util.IndexSorter;
+import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.Timer;
 

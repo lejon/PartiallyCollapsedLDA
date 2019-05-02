@@ -10,6 +10,7 @@ import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDAUtils;
 
 public class LDADistancer  {
 	static DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0");
@@ -174,7 +175,11 @@ public class LDADistancer  {
 	}
 	
 	public String [][] getTopWords(int wordsPerTopic) {
-		return trainedSampler.getTopWords(wordsPerTopic);
+		return LDAUtils.getTopWords(wordsPerTopic, 
+				trainedSampler.getAlphabet().size(), 
+				trainedSampler.getNoTopics(), 
+				trainedSampler.getTypeTopicMatrix(), 
+				trainedSampler.getAlphabet());
 	}
 
 }

@@ -7,9 +7,9 @@ import java.io.FileNotFoundException;
 import org.junit.Before;
 import org.junit.Test;
 
-import cc.mallet.topics.LDAUtils;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDAUtils;
 
 public class CorpusStatisticsTest {
 
