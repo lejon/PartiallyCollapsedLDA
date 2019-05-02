@@ -9,6 +9,7 @@ import java.util.Random;
 
 import org.apache.commons.math3.distribution.BinomialDistribution;
 import org.apache.commons.math3.stat.inference.ChiSquareTest;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import cc.mallet.types.PolyaUrnDirichlet;
@@ -134,7 +135,7 @@ public class PoissonPolyaUrnTest {
 
 		
 	@Test
-	public void testBinomialAliasUsingCounts() {
+	@Ignore("not robust enough yet") public void testBinomialAliasUsingCounts() {
 		// Setup draws
 		int noDraws = 500_000;
 		int [] trialss = {2, 10, 20, 50, 100};
@@ -223,7 +224,7 @@ public class PoissonPolyaUrnTest {
 	}
 
 	@Test
-	public void testBinomialAliasUsingProbs() {
+	@Ignore("not robust enough yet") public void testBinomialAliasUsingProbs() {
 		// Setup draws
 		int noDraws = 500_000;
 		int tableLength = 200;
