@@ -1189,7 +1189,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		int type, oldTopic, newTopic;
 
 		final int docLength = tokens.getLength();
-		if(docLength==0) return null;
+		if(docLength==0) return new LDADocSamplingResultDense(new int [0]);
 
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();

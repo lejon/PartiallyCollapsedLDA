@@ -67,9 +67,8 @@ public class MarsagliaSparseDirichlet extends ParallelDirichlet implements Spars
 	}
 
 	@Override
-	public VSResult nextDistributionWithSparseness(double[] previousDistribution, double prior) {
+	public VSResult nextDistributionWithSparseness(double prior) {
 		double distribution[] = new double[partition.length];
-		System.arraycopy(previousDistribution, 0, distribution, 0, previousDistribution.length);
 		int [] nonZero = updateDistributionWithSparseness(distribution, prior);
 		return new VSResult(distribution, nonZero);
 	}

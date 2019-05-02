@@ -1,11 +1,13 @@
 package cc.mallet.types;
 
+import java.util.Arrays;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 import org.apache.commons.math3.util.FastMath;
 
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 
 public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirichlet {
 
@@ -17,6 +19,7 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 		super(size, prior);
 	}
 
+	@Override
 	public VSResult nextDistributionWithSparseness(int [] counts) {
 		double distribution[] = new double[partition.length];
 		TIntArrayList resultingNonZeroIdxs = new TIntArrayList();
@@ -25,13 +28,7 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 		// implements the Poisson Polya Urn
 		for (int i=0; i<distribution.length; i++) {
 			// determine whether we land in F_0 or F^_n
-			if(counts[i]==0 || ThreadLocalRandom.current().nextDouble((partition[i] * magnitude) + counts[i]) < partition[i] * magnitude) {
-				// sample from F_0
-				distribution[i] = (double) nextPoisson(partition[i] * magnitude);
-			} else {
-				// sample from F^_n
-				distribution[i] = (double) nextPoisson((double) counts[i]);
-			}
+			distribution[i] = (double) nextPoisson(partition[i] * magnitude + (double) counts[i]);
 			sum += distribution[i];
 			if(distribution[i]!=0) {
 				resultingNonZeroIdxs.add(i);
@@ -50,43 +47,35 @@ public class PolyaUrnDirichlet extends ParallelDirichlet implements SparseDirich
 	}
 	
 	@Override
-	public VSResult nextDistributionWithSparseness(double[] previousDistribution, double prior) {
-		double distribution[] = new double[previousDistribution.length];
-		System.arraycopy(previousDistribution, 0, distribution, 0, previousDistribution.length);
+	public VSResult nextDistributionWithSparseness(double prior) {
+		double distribution[] = new double[partition.length];
 		int [] nonZero = updateDistributionWithSparseness(distribution, prior);
 		return new VSResult(distribution, nonZero);
 	}
 
 	@Override
-	public int[] updateDistributionWithSparseness(double[] previousDistribution, double prior) {		
-		TIntArrayList resultingNonZeroIdxs = new TIntArrayList();
+	public int[] updateDistributionWithSparseness(double [] target, double prior) {		
+		TIntHashSet resultingNonZeroIdxs = new TIntHashSet();
+		Arrays.fill(target, 0.0);
 		// (2) Draw \nu_k ~ Poisson(length * prior)
-		long nu_k = PolyaUrnDirichlet.nextPoisson(previousDistribution.length * prior);
+		long nu_k = PolyaUrnDirichlet.nextPoisson(target.length * prior);
 		
 		for(int i = 0; i < nu_k; i++) {
-			int u = ThreadLocalRandom.current().nextInt(previousDistribution.length);
+			int u = ThreadLocalRandom.current().nextInt(target.length);
 			//(3) For i=1,..,\nu, choose a column in distribution uniformly at random, and add 1 to it
-			previousDistribution[u]++;
+			target[u]++;
+			resultingNonZeroIdxs.add(u);
 		}
 		
-		long distSum = 0;
-		for(int i = 0; i < previousDistribution.length; i++) {
-			distSum += previousDistribution[i];
-		}
-
 		// Normalize the rows
-		if(distSum>0) {
-			for(int i = 0; i < previousDistribution.length; i++) {
-				previousDistribution[i] /= (double) distSum;
-				if (previousDistribution[i] < 0) {
-					previousDistribution[i] = 0.0;
-				}
-				if(previousDistribution[i]!=0) {
-					resultingNonZeroIdxs.add(i);
-				}
+		int [] nonZero = resultingNonZeroIdxs.toArray();
+		if(nu_k>0) {
+			for(int i = 0; i < nonZero.length; i++) {
+				int idx = nonZero[i];
+				target[idx] /= (double) nu_k;
 			}
 		}
-		return resultingNonZeroIdxs.toNativeArray();
+		return nonZero;
 	}
 	
 	@Override

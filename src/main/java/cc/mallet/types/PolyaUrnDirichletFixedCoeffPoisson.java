@@ -12,7 +12,8 @@ public class PolyaUrnDirichletFixedCoeffPoisson extends PolyaUrnDirichlet implem
 		super(size, prior);
 		this.fep = fep;
 	}
-
+	
+	@Override
 	public VSResult nextDistributionWithSparseness(int [] counts) {
 		double distribution[] = new double[partition.length];
 		int [] resultingNonZeroIdxs = new int[distribution.length];

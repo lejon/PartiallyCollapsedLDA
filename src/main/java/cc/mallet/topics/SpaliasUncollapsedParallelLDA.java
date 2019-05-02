@@ -129,7 +129,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 		int type, oldTopic, newTopic;
 
 		final int docLength = tokens.getLength();
-		if(docLength==0) return null;
+		if(docLength==0) return new LDADocSamplingResultSparseSimple(new int[0],0,new int[0]);
 		
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
