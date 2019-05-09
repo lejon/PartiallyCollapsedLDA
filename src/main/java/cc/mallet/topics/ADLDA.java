@@ -557,4 +557,14 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 		throw new NotImplementedException();
 	}
 
+	@Override
+	public double[] getLogLikelihood() {
+		return null;
+	}
+
+	@Override
+	public double[] getHeldOutLogLikelihood() {
+		return null;
+	}
+
 }

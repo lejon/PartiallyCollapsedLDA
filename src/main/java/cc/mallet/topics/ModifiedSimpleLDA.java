@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -109,6 +110,9 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	boolean usingSymmetricAlpha = true;
 	// The max over typeTotals, used for beta optimization
 	int maxTypeCount;
+	
+	List<Double> loglikelihood = new ArrayList<>();
+	List<Double> heldOutLoglikelihood = new ArrayList<>();
 	
 	public static LabelAlphabet newTopicLabelAlphabet (int numTopics) {
 		LabelAlphabet ret = new LabelAlphabet();
@@ -551,6 +555,16 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 			}
 		}
 		return res;
+	}
+
+	@Override
+	public double[] getLogLikelihood() {
+		return loglikelihood.stream().mapToDouble(d -> d).toArray();
+	}
+
+	@Override
+	public double[] getHeldOutLogLikelihood() {
+		return heldOutLoglikelihood.stream().mapToDouble(d -> d).toArray();
 	}
 
 	protected int sum(int[] vector) {

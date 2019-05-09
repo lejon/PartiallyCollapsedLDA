@@ -515,6 +515,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		double logLik = modelLogLikelihood();	
 		String tw = topWords (wordsPerTopic);
 		LogState logState = new LogState(logLik, 0, tw, loggingPath, logger);
+		loglikelihood.add(logLik);
 		LDAUtils.logLikelihoodToFile(logState);
 
 		boolean logTypeTopicDensity = config.logTypeTopicDensity(LDAConfiguration.LOG_TYPE_TOPIC_DENSITY_DEFAULT);
@@ -625,11 +626,13 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				if(testSet != null) {
 					heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
 					LDAUtils.heldOutLLToFile(loggingPath, iteration, heldOutLL, logger);
+					heldOutLoglikelihood.add(heldOutLL);
 				}
 
 				logLik = modelLogLikelihood();	
 				tw = topWords (wordsPerTopic);
 				logState = new LogState(logLik, iteration, tw, loggingPath, logger);
+				loglikelihood.add(logLik);
 				LDAUtils.logLikelihoodToFile(logState);
 				logger.info("<" + iteration + "> Log Likelihood: " + logLik);
 				logger.fine(tw);

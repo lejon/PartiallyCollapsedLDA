@@ -192,6 +192,16 @@ public class BatchBuilderTest {
 		public boolean getAbort() {
 			return false;
 		}
+
+		@Override
+		public double[] getLogLikelihood() {
+			return null;
+		}
+
+		@Override
+		public double[] getHeldOutLogLikelihood() {
+			return null;
+		}
 	}
 
 	@Test

@@ -42,4 +42,6 @@ public interface LDAGibbsSampler extends AbortableSampler {
 	void postSample();
 	void postZ();
 	void preZ();
+	double[] getLogLikelihood();
+	double[] getHeldOutLogLikelihood();
 }

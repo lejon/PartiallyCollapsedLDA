@@ -474,4 +474,14 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 	public InstanceList getDataset() {
 		throw new NotImplementedException();
 	}
+	
+	@Override
+	public double[] getLogLikelihood() {
+		return null;
+	}
+
+	@Override
+	public double[] getHeldOutLogLikelihood() {
+		return null;
+	}
 }
