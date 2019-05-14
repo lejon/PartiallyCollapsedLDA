@@ -484,4 +484,25 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public double getHDPKPercentile(double hdpKPercentile) {
 		return getDouble("hdp_k_percentile",hdpKPercentile);
 	}
+	
+	@Override
+	public boolean saveCorpus(boolean defaultValue) {
+		String key = "save_corpus";
+		Object prop = super.getProperty(translateKey(key));
+		if(prop==null) return defaultValue;
+		return getBooleanProperty(key);
+	}
+	
+	@Override
+	public String getCorpusFilename() {
+		return getStringProperty("corpus_filename");
+	}
+
+	@Override
+	public boolean logTopicIndicators(boolean logTypeTopicDensityDefault) {
+		String key = "log_topic_indicators";
+		return getBooleanProperty(key);
+	}
+
+
 }

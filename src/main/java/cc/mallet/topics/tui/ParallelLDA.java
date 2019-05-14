@@ -255,8 +255,14 @@ public class ParallelLDA implements IterationListener {
 
 				if(config.saveVocabulary(false)) {
 					String vocabFn = config.getVocabularyFilename();
-					String [] vobaculary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
-					LDAUtils.writeStringArray(vobaculary,lgDir.getAbsolutePath() + "/" + vocabFn);
+					String [] vocabulary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
+					LDAUtils.writeStringArray(vocabulary,lgDir.getAbsolutePath() + "/" + vocabFn);
+				}
+
+				if(config.saveCorpus(false)) {
+					String corpusFn = config.getCorpusFilename();
+					int [][] corpus = LDAUtils.extractCorpus(instances);
+					LDAUtils.writeASCIIIntMatrix(corpus,lgDir.getAbsolutePath() + "/" + corpusFn, ",");
 				}
 				
 				if(config.saveTermFrequencies(false)) {

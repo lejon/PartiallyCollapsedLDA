@@ -1879,4 +1879,16 @@ public class LDAUtils {
 
 		return instances;	
 	}
+
+	public static int[][] extractCorpus(InstanceList instances) {
+		int[][] corpus = new int[instances.size()][];
+		for (int i = 0; i < corpus.length; i++) {
+			Instance inst = instances.get(i);
+			FeatureSequence tokenSequence =
+					(FeatureSequence) inst.getData();
+			corpus[i] = tokenSequence.getFeatures();
+		}
+		return corpus;
+	}
+
 }

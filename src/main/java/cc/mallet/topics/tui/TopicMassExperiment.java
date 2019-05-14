@@ -1047,5 +1047,20 @@ public class TopicMassExperiment {
 			return pc.getHDPKPercentile(hdpKPercentile);
 		}
 
+		@Override
+		public boolean saveCorpus(boolean b) {
+			return pc.saveCorpus(b);
+		}
+
+		@Override
+		public String getCorpusFilename() {
+			return pc.getCorpusFilename();
+		}
+
+		@Override
+		public boolean logTopicIndicators(boolean b) {
+			return pc.logTopicIndicators(b);
+		}
+
 	}
 }

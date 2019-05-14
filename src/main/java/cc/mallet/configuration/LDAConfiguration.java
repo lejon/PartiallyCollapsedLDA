@@ -207,4 +207,10 @@ public interface LDAConfiguration {
 	public int getDocumentSamplerSplitLimit(int documentSamplerSplitLimitDefault);
 
 	public double getHDPKPercentile(double hdpKPercentile);
+
+	public boolean saveCorpus(boolean b);
+
+	public String getCorpusFilename();
+
+	public boolean logTopicIndicators(boolean b);
 }

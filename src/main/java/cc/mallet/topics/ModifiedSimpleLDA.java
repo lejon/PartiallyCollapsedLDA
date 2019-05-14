@@ -857,7 +857,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 			alphaSum = Dirichlet.learnParameters(alpha, topicDocCounts, docLengthCounts, 1.001, 1.0, 1);
 		}
 		
-		logger.info("[alpha: " + Arrays.toString(alpha) + "] ");	
+		logger.fine("[alpha: " + Arrays.toString(alpha) + "] ");	
 	}
 
 	public void optimizeBeta() {
@@ -901,7 +901,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 		beta = betaSum / numTypes;
 
 
-		logger.info("[beta: " + formatter.format(beta) + "] ");		
+		logger.fine("[beta: " + formatter.format(beta) + "] ");		
 	}
 
 	@Override
