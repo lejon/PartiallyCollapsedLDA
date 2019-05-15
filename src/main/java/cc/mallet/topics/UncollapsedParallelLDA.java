@@ -1,10 +1,12 @@
 package cc.mallet.topics;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -559,6 +561,11 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			LDAUtils.logStatstHeaderToFile(stats);
 			LDAUtils.logStatsToFile(stats);
 		}
+		
+		if(config.logTopicIndicators(false)) {
+			logTopicIndicators();
+			System.out.println("Logged topic indicators for iteration: " + getCurrentIteration());
+		}
 
 		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
 			currentIteration = iteration;
@@ -650,6 +657,12 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					LDAUtils.logStatsToFile(stats);
 				}
 				
+				// WARNING: This will SUBSTANTIALLY slow down the sampler
+				if(config.logTopicIndicators(false)) {
+					logTopicIndicators();
+					System.out.println("Logged topic indicators for iteration: " + getCurrentIteration());
+				}
+				
 				if(logTokensPerTopics) {
 					LDAUtils.writeIntRowArray(tokensPerTopic, loggingPath +  "/tokens_per_topic.csv");
 				}
@@ -695,6 +708,29 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 		postSample();
 
+	}
+
+	protected void logTopicIndicators() {
+		File ld = config.getLoggingUtil().getLogDir();
+		File z_file = new File(ld.getAbsolutePath() + "/z_" + getCurrentIteration() + ".csv");
+		try (FileWriter fw = new FileWriter(z_file, false); 
+				BufferedWriter bw = new BufferedWriter(fw);
+				PrintWriter pw  = new PrintWriter(bw)) {
+
+			for (int docIdx = 0; docIdx < data.size(); docIdx++) {
+				String szs = "";
+				LabelSequence topicSequence =
+						(LabelSequence) data.get(docIdx).topicSequence;
+				int [] oneDocTopics = topicSequence.getFeatures();
+				for (int i = 0; i < topicSequence.size(); i++) {
+					szs += oneDocTopics[i] + ",";
+				}
+				szs = szs.substring(0, szs.length()-1);
+				pw.println(szs);			
+			}			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
