@@ -725,7 +725,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				for (int i = 0; i < topicSequence.size(); i++) {
 					szs += oneDocTopics[i] + ",";
 				}
-				szs = szs.substring(0, szs.length()-1);
+				if(szs.length()>0) {
+					szs = szs.substring(0, szs.length()-1);
+				}
 				pw.println(szs);			
 			}			
 		} catch (Exception e) {
