@@ -1330,7 +1330,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 			docTopics = topicSequence.getFeatures();
 
-			for (int token=0; token < docTopics.length; token++) {
+			for (int token=0; token < topicSequence.size(); token++) {
 				topicCounts[ docTopics[token] ]++;
 			}
 
@@ -1342,8 +1342,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			}
 
 			// subtract the (count + parameter) sum term
-			logLikelihood -= Dirichlet.logGammaStirling(alphaSum + docTopics.length);
 
+			logLikelihood -= Dirichlet.logGammaStirling(alphaSum + topicSequence.size());
 			Arrays.fill(topicCounts, 0);
 		}
 
@@ -1378,16 +1378,17 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		}
 
 		for (int topic=0; topic < numTopics; topic++) {
+			int tokensPerTopicK = tokensPerTopic[ topic ];
 			logLikelihood -= 
 					Dirichlet.logGammaStirling( (beta * numTypes) +
-							tokensPerTopic[ topic ] );
+							tokensPerTopicK );
 
 			if (Double.isNaN(logLikelihood)) {
-				logger.info("NaN after topic " + topic + " " + tokensPerTopic[ topic ]);
+				logger.info("NaN after topic " + topic + " " + tokensPerTopicK);
 				return 0;
 			}
 			else if (Double.isInfinite(logLikelihood)) {
-				logger.info("Infinite value after topic " + topic + " " + tokensPerTopic[ topic ]);
+				logger.info("Infinite value after topic " + topic + " " + tokensPerTopicK);
 				return 0;
 			}
 
