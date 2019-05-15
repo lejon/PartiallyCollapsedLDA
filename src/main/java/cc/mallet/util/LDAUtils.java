@@ -21,11 +21,14 @@ import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.pipe.CharSequence2TokenSequence;
@@ -177,6 +180,18 @@ public class LDAUtils {
 		}
 		return instances;
 	}
+	
+	public static TfIdfPipe getTfIdfPipeFromConfig(LDAConfiguration config) throws FileNotFoundException {
+		TfIdfPipe tfIdfPipe = LDAUtils.getTfIdfPipe(
+						config.getDatasetFilename(), 
+						config.getStoplistFilename("stoplist.txt"), 
+						config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
+						config.keepNumbers(), 
+						config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+						config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), 
+						null, null);					
+		return tfIdfPipe;
+	}
 
 	/**
 	 * This has to be done in two sweeps to first find the counts then remove rare words
@@ -323,6 +338,7 @@ public class LDAUtils {
 		return loadInstancesKeep(inputFile, stoplistFile, keepCount, keepNumbers, 
 				maxBufSize, keepConnectors, dataAlphabet, null);
 	}
+	
 	/**
 	 * Loads instances and keeps the <code>keepCount</code> number of words with 
 	 * the highest TF-IDF
@@ -433,6 +449,84 @@ public class LDAUtils {
 		instances.addThruPipe(reader);
 
 		return instances;
+	}
+	
+	/**
+	 * Re-creates the pipe that is used if loading with TF-IDF
+	 * This is ugly as hell, but I wanted ti to be as similar as
+	 * possible as when using loadDataset
+	 * 
+	 * @param inputFile Input file to load
+	 * @param stoplistFile File with stopwords, one per line
+	 * @param keepCount The number of words to keep (based on TF-IDF)
+	 * @param keepNumbers Boolean flag to signal to keep numbers or not
+	 * @param keepConnectors Keep connectors. General category "Pc" in the Unicode specification.
+	 * @param dataAlphabet And optional (null else) data alphabet to use (typically used when loading a test set)
+	 * @return An InstanceList with the data in the input file
+	 * @throws FileNotFoundException
+	 */
+	public static TfIdfPipe getTfIdfPipe(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, 
+			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
+		SimpleTokenizerLarge tokenizer;
+		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
+		int dataGroup = 3;
+		int labelGroup = 2;
+		int nameGroup = 1; // data, label, name fields
+
+		tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
+
+		if (keepCount > 0) {
+			CsvIterator reader = new CsvIterator(
+					new FileReader(inputFile),
+					lineRegex,
+					dataGroup,
+					labelGroup,
+					nameGroup);
+
+			ArrayList<Pipe> pipes = new ArrayList<Pipe>();
+			Alphabet alphabet = null;
+			if(dataAlphabet==null) {
+				alphabet = new Alphabet();
+			} else {
+				alphabet = dataAlphabet;
+			}
+
+			CharSequenceLowercase csl = new CharSequenceLowercase();
+			SimpleTokenizer st = tokenizer.deepClone();
+			StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
+			TfIdfPipe tfIdfPipe = new TfIdfPipe(alphabet, null);
+
+			pipes.add(csl);
+			pipes.add(st);
+			pipes.add(sl2fs);
+			if (keepCount > 0) {
+				pipes.add(tfIdfPipe);
+			}
+
+			Pipe serialPipe = new SerialPipes(pipes);
+
+			Iterator<Instance> iterator = serialPipe.newIteratorFrom(reader);
+
+			int count = 0;
+
+			// We aren't really interested in the instance itself,
+			//  just the total feature counts.
+			while (iterator.hasNext()) {
+				count++;
+				if (count % 100000 == 0) {
+					System.out.println(count);
+				}
+				iterator.next();
+			}
+
+			if (keepCount > 0) {
+				tfIdfPipe.addPrunedWordsToStoplist(tokenizer, keepCount);
+				return tfIdfPipe;
+			}
+		} else {
+			return null;
+		}
+		return null;
 	}
 
 	static SimpleTokenizerLarge initTokenizer(String stoplistFile, boolean keepNumbers, int maxBufSize, boolean keepConnectors) {
@@ -1374,12 +1468,36 @@ public class LDAUtils {
 			result += "<empty doc>";
 		} else {
 			for (int i = 0; i < noWords; i++) {
-				result += alphabet.lookupObject(features.getIndexAtPosition(i)) + ", ";
+				result += alphabet.lookupObject(features.getIndexAtPosition(i));
+				if(i+1<noWords) {
+					result += ", ";
+				}
 			}
 		}
 		return result;
 	}
 	
+	public static String instanceToTokenIndexString(Instance instance) {
+		return instanceToTokenIndexString(instance,-1);
+	}
+	
+	public static String instanceToTokenIndexString(Instance instance, int noWords) {
+		String result = "";
+		FeatureSequence features = (FeatureSequence) instance.getData();
+		noWords = (noWords > 0 ?  Math.min(noWords, features.size()) : features.size());
+		if(noWords==0) {
+			result += "<empty doc>";
+		} else {
+			for (int i = 0; i < noWords; i++) {
+				result += features.getIndexAtPosition(i);
+				if(i+1<noWords) {
+					result += ", ";
+				}
+			}
+		}
+		return result;
+	}
+
 	public static String instanceToSvmLightString(Instance instance, int noWords) {
 		String result = "";
 		FeatureSequence features = (FeatureSequence) instance.getData();
@@ -1393,6 +1511,18 @@ public class LDAUtils {
 				if(i<(noWords-1)) {
 					result += " ";
 				}
+			}
+		}
+		return result;
+	}
+	
+	public static String indicesToString(int [] indices, Alphabet alphabet) {
+		String result = "";
+		int noWords = indices.length;
+		for (int i = 0; i < noWords; i++) {
+			result += alphabet.lookupObject(indices[i]);
+			if(i+1<noWords) {
+				result += " ";
 			}
 		}
 		return result;
@@ -1891,4 +2021,24 @@ public class LDAUtils {
 		return corpus;
 	}
 
+	public static List<String> findCommonWords(Instance testInstance, Instance closestTrain) {
+		Set<String>  resultTrain = new HashSet<>();
+		Set<String>  resultTest = new HashSet<>();
+		Alphabet alphabet = testInstance.getAlphabet();
+		FeatureSequence features = (FeatureSequence) testInstance.getData();
+		FeatureSequence trainFeatures = (FeatureSequence) closestTrain.getData();
+		int noWords = Math.max(features.size(),trainFeatures.size());
+		for (int i = 0; i < noWords; i++) {
+			if(i<features.size()) {
+				resultTest.add((String)alphabet.lookupObject(features.getIndexAtPosition(i)));
+			}
+			if(i<trainFeatures.size()) {
+				resultTrain.add((String)alphabet.lookupObject(trainFeatures.getIndexAtPosition(i)));
+			}
+		}
+		
+		resultTrain.retainAll(resultTest);
+		
+		return resultTrain.stream().collect(Collectors.toList());
+	}
 }
