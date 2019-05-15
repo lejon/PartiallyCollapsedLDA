@@ -750,9 +750,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	
 	@Override
 	public void postPhi() {
-		if(savePhiMeans() && samplePhiThisIteration()) {
-			noSampledPhi++;
-		}
+
 	}
 
 
@@ -965,6 +963,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	/**
 	 * Spreads the sampling of phi matrix rows on different threads
 	 * Creates Runnable() objects that call functions from the superclass
+	 * 
+	 * TODO: Should be cleaned up!
 	 */
 	protected void samplePhi() {
 		tbb.calculateBatch();
@@ -996,6 +996,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+		}
+		if(savePhiMeans() && samplePhiThisIteration()) {
+			noSampledPhi++;
 		}
 	}
 

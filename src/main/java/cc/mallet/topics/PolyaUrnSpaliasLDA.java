@@ -498,6 +498,12 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
 			VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
 			phiMatrix[topic] = res.getPhi();
+			
+			if(savePhiMeans() && samplePhiThisIteration()) {
+				for (int phi = 0; phi < phiMatrix[topic].length; phi++) {
+					phiMean[topic][phi] += phiMatrix[topic][phi];
+				}
+			}
 		}
 		long elapsedMillis = System.currentTimeMillis();
 		long threadId = Thread.currentThread().getId();
