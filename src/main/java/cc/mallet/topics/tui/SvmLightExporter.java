@@ -58,20 +58,31 @@ public class SvmLightExporter {
 				System.out.println("Scheme: " + whichModel);
 
 				InstanceList instances = LDAUtils.loadDataset(config, dataset_fn);
-				writeSvnLight(instances,lgDir.getAbsolutePath(),"cgcbib.corpus", "cgcbib.vocab");
+				//writeSvnLight(instances,lgDir.getAbsolutePath(),"cgcbib.corpus", "cgcbib.vocab");
+				writeTokensPerRow(instances,lgDir.getAbsolutePath(),conf + "-corpus.txt");
+				String vocabFn = conf + "-vocabulary.txt";
+				String [] vobaculary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
+				LDAUtils.writeStringArray(vobaculary,lgDir.getAbsolutePath() + "/" + vocabFn);
+
 			}
 		}
 	}
 
-	private static void writeSvnLight(InstanceList instances, String targetDir, String corpusFn, String vocabFn) {
-//		String [] vobaculary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
-//		LDAUtils.writeStringArray(vobaculary,targetDir + "/" + vocabFn);
-
+	public static void writeSvnLight(InstanceList instances, String targetDir, String corpusFn) {
 		String [] smvLightInstances = new String[instances.size()];
 		int sidx = 0;
 		for(Instance instance : instances) {
 			smvLightInstances[sidx++] = LDAUtils.instanceToSvmLightString(instance, -1);
 		}
 		LDAUtils.writeStringArray(smvLightInstances,targetDir + "/" + corpusFn);
+	}
+	
+	public static void writeTokensPerRow(InstanceList instances, String targetDir, String corpusFn) {
+		String [] stringInstances = new String[instances.size()];
+		int sidx = 0;
+		for(Instance instance : instances) {
+			stringInstances[sidx++] = LDAUtils.instanceToTokenIndexString(instance, -1);
+		}
+		LDAUtils.writeStringArray(stringInstances,targetDir + "/" + corpusFn);
 	}
 }
