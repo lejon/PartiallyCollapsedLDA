@@ -1361,13 +1361,14 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			topicCounts = typeTopicCounts[type];
 
 			for (int topic = 0; topic < numTopics; topic++) {
-				if (topicCounts[topic] == 0) { continue; }
-
+				int topicTypeCount = topicCounts[topic];
+				if (topicTypeCount == 0) { continue; }
+				
 				nonZeroTypeTopics++;
-				logLikelihood += Dirichlet.logGammaStirling(beta + topicCounts[topic]);
+				logLikelihood += Dirichlet.logGammaStirling(beta + topicTypeCount);
 
 				if (Double.isNaN(logLikelihood)) {
-					System.err.println("NaN in log likelihood calculation: " + topicCounts[topic]);
+					System.err.println("NaN in log likelihood calculation: " + topicTypeCount);
 					System.exit(1);
 				} 
 				else if (Double.isInfinite(logLikelihood)) {
