@@ -91,7 +91,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 
 	protected Alphabet targetAlphabet;
 
-	protected LDAConfiguration config;
+	transient protected LDAConfiguration config;
 
 	protected InstanceList testSet = null; 
 	protected int currentIteration = 0;

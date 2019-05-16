@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.net.URL;
@@ -25,11 +26,12 @@ import java.util.regex.Pattern;
 import cc.mallet.configuration.Configuration;
 import cc.mallet.configuration.LDACommandLineParser;
 
-public class LoggingUtils {
+public class LoggingUtils implements Serializable {
 
+	private static final long serialVersionUID = 1L;
 	String baseDir = "";
 	File currentLogDirf = null;
-	List<Timing> timings = new ArrayList<Timing>();
+	transient List<Timing> timings = new ArrayList<Timing>();
 
 	public LoggingUtils() {	}
 	

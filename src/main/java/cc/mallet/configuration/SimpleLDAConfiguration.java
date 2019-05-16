@@ -1,8 +1,11 @@
 package cc.mallet.configuration;
 
+import java.io.Serializable;
+
 import cc.mallet.util.LoggingUtils;
 
-public class SimpleLDAConfiguration implements LDAConfiguration {
+public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
+	private static final long serialVersionUID = 1L;
 	LoggingUtils logUtil;
 	private String scheme;
 	private Integer noTopics       = LDAConfiguration.NO_TOPICS_DEFAULT;

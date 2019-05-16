@@ -1,15 +1,27 @@
 package cc.mallet.topics;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.apache.commons.configuration.ConfigurationException;
+
 import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.configuration.ParsedLDAConfiguration;
+import cc.mallet.types.Alphabet;
 import cc.mallet.types.BinomialSampler;
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.ParallelDirichlet;
+import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LoggingUtils;
@@ -53,8 +65,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
 	// topicOcurrenceCount stores how many times the topic has been active?
 	int [] topicOcurrenceCount;
-	
-	ParallelDirichlet phiDirichletPrior;
 
 	double k_percentile;
 
@@ -86,7 +96,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	@Override
 	public void addInstances(InstanceList training) {
 		super.addInstances(training);
-		phiDirichletPrior = new ParallelDirichlet(numTypes, beta);
 		docTopicTokenFreqTable = new DocTopicTokenFreqTable(numTopics,longestDocLength);
 	}
 	
@@ -208,7 +217,8 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		void incrementTopic(int i);
 	}
 	
-	class GEMBasedPsiSampler implements PsiSampler {
+	class GEMBasedPsiSampler implements PsiSampler, Serializable {
+		private static final long serialVersionUID = 1L;
 		double [] psi; // This is capital Psi in paper.
 		int [] l;
 		long lSum = -1;
@@ -629,4 +639,172 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	public void setActiveTopicInDataHistory(List<Integer> activeInDataTopicHistory) {
 		this.activeTopicInDataHistory = activeInDataTopicHistory;
 	}
+	
+	// Serialization
+
+		private static int PARSED_CONFIG = 0;
+		private static int SIMPLE_CONFIG = 1;
+
+		private void writeObject(ObjectOutputStream out) throws IOException {
+			if(ParsedLDAConfiguration.class.isAssignableFrom(config.getClass())) {
+				out.writeInt(PARSED_CONFIG);
+				System.out.flush();
+			} else {
+				out.writeInt(SIMPLE_CONFIG);
+			}
+			out.writeObject(data);
+			out.writeObject(alphabet);
+			out.writeObject(topicAlphabet);
+
+			out.writeInt(numTopics);
+
+			out.writeInt(numTypes);
+
+			out.writeObject(alpha);
+			out.writeDouble(alphaSum);
+			out.writeDouble(beta);
+			out.writeDouble(betaSum);
+
+			out.writeObject(phi);
+			out.writeObject(phiMean);
+			out.writeInt(phiBurnIn);
+			out.writeInt(phiMeanThin);
+			out.writeInt(noSampledPhi);
+
+			out.writeObject(typeTopicCounts);
+			out.writeObject(tokensPerTopic);
+
+			out.writeObject(docLengthCounts);
+			out.writeObject(topicDocCounts);
+
+			out.writeInt(showTopicsInterval);
+			out.writeInt(wordsPerTopic);
+
+			out.writeObject(formatter);
+			out.writeBoolean(printLogLikelihood);
+			
+			
+			out.writeInt(poissonNormalApproxThreshold);
+			out.writeObject(psiSampler);
+			out.writeDouble(gamma);
+			  
+			out.writeObject(activeTopics);
+			
+			out.writeDouble(alphaCoef); 
+			
+			out.writeObject(docTopicTokenFreqTable); 
+			out.writeInt(nrStartTopics);
+			
+			out.writeObject(activeTopicHistory); 
+			out.writeObject(activeTopicInDataHistory);
+			
+			out.writeObject(topicOcurrenceCount);
+			
+			out.writeDouble(k_percentile);
+
+			out.writeObject(deceasedTopics);
+			
+			if(ParsedLDAConfiguration.class.isAssignableFrom(config.getClass())) {
+				out.writeObject(config.whereAmI());
+			} else {
+				out.writeObject(config);
+			}
+		}
+
+		@SuppressWarnings("unchecked")
+		private void readObject (ObjectInputStream in) throws IOException, ClassNotFoundException {
+			int version = in.readInt ();
+
+			data = (ArrayList<TopicAssignment>) in.readObject ();
+			alphabet = (Alphabet) in.readObject();
+			topicAlphabet = (LabelAlphabet) in.readObject();
+
+			numTopics = in.readInt();
+
+			numTypes = in.readInt();
+
+			alpha = (double[]) in.readObject();
+			alphaSum = in.readDouble();
+			beta = in.readDouble();
+			betaSum = in.readDouble();
+
+			phi = (double[][]) in.readObject();
+			phiMean  = (double[][]) in.readObject();
+			phiBurnIn = in.readInt();
+			phiMeanThin = in.readInt();
+			noSampledPhi = in.readInt();
+
+			typeTopicCounts = (int[][]) in.readObject();
+			tokensPerTopic = (int[]) in.readObject();
+
+			docLengthCounts = (int[]) in.readObject();
+			topicDocCounts = (int[][]) in.readObject();
+
+			showTopicsInterval = in.readInt();
+			wordsPerTopic = in.readInt();
+
+			formatter = (NumberFormat) in.readObject();
+			printLogLikelihood = in.readBoolean();
+			
+			poissonNormalApproxThreshold = in.readInt();
+			psiSampler = (PsiSampler) in.readObject();
+			gamma = in.readDouble();
+			  
+			activeTopics = (List<Integer>) in.readObject();
+			
+			alphaCoef = in.readDouble(); 
+			
+			docTopicTokenFreqTable = (DocTopicTokenFreqTable) in.readObject(); 
+			nrStartTopics = in.readInt();
+			
+			activeTopicHistory = (List<Integer>) in.readObject(); 
+			activeTopicInDataHistory = (List<Integer>) in.readObject();
+			
+			topicOcurrenceCount = (int []) in.readObject();
+			
+			k_percentile = in.readDouble();
+
+			deceasedTopics = (boolean []) in.readObject();
+
+			if(version==SIMPLE_CONFIG) {
+				config = (LDAConfiguration) in.readObject();
+			} else {
+				String cfg_file = (String) in.readObject();
+				System.out.println("Reading config from:" + cfg_file);
+				try {
+					config = new ParsedLDAConfiguration(cfg_file);
+
+					String logSuitePath = "logdir-" + LoggingUtils.getDateStamp();
+					System.out.println("Will do logging to: " + logSuitePath);
+					LoggingUtils lu = new LoggingUtils();
+					lu.checkAndCreateCurrentLogDir(logSuitePath);
+					config.setLoggingUtil(lu);
+
+					System.out.println("Done Reading config!");
+				} catch (ConfigurationException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		public void write (File serializedModelFile) {
+			try {
+				ObjectOutputStream oos = new ObjectOutputStream (new FileOutputStream(serializedModelFile));
+				oos.writeObject(this);
+				oos.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.err.println("Problem serializing TopicModel to file " +
+						serializedModelFile + ": " + e);
+			}
+		}
+
+		public static PoissonPolyaUrnHDPLDAInfiniteTopics read (File f) throws Exception {
+			ObjectInputStream ois = new ObjectInputStream (new FileInputStream(f));
+			PoissonPolyaUrnHDPLDAInfiniteTopics topicModel = (PoissonPolyaUrnHDPLDAInfiniteTopics) ois.readObject();
+			ois.close();
+
+			return topicModel;
+		}
+
 }

@@ -1,12 +1,15 @@
 package cc.mallet.util;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.math3.stat.inference.ChiSquareTest;
 
-public class OptimizedGentleAliasMethod implements WalkerAliasTable {
+public class OptimizedGentleAliasMethod implements WalkerAliasTable, Serializable {
+	private static final long serialVersionUID = 1L;
+
 	Random random = new Random();
 	
 	int k;

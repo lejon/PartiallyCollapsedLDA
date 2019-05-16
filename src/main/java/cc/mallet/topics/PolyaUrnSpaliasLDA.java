@@ -28,7 +28,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	private static final long serialVersionUID = 1L;
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
-	ExecutorService tableBuilderExecutor;
+	transient ExecutorService tableBuilderExecutor;
 	
 	// #### Sparsity handling
 	// Jagged array containing the topics that are non-zero for each type

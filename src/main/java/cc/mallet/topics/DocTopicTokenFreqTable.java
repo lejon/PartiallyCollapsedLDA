@@ -1,5 +1,6 @@
 package cc.mallet.topics;
 
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -31,8 +32,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Leif Jonsson
  *
  */
-public class DocTopicTokenFreqTable {
+public class DocTopicTokenFreqTable implements Serializable {
 
+	private static final long serialVersionUID = 1L;
+	
 	AtomicInteger [][] docTokenFreqMap;
 	int numTopics;
 	int maxFreq = -1;
