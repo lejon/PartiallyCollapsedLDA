@@ -8,7 +8,7 @@ import cc.mallet.topics.tui.IterationListener;
 
 public class ModelFactory {
 	@SuppressWarnings("unchecked")
-	public static synchronized LDAGibbsSampler get(LDAConfiguration config, double[][] xs, int[] ys) {
+	public static synchronized LDAGibbsSampler get(LDAConfiguration config) {
 		String model_name = config.getSamplerClass(LDAConfiguration.MODEL_DEFAULT);
 
 		@SuppressWarnings("rawtypes")
@@ -28,7 +28,7 @@ public class ModelFactory {
 
 		try {
 			return (LDAGibbsSampler) modelClass.getDeclaredConstructor(argumentTypes)
-					.newInstance(config,xs,ys);
+					.newInstance(config);
 		} catch (InstantiationException | IllegalAccessException
 				| InvocationTargetException
 				| NoSuchMethodException | SecurityException e) {
@@ -38,8 +38,7 @@ public class ModelFactory {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static synchronized LDASamplerWithCallback get(LDAConfiguration config, double[][] xs, 
-			int[] ys, IterationListener callback) {
+	public static synchronized LDASamplerWithCallback get(LDAConfiguration config, IterationListener callback) {
 		String model_name = config.getSamplerClass(LDAConfiguration.MODEL_DEFAULT);
 
 		@SuppressWarnings("rawtypes")
@@ -59,7 +58,7 @@ public class ModelFactory {
 
 		try {
 			LDASamplerWithCallback dwc = (LDASamplerWithCallback) modelClass.getDeclaredConstructor(argumentTypes)
-					.newInstance(config,xs,ys);
+					.newInstance(config);
 			dwc.setIterationCallback(callback);
 			return dwc;
 		} catch (InstantiationException | IllegalAccessException
