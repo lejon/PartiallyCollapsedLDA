@@ -43,6 +43,7 @@ public interface LDAConfiguration {
 	public static final boolean LOG_TOKENS_PER_TOPIC = false;
 	public static final int DOCUMENT_SAMPLER_SPLIT_LIMIT_DEFAULT = 100;
 	public static final double HDP_K_PERCENTILE = .8;
+	public static final String MODEL_DEFAULT = "cc.mallet.topics.PolyaUrnSpaliasLDA";
 
 	public LoggingUtils getLoggingUtil();
 
@@ -213,4 +214,6 @@ public interface LDAConfiguration {
 	public String getCorpusFilename();
 
 	public boolean logTopicIndicators(boolean b);
+
+	public String getSamplerClass(String modelDefault);
 }

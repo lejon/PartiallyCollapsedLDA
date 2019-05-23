@@ -503,6 +503,93 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		String key = "log_topic_indicators";
 		return getBooleanProperty(key);
 	}
-
-
+	
+	public SimpleLDAConfiguration simpleLDAConfiguration() {
+		
+		double [] fixedSplitSizeDoc = new double [0];
+		try {
+			fixedSplitSizeDoc = getFixedSplitSizeDoc();
+		} catch (Exception e) {
+		} 
+		
+		SimpleLDAConfiguration conf = new SimpleLDAConfiguration(
+				getLoggingUtil(), 
+				getScheme(), 
+				getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT), 
+				getAlpha(LDAConfiguration.ALPHA_DEFAULT), 
+				getBeta(LDAConfiguration.BETA_DEFAULT),
+				getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
+				getNoIterations(LDAConfiguration.NO_ITER_DEFAULT), 
+				getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT), 
+				getNoTopicBatches(LDAConfiguration.NO_TOPIC_BATCHES_DEFAULT), 
+				getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD),
+				getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
+				getTopicInterval(LDAConfiguration.TOPIC_INTER_DEFAULT), 
+				getStartDiagnostic(LDAConfiguration.START_DIAG_DEFAULT), 
+				getSeed(LDAConfiguration.SEED_DEFAULT), 
+				getDebug(),
+				getDatasetFilename(), 
+				getTestDatasetFilename(), 
+				getDocumentBatchBuildingScheme(LDAConfiguration.BATCH_BUILD_SCHEME_DEFAULT), 
+				getDocPercentageSplitSize(),
+				getTopicPercentageSplitSize(), 
+				getResultSize(LDAConfiguration.RESULTS_SIZE_DEFAULT), 
+				getFullPhiPeriod(5), 
+				topTokensToSample(100),
+				getTopicPriorFilename(), 
+				getTopicIndexBuildingScheme(LDAConfiguration.TOPIC_INDEX_BUILD_SCHEME_DEFAULT), 
+				getTopicBatchBuildingScheme(LDAConfiguration.TOPIC_BATCH_BUILD_SCHEME_DEFAULT),
+				getInstabilityPeriod(100), 
+				fixedSplitSizeDoc,
+				getProportionalTopicIndexBuilderSkipStep(), 
+				savePhiMeans(LDAConfiguration.SAVE_PHI_MEAN_DEFAULT), 
+				getPhiBurnInPercent(LDAConfiguration.PHI_BURN_IN_DEFAULT),
+				getDocLengthsFilename(), 
+				saveDocLengths(false), 
+				getTermFrequencyFilename(),
+				saveTermFrequencies(false), 
+				getVocabularyFilename(), 
+				saveVocabulary(false), 
+				getCorpusFilename(),
+				saveCorpus(false), 
+				getPrintPhi(), 
+				getMeasureTiming(), 
+				logTokensPerTopic(false),
+				logTypeTopicDensity(false), 
+				logDocumentDensity(false), 
+				getExperimentOutputDirectory("tmp"),
+				logPhiDensity("false"), 
+				keepNumbers(), 
+				saveDocumentTopicMeans(), 
+				saveDocumentThetaEstimate(), 
+				getDocumentTopicMeansOutputFilename(),
+				getDocumentTopicThetaOutputFilename(),
+				saveDocumentTopicDiagnostics(), 
+				getDocumentTopicDiagnosticsOutputFilename(),
+				getPhiMeansOutputFilename(), 
+				getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), 
+				getStoplistFilename("stoplist.txt"), 
+				getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT),
+				getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+				getPhiMeanThin(LDAConfiguration.PHI_THIN_DEFAULT), 
+				getDirichletSamplerBuilderClass(LDAConfiguration.SPARSE_DIRICHLET_SAMPLER_BULDER_DEFAULT),
+				getAliasPoissonThreshold(LDAConfiguration.ALIAS_POISSON_DEFAULT_THRESHOLD), 
+				getFileRegex(LDAConfiguration.FILE_REGEX_DEFAULT), 
+				getHyperparamOptimInterval(LDAConfiguration.HYPERPARAM_OPTIM_INTERVAL_DEFAULT), 
+				useSymmetricAlpha(LDAConfiguration.SYMMETRIC_ALPHA_DEFAULT),
+				getHDPGamma(LDAConfiguration.HDP_GAMMA_DEFAULT), 
+				getHDPNrStartTopics(LDAConfiguration.HDP_START_TOPICS_DEFAULT), 
+				getDocumentSamplerSplitLimit(LDAConfiguration.DOCUMENT_SAMPLER_SPLIT_LIMIT_DEFAULT), 
+				getHDPKPercentile(LDAConfiguration.HDP_K_PERCENTILE),
+				logTopicIndicators(false),
+				getSamplerClass(LDAConfiguration.MODEL_DEFAULT));
+		
+		return conf;
+	}
+	
+	@Override
+	public String getSamplerClass(String modelDefault) {
+		String configProperty = getStringProperty("sampler_class");
+		return (configProperty == null) ? modelDefault : configProperty;
+	}
 }

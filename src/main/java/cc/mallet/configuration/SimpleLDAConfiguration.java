@@ -77,6 +77,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private int documentSamplerSplitLimit = LDAConfiguration.DOCUMENT_SAMPLER_SPLIT_LIMIT_DEFAULT;
 	private double hdpKPercentile = LDAConfiguration.HDP_K_PERCENTILE;
 	private boolean logTopicIndicators;
+	private String samplerClass = LDAConfiguration.MODEL_DEFAULT;
 	
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -100,6 +101,98 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public SimpleLDAConfiguration() {
 	}
 	
+	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme, Integer noTopics, Double alpha, Double beta,
+			Double lambda, Integer noIters, Integer noBatches, Integer noTopicBatches, Integer rareThreshold,
+			Integer tfIdfThreshold, Integer topicInterval, Integer startDiagnostic, Integer seed, boolean debug,
+			String dataset_fn, String test_dataset_fn, String building_scheme, double percentage_split_size_doc,
+			double percentage_split_size_topic, int resultSetSize, Integer fullPhiPeriod, Double topTokensToSample,
+			String topicPriorFilename, String topic_building_scheme, String topic_batch_building_scheme,
+			int instability_period, double[] fixed_split_size_doc, int skipStep, boolean savePhi, int phiBurnIn,
+			String docLengthsFilename, boolean saveDocLengths, String termFrequencyFilename,
+			boolean saveTermFrequencies, String vocabularyFn, boolean saveVocabulary, String corpusFn,
+			boolean saveCorpus, boolean printPhi, boolean measureTiming, boolean logTokensPerTopic,
+			boolean logTypeTopicDensity, boolean logDocumentDensity, String experimentOutputDirectory,
+			boolean logPhiDensity, boolean keepNumbers, boolean saveDocumentTopicMeans, boolean saveDocumentTopicTheta,
+			String documentTopicMeansOutputFilename, String documentTopicThetaOutputFilename,
+			boolean saveDocumentTopicDiagnostics, String documentTopicDiagnosticsOutputFilename,
+			String phiMeansOutputFilename, boolean keepConnectingPunctuation, String stoplistFilename, int nrTopWords,
+			int maxDocBufferSize, int phiMeanThinDefault, String dirichletSamplerBuilderClassName,
+			int aliasPoissonThreshold, String fileRegex, Integer hyperparamOptimInterval, boolean symmetricAlpha,
+			double hdpGgamma, int hdpNrStartTopics, int documentSamplerSplitLimit, double hdpKPercentile,
+			boolean logTopicIndicators, String samplerClass) {
+		super();
+		this.logUtil = logUtil;
+		this.scheme = scheme;
+		this.noTopics = noTopics;
+		this.alpha = alpha;
+		this.beta = beta;
+		this.lambda = lambda;
+		this.noIters = noIters;
+		this.noBatches = noBatches;
+		this.noTopicBatches = noTopicBatches;
+		this.rareThreshold = rareThreshold;
+		this.tfIdfThreshold = tfIdfThreshold;
+		this.topicInterval = topicInterval;
+		this.startDiagnostic = startDiagnostic;
+		this.seed = seed;
+		this.debug = debug;
+		this.dataset_fn = dataset_fn;
+		this.test_dataset_fn = test_dataset_fn;
+		this.building_scheme = building_scheme;
+		this.percentage_split_size_doc = percentage_split_size_doc;
+		this.percentage_split_size_topic = percentage_split_size_topic;
+		this.resultSetSize = resultSetSize;
+		this.fullPhiPeriod = fullPhiPeriod;
+		this.topTokensToSample = topTokensToSample;
+		this.topicPriorFilename = topicPriorFilename;
+		this.topic_building_scheme = topic_building_scheme;
+		this.topic_batch_building_scheme = topic_batch_building_scheme;
+		this.instability_period = instability_period;
+		this.fixed_split_size_doc = fixed_split_size_doc;
+		this.skipStep = skipStep;
+		this.savePhi = savePhi;
+		this.phiBurnIn = phiBurnIn;
+		this.docLengthsFilename = docLengthsFilename;
+		this.saveDocLengths = saveDocLengths;
+		this.termFrequencyFilename = termFrequencyFilename;
+		this.saveTermFrequencies = saveTermFrequencies;
+		this.vocabularyFn = vocabularyFn;
+		this.saveVocabulary = saveVocabulary;
+		this.corpusFn = corpusFn;
+		this.saveCorpus = saveCorpus;
+		this.printPhi = printPhi;
+		this.measureTiming = measureTiming;
+		this.logTokensPerTopic = logTokensPerTopic;
+		this.logTypeTopicDensity = logTypeTopicDensity;
+		this.logDocumentDensity = logDocumentDensity;
+		this.experimentOutputDirectory = experimentOutputDirectory;
+		this.logPhiDensity = logPhiDensity;
+		this.keepNumbers = keepNumbers;
+		this.saveDocumentTopicMeans = saveDocumentTopicMeans;
+		this.saveDocumentTopicTheta = saveDocumentTopicTheta;
+		this.documentTopicMeansOutputFilename = documentTopicMeansOutputFilename;
+		this.documentTopicThetaOutputFilename = documentTopicThetaOutputFilename;
+		this.saveDocumentTopicDiagnostics = saveDocumentTopicDiagnostics;
+		this.documentTopicDiagnosticsOutputFilename = documentTopicDiagnosticsOutputFilename;
+		this.phiMeansOutputFilename = phiMeansOutputFilename;
+		this.keepConnectingPunctuation = keepConnectingPunctuation;
+		this.stoplistFilename = stoplistFilename;
+		this.nrTopWords = nrTopWords;
+		this.maxDocBufferSize = maxDocBufferSize;
+		this.phiMeanThinDefault = phiMeanThinDefault;
+		this.dirichletSamplerBuilderClassName = dirichletSamplerBuilderClassName;
+		this.aliasPoissonThreshold = aliasPoissonThreshold;
+		this.fileRegex = fileRegex;
+		this.hyperparamOptimInterval = hyperparamOptimInterval;
+		this.symmetricAlpha = symmetricAlpha;
+		this.hdpGgamma = hdpGgamma;
+		this.hdpNrStartTopics = hdpNrStartTopics;
+		this.documentSamplerSplitLimit = documentSamplerSplitLimit;
+		this.hdpKPercentile = hdpKPercentile;
+		this.logTopicIndicators = logTopicIndicators;
+		this.samplerClass = samplerClass;
+	}
+
 	public void setPrintPhi(boolean printPhi) {
 		this.printPhi = printPhi;
 	}
@@ -778,4 +871,16 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		logTopicIndicators = b;
 	}
 
+	public String getSamplerClass() {
+		return samplerClass;
+	}
+
+	public void setSamplerClass(String samplerClass) {
+		this.samplerClass = samplerClass;
+	}
+
+	@Override
+	public String getSamplerClass(String modelDefault) {
+		return samplerClass;
+	}
 }
