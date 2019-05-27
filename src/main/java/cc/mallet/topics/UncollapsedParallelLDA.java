@@ -30,6 +30,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.apache.commons.configuration.ConfigurationException;
 
@@ -55,12 +56,15 @@ import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LDAThreadFactory;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
+import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Stats;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
 
 
 public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibbsSampler, LDASamplerWithPhi {
+	
+	protected static Logger logger = MalletLogger.getLogger(UncollapsedParallelLDA.class.getName());
 
 	private static final long serialVersionUID = 1L;
 	protected double[][] phi; // phi[topic][type]
@@ -98,7 +102,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	private ForkJoinPool documentSamplerPool;
 	private ExecutorService	phiSamplePool;
 	private ExecutorService	topicUpdaters;
-	Object [] topicLocks;
 
 	protected TopicIndexBuilder topicIndexBuilder;
 
@@ -132,11 +135,6 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		for (int bb = 0; bb < config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT); bb++) batchIndexes[bb] = bb;
 
 		startupThreadPools();
-
-		topicLocks = new Object[numTopics];
-		for (int i = 0; i < numTopics; i++) {
-			topicLocks[i] = new Object();
-		}
 
 		measureTimings = config.getMeasureTiming();
 
@@ -754,7 +752,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
 			preIterationGivenPhi();
 			currentIteration = iteration;
-
+			
 			// Sample z by dividing the corpus in batches
 			preZ();
 			loopOverBatches();
