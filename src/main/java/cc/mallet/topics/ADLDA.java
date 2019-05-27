@@ -34,6 +34,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 	private int startSeed;
 	double [] kdDensities;
 	private boolean abort = false;
+	private InstanceList trainingSet;
 	
 	public ADLDA(LDAConfiguration config) {
 		// MALLET uses alphaSum iso. alpha, so we need to multiply with no_topics
@@ -527,6 +528,13 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 		return numTypes;
 	}
 	
+	
+	@Override
+	public void addInstances(InstanceList training) {
+		this.trainingSet = training;
+		super.addInstances(training);
+	}
+
 	@Override
 	public void addTestInstances(InstanceList testSet) {
 		throw new NotImplementedException();
@@ -554,7 +562,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 
 	@Override
 	public InstanceList getDataset() {
-		throw new NotImplementedException();
+		return trainingSet;
 	}
 
 	@Override

@@ -32,6 +32,7 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 
 	// Used for inefficiency calculations
 	int [][] topIndices = null;
+	private InstanceList trainingSet;
 
 	public SerialCollapsedLDA(LDAConfiguration config) {
 		super(config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT),
@@ -136,6 +137,14 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 						binOutput.getAbsolutePath() + "/Phi_KxV", topIndices);
 			}
 		}
+	}
+	
+	
+
+	@Override
+	public void addInstances(InstanceList training) {
+		this.trainingSet = training;
+		super.addInstances(training);
 	}
 
 	/**
@@ -472,7 +481,7 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 
 	@Override
 	public InstanceList getDataset() {
-		throw new NotImplementedException();
+		return trainingSet;
 	}
 	
 	@Override
