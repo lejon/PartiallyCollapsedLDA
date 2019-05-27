@@ -21,7 +21,7 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	private static final long serialVersionUID = 1L;
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
-	private ExecutorService tableBuilderExecutor;
+	private transient ExecutorService tableBuilderExecutor;
 	
 	boolean staticPhiAliasTableIsBuild = false;
 
