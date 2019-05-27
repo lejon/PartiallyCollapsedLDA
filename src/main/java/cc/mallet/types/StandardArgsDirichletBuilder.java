@@ -36,6 +36,7 @@ public abstract class StandardArgsDirichletBuilder implements SparseDirichletSam
 		} catch (InstantiationException | IllegalAccessException
 				| InvocationTargetException
 				| NoSuchMethodException | SecurityException e) {
+			System.err.println("Could not create sampler: " + samplerClassName);
 			e.printStackTrace();
 			throw new IllegalArgumentException(e);
 		}
