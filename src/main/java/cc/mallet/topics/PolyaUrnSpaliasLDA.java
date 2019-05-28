@@ -258,7 +258,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 				System.out.println("################### YAY!");
 			}*/
 			
-			if(nonZeroTypeCnt < nonZeroTopicCnt) {
+			if(nonZeroTypeCnt < nonZeroTopicCnt && nonZeroTypeCnt > 0) {
 				// INTERSECTION SHOULD IMPROVE perf since we use result both in cumsum and sample topic
 				// Intersection needs to b O(k) for it to improve perf, but unless we add more memory 
 				// requirements it becomes O(k log(k))
@@ -273,8 +273,27 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			double u = ThreadLocalRandom.current().nextDouble();
 			
 			// Document and type sparsity removed all (but one?) topics, just use the prior contribution
+			// This happens when the document has only one word, then we use only the 
+			// word probability in phi
 			if(nonZeroTopicCntAdjusted==0) {
-				newTopic = (int) Math.floor(u * this.numTopics); // uniform (0,1)
+				double[] topicTermScores = new double[numTopics];
+				sum = 0.0;
+				
+				double score = phi[0][type];
+				topicTermScores[0] = score;
+				for (int topic = 1; topic < numTopics; topic++) {
+					score += phi[topic][type];
+					topicTermScores[topic] = score;
+				}
+				// Choose a random point between 0 and the sum of all topic scores
+				double sample = random.nextUniform() * score;
+
+				// Figure out which topic contains that point
+				newTopic = -1;
+				while (sample > 0.0) {
+					newTopic++;
+					sample -= topicTermScores[newTopic];
+				}
 			} else { 
 				int topic = nonZeroTopicsAdjusted[0];
 				double score = localTopicCounts[topic] * phi[topic][type];

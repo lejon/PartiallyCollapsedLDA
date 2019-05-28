@@ -182,38 +182,61 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 			 */
 			decrement(myBatch, oldTopic, type);
 			//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
-			 
-			int topic = nonZeroTopics[0];
-			double score = localTopicCounts[topic] * phi[topic][type];
-			cumsum[0] = score;
-			// Now calculate and add up the scores for each topic for this word
-			// We build a cumsum indexed by topicIndex
-			int topicIdx = 1;
-			while ( topicIdx < nonZeroTopicCnt ) {
-				topic = nonZeroTopics[topicIdx];
-				score = localTopicCounts[topic] * phi[topic][type];
-				cumsum[topicIdx] = score + cumsum[topicIdx-1];
-				topicIdx++;
+
+			// The special case when we have a one-word long document
+			if(nonZeroTopicCnt==0) {
+				double[] topicTermScores = new double[numTopics];
+				sum = 0.0;
+				
+				double score = phi[0][type];
+				topicTermScores[0] = score;
+				for (int topic = 1; topic < numTopics; topic++) {
+					score += phi[topic][type];
+					topicTermScores[topic] = score;
+				}
+				// Choose a random point between 0 and the sum of all topic scores
+				double sample = random.nextUniform() * score;
+
+				// Figure out which topic contains that point
+				newTopic = -1;
+				while (sample > 0.0) {
+					newTopic++;
+					sample -= topicTermScores[newTopic];
+				}
+			} else {
+				// Take the first non-zero topic (i.e at index 0)
+				int topic = nonZeroTopics[0];
+				double score = localTopicCounts[topic] * phi[topic][type];
+				cumsum[0] = score;
+				// Now calculate and add up the scores for each topic for this word
+				// We build a cumsum indexed by topicIndex
+				int topicIdx = 1;
+				while ( topicIdx < nonZeroTopicCnt ) {
+					topic = nonZeroTopics[topicIdx];
+					score = localTopicCounts[topic] * phi[topic][type];
+					cumsum[topicIdx] = score + cumsum[topicIdx-1];
+					topicIdx++;
+				}
+				sum = cumsum[topicIdx-1]; // sigma_likelihood
+
+				// Choose a random point between 0 and the sum of all topic scores
+				// The thread local random performs better in concurrent situations 
+				// than the standard random which is thread safe and incurs lock 
+				// contention
+				double u = ThreadLocalRandom.current().nextDouble();
+				double u_sigma = u * (typeNorm[type] + sum);
+				// u ~ U(0,1)  
+				// u [0,1]
+				// u_sigma = u * (typeNorm[type] + sum)
+				// if u_sigma < typeNorm[type] -> prior
+				// u * (typeNorm[type] + sum) < typeNorm[type] => u < typeNorm[type] / (typeNorm[type] + sum)
+				// else -> likelihood
+				// u_prior = u_sigma / typeNorm[type] -> u_prior (0,1)
+				// u_likelihood = (u_sigma - typeNorm[type]) / sum  -> u_likelihood (0,1)
+
+				newTopic = sampleNewTopic(type, nonZeroTopics, nonZeroTopicCnt, sum, cumsum, u, u_sigma);
 			}
-			sum = cumsum[topicIdx-1]; // sigma_likelihood
-
-			// Choose a random point between 0 and the sum of all topic scores
-			// The thread local random performs better in concurrent situations 
-			// than the standard random which is thread safe and incurs lock 
-			// contention
-			double u = ThreadLocalRandom.current().nextDouble();
-			double u_sigma = u * (typeNorm[type] + sum);
-			// u ~ U(0,1)  
-			// u [0,1]
-			// u_sigma = u * (typeNorm[type] + sum)
-			// if u_sigma < typeNorm[type] -> prior
-			// u * (typeNorm[type] + sum) < typeNorm[type] => u < typeNorm[type] / (typeNorm[type] + sum)
-			// else -> likelihood
-			// u_prior = u_sigma / typeNorm[type] -> u_prior (0,1)
-			// u_likelihood = (u_sigma - typeNorm[type]) / sum  -> u_likelihood (0,1)
-
-			newTopic = sampleNewTopic(type, nonZeroTopics, nonZeroTopicCnt, sum, cumsum, u, u_sigma);
-
+			
 			// Make sure we actually sampled a valid topic
 			if (newTopic < 0 || newTopic > numTopics) {
 				throw new IllegalStateException ("SpaliasUncollapsedParallelLDA: New valid topic not sampled (" + newTopic + ").");
