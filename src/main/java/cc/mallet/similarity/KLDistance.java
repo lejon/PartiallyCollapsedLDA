@@ -4,10 +4,8 @@ public class KLDistance implements Distance {
 
 	@Override
 	public double calculate(double[] v1, double[] v2) {
-		// Use symmetrisized KL divergence
-		double u1 = cc.mallet.util.Maths.klDivergence(v1, v2);
-		double u2 = cc.mallet.util.Maths.klDivergence(v2, v1);
-		return (u1 + u2) / 2;
+		if(v1.length != v2.length) throw new ArrayIndexOutOfBoundsException("Vectors have to be of equal length for KLDistance distance!");
+		return cc.mallet.util.Maths.klDivergence(v1, v2);
 	}
 
 }

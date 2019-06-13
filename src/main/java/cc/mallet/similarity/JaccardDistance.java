@@ -1,19 +1,35 @@
 package cc.mallet.similarity;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class JaccardDistance implements Distance {
 
 	@Override
 	public double calculate(double[] v1, double[] v2) {
-		double intersection = 0.0;
-		double union = 0.0;
+		Set<Integer> union = new HashSet<>();
+		Set<Integer> intersection = new HashSet<>();
+		Set<Integer> v1s = new HashSet<>();
+		
 		for (int i = 0; i < v1.length; i++) {
-			intersection += Math.min(v1[i], v2[i]);
-			union += Math.max(v1[i], v2[i]);
+			if(v1[i]>0) {
+				union.add(i);
+				v1s.add(i);
+			}
 		}
-		if (intersection > 0.0D) {
-			return 1-(intersection / union);
+		for (int i = 0; i < v2.length; i++) {
+			if(v2[i]>0) {
+				intersection.add(i);
+			}
+		}
+		
+		union.addAll(intersection);
+		intersection.retainAll(v1s);
+		
+		if (intersection.size() > 0) {
+			return 1-(intersection.size() / (double) union.size());
 		} else {
-			return 0.0;
+			return Double.MAX_VALUE;
 		}
 	}
 }

@@ -11,16 +11,16 @@ import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.configuration.ModelFactory;
 import cc.mallet.configuration.ParsedLDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
 import cc.mallet.pipe.Pipe;
 import cc.mallet.topics.LDASamplerWithPhi;
 import cc.mallet.topics.PolyaUrnSpaliasLDA;
-import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.Instance;
@@ -29,7 +29,7 @@ import cc.mallet.util.ArrayStringUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.StringClassArrayIterator; 
 
-public class LDADistancer implements TrainedDistance {
+public class LDALikelihoodDistance implements TrainedDistance {
 	static DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0");
 	public static int noDigits = 4;
 
@@ -38,6 +38,7 @@ public class LDADistancer implements TrainedDistance {
 	
 	InstanceList trainingset;
 	LDASamplerWithPhi trainedSampler;
+	int noClassified = 0;
 	double alpha;
 	String [] testRowIds;
 	Map<Instance, double []> sampledTopics = new HashMap<>();
@@ -46,30 +47,21 @@ public class LDADistancer implements TrainedDistance {
 	Map<Integer,double []> cache = new HashMap<>();
 	
 	int testSampleIter = 500;
+	double epsilon = 0.0;
+	double lambda = 0.4;
+	double mu = 1000.0;
 	
-	Distance dist = new KLDistance();
+	double [][] phi;
 
 	Pipe instancePipe;
 	
 	String samplerFn = "stored_samplers/saved_similarity_sampler.bin";
+	private int[] N_d;
+	private double[] p_w_coll;
 	
-	public LDADistancer(LDAConfiguration config) {
+	public LDALikelihoodDistance(LDAConfiguration config) {
 		this.config = config;
 		alpha = config.getAlpha(0.01);
-	}
-
-	public LDADistancer(LDAConfiguration config, Distance d) {
-		this.config = config;
-		alpha = config.getAlpha(0.01);
-		this.dist = d;
-	}
-
-	public Distance getDist() {
-		return dist;
-	}
-
-	public void setDist(Distance dist) {
-		this.dist = dist;
 	}
 	
 	public void setNoTRainingSamples(int samples) {
@@ -89,8 +81,8 @@ public class LDADistancer implements TrainedDistance {
 			InstanceList currentTestset = new InstanceList(trainingset.getDataAlphabet(), trainingset.getTargetAlphabet());
 			currentTestset.add(instance);
 			SimpleLDAConfiguration sc = ((ParsedLDAConfiguration) config).simpleLDAConfiguration();
-			sc.setTopicInterval(100);
-			LDASamplerWithPhi spalias = (LDASamplerWithPhi) ModelFactory.get(sc);
+			sc.setTopicInterval(10);
+			PolyaUrnSpaliasLDA spalias = new PolyaUrnSpaliasLDA(sc);
 			spalias.addInstances(currentTestset);
 			spalias.setPhi(trainedSampler.getPhi(), instance.getAlphabet(), instance.getTargetAlphabet());
 			spalias.sampleZGivenPhi(testSampleIter);
@@ -119,7 +111,7 @@ public class LDADistancer implements TrainedDistance {
 				//System.out.println("Test-topic: " + arrToStr(trainingDoc));
 				//double klDivergence = calcKLDivergences(classCentroids.get(key), docTheta);
 				//double klDivergence = calcKLDivergences(trainingDoc, docTopicMeans);
-				double distance = dist.calculate(docTheta, trainingDoc);
+				double distance = calculate(trainingDoc, docTheta);
 				//System.out.println("Divergence vs. " + instance +" is:" + klDivergence);
 				// We need to transform the kl-divergencies (low is good) to scores (high is good)
 				distances[i] = distance;
@@ -128,54 +120,26 @@ public class LDADistancer implements TrainedDistance {
 				
 		//System.out.println("["  + instance.getTarget().toString() + "]: Scores are: " + arrToStr(scores));
 		
+		noClassified++;
+		if(noClassified%50==0) System.out.println("# Classified: " + noClassified );
 		return distances;
 	}
 
 	public LDASamplerWithPhi train(InstanceList trainingset) throws IOException {
-		String trainingsetHash = getConfigSetHash();
-		String storedHash = readStoredTrainingsetHash(samplerFn + "-training_hash-" + trainingsetHash);
-		File storedSampler = new File(samplerFn + "-sampler-" + trainingsetHash);
+		instancePipe = trainingset.getPipe();
+		
 		this.trainingset = trainingset;
-		if(storedSampler.exists() && trainingsetHash.equals(storedHash)) {
-			try {
-				System.out.println("Using pretrained sampler @:" + storedSampler.getAbsolutePath());
-				LDASamplerWithPhi tmp = (LDASamplerWithPhi) ModelFactory.get(config);
-				if(tmp instanceof PolyaUrnSpaliasLDA) {
-					System.out.println("Loading PolyaUrn sampler...");
-					trainedSampler = PolyaUrnSpaliasLDA.read(storedSampler);
-				} else if (tmp instanceof SpaliasUncollapsedParallelLDA) {
-					System.out.println("Loading Spalias sampler...");
-					trainedSampler = SpaliasUncollapsedParallelLDA.read(storedSampler);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else {
-			trainingset.getAlphabet().stopGrowth();
-			trainedSampler = new PolyaUrnSpaliasLDA(config);
-			trainedSampler.addInstances(trainingset);
-			try {
-				System.out.println("Using config: " + config.getActiveSubConfig());
-				trainedSampler.sample(config.getNoIterations(3000));
-				File tmpDir = new File("stored_samplers");
-				if(!tmpDir.exists()) {
-					tmpDir.mkdir();
-				}
-				if(trainedSampler instanceof PolyaUrnSpaliasLDA) {
-					System.out.println("Storing PolyaUrn sampler...");
-					((PolyaUrnSpaliasLDA) trainedSampler).write(storedSampler);
-				} else if (trainedSampler instanceof SpaliasUncollapsedParallelLDA) {
-					System.out.println("Storing SpaliasUncollapsedParallelLDA sampler...");
-					((SpaliasUncollapsedParallelLDA) trainedSampler).write(storedSampler);
-				}
-				writeTrainingsetHash(trainingsetHash,samplerFn + "-training_hash-" + trainingsetHash);
-			} catch (IOException e) {
-				e.printStackTrace();
-				throw new IllegalStateException(e);
-			}
-		}
+				
+		trainedSampler = new PolyaUrnSpaliasLDA(config);
+		trainedSampler.addInstances(trainingset);
+		trainedSampler.sample(config.getNoIterations(3000));
 		
 		trainingSetTopicDists = trainedSampler.getThetaEstimate();
+		
+		for (int i = 0; i < trainingset.size(); i++) {
+			Instance instance = trainingset.get(i);
+			sampledTopics.put(instance, trainingSetTopicDists[i]);
+		}
 		
 		return trainedSampler;
 	}
@@ -196,7 +160,7 @@ public class LDADistancer implements TrainedDistance {
 		String res = "";
 		res += title + "[" +  arr.length + "]:";
 		for (int j = 0; j < arr.length && j < maxLen; j++) {
-			if(arr[j]<0.05 && mark) {
+			if(arr[j]<0.05) {
 				res += "     *, ";
 			} else {				
 				res += ArrayStringUtils.formatDouble(arr[j]) + ", ";
@@ -253,6 +217,7 @@ public class LDADistancer implements TrainedDistance {
 
 	@Override
 	public double calculate(double[] v1, double[] v2) {
+		System.out.println("Calculating...");
 		int [] v1Indices = new int[v1.length];
 		int [] v2Indices = new int[v2.length];
 		
@@ -289,9 +254,66 @@ public class LDADistancer implements TrainedDistance {
 		sampledQueryTopics.put(Arrays.hashCode(v1), theta1);
 		sampledQueryTopics.put(Arrays.hashCode(v2), theta2);
 
-		return dist.calculate(theta1, theta2);
+		return 0.0;
 	}
 	
+	private double ldaLoglikelihood(int[] v1, int[] v2, double[] theta1, double[] theta2) {
+		double p_w = 0.0;
+		double N_d = v2.length;
+		
+		//System.out.println("v1: \n\t" + Arrays.toString(v1) + "\n\t" + Arrays.toString(theta1));
+		//System.out.println("v2: \n\t" + Arrays.toString(v2) + "\n\t" + Arrays.toString(theta2));
+
+		Set<Integer> uniqueDocumentWords = new HashSet<>();
+		Map<Integer,Double> p_w_d = new HashMap<>();
+
+		// Find the number of unique words in v2
+		// Find the number of times each word occurs in v2
+		for (int i = 0; i < v2.length; i++) {
+			int wordFreq = (int)v2[i];
+			if(wordFreq>0) {
+				int word = i;
+				uniqueDocumentWords.add(word);
+				if(p_w_d.get(word) == null) {
+					p_w_d.put(word,0.0);
+				}
+				p_w_d.put(word,p_w_d.get(word) + wordFreq);
+			}
+		}
+
+		// Normalize
+		for (Integer word : p_w_d.keySet()) {
+			p_w_d.put(word,p_w_d.get(word) /  N_d);
+		}
+
+		int K = config.getNoTopics(LDAConfiguration.NO_TOPICS_DEFAULT);
+		double mixtureRatio = (N_d / (N_d + mu));
+		for (int i = 0; i < v1.length; i++) {
+			double wordProb = epsilon;
+			int wordFreq = (int)v1[i];
+			if(wordFreq > 0) {
+				int word = i;
+				if(p_w_d.get(word) != null) {
+					wordProb = p_w_d.get(word);
+				}
+				
+				double p_w_lda = 0.0;
+				for (int k = 0; k < K; k++) {
+					p_w_lda += theta2[k] * phi[k][word];
+				}
+				//System.out.println("p_w_lda: " + p_w_lda);
+				
+				p_w += lambda *
+						// Ordinary likelihood
+						(mixtureRatio * wordProb + (1-mixtureRatio) * p_w_coll[word]) +
+						// LDA likelihood
+						(1-lambda) * p_w_lda;						
+			}
+		}
+		
+		return 1-p_w;
+	}
+
 	double [] sample(Instance instance) {
 		InstanceList currentTestset = new InstanceList(trainingset.getDataAlphabet(), trainingset.getTargetAlphabet());
 		currentTestset.add(instance);
@@ -309,22 +331,51 @@ public class LDADistancer implements TrainedDistance {
 		return thetaEstimate[0];
 	}
 
-	@Override	
+	@Override
 	public void init(InstanceList trainingset) {
-		try {
-			train(trainingset);
-		} catch (IOException e) {
-			throw new IllegalArgumentException(e);
+		String trainingsetHash = getTrainingSetHash();
+		String storedHash = readStoredTrainingsetHash(samplerFn + "-training_hash-" + trainingsetHash);
+		File storedSampler = new File(samplerFn + "-sampler-" + trainingsetHash);
+		this.trainingset = trainingset;
+		
+		
+		initLikelihood(trainingset);
+		
+		
+		if(storedSampler.exists() && trainingsetHash.equals(storedHash)) {
+			try {
+				System.out.println("Using pretrained sampler @:" + storedSampler.getAbsolutePath());
+				trainedSampler = PolyaUrnSpaliasLDA.read(storedSampler);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+			trainingset.getAlphabet().stopGrowth();
+			trainedSampler = new PolyaUrnSpaliasLDA(config);
+			trainedSampler.addInstances(trainingset);
+			try {
+				trainedSampler.sample(config.getNoIterations(3000));
+				File tmpDir = new File("stored_samplers");
+				if(!tmpDir.exists()) {
+					tmpDir.mkdir();
+				}
+				((PolyaUrnSpaliasLDA) trainedSampler).write(storedSampler);
+				writeTrainingsetHash(trainingsetHash,samplerFn + "-training_hash-" + trainingsetHash);
+			} catch (IOException e) {
+				e.printStackTrace();
+				throw new IllegalStateException(e);
+			}
 		}
+		trainingSetTopicDists = trainedSampler.getThetaEstimate();
+		phi = trainedSampler.getPhi();
 		
 		for (int i = 0; i < trainingset.size(); i++) {
 			Instance instance = trainingset.get(i);
 			sampledTopics.put(instance, trainingSetTopicDists[i]);
 		}
 		
-		int numWords = Math.min(10, trainedSampler.getAlphabet().size());
 		System.out.println("Top words of the traines sampler are: \n" + 
-				LDAUtils.formatTopWords(LDAUtils.getTopWords(numWords, 
+				LDAUtils.formatTopWords(LDAUtils.getTopWords(10, 
 						trainedSampler.getAlphabet().size(), 
 						trainedSampler.getNoTopics(), 
 						trainedSampler.getTypeTopicMatrix(), 
@@ -334,9 +385,30 @@ public class LDADistancer implements TrainedDistance {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		
 	}
 
-	private String getConfigSetHash() {
+	 void initLikelihood(InstanceList trainingset2) {
+		 N_d = new int[trainingset.size()];
+			p_w_coll = new double[trainingset.getAlphabet().size()];
+			long corpusSize = 0;
+			for (int i = 0; i < trainingset.size(); i++) {
+				FeatureSequence words = (FeatureSequence)trainingset.get(i).getData();
+				N_d[i] = words.size();
+				for (int j = 0; j < words.size(); j++) {
+					p_w_coll[words.getIndexAtPosition(j)]++;
+					corpusSize++;
+				}
+			}	
+			
+			//normalize
+			for (int i = 0; i < p_w_coll.length; i++) {
+				p_w_coll[i] /= corpusSize;
+			}
+	}
+
+	private String getTrainingSetHash() {
+		
 		String configFn = config.whereAmI();
 
 		byte[] bytes = null;
@@ -417,13 +489,21 @@ public class LDADistancer implements TrainedDistance {
 		sampledTopics.put(testInstances.get(0), theta1);
 		sampledQueryTopics.put(Arrays.hashCode(query), theta1);
 
-		double dd = dist.calculate(theta1, theta2);
-//		System.out.println("Comparing: \n\t" 
-//				+ s1 + "\n\t" 
-//				+ Arrays.toString(theta1) + "\n\t" 
-//				+ Arrays.toString(theta2) + "\n\t"  
-//				+ LDAUtils.instanceToString(trainingset.get(sampleId)));
-//		System.out.println("Distance was: " + dd);
+		
+		FeatureSequence features = (FeatureSequence) trainingset.get(sampleId).getData();
+		int [] v1 = new int[query.length];
+		for (int i = 0; i < v1.length; i++) {
+			v1[i] = (int)query[i];
+		}
+
+		int [] v2 = new int[trainingset.get(sampleId).getAlphabet().size()];
+		for (int i = 0; i < features.size(); i++) {
+			v2[features.getIndexAtPosition(i)]++;
+		}
+		
+		double dd = ldaLoglikelihood(v1, v2, theta1, theta2);
+		//System.out.println("Comparing: \n\t" + s1 + "\n\t" + Arrays.toString(theta1) + "\n\t" + Arrays.toString(theta2) + "\n\t" + LDAUtils.instanceToString(trainingset.get(sampleId)));
+		//System.out.println("Distance was: " + dd);
 		return dd;
 	}
 

@@ -1,5 +1,11 @@
 package cc.mallet.similarity;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import cc.mallet.types.FeatureSequence;
+import cc.mallet.types.InstanceList;
+
 // This code was adapted from: BM25.java with the original Copyright
 
 /*Copyright 2011 Deminem Solutions
@@ -13,17 +19,22 @@ either express or implied. See the License for the specific language governing p
 under the License.
 */
 
-public class BM25Distance implements Distance {
+public class BM25Distance implements TrainedDistance {
 
 	protected double k_1 = 1.2;
 	protected double k_3 = 8;
-	protected double b = 0.75;
+	protected double b = 0.5;
 	
-	double corpusSize = 0.0;
+	int corpusSize = 0;
 	double avgDocLen = 0.0;
 	int [] docFreq;
+	InstanceList trainingset;
+
+	public BM25Distance() {
+		
+	}
 	
-	public BM25Distance(double corpusSize, double avgDocLen, int [] docFreq) {
+	public BM25Distance(int corpusSize, double avgDocLen, int [] docFreq) {
 		this.corpusSize = corpusSize;
 		this.avgDocLen = avgDocLen;
 		this.docFreq = docFreq;
@@ -32,11 +43,20 @@ public class BM25Distance implements Distance {
 	@Override
 	public double calculate(double[] v1, double[] v2) {
 		double totBM25 = 0.0;
-		for (int i = 0; i < v1.length; i++) {
-			//totBM25 += bm25fext(v1[i], corpusSize, v2.length, avgDocLen, v2[i], docFreq[i] );
-			totBM25 += bm25f(v1[i], corpusSize, v2.length, avgDocLen, docFreq[i] );
+		//totBM25 += bm25fext(v1[i], corpusSize, v2.length, avgDocLen, v2[i], docFreq[i] );
+		int queryFreqIndoc = 0;
+		for (int j = 0; j < v1.length; j++) {
+			for (int j2 = 0; j2 < v2.length; j2++) {
+				if(v1[j]==v2[j2]) {
+					queryFreqIndoc++;
+				}
+			}
+			totBM25 += bm25f(queryFreqIndoc, corpusSize, v2.length, avgDocLen, docFreq[(int)v1[j]] );
 		}
-		return totBM25;
+		if(totBM25==0.0) {
+			totBM25 = Double.NEGATIVE_INFINITY;
+		}
+		return -totBM25;
 	}
 	
 	/**
@@ -45,7 +65,7 @@ public class BM25Distance implements Distance {
 	 * usually short and consist of only a few words.
 	 *  
 	 * @param queryTermFrequency the frequency of the query term in the document
-	 * @param numberOfDocuments
+	 * @param numberOfDocuments in vocabulary
 	 * @param docLength
 	 * @param averageDocumentLength
 	 * @param queryFrequency
@@ -59,16 +79,15 @@ public class BM25Distance implements Distance {
     		double documentFrequency) {
     	
             double K = k_1 * ((1 - b) + ((b * docLength) / averageDocumentLength));
-            double tf = ( ((k_1 + 1) * queryTermFrequency) / (K + queryTermFrequency) );	//first part
+            double tf = ( ((k_1 + 1) * queryTermFrequency) / (K + queryTermFrequency) );
             
             double idf = calcIdf(numberOfDocuments, documentFrequency);
-            idf = Math.max(idf,0.1);
 			double score = tf * idf;	
             return score;
     }
 
 	public static double calcIdf(double numberOfDocuments, double documentFrequency) {
-		return Math.log((numberOfDocuments - documentFrequency + 0.5) / (documentFrequency + 0.5));
+		return Math.log(1 + (numberOfDocuments - documentFrequency + 0.5) / (documentFrequency + 0.5));
 	}
 	
 	/**
@@ -98,4 +117,44 @@ public class BM25Distance implements Distance {
 			double score = idf * tf_ext;	
             return score;
     }
+	
+	@Override
+	public void init(InstanceList trainingset) {
+		this.trainingset = trainingset;
+		corpusSize = trainingset.size();
+		int alphabetSize = trainingset.getAlphabet().size();
+		docFreq = new int [alphabetSize];
+		Set<Integer> docUnique = new HashSet<>();
+		long docLenSum = 0;
+		for (int docIdx = 0; docIdx < trainingset.size(); docIdx++) {
+			FeatureSequence tokenSequence =
+					(FeatureSequence) trainingset.get(docIdx).getData();
+			int [] docTokens = tokenSequence.getFeatures();
+			docLenSum += docTokens.length;
+			// In MALLET documents with one word still has length(docTokens) == 2
+			for (int i = 0; i < tokenSequence.size(); i++) {
+				int ti = docTokens[i];
+				docUnique.add(ti);
+			}
+			for (Integer integer : docUnique) {
+				docFreq[integer]++;
+			}
+		}	
+		avgDocLen = docLenSum / (double) trainingset.size();
+	}
+
+	@Override
+	public double distanceToTrainingSample(double[] query, int sampleId) {				
+		FeatureSequence tokenSequence =
+				(FeatureSequence) trainingset.get(sampleId).getData();
+		double [] trainingInstance = new double[tokenSequence.size()];
+		int [] docTokens = tokenSequence.getFeatures();
+		// In MALLET documents with one word still has length(docTokens) == 2 
+		// so must use tokenSequence.size which returns 1 
+		for (int i = 0; i < tokenSequence.size(); i++) {
+			trainingInstance[i] = (int) docTokens[i];
+		}
+
+		return calculate(query, trainingInstance);
+	}
 }

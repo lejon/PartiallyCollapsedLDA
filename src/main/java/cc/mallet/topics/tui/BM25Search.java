@@ -16,7 +16,6 @@ import cc.mallet.similarity.CorpusStatistics;
 import cc.mallet.types.CrossValidationIterator;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
-import cc.mallet.types.LabelAlphabet;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.Timer;
@@ -111,7 +110,8 @@ public class BM25Search {
 				}
 				
 
-				System.out.println(String.format("Rare word threshold: %d", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD)));
+				System.out.println(String.format("Rare word threshold: %d", 
+						config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD)));
 
 				System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
 				System.out.println("Instance list is: " + instances.size());
@@ -132,7 +132,7 @@ public class BM25Search {
 				InstanceList train = cvSplit[TRAINING];
 				InstanceList test = cvSplit[TESTING];
 								
-				BM25Distance bm25 = new BM25Distance(cs.size(), cs.getAvgDocLen(), cs.getDocFreqs());
+				BM25Distance bm25 = new BM25Distance((int)cs.size(), cs.getAvgDocLen(), cs.getDocFreqs());
 				Timer t = new Timer();
 				t.start();
 				//for (Instance instance : test) {
@@ -155,12 +155,17 @@ public class BM25Search {
 					}
 					if(minDistIdx>-1) {
 					
-					System.out.println("Test doc (" + LDAUtils.instanceLabelToString(instance,(LabelAlphabet) instances.getTargetAlphabet()) + "):\n"+ stringToBlock(toPlaintext.get(instance.hashCode())));
-					System.out.println("Closest train doc(" + LDAUtils.instanceLabelToString(train.get(minDistIdx),(LabelAlphabet) instances.getTargetAlphabet()) + "):\n"+ stringToBlock(toPlaintext.get(train.get(minDistIdx).hashCode())));
+					System.out.println("Test doc (" + 
+							LDAUtils.instanceLabelToString(instance) + 
+							"):\n"+ stringToBlock(toPlaintext.get(instance.hashCode())));
+					System.out.println("Closest train doc(" + 
+							LDAUtils.instanceLabelToString(train.get(minDistIdx)) + 
+							"):\n"+ stringToBlock(toPlaintext.get(train.get(minDistIdx).hashCode())));
 					
 					System.out.println();
 					} else {
-						System.out.println("Could not find distance for:" +  stringToBlock(toPlaintext.get(instance.hashCode())));
+						System.out.println("Could not find distance for:" +  
+								stringToBlock(toPlaintext.get(instance.hashCode())));
 					}
 				}
 				t.stop();
@@ -170,7 +175,8 @@ public class BM25Search {
 				metadata.add("No. Topics: " + config.getNoTopics(-1));
 				// Save stats for this run
 				lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
-						this.getClass().getName(), this.getClass().getSimpleName() + "-results", "HEADING", "PCLDA", numberOfRuns, metadata);
+						this.getClass().getName(), this.getClass().getSimpleName() + 
+						"-results", "HEADING", "PCLDA", numberOfRuns, metadata);
 
 				System.out.println("I am done!");
 			}

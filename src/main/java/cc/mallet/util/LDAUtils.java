@@ -138,6 +138,10 @@ public class LDAUtils {
 	}
 	
 	public static InstanceList loadDataset(LDAConfiguration config, String dataset_fn, Alphabet alphabet) throws FileNotFoundException {
+		return loadDataset(config, dataset_fn, alphabet, null);
+	}
+	
+	public static InstanceList loadDataset(LDAConfiguration config, String dataset_fn, Alphabet alphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
 		InstanceList instances;
 		
 		File dsf = new File(dataset_fn); 
@@ -167,7 +171,9 @@ public class LDAUtils {
 						config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
 						config.keepNumbers(), 
 						config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
-						config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), alphabet);					
+						config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), 
+						alphabet,
+						targetAlphabet);					
 			} else {					
 				instances = LDAUtils.loadInstancesPrune(
 						dataset_fn, 
@@ -175,7 +181,9 @@ public class LDAUtils {
 						config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), 
 						config.keepNumbers(), 
 						config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
-						config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), alphabet);
+						config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), 
+						alphabet,
+						targetAlphabet);
 			}
 		}
 		return instances;
@@ -1747,8 +1755,13 @@ public class LDAUtils {
 		return files;	
 		}
 
-	public static String instanceLabelToString(Instance instance, LabelAlphabet labelAlphabet) {
+	public static String instanceLabelToString(Instance instance) {
 		String label  = instance.getLabeling().getBestLabel().toString();
+		return label;
+	}
+
+	public static String instanceIdToString(Instance instance) {
+		String label  = instance.getName().toString();
 		return label;
 	}
 
@@ -1857,7 +1870,14 @@ public class LDAUtils {
 			return loadInstanceDirectories(new String[] {directory}, fileRegex, stoplistFile, rareThreshold,
 				 keepNumbers, maxDocumentBufferSize, keepConnectors, alphabet);
 	}
-	
+
+	public static InstanceList loadInstanceDirectory(String directory, String fileRegex, String stoplistFile,
+			Integer rareThreshold, boolean keepNumbers, int maxDocumentBufferSize, boolean keepConnectors, 
+			Alphabet alphabet, LabelAlphabet targetAlphabet) {
+			return loadInstanceDirectories(new String[] {directory}, fileRegex, stoplistFile, rareThreshold,
+				 keepNumbers, maxDocumentBufferSize, keepConnectors, alphabet, targetAlphabet);
+	}
+
 	public static InstanceList loadInstanceDirectories(String [] directories, final String fileRegex, String stoplistFile, Integer keepCount,
 			boolean keepNumbers, int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) {
 		return loadInstanceDirectories(directories, fileRegex, stoplistFile, keepCount,
@@ -2040,5 +2060,16 @@ public class LDAUtils {
 		resultTrain.retainAll(resultTest);
 		
 		return resultTrain.stream().collect(Collectors.toList());
+	}
+
+	/**
+	 * NOTE: In the special case where a document is 1 token long, the below
+	 * method still returns and array that is 2 long (this is part of how MALLET works)
+	 * 
+	 * @param instance
+	 * @return
+	 */
+	public static int[] getWordTokens(Instance instance) {
+		return ((FeatureSequence) instance.getData()).getFeatures();
 	}
 }

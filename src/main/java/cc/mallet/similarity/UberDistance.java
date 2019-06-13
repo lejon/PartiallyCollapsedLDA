@@ -7,7 +7,7 @@ public class UberDistance implements Distance {
 			new ChebychevDistance(),
 			new CosineDistance(),
 			new EuclidianDistance(),
-			new JaccardDistance(),
+			new ContinousJaccardDistance(),
 			new KLDistance(),
 			new ManhattanDistance()
 	};
