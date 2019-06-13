@@ -248,10 +248,27 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 			
 			double u = ThreadLocalRandom.current().nextDouble();
 			
-			// Document and type sparsity removed all (but one?) topics, just use the prior contribution
+			// Document and type sparsity removed all (but one?) topics
+			// This happens with 1-word documents
 			if(nonZeroTopicCntAdjusted==0) {
-				//toPrior.incrementAndGet();
-				newTopic = aliasTables[type].generateSample(u); // uniform (0,1)
+				double[] topicTermScores = new double[numTopics];
+				sum = 0.0;
+				
+				double score = phi[0][type];
+				topicTermScores[0] = score;
+				for (int topic = 1; topic < numTopics; topic++) {
+					score += phi[topic][type];
+					topicTermScores[topic] = score;
+				}
+				// Choose a random point between 0 and the sum of all topic scores
+				double sample = random.nextUniform() * score;
+
+				// Figure out which topic contains that point
+				newTopic = -1;
+				while (sample > 0.0) {
+					newTopic++;
+					sample -= topicTermScores[newTopic];
+				}
 			} else {
 				double score;
 				int topic = nonZeroTopicsAdjusted[0];
