@@ -1762,7 +1762,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			try {
 				config = new ParsedLDAConfiguration(cfg_file);
 
-				String logSuitePath = "logdir-" + LoggingUtils.getDateStamp();
+				String logSuitePath = "StoredSamplerLogs/logdir-" + LoggingUtils.getDateStamp();
 				System.out.println("Will do logging to: " + logSuitePath);
 				LoggingUtils lu = new LoggingUtils();
 				lu.checkAndCreateCurrentLogDir(logSuitePath);

@@ -25,6 +25,7 @@ import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LoggingUtils;
+import cc.mallet.util.MalletLogger;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.ParallelRandoms;
 
@@ -42,6 +43,10 @@ import cc.mallet.util.ParallelRandoms;
  *
  */
 public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA implements HDPSamplerWithPhi {
+
+	{ 
+		logger = MalletLogger.getLogger(PoissonPolyaUrnHDPLDAInfiniteTopics.class.getName());
+	}
 
 	private static final long serialVersionUID = 1L;
 
@@ -185,6 +190,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	 * 
 	 * @param tokensPerTopic
 	 */
+	@Override
 	protected void reArrangeTopics(int [] tokensPerTopic) {
 		int [] sortedIndices =  IndexSorter.getSortedIndices(tokensPerTopic);
 				
@@ -334,7 +340,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 				
 								
 		if (showTopicsInterval > 0 && currentIteration % showTopicsInterval == 0) {
-			System.err.println("Active in data: " + activeInData 
+			logger.info("Active in data: " + activeInData 
 					+ "\tK = " + calcK 
 					+ "\tEmpty topics (" + emptyTopics.length + ")");
 		}
@@ -774,7 +780,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 				try {
 					config = new ParsedLDAConfiguration(cfg_file);
 
-					String logSuitePath = "logdir-" + LoggingUtils.getDateStamp();
+					String logSuitePath = "StoredSamplerLogs/logdir-" + LoggingUtils.getDateStamp();
 					System.out.println("Will do logging to: " + logSuitePath);
 					LoggingUtils lu = new LoggingUtils();
 					lu.checkAndCreateCurrentLogDir(logSuitePath);
