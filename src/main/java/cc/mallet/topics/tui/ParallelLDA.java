@@ -14,26 +14,13 @@ import cc.mallet.configuration.ConfigFactory;
 import cc.mallet.configuration.Configuration;
 import cc.mallet.configuration.LDACommandLineParser;
 import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.configuration.ModelFactory;
 import cc.mallet.configuration.ParsedLDAConfiguration;
-import cc.mallet.topics.ADLDA;
-import cc.mallet.topics.CollapsedLightLDA;
-import cc.mallet.topics.EfficientUncollapsedParallelLDA;
 import cc.mallet.topics.HDPSamplerWithPhi;
 import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.LDASamplerWithCallback;
 import cc.mallet.topics.LDASamplerWithPhi;
-import cc.mallet.topics.LightPCLDA;
-import cc.mallet.topics.LightPCLDAtypeTopicProposal;
-import cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA;
-import cc.mallet.topics.PoissonPolyaUrnHDPLDA;
-import cc.mallet.topics.PoissonPolyaUrnHDPLDAInfiniteTopics;
-import cc.mallet.topics.PoissonPolyaUrnHLDA;
-import cc.mallet.topics.PolyaUrnSpaliasLDA;
-import cc.mallet.topics.SerialCollapsedLDA;
-import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
-import cc.mallet.topics.SpaliasUncollapsedParallelWithPriors;
 import cc.mallet.topics.TopicModelDiagnosticsPlain;
-import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.InstanceList;
 import cc.mallet.util.EclipseDetector;
 import cc.mallet.util.LDAUtils;
@@ -220,15 +207,6 @@ public class ParallelLDA implements IterationListener {
 					LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
 				}
 				
-				if(config.saveDocumentTopicDiagnostics()) {
-					TopicModelDiagnosticsPlain tmd = new TopicModelDiagnosticsPlain(model, requestedWords);
-					String docTopicDiagFn = config.getDocumentTopicDiagnosticsOutputFilename();
-					PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/" + docTopicDiagFn);
-					out.println(tmd.topicsToCsv());
-					out.flush();
-					out.close();
-				}
-
 				if(config.saveDocumentThetaEstimate()) {
 					String docTopicThetaFn = config.getDocumentTopicThetaOutputFilename();
 					double [][] means = model.getThetaEstimate();
@@ -342,6 +320,15 @@ public class ParallelLDA implements IterationListener {
 				
 				if(model instanceof HDPSamplerWithPhi) {
 					printHDPResults(model, lgDir);
+				}
+				
+				if(config.saveDocumentTopicDiagnostics()) {
+					TopicModelDiagnosticsPlain tmd = new TopicModelDiagnosticsPlain(model, requestedWords);
+					String docTopicDiagFn = config.getDocumentTopicDiagnosticsOutputFilename();
+					out = new PrintWriter(lgDir.getAbsolutePath() + "/" + docTopicDiagFn);
+					out.println(tmd.topicsToCsv());
+					out.flush();
+					out.close();
 				}
 				
 				System.out.println(new Date() + ": I am done!");
@@ -459,72 +446,75 @@ public class ParallelLDA implements IterationListener {
 		LDAGibbsSampler model;
 		switch(whichModel) {
 		case "adlda": {
-			model = new ADLDA(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.ADLDA");
 			System.out.println("ADLDA.");
 			break;
 		}
 		case "uncollapsed": {
-			model = new UncollapsedParallelLDA(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.UncollapsedParallelLDA");
 			System.out.println("Uncollapsed Parallell LDA.");
 			break;
 		}
 		case "collapsed": {
-			model = new SerialCollapsedLDA(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.SerialCollapsedLDA");
 			System.out.println("Uncollapsed Parallell LDA.");
 			break;
 		}
 		case "lightcollapsed": {
-			model = new CollapsedLightLDA(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.CollapsedLightLDA");
 			System.out.println("CollapsedLightLDA Parallell LDA.");
 			break;
 		}
 		case "efficient_uncollapsed": {
-			model = new EfficientUncollapsedParallelLDA(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.EfficientUncollapsedParallelLDA");
 			System.out.println("EfficientUncollapsedParallelLDA Parallell LDA.");
 			break;
 		}
 		case "spalias": {
-			model = new SpaliasUncollapsedParallelLDA(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.SpaliasUncollapsedParallelLDA");
 			System.out.println("SpaliasUncollapsed Parallell LDA.");
 			break;
 		}
 		case "polyaurn": {
-			model = new PolyaUrnSpaliasLDA(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.PolyaUrnSpaliasLDA");
 			System.out.println("PolyaUrnSpaliasLDA Parallell LDA.");
 			break;
 		}
  		case "ppu_hlda": {
- 			model = new PoissonPolyaUrnHLDA(config);
-			System.out.println("PoissonPolyaUrnHLDA Parallell HDP.");
- 			break;
+ 			throw new IllegalStateException("ppu_hlda: using PoissonPolyaUrnHLDA is not verified to be working, won't run");
+// 			model = new PoissonPolyaUrnHLDA(config);
+// 			model = ModelFactory.get(config, "cc.mallet.topics.PolyaUrnSpaliasLDA");
+//			System.out.println("PoissonPolyaUrnHLDA Parallell HDP.");
+// 			break;
  		}
  		case "ppu_hdplda": {
- 			model = new PoissonPolyaUrnHDPLDA(config);
-			System.out.println("PoissonPolyaUrnHDPLDA Parallell HDP.");
- 			break;
+			throw new IllegalStateException("ppu_hdplda: using PoissonPolyaUrnHDPLDA is not verified to be working, won't run");
+// 			model = new PoissonPolyaUrnHDPLDA(config);
+//			System.out.println("PoissonPolyaUrnHDPLDA Parallell HDP.");
+// 			break;
  		}
  		case "ppu_hdplda_all_topics": {
- 			model = new PoissonPolyaUrnHDPLDAInfiniteTopics(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.PoissonPolyaUrnHDPLDAInfiniteTopics");
 			System.out.println("PoissonPolyaUrnHDPLDAInfiniteTopics Parallell HDP.");
  			break;
  		}
 		case "spalias_priors": {
-			model = new SpaliasUncollapsedParallelWithPriors(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.SpaliasUncollapsedParallelWithPriors");
 			System.out.println("SpaliasUncollapsed Parallell LDA with Priors.");
 			break;
 		}
 		case "lightpclda": {
-			model = new LightPCLDA(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.LightPCLDA");
 			System.out.println("Light PC LDA.");
 			break;
 		}
 		case "lightpcldaw2": {
-			model = new LightPCLDAtypeTopicProposal(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.LightPCLDAtypeTopicProposal");
 			System.out.println("Light PC LDA with proposal 2.");
 			break;
 		}
 		case "nzvsspalias": {
-			model = new NZVSSpaliasUncollapsedParallelLDA(config);
+			model = ModelFactory.get(config, "cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA");
 			System.out.println("NZVSSpaliasUncollapsedParallelLDA Parallell LDA.");
 			break;
 		}
