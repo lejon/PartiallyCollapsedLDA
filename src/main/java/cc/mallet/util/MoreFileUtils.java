@@ -13,7 +13,7 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileUtils {
+public class MoreFileUtils {
 	
 	public static String[] readLines(String filename) throws IOException {
         FileReader fileReader = null;
@@ -156,30 +156,15 @@ public class FileUtils {
 	}
 
 	
-	@SuppressWarnings("resource") // Will be closed in the filnally...
+	@SuppressWarnings("resource")
 	public static void copyFile(File sourceFile, File destFile) throws IOException {
 	    if(!destFile.exists()) {
 	        if(!destFile.createNewFile()) throw new IllegalArgumentException("File "+destFile.getName()+" was suddenly created behind my back!?");
 	    }
 
-	    FileChannel source = null;
-	    FileChannel destination = null;
-	    try {
-	        source = new FileInputStream(sourceFile).getChannel();
-	        destination = new FileOutputStream(destFile).getChannel();
-	        long count = 0;
-	        long size = source.size();              
-	        while((count += destination.transferFrom(source, count, size-count))<size);
-            source.close();
-            destination.close();
-	    }
-	    finally {
-	        if(source != null) {
-	            source.close();
-	        }
-	        if(destination != null) {
-	            destination.close();
-	        }
+	    try (FileChannel sourceChannel = new FileInputStream(sourceFile).getChannel();
+	    	FileChannel destChannel = new FileOutputStream(destFile).getChannel();) {
+	    	sourceChannel.transferTo(0, sourceChannel.size(), destChannel);
 	    }
 	}
 	

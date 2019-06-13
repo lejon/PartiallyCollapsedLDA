@@ -343,7 +343,7 @@ public class LoggingUtils implements Serializable {
 
 		if( config != null) { 
 			File confsrc = new File(config.whereAmI());
-			FileUtils.copyFile(new File(config.whereAmI()), new File(logdir + "/" + confsrc.getName()));
+			MoreFileUtils.copyFile(new File(config.whereAmI()), new File(logdir + "/" + confsrc.getName()));
 		}
 		
 		out.flush();
@@ -401,7 +401,7 @@ public class LoggingUtils implements Serializable {
 			File configFile = new File(config.whereAmI());
 			File confsrc = configFile;
 			File destFile = new File(logdir + "/" + confsrc.getName());
-			FileUtils.copyFile(configFile, destFile);
+			MoreFileUtils.copyFile(configFile, destFile);
 		}
 
 		if(t!=null) {
