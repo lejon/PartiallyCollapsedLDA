@@ -485,7 +485,31 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		phi[oldTopic] = tmpTopic;
 	}
 
-
+	/**
+	 * Re-arranges the topics in the typeTopic matrix based
+	 * on tokensPerTopic
+	 */
+	protected void reArrangeTopics() {
+		reArrangeTopics(tokensPerTopic);
+	}
+	
+	/**
+	 * Re-arranges the topics in the typeTopic matrix based
+	 * on tokensPerTopic
+	 * 
+	 * @param tokensPerTopic
+	 */
+	protected void reArrangeTopics(int [] tokensPerTopic) {
+		int [] sortedIndices =  IndexSorter.getSortedIndices(tokensPerTopic);
+				
+		for (int i = 0; i < sortedIndices.length; i++) {
+			if(i != sortedIndices[i]) {
+				moveTopic(sortedIndices[i], i);					
+				sortedIndices = IndexSorter.getSortedIndices(this.tokensPerTopic);
+			}
+		}
+	}
+	
 	private double[] calcTypeFrequencyCumSum(int[] typeFrequencyIndex,int[] typeCounts) {
 		double [] result = new double[typeCounts.length];
 		result[0] = ((double)typeCounts[typeFrequencyIndex[0]]) / corpusWordCount;
