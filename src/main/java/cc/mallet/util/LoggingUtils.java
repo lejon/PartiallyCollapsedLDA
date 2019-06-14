@@ -374,8 +374,18 @@ public class LoggingUtils implements Serializable {
 		}
 		if( config != null) { 
 			out.println("Active subconfig: " +config.getActiveSubConfig());
-			out.println("Config:Title: " + config.getStringProperty("title").trim());
-			out.println("Config:Description: " + config.getStringProperty("description").trim());
+			String title = config.getStringProperty("title");
+			if(title==null) {
+				title = "<no_title_set>";
+			}
+			title=title.trim();
+			out.println("Config:Title: " + title);
+			String desc = config.getStringProperty("description");
+			if(desc==null) {
+				desc = "";
+			}
+			desc=desc.trim();
+			out.println("Config:Description: " + desc);
 		}
 		//out.println(iterationType + iterations);
 		out.println("Running class: " + runner);

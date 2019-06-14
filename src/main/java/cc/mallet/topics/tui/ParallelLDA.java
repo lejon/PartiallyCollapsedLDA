@@ -1,7 +1,9 @@
 package cc.mallet.topics.tui;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -9,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import cc.mallet.configuration.ConfigFactory;
 import cc.mallet.configuration.Configuration;
@@ -35,6 +38,22 @@ public class ParallelLDA implements IterationListener {
 	protected static volatile boolean normalShutdown = false;
 	static LDAGibbsSampler plda;
 	public static PrintWriter pw;
+	
+	public static final String ADLDA_MODEL = "adlda";
+	public static final String UNCOLLAPSED_MODEL = "uncollapsed";
+	public static final String COLLAPSED_MODEL = "collapsed";
+	public static final String LIGHT_COLLAPSED_MODEL = "lightcollapsed";
+	public static final String EFFICIENT_UNCOLLAPSED_MODEL = "efficient_uncollapsed";
+	public static final String SPALIAS_MODEL = "spalias";
+	public static final String POLYAURN_MODEL =  "polyaurn";
+	public static final String PPU_HLDA_MODEL =  "ppu_hlda";
+	public static final String PPU_HDPLDA_MODEL =  "ppu_hdplda";
+	public static final String PPU_HDP_ALL_TOPICS_MODEL =  "ppu_hdp_all_topics";
+	public static final String SPALIAS_PRIORS_MODEL =  "spalias_priors";
+	public static final String LIGHTPCLDA_MODEL =  "lightpclda";
+	public static final String LIGHTPCLDA_PROPOSAL_MODEL =  "lightpclda_proposal";
+	public static final String NZVSSPALIAS_MODEL =  "nzvsspalias";
+	public static final String DEFAULT_MODEL =  POLYAURN_MODEL;
 
 	public static void main(String[] args) throws Exception {
 		ParallelLDA plda = new ParallelLDA();
@@ -105,7 +124,11 @@ public class ParallelLDA implements IterationListener {
 		// We have to create this temporary config because at this stage if we want to create a new config for each run
 		ParsedLDAConfiguration tmpconfig = (ParsedLDAConfiguration) ConfigFactory.getMainConfiguration(cp);			
 		
-		int numberOfRuns = tmpconfig.getInt("no_runs");
+		int numberOfRuns = 1;
+		try {
+			numberOfRuns = tmpconfig.getInt("no_runs");
+		} catch (NoSuchElementException e) {
+		}
 		System.out.println("Doing: " + numberOfRuns + " runs");
 		// Reading in command line parameters		
 		for (int i = 0; i < numberOfRuns; i++) {
@@ -123,186 +146,217 @@ public class ParallelLDA implements IterationListener {
 			config.setLoggingUtil(lu);
 
 			String [] configs = config.getSubConfigs();
-			for(String conf : configs) {
+			if(configs!=null && configs.length>0) {
+				for(String conf : configs) {
+					lu.checkCreateAndSetSubLogDir(conf);
+					config.activateSubconfig(conf);
+					doIteration(cp, config, lu, conf);
+				}
+			} else {
+				System.out.println("No subconfigs defined, using 'default'...");
+				String conf = "default";
 				lu.checkCreateAndSetSubLogDir(conf);
-				config.activateSubconfig(conf);
-				int commonSeed = config.getSeed(LDAConfiguration.SEED_DEFAULT);
-				
-				File lgDir = lu.getLogDir();
-				String logFile = lgDir.getAbsolutePath() + "/" + conf + "_console_output.txt"; 
-				PrintStream logOut = new PrintStream(new FileOutputStream(logFile, true));
+				doIteration(cp, config, lu, conf);				
+			}
+			if(buildVer==null||implVer==null) {
+				System.out.println("GIT info:" + LoggingUtils.getLatestCommit());
+			} else {
+			System.out.println("Build info:" 
+					+ "Implementation-Build = " + buildVer + ", " 
+					+ "Implementation-Version = " + implVer);
+			}
+			normalShutdown = true;
+		}
+	}
 
-				PrintStream teeStdOut = new TeeStream(System.out, logOut);
-				PrintStream teeStdErr = new TeeStream(System.err, logOut);
+	void doIteration(LDACommandLineParser cp, LDAConfiguration config, LoggingUtils lu, String conf)
+			throws FileNotFoundException, IOException, Exception {
+		int commonSeed = config.getSeed(LDAConfiguration.SEED_DEFAULT);
+		
+		File lgDir = lu.getLogDir();
+		String logFile = lgDir.getAbsolutePath() + "/" + conf + "_console_output.txt"; 
+		PrintStream logOut = new PrintStream(new FileOutputStream(logFile, true));
 
-				System.setOut(teeStdOut);
-				System.setErr(teeStdErr);
+		PrintStream teeStdOut = new TeeStream(System.out, logOut);
+		PrintStream teeStdErr = new TeeStream(System.err, logOut);
 
-				System.out.println("Using Config: " + config.whereAmI());
-				System.out.println("Runnin subconfig: " + conf);
-				String dataset_fn = config.getDatasetFilename();
-				System.out.println("# topics: " + config.getNoTopics(-1));
-				System.out.println("Using dataset: " + dataset_fn);
-				if(config.getTestDatasetFilename()!=null) {
-					System.out.println("Using TEST dataset: " + config.getTestDatasetFilename());
-				}
-				String whichModel = config.getScheme();
-				System.out.println("Scheme: " + whichModel);
+		System.setOut(teeStdOut);
+		System.setErr(teeStdErr);
 
-				InstanceList instances = LDAUtils.loadDataset(config, dataset_fn);
-				instances.getAlphabet().stopGrowth();
+		System.out.println("Using Config: " + config.whereAmI());
+		System.out.println("Running subconfig: " + conf);
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("# topics: " + config.getNoTopics(-1));
+		System.out.println("Using dataset: " + dataset_fn);
+		if(config.getTestDatasetFilename()!=null) {
+			System.out.println("Using TEST dataset: " + config.getTestDatasetFilename());
+		}
+		String whichModel = config.getScheme();
+		if(whichModel==null) {
+			whichModel = DEFAULT_MODEL;
+			System.out.println("No model set, using '" + whichModel + "' as default...");
+		}
+		System.out.println("Scheme: " + whichModel);
 
-				LDAGibbsSampler model = createModel(config, whichModel);
-				plda = model;
-				
-				if(model instanceof LDASamplerWithCallback) {
-					System.out.println("Setting callback...");
-					((LDASamplerWithCallback)model).setIterationCallback(this);
-					//vis = new TopicMatrixPanel(900, 400, config.getNoTopics(-1) , 1);
-				}
-				
-				model.setRandomSeed(commonSeed);
-				if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
-					System.out.println(String.format("Top TF-IDF threshold: %d", config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)));
+		InstanceList instances = LDAUtils.loadDataset(config, dataset_fn);
+		instances.getAlphabet().stopGrowth();
+
+		LDAGibbsSampler model = createModel(config, whichModel);
+		if(model==null) {
+			System.out.println("No valid model selected ('" + whichModel + "' is not a recognized model), please select a valid model...");
+			System.exit(-1);
+		}
+		System.out.println();
+		plda = model;
+		
+		if(model instanceof LDASamplerWithCallback) {
+			System.out.println("Setting callback...");
+			((LDASamplerWithCallback)model).setIterationCallback(this);
+			//vis = new TopicMatrixPanel(900, 400, config.getNoTopics(-1) , 1);
+		}
+		
+		model.setRandomSeed(commonSeed);
+		if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
+			System.out.println(String.format("Top TF-IDF threshold: %d", config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)));
+		} else {
+			System.out.println(String.format("Rare word threshold: %d", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD)));
+		}
+		
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		// Sets the frequent with which top words for each topic are printed
+		//model.setShowTopicsInterval(config.getTopicInterval(LDAConfiguration.TOPIC_INTER_DEFAULT));
+		System.out.println("Config seed:" + config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		System.out.println("Start seed: " + model.getStartSeed());
+		// Imports the data into the model
+		model.addInstances(instances);
+		if(config.getTestDatasetFilename()!=null) {
+			InstanceList testInstances = LDAUtils.loadDataset(config, config.getTestDatasetFilename(),instances.getAlphabet());
+			model.addTestInstances(testInstances);
+		}
+
+		System.out.println("Loaded " + model.getDataset().size() + " documents, with " + model.getCorpusSize() + " words in total.");
+
+		System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
+		System.out.println("_____________________________\n");
+
+		// Runs the model
+		System.out.println("Starting:" + new Date());
+		Timer t = new Timer();
+		t.start();
+		model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
+		t.stop();
+		System.out.println("Finished:" + new Date());
+		
+		int requestedWords = config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT);
+		//System.out.println("Topic model diagnostics:");
+		//System.out.println(tmd.toString());				
+		
+		if(config.saveDocumentTopicMeans()) {
+			String docTopicMeanFn = config.getDocumentTopicMeansOutputFilename();
+			double [][] means = model.getZbar();
+			LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
+		}
+		
+		if(config.saveDocumentThetaEstimate()) {
+			String docTopicThetaFn = config.getDocumentTopicThetaOutputFilename();
+			double [][] means = model.getThetaEstimate();
+			LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicThetaFn, ",");
+		}
+
+		if(model instanceof LDASamplerWithPhi) {
+			LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
+			if(config.savePhiMeans(LDAConfiguration.SAVE_PHI_MEAN_DEFAULT)) {
+				String docTopicMeanFn = config.getPhiMeansOutputFilename();
+				double [][] means = modelWithPhi.getPhiMeans();
+				if(means!=null) {
+				LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
 				} else {
-					System.out.println(String.format("Rare word threshold: %d", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD)));
+					System.err.println("WARNING: ParallelLDA: No Phi means where sampled, not saving Phi means! This is likely due to a combination of configuration settings of phi_mean_burnin, phi_mean_thin and save_phi_mean");
 				}
-				
+				// No big point in saving Phi without the vocabulary
+				String vocabFn = config.getVocabularyFilename();
+				if(vocabFn==null || vocabFn.length()==0) { vocabFn = "phi_vocabulary.txt"; }
+				String [] vobaculary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
+				LDAUtils.writeStringArray(vobaculary,lgDir.getAbsolutePath() + "/" + vocabFn);
+			}
+		}
 
-				System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
-				System.out.println("Instance list is: " + instances.size());
-				System.out.println("Loading data instances...");
+		if(config.saveVocabulary(false)) {
+			String vocabFn = config.getVocabularyFilename();
+			String [] vocabulary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
+			LDAUtils.writeStringArray(vocabulary,lgDir.getAbsolutePath() + "/" + vocabFn);
+		}
 
-				// Sets the frequent with which top words for each topic are printed
-				//model.setShowTopicsInterval(config.getTopicInterval(LDAConfiguration.TOPIC_INTER_DEFAULT));
-				System.out.println("Config seed:" + config.getSeed(LDAConfiguration.SEED_DEFAULT));
-				System.out.println("Start seed: " + model.getStartSeed());
-				// Imports the data into the model
-				model.addInstances(instances);
-				if(config.getTestDatasetFilename()!=null) {
-					InstanceList testInstances = LDAUtils.loadDataset(config, config.getTestDatasetFilename(),instances.getAlphabet());
-					model.addTestInstances(testInstances);
-				}
+		if(config.saveCorpus(false)) {
+			String corpusFn = config.getCorpusFilename();
+			int [][] corpus = LDAUtils.extractCorpus(instances);
+			LDAUtils.writeASCIIIntMatrix(corpus,lgDir.getAbsolutePath() + "/" + corpusFn, ",");
+		}
+		
+		if(config.saveTermFrequencies(false)) {
+			String termCntFn = config.getTermFrequencyFilename();
+			int [] freqs = LDAUtils.extractTermCounts(instances);
+			LDAUtils.writeIntArray(freqs, lgDir.getAbsolutePath() + "/" + termCntFn);
+		}
+		
+		if(config.saveDocLengths(false)) {
+			String docLensFn = config.getDocLengthsFilename();
+			int [] freqs = LDAUtils.extractDocLength(instances);
+			LDAUtils.writeIntArray(freqs, lgDir.getAbsolutePath() + "/" + docLensFn);
 			
-				System.out.println("Loaded " + model.getDataset().size() + " documents, with " + model.getCorpusSize() + " words in total.");
+		}
+		
+		List<String> metadata = new ArrayList<String>();
+		metadata.add("No. Topics: " + model.getNoTopics());
+		metadata.add("Start Seed: " + model.getStartSeed());
+		// Save stats for this run
+		lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
+				ParallelLDA.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
+		
+		if(requestedWords>instances.getDataAlphabet().size()) {
+			requestedWords = instances.getDataAlphabet().size();
+		}
+		
+		PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
+		out.println(LDAUtils.formatTopWordsAsCsv(
+				LDAUtils.getTopWords(requestedWords, 
+						model.getAlphabet().size(), 
+						model.getNoTopics(), 
+						model.getTypeTopicMatrix(), 
+						model.getAlphabet())));
+		out.flush();
+		out.close();
+		
+		out = new PrintWriter(lgDir.getAbsolutePath() + "/RelevanceWords.txt");
+		out.println(LDAUtils.formatTopWordsAsCsv(
+				LDAUtils.getTopRelevanceWords(requestedWords, 
+						model.getAlphabet().size(), 
+						model.getNoTopics(), 
+						model.getTypeTopicMatrix(),  
+						config.getBeta(LDAConfiguration.BETA_DEFAULT),
+						config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
+						model.getAlphabet())));
+		out.flush();
+		out.close();
 
-				System.out.println("Starting iterations (" + config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT) + " total).");
-				System.out.println("_____________________________\n");
-
-				// Runs the model
-				System.out.println("Starting:" + new Date());
-				Timer t = new Timer();
-				t.start();
-				model.sample(config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT));
-				t.stop();
-				System.out.println("Finished:" + new Date());
-				
-				int requestedWords = config.getNrTopWords(LDAConfiguration.NO_TOP_WORDS_DEFAULT);
-				//System.out.println("Topic model diagnostics:");
-				//System.out.println(tmd.toString());				
-				
-				if(config.saveDocumentTopicMeans()) {
-					String docTopicMeanFn = config.getDocumentTopicMeansOutputFilename();
-					double [][] means = model.getZbar();
-					LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
-				}
-				
-				if(config.saveDocumentThetaEstimate()) {
-					String docTopicThetaFn = config.getDocumentTopicThetaOutputFilename();
-					double [][] means = model.getThetaEstimate();
-					LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicThetaFn, ",");
-				}
-
-				if(model instanceof LDASamplerWithPhi) {
-					LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
-					if(config.savePhiMeans(LDAConfiguration.SAVE_PHI_MEAN_DEFAULT)) {
-						String docTopicMeanFn = config.getPhiMeansOutputFilename();
-						double [][] means = modelWithPhi.getPhiMeans();
-						if(means!=null) {
-						LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
-						} else {
-							System.err.println("WARNING: ParallelLDA: No Phi means where sampled, not saving Phi means! This is likely due to a combination of configuration settings of phi_mean_burnin, phi_mean_thin and save_phi_mean");
-						}
-						// No big point in saving Phi without the vocabulary
-						String vocabFn = config.getVocabularyFilename();
-						if(vocabFn==null || vocabFn.length()==0) { vocabFn = "phi_vocabulary.txt"; }
-						String [] vobaculary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
-						LDAUtils.writeStringArray(vobaculary,lgDir.getAbsolutePath() + "/" + vocabFn);
-					}
-				}
-
-				if(config.saveVocabulary(false)) {
-					String vocabFn = config.getVocabularyFilename();
-					String [] vocabulary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
-					LDAUtils.writeStringArray(vocabulary,lgDir.getAbsolutePath() + "/" + vocabFn);
-				}
-
-				if(config.saveCorpus(false)) {
-					String corpusFn = config.getCorpusFilename();
-					int [][] corpus = LDAUtils.extractCorpus(instances);
-					LDAUtils.writeASCIIIntMatrix(corpus,lgDir.getAbsolutePath() + "/" + corpusFn, ",");
-				}
-				
-				if(config.saveTermFrequencies(false)) {
-					String termCntFn = config.getTermFrequencyFilename();
-					int [] freqs = LDAUtils.extractTermCounts(instances);
-					LDAUtils.writeIntArray(freqs, lgDir.getAbsolutePath() + "/" + termCntFn);
-				}
-				
-				if(config.saveDocLengths(false)) {
-					String docLensFn = config.getDocLengthsFilename();
-					int [] freqs = LDAUtils.extractDocLength(instances);
-					LDAUtils.writeIntArray(freqs, lgDir.getAbsolutePath() + "/" + docLensFn);
-					
-				}
-				
-				List<String> metadata = new ArrayList<String>();
-				metadata.add("No. Topics: " + model.getNoTopics());
-				metadata.add("Start Seed: " + model.getStartSeed());
-				// Save stats for this run
-				lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
-						ParallelLDA.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
-				
-				if(requestedWords>instances.getDataAlphabet().size()) {
-					requestedWords = instances.getDataAlphabet().size();
-				}
-				
-				PrintWriter out = new PrintWriter(lgDir.getAbsolutePath() + "/TopWords.txt");
-				out.println(LDAUtils.formatTopWordsAsCsv(
-						LDAUtils.getTopWords(requestedWords, 
-								model.getAlphabet().size(), 
-								model.getNoTopics(), 
-								model.getTypeTopicMatrix(), 
-								model.getAlphabet())));
-				out.flush();
-				out.close();
-				
-				out = new PrintWriter(lgDir.getAbsolutePath() + "/RelevanceWords.txt");
-				out.println(LDAUtils.formatTopWordsAsCsv(
-						LDAUtils.getTopRelevanceWords(requestedWords, 
-								model.getAlphabet().size(), 
-								model.getNoTopics(), 
-								model.getTypeTopicMatrix(),  
-								config.getBeta(LDAConfiguration.BETA_DEFAULT),
-								config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
-								model.getAlphabet())));
-				out.flush();
-				out.close();
-
-				System.out.println("Top words are: \n" + 
-						LDAUtils.formatTopWords(LDAUtils.getTopWords(requestedWords, 
-								model.getAlphabet().size(), 
-								model.getNoTopics(), 
-								model.getTypeTopicMatrix(), 
-								model.getAlphabet())));
-				System.out.println("Relevance words are: \n" + 
-						LDAUtils.formatTopWords(LDAUtils.getTopRelevanceWords(requestedWords, 
-								model.getAlphabet().size(), 
-								model.getNoTopics(), 
-								model.getTypeTopicMatrix(),  
-								config.getBeta(LDAConfiguration.BETA_DEFAULT),
-								config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
-								model.getAlphabet())));
+		System.out.println("Top words are: \n" + 
+				LDAUtils.formatTopWords(LDAUtils.getTopWords(requestedWords, 
+						model.getAlphabet().size(), 
+						model.getNoTopics(), 
+						model.getTypeTopicMatrix(), 
+						model.getAlphabet())));
+		System.out.println("Relevance words are: \n" + 
+				LDAUtils.formatTopWords(LDAUtils.getTopRelevanceWords(requestedWords, 
+						model.getAlphabet().size(), 
+						model.getNoTopics(), 
+						model.getTypeTopicMatrix(),  
+						config.getBeta(LDAConfiguration.BETA_DEFAULT),
+						config.getLambda(LDAConfiguration.LAMBDA_DEFAULT), 
+						model.getAlphabet())));
 //				System.out.println("Salient words are: \n" + 
 //						LDAUtils.formatTopWords(LDAUtils.getTopSalientWords(20, 
 //								model.getAlphabet().size(), 
@@ -317,31 +371,21 @@ public class ParallelLDA implements IterationListener {
 //								model.getTypeTopicMatrix(),  
 //								config.getBeta(LDAConfiguration.BETA_DEFAULT),
 //								model.getAlphabet())));
-				
-				if(model instanceof HDPSamplerWithPhi) {
-					printHDPResults(model, lgDir);
-				}
-				
-				if(config.saveDocumentTopicDiagnostics()) {
-					TopicModelDiagnosticsPlain tmd = new TopicModelDiagnosticsPlain(model, requestedWords);
-					String docTopicDiagFn = config.getDocumentTopicDiagnosticsOutputFilename();
-					out = new PrintWriter(lgDir.getAbsolutePath() + "/" + docTopicDiagFn);
-					out.println(tmd.topicsToCsv());
-					out.flush();
-					out.close();
-				}
-				
-				System.out.println(new Date() + ": I am done!");
-			}
-			if(buildVer==null||implVer==null) {
-				System.out.println("GIT info:" + LoggingUtils.getLatestCommit());
-			} else {
-			System.out.println("Build info:" 
-					+ "Implementation-Build = " + buildVer + ", " 
-					+ "Implementation-Version = " + implVer);
-			}
-			normalShutdown = true;
+		
+		if(model instanceof HDPSamplerWithPhi) {
+			printHDPResults(model, lgDir);
 		}
+		
+		if(config.saveDocumentTopicDiagnostics()) {
+			TopicModelDiagnosticsPlain tmd = new TopicModelDiagnosticsPlain(model, requestedWords);
+			String docTopicDiagFn = config.getDocumentTopicDiagnosticsOutputFilename();
+			out = new PrintWriter(lgDir.getAbsolutePath() + "/" + docTopicDiagFn);
+			out.println(tmd.topicsToCsv());
+			out.flush();
+			out.close();
+		}
+		
+		System.out.println(new Date() + ": I am done!");
 	}
 
 	private UncaughtExceptionHandler buildExceptionHandler() {
@@ -445,75 +489,75 @@ public class ParallelLDA implements IterationListener {
 	public static LDAGibbsSampler createModel(LDAConfiguration config, String whichModel) {
 		LDAGibbsSampler model;
 		switch(whichModel) {
-		case "adlda": {
+		case ADLDA_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.ADLDA");
 			System.out.println("ADLDA.");
 			break;
 		}
-		case "uncollapsed": {
+		case UNCOLLAPSED_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.UncollapsedParallelLDA");
 			System.out.println("Uncollapsed Parallell LDA.");
 			break;
 		}
-		case "collapsed": {
+		case COLLAPSED_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.SerialCollapsedLDA");
 			System.out.println("Uncollapsed Parallell LDA.");
 			break;
 		}
-		case "lightcollapsed": {
+		case LIGHT_COLLAPSED_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.CollapsedLightLDA");
 			System.out.println("CollapsedLightLDA Parallell LDA.");
 			break;
 		}
-		case "efficient_uncollapsed": {
+		case EFFICIENT_UNCOLLAPSED_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.EfficientUncollapsedParallelLDA");
 			System.out.println("EfficientUncollapsedParallelLDA Parallell LDA.");
 			break;
 		}
-		case "spalias": {
+		case SPALIAS_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.SpaliasUncollapsedParallelLDA");
 			System.out.println("SpaliasUncollapsed Parallell LDA.");
 			break;
 		}
-		case "polyaurn": {
+		case POLYAURN_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.PolyaUrnSpaliasLDA");
 			System.out.println("PolyaUrnSpaliasLDA Parallell LDA.");
 			break;
 		}
- 		case "ppu_hlda": {
+ 		case PPU_HLDA_MODEL: {
  			throw new IllegalStateException("ppu_hlda: using PoissonPolyaUrnHLDA is not verified to be working, won't run");
 // 			model = new PoissonPolyaUrnHLDA(config);
 // 			model = ModelFactory.get(config, "cc.mallet.topics.PolyaUrnSpaliasLDA");
 //			System.out.println("PoissonPolyaUrnHLDA Parallell HDP.");
 // 			break;
  		}
- 		case "ppu_hdplda": {
+ 		case PPU_HDPLDA_MODEL: {
 			throw new IllegalStateException("ppu_hdplda: using PoissonPolyaUrnHDPLDA is not verified to be working, won't run");
 // 			model = new PoissonPolyaUrnHDPLDA(config);
 //			System.out.println("PoissonPolyaUrnHDPLDA Parallell HDP.");
 // 			break;
  		}
- 		case "ppu_hdplda_all_topics": {
+ 		case PPU_HDP_ALL_TOPICS_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.PoissonPolyaUrnHDPLDAInfiniteTopics");
 			System.out.println("PoissonPolyaUrnHDPLDAInfiniteTopics Parallell HDP.");
  			break;
  		}
-		case "spalias_priors": {
+		case SPALIAS_PRIORS_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.SpaliasUncollapsedParallelWithPriors");
 			System.out.println("SpaliasUncollapsed Parallell LDA with Priors.");
 			break;
 		}
-		case "lightpclda": {
+		case LIGHTPCLDA_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.LightPCLDA");
 			System.out.println("Light PC LDA.");
 			break;
 		}
-		case "lightpcldaw2": {
+		case LIGHTPCLDA_PROPOSAL_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.LightPCLDAtypeTopicProposal");
 			System.out.println("Light PC LDA with proposal 2.");
 			break;
 		}
-		case "nzvsspalias": {
+		case NZVSSPALIAS_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.NZVSSpaliasUncollapsedParallelLDA");
 			System.out.println("NZVSSpaliasUncollapsedParallelLDA Parallell LDA.");
 			break;
