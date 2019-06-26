@@ -102,7 +102,12 @@ public class LDAUtils {
 	
 	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) { 		
 		int maxBufSize = 10000;
-		SimpleTokenizerLarge tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
+		SimpleTokenizerLarge tokenizer = null;
+		if(stoplistFile==null) {
+			tokenizer = new SimpleTokenizerLarge(new HashSet<String>(), maxBufSize);
+		} else {
+			tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
+		}
 		
 		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
 		Alphabet alphabet = null;
@@ -1506,6 +1511,16 @@ public class LDAUtils {
 		return result;
 	}
 
+	public static int [] instanceToTokenIndices(Instance instance) {
+		FeatureSequence features = (FeatureSequence) instance.getData();
+		int [] result = new int [features.size()];
+		for (int i = 0; i < result.length; i++) {
+			result[i] = features.getIndexAtPosition(i);
+		}
+
+		return result;
+	}
+	
 	public static String instanceToSvmLightString(Instance instance, int noWords) {
 		String result = "";
 		FeatureSequence features = (FeatureSequence) instance.getData();
@@ -2071,5 +2086,33 @@ public class LDAUtils {
 	 */
 	public static int[] getWordTokens(Instance instance) {
 		return ((FeatureSequence) instance.getData()).getFeatures();
+	}
+
+	public static InstanceList loadInstancesStrings(String [] doclines, Pipe pipe) {
+		return loadInstancesStrings(doclines, "X", "stoplist.txt", pipe);
+	}
+	
+	public static InstanceList loadInstancesStrings(String [] doclines) {
+		return loadInstancesStrings(doclines, "X", "stoplist.txt");
+	}
+	
+	public static InstanceList loadInstancesStrings(String [] doclines, String className) {
+		return loadInstancesStrings(doclines, className, "stoplist.txt");
+	}
+	
+	public static InstanceList loadInstancesStrings(String [] doclines, String className, String stoplistFile) {
+		return loadInstancesStrings(doclines, className, stoplistFile, null);
+	}
+	
+	public static InstanceList loadInstancesStrings(String [] doclines, String className, String stoplistFile, Pipe pipe) {
+		StringClassArrayIterator readerTrain = new StringClassArrayIterator(doclines, className); 
+
+		if(pipe == null) {
+			pipe = LDAUtils.buildSerialPipe(stoplistFile,null);
+		}
+
+		InstanceList instances = new InstanceList(pipe);
+		instances.addThruPipe(readerTrain);
+		return instances;
 	}
 }
