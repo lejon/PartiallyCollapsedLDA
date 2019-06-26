@@ -18,7 +18,19 @@ public class TokenIndexVectorizer implements Vectorizer {
 
 		return coordinates;
 	}
-	
+
+	@Override
+	public int[] instanceToIntVector(Instance instance) {
+		FeatureSequence features = (FeatureSequence) instance.getData();
+		int [] coordinates = new int[features.size()];
+		
+		for(int i = 0; i < features.size(); i++) {
+			coordinates[i] = features.getIndexAtPosition(i);
+		}
+
+		return coordinates;
+	}
+
 	public String toAnnotatedString(Instance instance) {
 		double [] arr = instanceToVector(instance);
 		Alphabet alphabet = instance.getAlphabet();

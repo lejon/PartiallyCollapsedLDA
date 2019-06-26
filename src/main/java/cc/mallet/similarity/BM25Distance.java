@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import cc.mallet.types.FeatureSequence;
+import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
 
 // This code was adapted from: BM25.java with the original Copyright
@@ -19,7 +20,7 @@ either express or implied. See the License for the specific language governing p
 under the License.
 */
 
-public class BM25Distance implements TrainedDistance {
+public class BM25Distance implements TrainedDistance, InstanceDistance {
 
 	protected double k_1 = 1.2;
 	protected double k_3 = 8;
@@ -144,17 +145,29 @@ public class BM25Distance implements TrainedDistance {
 	}
 
 	@Override
-	public double distanceToTrainingSample(double[] query, int sampleId) {				
-		FeatureSequence tokenSequence =
-				(FeatureSequence) trainingset.get(sampleId).getData();
-		double [] trainingInstance = new double[tokenSequence.size()];
-		int [] docTokens = tokenSequence.getFeatures();
-		// In MALLET documents with one word still has length(docTokens) == 2 
-		// so must use tokenSequence.size which returns 1 
-		for (int i = 0; i < tokenSequence.size(); i++) {
-			trainingInstance[i] = (int) docTokens[i];
-		}
-
+	public double distanceToTrainingSample(double[] query, int sampleId) {
+		TokenIndexVectorizer tv = new TokenIndexVectorizer();
+		double [] trainingInstance = tv.instanceToVector(trainingset.get(sampleId));
 		return calculate(query, trainingInstance);
 	}
+	
+	@Override
+	public double[] distanceToAll(Instance testInstance) {
+		TokenIndexVectorizer tv = new TokenIndexVectorizer();
+		double [] testVector = tv.instanceToVector(testInstance);
+		double [] result = new double[trainingset.size()];
+		for (int i = 0; i < trainingset.size(); i++) {
+			result[i] = distanceToTrainingSample(testVector,i);
+		}
+		return result;
+	}
+
+	@Override
+	public double distance(Instance instance1, Instance instance2) {
+		TokenIndexVectorizer tv = new TokenIndexVectorizer();
+		double [] trainingInstance1 = tv.instanceToVector(instance1);
+		double [] trainingInstance2 = tv.instanceToVector(instance2);
+		return calculate(trainingInstance1, trainingInstance2);
+	}
+
 }

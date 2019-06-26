@@ -16,6 +16,17 @@ public class TokenFrequencyVectorizer implements Vectorizer {
 		}
 		return coordinates;
 	}
+
+	@Override
+	public int[] instanceToIntVector(Instance instance) {
+		FeatureSequence features = (FeatureSequence) instance.getData();
+		int [] coordinates = new int[instance.getAlphabet().size()];
+		for (int i = 0; i < features.size(); i++) {
+			coordinates[features.getIndexAtPosition(i)]++;
+		}
+		return coordinates;
+	}
+
 	
 	public String toAnnotatedString(Instance instance) {
 		double [] arr = instanceToVector(instance);

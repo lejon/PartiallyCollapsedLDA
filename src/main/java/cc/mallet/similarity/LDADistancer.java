@@ -29,7 +29,7 @@ import cc.mallet.util.ArrayStringUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.StringClassArrayIterator; 
 
-public class LDADistancer implements TrainedDistance {
+public class LDADistancer implements TrainedDistance, InstanceDistance {
 	static DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0");
 	public static int noDigits = 4;
 
@@ -59,9 +59,21 @@ public class LDADistancer implements TrainedDistance {
 	}
 
 	public LDADistancer(LDAConfiguration config, Distance d) {
-		this.config = config;
-		alpha = config.getAlpha(0.01);
+		this(config);
 		this.dist = d;
+	}
+
+	public LDADistancer(LDASamplerWithPhi ldaModel) {
+		this.config = ldaModel.getConfiguration();
+		alpha = config.getAlpha(0.01);
+		trainedSampler = ldaModel;
+		trainingset = ldaModel.getDataset();
+		trainingSetTopicDists = ldaModel.getThetaEstimate();
+	}
+
+	public LDADistancer(LDASamplerWithPhi ldaModel, Distance d) {
+		this(ldaModel);
+		dist = d;
 	}
 
 	public Distance getDist() {
@@ -85,10 +97,22 @@ public class LDADistancer implements TrainedDistance {
 		double[] docTheta;
 		int[] wordTokens = LDAUtils.getWordTokens(instance);
 		int hashCode = Arrays.hashCode(wordTokens);
-		if(!cache.containsKey(hashCode)) {			
+		
+		if(trainingset.contains(instance)) {
+			int idx = trainingset.indexOf(instance);
+			docTheta = trainingSetTopicDists[idx]; 
+		}
+		else if(cache.containsKey(hashCode)) {			
+			docTheta = cache.get(hashCode);
+		} else {
 			InstanceList currentTestset = new InstanceList(trainingset.getDataAlphabet(), trainingset.getTargetAlphabet());
 			currentTestset.add(instance);
-			SimpleLDAConfiguration sc = ((ParsedLDAConfiguration) config).simpleLDAConfiguration();
+			SimpleLDAConfiguration sc;
+			if(config instanceof SimpleLDAConfiguration) {
+				sc = (SimpleLDAConfiguration) config;
+			} else {
+				sc = ((ParsedLDAConfiguration) config).simpleLDAConfiguration();
+			}
 			sc.setTopicInterval(100);
 			LDASamplerWithPhi spalias = (LDASamplerWithPhi) ModelFactory.get(sc);
 			spalias.addInstances(currentTestset);
@@ -97,9 +121,6 @@ public class LDADistancer implements TrainedDistance {
 			double [][] thetaEstimate = spalias.getThetaEstimate();
 			docTheta = thetaEstimate[0];
 			cache.put(hashCode, docTheta);
-			
-		} else {
-			docTheta = cache.get(hashCode);
 		}
 		
 		sampledTopics.put(instance, docTheta);
@@ -386,6 +407,40 @@ public class LDADistancer implements TrainedDistance {
 
 		return hash;
 	}
+	
+	@Override
+	public double distance(Instance instance1, Instance instance2) {
+		int [] v1Indices = LDAUtils.instanceToTokenIndices(instance1);
+		
+		double [] theta1;
+		int hashCode = Arrays.hashCode(LDAUtils.getWordTokens(instance1));
+		if(!cache.containsKey(hashCode)) {	
+			theta1 = sample(instance1);
+			cache.put(hashCode, theta1);
+		} else {
+			theta1 = cache.get(hashCode);
+		}
+		
+		sampledTopics.put(instance1, theta1);
+		sampledQueryTopics.put(Arrays.hashCode(v1Indices), theta1);
+		
+
+		int [] v2Indices = LDAUtils.instanceToTokenIndices(instance2);
+		double [] theta2;
+		hashCode = Arrays.hashCode(LDAUtils.getWordTokens(instance2));
+		if(!cache.containsKey(hashCode)) {	
+			theta2 = sample(instance2);
+			cache.put(hashCode, theta2);
+		} else {
+			theta2 = cache.get(hashCode);
+		}
+		
+		sampledTopics.put(instance2, theta2);
+		sampledQueryTopics.put(Arrays.hashCode(v2Indices), theta2);
+		
+		double dd = dist.calculate(theta1, theta2);
+		return dd;
+	}
 
 	@Override
 	public double distanceToTrainingSample(double[] query, int sampleId) {
@@ -430,5 +485,4 @@ public class LDADistancer implements TrainedDistance {
 	public double[] getSampledQueryTopics(double[] instanceVector) {
 		return sampledQueryTopics.get(Arrays.hashCode(instanceVector));
 	}
-
 }

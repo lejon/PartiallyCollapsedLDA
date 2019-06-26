@@ -24,6 +24,17 @@ public class TfIdfVectorizer implements Vectorizer {
 		}
 		return coordinates;
 	}
+
+	@Override
+	public int[] instanceToIntVector(Instance instance) {
+		FeatureSequence trainTokenSeq = (FeatureSequence) instance.getData();
+		int [] tokenSequence = trainTokenSeq.getFeatures();
+		int [] coordinates = new int[instance.getAlphabet().size()];
+		for (int i = 0; i < tokenSequence.length; i++) {
+			coordinates[tokenSequence[i]] = (int) Math.round(tp.getTfIdf().get(tokenSequence[i]));
+		}
+		return coordinates;
+	}
 	
 	public String toAnnotatedString(Instance instance) {
 		double [] arr = instanceToVector(instance);

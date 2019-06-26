@@ -6,7 +6,7 @@ import cc.mallet.util.LoggingUtils;
 
 public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private static final long serialVersionUID = 1L;
-	LoggingUtils logUtil;
+	LoggingUtils logUtil = new LoggingUtils(".");
 	private String scheme;
 	private Integer noTopics       = LDAConfiguration.NO_TOPICS_DEFAULT;
 	private Double alpha           = LDAConfiguration.ALPHA_DEFAULT;
@@ -18,7 +18,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private Integer rareThreshold  = LDAConfiguration.RARE_WORD_THRESHOLD;
 	private Integer tfIdfThreshold = LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT;
 	private Integer topicInterval  = LDAConfiguration.TOPIC_INTER_DEFAULT;
-	private Integer startDiagnostic;
+	private Integer startDiagnostic = -1;
 	private Integer seed = 0;
 	private boolean debug = false;
 	private String dataset_fn;
