@@ -288,11 +288,18 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 				// Choose a random point between 0 and the sum of all topic scores
 				double sample = random.nextUniform() * score;
 
-				// Figure out which topic contains that point
-				newTopic = -1;
-				while (sample > 0.0) {
-					newTopic++;
-					sample -= topicTermScores[newTopic];
+				// In some rare cases (typically in very short documents), all types have
+				// 0 likelihood in the PolyaUrn Case, in this case we just randomly pick a 
+				// topic (i.e the else branch)
+				if(sample > 0.0) {
+					// Figure out which topic contains that point
+					newTopic = -1;
+					while (sample > 0.0) {
+						newTopic++;
+						sample -= topicTermScores[newTopic];
+					} 
+				} else {
+					newTopic = random.nextInt(numTopics);
 				}
 			} else { 
 				int topic = nonZeroTopicsAdjusted[0];
@@ -328,7 +335,8 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			
 			// Make sure we actually sampled a valid topic
 			if (newTopic < 0 || newTopic >= numTopics) {
-				throw new IllegalStateException ("SpaliasUncollapsedParallelLDA: Invalid topic sampled (" + newTopic + ").");
+				System.err.println("Didn't manage to sample " + docLength + " long document. Sampling from " + (nonZeroTopicCntAdjusted==0?"prior":"likelihood"));
+				throw new IllegalStateException ("PolyaUrnSpaliasLDA: Invalid topic sampled (" + newTopic + ").");
 			}
 
 			// Put that new topic into the counts
