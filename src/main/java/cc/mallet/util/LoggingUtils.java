@@ -29,11 +29,17 @@ import cc.mallet.configuration.LDACommandLineParser;
 public class LoggingUtils implements Serializable {
 
 	private static final long serialVersionUID = 1L;
-	String baseDir = "";
+	String baseDir = ".";
 	File currentLogDirf = null;
 	transient List<Timing> timings = new ArrayList<Timing>();
 
 	public LoggingUtils() {	}
+	
+	public LoggingUtils(String baseDir) {
+		super();
+		this.baseDir = baseDir;
+		checkAndCreateCurrentLogDir("Runs/RunSuite" + LoggingUtils.getDateStamp());	
+	}
 	
 	public LoggingUtils(String baseDir, File currentLogDirf, List<Timing> timings) {
 		super();
