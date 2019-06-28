@@ -43,8 +43,6 @@ public class LikelihoodDistance implements TrainedDistance, InstanceDistance {
 	 */
 	@Override
 	public double calculate(double[] v1, double[] v2) {
-		double p_w = 0.0;
-
 		Set<Integer> uniqueDocumentWords = new HashSet<>();
 		Map<Integer,Double> p_w_d = new HashMap<>();
 
@@ -71,8 +69,8 @@ public class LikelihoodDistance implements TrainedDistance, InstanceDistance {
 
 		// Some sanity check first
 		if(d1length == 0 && d2length == 0) return 0;
-		if(d1length == 0 && d2length != 0) return 1;
-		if(d1length != 0 && d2length == 0) return 1;
+		if(d1length == 0 && d2length != 0) return Double.POSITIVE_INFINITY;
+		if(d1length != 0 && d2length == 0) return Double.POSITIVE_INFINITY;
 
 		// Normalize
 		if(d2length!=0) {
@@ -84,6 +82,8 @@ public class LikelihoodDistance implements TrainedDistance, InstanceDistance {
 		if(mixtureRatio<0) {
 			mixtureRatio = (d2length / (d2length + mu));
 		}
+
+		double p_w = 0.0;
 		for (int i = 0; i < v1.length; i++) {
 			double wordProb = epsilon;
 			int wordFreq = (int)v1[i];
