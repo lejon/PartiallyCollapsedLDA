@@ -21,6 +21,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private Integer startDiagnostic = -1;
 	private Integer seed = 0;
 	private boolean debug = false;
+	private String original_dataset_fn;
 	private String dataset_fn;
 	private String test_dataset_fn;
 	private String building_scheme;
@@ -119,7 +120,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 			int maxDocBufferSize, int phiMeanThinDefault, String dirichletSamplerBuilderClassName,
 			int aliasPoissonThreshold, String fileRegex, Integer hyperparamOptimInterval, boolean symmetricAlpha,
 			double hdpGgamma, int hdpNrStartTopics, int documentSamplerSplitLimit, double hdpKPercentile,
-			boolean logTopicIndicators, String samplerClass) {
+			boolean logTopicIndicators, String samplerClass, String original_dataset_fn) {
 		super();
 		this.logUtil = logUtil;
 		this.scheme = scheme;
@@ -137,6 +138,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.seed = seed;
 		this.debug = debug;
 		this.dataset_fn = dataset_fn;
+		this.original_dataset_fn = original_dataset_fn;
 		this.test_dataset_fn = test_dataset_fn;
 		this.building_scheme = building_scheme;
 		this.percentage_split_size_doc = percentage_split_size_doc;
@@ -312,7 +314,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public String getDatasetFilename() {
 		return dataset_fn;
 	}
-	
+
+	@Override
+	public String getOriginalDatasetFilename() {
+		return original_dataset_fn;
+	}
+
 	@Override
 	public String getTestDatasetFilename() {
 		return test_dataset_fn;
@@ -323,6 +330,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		dataset_fn = fn;
 	}
 
+	public void setOriginalDatasetFilename(String fn) {
+		original_dataset_fn = fn;
+	}
+	
 	@Override
 	public String getScheme() {
 		return scheme;

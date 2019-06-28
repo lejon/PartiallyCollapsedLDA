@@ -582,7 +582,8 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 				getDocumentSamplerSplitLimit(LDAConfiguration.DOCUMENT_SAMPLER_SPLIT_LIMIT_DEFAULT), 
 				getHDPKPercentile(LDAConfiguration.HDP_K_PERCENTILE),
 				logTopicIndicators(false),
-				getSamplerClass(LDAConfiguration.MODEL_DEFAULT));
+				getSamplerClass(LDAConfiguration.MODEL_DEFAULT),
+				getOriginalDatasetFilename());
 		
 		return conf;
 	}
@@ -591,5 +592,10 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public String getSamplerClass(String modelDefault) {
 		String configProperty = getStringProperty("sampler_class");
 		return (configProperty == null) ? modelDefault : configProperty;
+	}
+
+	@Override
+	public String getOriginalDatasetFilename() {
+		return getStringProperty("original_dataset");
 	}
 }

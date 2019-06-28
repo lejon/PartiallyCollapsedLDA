@@ -216,4 +216,6 @@ public interface LDAConfiguration {
 	public boolean logTopicIndicators(boolean b);
 
 	public String getSamplerClass(String modelDefault);
+	
+	public String getOriginalDatasetFilename();
 }

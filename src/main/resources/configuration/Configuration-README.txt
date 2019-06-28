@@ -29,6 +29,10 @@ description = Partially Collapsed Parallel LDA with adaptive subsampling (not fu
 dataset = datasets/nips.txt
 #dataset = datasets/pubmed.txt
 
+## Original Dataset: Filename of original dataset. This is useful if the dataset has been 
+## pre-processed externally and a reference to the original text is needed
+## the order of the documents are assumed to be the same as in 'dataset'
+
 ## Test Dataset: Filename of test dataset file to use, must follow same format as dataset file
 ## if this file is given, the held out log likelihood will be calculated every 'topic_interval' 
 ## relative to this dataset. 
