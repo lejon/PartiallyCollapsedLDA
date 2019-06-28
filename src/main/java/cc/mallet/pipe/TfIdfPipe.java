@@ -33,8 +33,8 @@ public class TfIdfPipe extends Pipe {
 	public TfIdfPipe(Alphabet dataDict, Alphabet targetDict) {
 		super(dataDict, targetDict);
 
-		counter = new FeatureCounter(dataAlphabet);
-		tfs = new FeatureCounter(dataAlphabet);
+		counter = new FeatureCounter(getDataAlphabet());
+		tfs = new FeatureCounter(getDataAlphabet());
 	}
 
 	public Instance pipe(Instance instance) {
