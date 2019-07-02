@@ -332,7 +332,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	 * @return logLikelihood of document generating query
 	 */
 	public double ldaLoglikelihood(int[] query, int[] document, double[] theta) {
-		Map<Integer, Double> p_w_d = calcProbWordGivenDocMLWordEncoding(document);
+		Map<Integer, Double> p_w_d = calcProbWordGivenDocMLFrequencyEncoding(document);
 
 		double querylength = getDocLength(query);
 		double doclength = getDocLength(document);
@@ -393,7 +393,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	 * @param document
 	 * @return
 	 */
-	public static Map<Integer, Double> calcProbWordGivenDocMLWordEncoding(int[] document) {
+	public static Map<Integer, Double> calcProbWordGivenDocMLFrequencyEncoding(int[] document) {
 		Set<Integer> uniqueDocumentWords = new HashSet<>();
 		Map<Integer,Double> p_w_d = new HashMap<>();
 
@@ -425,9 +425,9 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	
 	double calcProbWordGivenTheta(double[] theta2, int word, double [][] phi) {
 		int K = phi.length;
-		double p_w_lda = 1.0;
+		double p_w_lda = 0.0;
 		for (int k = 0; k < K; k++) {
-			p_w_lda *= theta2[k] * phi[k][word];
+			p_w_lda += theta2[k] * phi[k][word];
 		}
 		return p_w_lda;
 	}
@@ -539,14 +539,33 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		 return p_w_coll;
 	}
 
-	 static double [] calculateProbWordGivenCorpusMLWordEncoding(int [][] trainingset, int [] vocabulary) {
+//	 static double [] calculateProbWordGivenCorpusMLWordEncoding(int [][] trainingset, int [] vocabulary) {
+//		 double [] p_w_coll = new double[vocabulary.length];
+//		 long corpusSize = 0;
+//		 for (int i = 0; i < trainingset.length; i++) {
+//			 int [] words = trainingset[i];
+//			 for (int j = 0; j < words.length; j++) {
+//				 p_w_coll[words[j]]++;
+//				 corpusSize++;
+//			 }
+//		 }	
+//
+//		 //normalize
+//		 for (int i = 0; i < p_w_coll.length; i++) {
+//			 p_w_coll[i] /= corpusSize;
+//		 }
+//		 
+//		 return p_w_coll;
+//	}
+
+	 static double [] calculateProbWordGivenCorpusMLFrequencyEncoding(int [][] trainingset, int [] vocabulary) {
 		 double [] p_w_coll = new double[vocabulary.length];
 		 long corpusSize = 0;
 		 for (int i = 0; i < trainingset.length; i++) {
 			 int [] words = trainingset[i];
 			 for (int j = 0; j < words.length; j++) {
-				 p_w_coll[words[j]]++;
-				 corpusSize++;
+				 p_w_coll[j] += words[j];
+				 corpusSize += words[j];
 			 }
 		 }	
 
@@ -633,14 +652,13 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	}
 
 	public void initModel(int[][] trainingset, int[] vocab) {
-		p_w_coll = calculateProbWordGivenCorpusMLWordEncoding(trainingset,vocab);
+		p_w_coll = calculateProbWordGivenCorpusMLFrequencyEncoding(trainingset,vocab);
 		
 	}
 
 	public void initModel(int[][] trainingset, int[] vocab, double [][] phi) {
-		p_w_coll = calculateProbWordGivenCorpusMLWordEncoding(trainingset,vocab);
+		p_w_coll = calculateProbWordGivenCorpusMLFrequencyEncoding(trainingset,vocab);
 		setPhi(phi);
-		
 	}
 
 	public double getMu() {

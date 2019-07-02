@@ -104,7 +104,7 @@ public class LongQueryLDALikelihoodDistance extends LDALikelihoodDistance {
 	 * @return logLikelihood of document generating query
 	 */
 	public double ldaLoglikelihood(int[] query, double[] queryTheta, int[] document, double[] documentTheta) {
-		Map<Integer, Double> p_w_d = calcProbWordGivenDocMLWordEncoding(document);
+		Map<Integer, Double> p_w_d = calcProbWordGivenDocMLFrequencyEncoding(document);
 		
 		double querylength1 = getDocLength(query);
 		double doclength1 = getDocLength(document);
