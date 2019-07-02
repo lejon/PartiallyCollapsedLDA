@@ -12,7 +12,7 @@ import cc.mallet.types.InstanceList;
 /**
  * 
  * This distance measure assumes that the features are coded with word frequency
- * It the input documents are both of the same size (the length of the Alpabet)
+ * It the input documents are both of the same size (the length of the Alphabet)
  * and each slot has the number of times that word occurs in the document
  * 
  * @author Leif Jonsson
@@ -21,7 +21,6 @@ import cc.mallet.types.InstanceList;
 public class LikelihoodDistance implements TrainedDistance, InstanceDistance {
 	int [] N_d;
 	double mu = 1;
-	double epsilon = 0.0;
 	double [] p_w_coll;
 	double mixtureRatio = -1;
 	
@@ -85,7 +84,7 @@ public class LikelihoodDistance implements TrainedDistance, InstanceDistance {
 
 		double p_w = 0.0;
 		for (int i = 0; i < v1.length; i++) {
-			double wordProb = epsilon;
+			double wordProb = 0.0;
 			int wordFreq = (int)v1[i];
 			if(wordFreq > 0) {
 				int word = i;
