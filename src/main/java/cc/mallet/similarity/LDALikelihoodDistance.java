@@ -367,8 +367,16 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		return p_q_d;
 	}
 
-	double getDocLength(int[] document) {
-		double doclength = 0;
+	int getDocLength(int[] document) {
+		int doclength = 0;
+		for (int i = 0; i < document.length; i++) {
+			doclength += document[i];
+		}
+		return doclength;
+	}
+
+	int getDocLength(double[] document) {
+		int doclength = 0;
 		for (int i = 0; i < document.length; i++) {
 			doclength += document[i];
 		}
