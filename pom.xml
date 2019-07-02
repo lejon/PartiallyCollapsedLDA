@@ -90,7 +90,8 @@
 	<!-- v8.0.6: Minor bug fix in model log likelihood calculation, logging of topic indicators -->
 	<!-- v8.0.7: Minor bug fix sparse samplers when document is one word long + various cleanup-->
 	<!-- v8.0.8: Similarity updates-->
-	<version>8.0.8</version>
+	<!-- v8.0.9: Likelihood distances working -->
+	<version>8.0.9</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
