@@ -20,6 +20,7 @@ public class SubConfig extends HierarchicalINIConfiguration {
 	}
 
 	public void activateSubconfig(String subConfName) {
+		if(subConfName== null || subConfName.length() == 0) return;
 		boolean foundIt = false;
 		String [] configs = super.getStringArray("configs");
 		for( String cfg : configs ) {

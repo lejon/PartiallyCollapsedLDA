@@ -1738,6 +1738,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		out.writeBoolean(printLogLikelihood);
 		if(ParsedLDAConfiguration.class.isAssignableFrom(config.getClass())) {
 			out.writeObject(config.whereAmI());
+			out.writeObject(config.getActiveSubConfig());
 		} else {
 			out.writeObject(config);
 		}
@@ -1782,6 +1783,12 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			config = (LDAConfiguration) in.readObject();
 		} else {
 			String cfg_file = (String) in.readObject();
+			String activeSubconfig = null;
+			try {
+				activeSubconfig = (String) in.readObject();
+			} catch (java.io.OptionalDataException e1) {
+				System.out.println("Could not read active subconfig from serialized sampler...");
+			}
 			System.out.println("Reading config from:" + cfg_file);
 			try {
 				config = new ParsedLDAConfiguration(cfg_file);
@@ -1791,6 +1798,12 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				LoggingUtils lu = new LoggingUtils();
 				lu.checkAndCreateCurrentLogDir(logSuitePath);
 				config.setLoggingUtil(lu);
+				if(activeSubconfig==null) {
+					activeSubconfig = config.getSubConfigs()[0];
+					System.out.println("Active subconfig not set, activating first available (" + activeSubconfig + ") ...");
+				}
+				System.out.println("Activating subconfig: " + activeSubconfig);
+				config.activateSubconfig(activeSubconfig);
 
 				System.out.println("Done Reading config!");
 			} catch (ConfigurationException e) {

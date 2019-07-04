@@ -9,7 +9,6 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	private static final long serialVersionUID = 1L;
 
 	LoggingUtils logger;
-	int noTopics = -1;
 
 	/* (non-Javadoc)
 	 * @see configuration.LDAConfiguration#getLoggingUtil()
@@ -70,7 +69,7 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	 */
 	@Override
 	public Integer getNoTopics(int defaultValue) {
-		return noTopics < 0 ? getInteger("topics",defaultValue) : noTopics;
+		return getInteger("topics",defaultValue);
 	}
 	
 	/* (non-Javadoc)
@@ -160,7 +159,7 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 
 	@Override
 	public void setNoTopics(int newValue) {
-		noTopics = newValue;
+		throw new UnsupportedOperationException("Cannot set 'no topics' on ParsedLDAConfiguration. Create a SimpleLDAConfiguration from it and modity that if needed");
 	}
 
 	@Override
