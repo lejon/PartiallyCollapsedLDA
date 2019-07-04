@@ -91,7 +91,8 @@
 	<!-- v8.0.7: Minor bug fix sparse samplers when document is one word long + various cleanup-->
 	<!-- v8.0.8: Similarity updates-->
 	<!-- v8.0.9: Likelihood distances working -->
-	<version>8.0.9</version>
+	<!-- v8.0.10: Made time critical toString methods use StringBuilder -->
+	<version>8.0.10</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 

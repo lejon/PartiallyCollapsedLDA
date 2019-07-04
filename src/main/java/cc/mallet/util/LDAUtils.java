@@ -1460,12 +1460,12 @@ public class LDAUtils {
 	}
 
 	public static String instancesToString(InstanceList instances, int noWords) {
-		String result = "";
+		StringBuilder result = new StringBuilder("");
 		for (Instance instance : instances) {
-			result += instanceToString(instance, noWords);
-			result += "\n";
+			result.append(instanceToString(instance, noWords));
+			result.append("\n");
 		}
-		return result;
+		return result.toString();
 	}
 
 	public static String instanceToString(Instance instance) {
@@ -1473,21 +1473,21 @@ public class LDAUtils {
 	}
 
 	public static String instanceToString(Instance instance, int noWords) {
-		String result = "";
+		StringBuilder result = new StringBuilder("");
 		Alphabet alphabet = instance.getAlphabet();
 		FeatureSequence features = (FeatureSequence) instance.getData();
 		noWords = (noWords > 0 ?  Math.min(noWords, features.size()) : features.size());
 		if(noWords==0) {
-			result += "<empty doc>";
+			result.append("<empty doc>");
 		} else {
 			for (int i = 0; i < noWords; i++) {
-				result += alphabet.lookupObject(features.getIndexAtPosition(i));
+				result.append(alphabet.lookupObject(features.getIndexAtPosition(i)));
 				if(i+1<noWords) {
-					result += ", ";
+					result.append(", ");
 				}
 			}
 		}
-		return result;
+		return result.toString();
 	}
 	
 	public static String instanceToTokenIndexString(Instance instance) {
@@ -1495,20 +1495,20 @@ public class LDAUtils {
 	}
 	
 	public static String instanceToTokenIndexString(Instance instance, int noWords) {
-		String result = "";
+		StringBuilder result = new StringBuilder("");
 		FeatureSequence features = (FeatureSequence) instance.getData();
 		noWords = (noWords > 0 ?  Math.min(noWords, features.size()) : features.size());
 		if(noWords==0) {
-			result += "<empty doc>";
+			result.append("<empty doc>");
 		} else {
 			for (int i = 0; i < noWords; i++) {
-				result += features.getIndexAtPosition(i);
+				result.append(features.getIndexAtPosition(i));
 				if(i+1<noWords) {
-					result += ", ";
+					result.append(", ");
 				}
 			}
 		}
-		return result;
+		return result.toString();
 	}
 
 	public static int [] instanceToTokenIndices(Instance instance) {
@@ -1540,15 +1540,15 @@ public class LDAUtils {
 	}
 	
 	public static String indicesToString(int [] indices, Alphabet alphabet) {
-		String result = "";
+		StringBuilder result = new StringBuilder("");
 		int noWords = indices.length;
 		for (int i = 0; i < noWords; i++) {
-			result += alphabet.lookupObject(indices[i]);
+			result.append(alphabet.lookupObject(indices[i]));
 			if(i+1<noWords) {
-				result += " ";
+				result.append(" ");
 			}
 		}
-		return result;
+		return result.toString();
 	}
 
 	public static int[][] getDocumentTopicCounts(ArrayList<TopicAssignment> data, int numTopics) {
