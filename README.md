@@ -75,7 +75,7 @@ in bash.
 
 ## Example run using binary (the release JAR)
 
-```java -cp PCPLDA-4.7.3.jar cc.mallet.topics.tui.ParallelLDA --run_cfg=src/main/resources/configuration/PLDAConfig.cfg```
+```java -cp PCPLDA-8.0.11.jar cc.mallet.topics.tui.ParallelLDA --run_cfg=src/main/resources/configuration/PLDAConfig.cfg```
 
 ## Public DOI
 [![DOI](https://zenodo.org/badge/13374/lejon/PartiallyCollapsedLDA.svg)](http://dx.doi.org/10.5281/zenodo.18102)
