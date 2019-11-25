@@ -263,3 +263,7 @@ symmetric_alpha = true | false
 # if the document batch size is < than this value, that number of documents will
 # be handled by each document sampling task
 document_sampler_split_limit (default = 100)
+
+# A pointer to the original dataset.
+# Can be used to show the original text to the end user
+original_dataset =  datasets/nips_orig.txt

@@ -42,6 +42,29 @@ public class IndexSorter {
 		return pairs;
 	}
 
+	
+	/**
+	 * Returns an array of indices into the <code>values</code> array, where the first entry is the index
+	 * of the largest value in <code>values</code>
+	 * 
+	 * @param values Values to be index sorted
+	 * @return Array of indexes, with the index of the biggest entry in <code>values</code> comes first
+	 */
+	public static int [] getSortedIndices(double [][] matrix, int sortColumn) {
+		double [][] pairs = new double[matrix.length][];
+		int i = 0;
+		for(double[] p : matrix)
+			pairs[i] = new double[] { p[sortColumn], i++ };
+	
+		pairs = sortPairs(pairs);
+	
+		int [] result = new int[pairs.length];
+		for( int j = 0; j < pairs.length; j++) {
+			result[j] = (int)pairs[j][1];
+		}
+		return result;
+	}
+	
 	/**
 	 * Returns an array of indices into the <code>values</code> array, where the first entry is the index
 	 * of the largest value in <code>values</code>

@@ -49,5 +49,18 @@ public class IndexSorterTest {
 			assertEquals(expected2[i], si[i]);
 		}		
 	}
-
+	
+	@Test
+	public void testSortMatrix() {
+		double[][] matrix= {
+				{1, 5},
+				{13, 1.55},
+				{12, 100.6},
+				{12.1, .85} };
+		int [] si = IndexSorter.getSortedIndices(matrix,1);
+		int [] expected = {2,0,1,3};
+		for (int i = 0; i < expected.length; i++) {
+			assertEquals(expected[i], si[i]);
+		}
+	}
 }

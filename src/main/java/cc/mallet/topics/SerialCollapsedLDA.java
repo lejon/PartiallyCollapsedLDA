@@ -115,8 +115,9 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 			}
 
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
+				System.out.println("Iteration: " + currentIteration);
+				logLik = modelLogLikelihood();
 				if(config!= null) { 
-					logLik = modelLogLikelihood();
 					tw = topWords (wordsPerTopic);
 					loggingPath = config.getLoggingUtil().getLogDir().getAbsolutePath();
 					LDAUtils.logLikelihoodToFile(logLik,iteration,tw,loggingPath,logger);
