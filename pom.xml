@@ -95,6 +95,7 @@
 	<!-- v8.0.11: Fixed setting subconfig when reading serialized sampler + removed set no topics in parsed config -->
 	<!-- v8.0.12: Fixed "zero length document" bug in Spalias with priors -->
 	<!-- v8.1.0: Added Polya Urn with seeding (fixed small bug in Spalias with prior)-->
+	<!-- v8.1.1: Added 'raw' mode, i.e no pre-processing of input data-->
 	<version>8.1.1</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
