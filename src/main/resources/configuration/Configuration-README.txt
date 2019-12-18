@@ -267,3 +267,10 @@ document_sampler_split_limit (default = 100)
 # A pointer to the original dataset.
 # Can be used to show the original text to the end user
 original_dataset =  datasets/nips_orig.txt
+
+# Keeps "connecting punctuation" in word tokens as defined by the Unicode CONNECTOR_PUNCTUATION
+keep_connecting_punctuation = true
+
+# Saves csv files with the topic indicators per iteration in the log directory
+# the files are named z_XX.csv where XX is the iteration number
+log_topic_indicators = true

@@ -20,11 +20,17 @@ import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.LoggingUtils;
+import cc.mallet.util.MalletLogger;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 
 //public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGibbsSampler, LDASamplerWithCallback {
 public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGibbsSampler {
+	
+	{ 
+		logger = MalletLogger.getLogger(PolyaUrnSpaliasLDA.class.getName());
+	}
+	
 	private static final long serialVersionUID = 1L;
 	WalkerAliasTable [] aliasTables; 
 	double [] typeNorm; // Array with doubles with sum of alpha * phi
@@ -214,7 +220,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		//kdDensities[myBatch] += nonZeroTopicCnt;
 		kdDensities.addAndGet(nonZeroTopicCnt);
 		
-		double sum; // sigma_likelihood
 		double[] cumsum = new double[numTopics]; 
 		int [] nonZeroTopicsAdjusted;
 		int nonZeroTopicCntAdjusted;
@@ -277,7 +282,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			// word probability in phi
 			if(nonZeroTopicCntAdjusted==0) {
 				double[] topicTermScores = new double[numTopics];
-				sum = 0.0;
 				
 				double score = phi[0][type];
 				topicTermScores[0] = score;
@@ -302,35 +306,7 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 					newTopic = random.nextInt(numTopics);
 				}
 			} else { 
-				int topic = nonZeroTopicsAdjusted[0];
-				double score = localTopicCounts[topic] * phi[topic][type];
-				cumsum[0] = score;
-				// Now calculate and add up the scores for each topic for this word
-				// We build a cumsum indexed by topicIndex
-				int topicIdx = 1;
-				while ( topicIdx < nonZeroTopicCntAdjusted ) {
-					topic = nonZeroTopicsAdjusted[topicIdx];
-					score = localTopicCounts[topic] * phi[topic][type];
-					cumsum[topicIdx] = score + cumsum[topicIdx-1];
-					topicIdx++;
-				}
-				sum = cumsum[topicIdx-1]; // sigma_likelihood
-
-				// Choose a random point between 0 and the sum of all topic scores
-				// The thread local random performs better in concurrent situations 
-				// than the standard random which is thread safe and incurs lock 
-				// contention
-				double u_sigma = u * (typeNorm[type] + sum);
-				// u ~ U(0,1)  
-				// u [0,1]
-				// u_sigma = u * (typeNorm[type] + sum)
-				// if u_sigma < typeNorm[type] -> prior
-				// u * (typeNorm[type] + sum) < typeNorm[type] => u < typeNorm[type] / (typeNorm[type] + sum)
-				// else -> likelihood
-				// u_prior = u_sigma / typeNorm[type] -> u_prior (0,1)
-				// u_likelihood = (u_sigma - typeNorm[type]) / sum  -> u_likelihood (0,1)
-
-				newTopic = sampleNewTopic(type, nonZeroTopicsAdjusted, nonZeroTopicCntAdjusted, sum, cumsum, u, u_sigma);
+				newTopic = calcScoreSampleTopic(type, localTopicCounts, cumsum, nonZeroTopicsAdjusted, nonZeroTopicCntAdjusted, u);
 			}
 			
 			// Make sure we actually sampled a valid topic
@@ -361,38 +337,41 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		return new LDADocSamplingResultSparseSimple(localTopicCounts,nonZeroTopicCnt,nonZeroTopics);
 	}
 
-	/*
-	protected int intersection(int [] nonZeroTypeTopicIdxs, int nonZeroTypeTopicCnt, int[] nonZeroDocumentTopics, int [] nonZeroDocumentTopicsBackMapping,
-			int[] nonZeroTopicsAdjusted, int nonZeroDocumentTopicCnt) {
-		int nonZeroCnt = 0;
-		// If we have more type sparsity loop over nonZeroTypeTopicIdxs, else loop over nonZeroTypeTopicCnt
-		if(nonZeroTypeTopicCnt < nonZeroDocumentTopicCnt) {
-			usedTypeSparsness.incrementAndGet();
-			for (int i = 0; i < nonZeroTypeTopicCnt; i++) {
-				if(nonZeroDocumentTopicsBackMapping[nonZeroTypeTopicIdxs[i]]!=NOT_IN_SET)
-					nonZeroTopicsAdjusted[nonZeroCnt++] = nonZeroTypeTopicIdxs[i];
-			}
-		} else {
-			for (int i = 0; i < nonZeroDocumentTopicCnt; i++) {
-				if(findInTypeSet(nonZeroDocumentTopics[i],nonZeroTypeTopicIdxs, nonZeroTypeTopicCnt)!=NOT_IN_SET)
-					nonZeroTopicsAdjusted[nonZeroCnt++] = nonZeroDocumentTopics[i];
-			}
-			
+	int calcScoreSampleTopic(int type, int[] localTopicCounts, double[] cumsum, int[] nonZeroTopicsAdjusted,
+			int nonZeroTopicCntAdjusted, double u) {
+		int newTopic;
+		double sum;
+		int topic = nonZeroTopicsAdjusted[0];
+		double score = localTopicCounts[topic] * phi[topic][type];
+		cumsum[0] = score;
+		// Now calculate and add up the scores for each topic for this word
+		// We build a cumsum indexed by topicIndex
+		int topicIdx = 1;
+		while ( topicIdx < nonZeroTopicCntAdjusted ) {
+			topic = nonZeroTopicsAdjusted[topicIdx];
+			score = localTopicCounts[topic] * phi[topic][type];
+			cumsum[topicIdx] = score + cumsum[topicIdx-1];
+			topicIdx++;
 		}
-		return nonZeroCnt;
-	}
+		sum = cumsum[topicIdx-1]; // sigma_likelihood
 
-	private int findInTypeSet(int value, int[] nonZeroTypeTopicIdxs, int numNonZeroForType) {
-		// int currSize = size.get();
-		// Find the place to insert
-		int i = 0;
-		while (i < numNonZeroForType && nonZeroTypeTopicIdxs[i]<value) i++;
-		// topic is already inserted
-		if(nonZeroTypeTopicIdxs[i]==value) {
-			return i;
-		};
-		return NOT_IN_SET;
-	}*/
+		// Choose a random point between 0 and the sum of all topic scores
+		// The thread local random performs better in concurrent situations 
+		// than the standard random which is thread safe and incurs lock 
+		// contention
+		double u_sigma = u * (typeNorm[type] + sum);
+		// u ~ U(0,1)  
+		// u [0,1]
+		// u_sigma = u * (typeNorm[type] + sum)
+		// if u_sigma < typeNorm[type] -> prior
+		// u * (typeNorm[type] + sum) < typeNorm[type] => u < typeNorm[type] / (typeNorm[type] + sum)
+		// else -> likelihood
+		// u_prior = u_sigma / typeNorm[type] -> u_prior (0,1)
+		// u_likelihood = (u_sigma - typeNorm[type]) / sum  -> u_likelihood (0,1)
+
+		newTopic = sampleNewTopic(type, nonZeroTopicsAdjusted, nonZeroTopicCntAdjusted, sum, cumsum, u, u_sigma);
+		return newTopic;
+	}
 
 	double calcCumSum(int type, double[] localTopicCounts, int[] nonZeroTopics, int nonZeroTopicCnt, double[] cumsum) {
 		int topic = nonZeroTopics[0];
@@ -523,8 +502,8 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 		long beforeSamplePhi = System.currentTimeMillis();		
 		for (int topic : indices) {
 			int [] relevantTypeTopicCounts = topicTypeCountMapping[topic];
-			VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
-			phiMatrix[topic] = res.getPhi();
+			
+			phiMatrix[topic] = samplePhiTopic(relevantTypeTopicCounts,topic);
 			
 			if(savePhiMeans() && samplePhiThisIteration()) {
 				for (int phi = 0; phi < phiMatrix[topic].length; phi++) {
@@ -543,6 +522,12 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 			pw.flush();
 			pw.close();
 		}
+	}
+	
+	double [] samplePhiTopic(int [] relevantTypeTopicCounts, int topic) {
+		VariableSelectionResult res = dirichletSampler.nextDistributionWithSparseness(relevantTypeTopicCounts);
+		double [] phi = res.getPhi();
+		return phi;
 	}
 	
 	@Override

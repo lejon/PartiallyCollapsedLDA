@@ -46,6 +46,7 @@ public class ParallelLDA implements IterationListener {
 	public static final String EFFICIENT_UNCOLLAPSED_MODEL = "efficient_uncollapsed";
 	public static final String SPALIAS_MODEL = "spalias";
 	public static final String POLYAURN_MODEL =  "polyaurn";
+	public static final String POLYAURN_PRIORS_MODEL =  "polyaurn_priors";
 	public static final String PPU_HLDA_MODEL =  "ppu_hlda";
 	public static final String PPU_HDPLDA_MODEL =  "ppu_hdplda";
 	public static final String PPU_HDP_ALL_TOPICS_MODEL =  "ppu_hdp_all_topics";
@@ -521,6 +522,11 @@ public class ParallelLDA implements IterationListener {
 		}
 		case POLYAURN_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.PolyaUrnSpaliasLDA");
+			System.out.println("PolyaUrnSpaliasLDA Parallell LDA.");
+			break;
+		}
+		case POLYAURN_PRIORS_MODEL: {
+			model = ModelFactory.get(config, "cc.mallet.topics.PolyaUrnSpaliasLDAWithPriors");
 			System.out.println("PolyaUrnSpaliasLDA Parallell LDA.");
 			break;
 		}

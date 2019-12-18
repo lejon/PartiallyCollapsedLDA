@@ -1,23 +1,12 @@
 package cc.mallet.topics;
 
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.logging.Level;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.topics.randomscan.topic.AllWordsTopicIndexBuilder;
-import cc.mallet.types.Alphabet;
 import cc.mallet.types.ConditionalDirichlet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
@@ -34,13 +23,8 @@ import cc.mallet.util.LoggingUtils;
  */
 public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedParallelLDA implements LDASamplerWithPhi, LDASamplerWithPriors {
 	
-
 	private static final long serialVersionUID = 1L;
 	
-	protected boolean haveTopicPriors = false;
-	protected double[][] topicPriors;
-
-
 	public SpaliasUncollapsedParallelWithPriors(LDAConfiguration config) {
 		super(config);
 	}
@@ -53,142 +37,11 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 		super.addInstances(training);
 	}
 
-	
 	@Override
 	public double[][] getTopicPriors() {
 		return topicPriors;
 	}
-	
-	@Override
-	public void initialSamplePhi(int [] indices, double[][] phiMatrix) {
-		super.initialSamplePhi(indices, phiMatrix);
-		if(haveTopicPriors) {
-			for (int topic = 0; topic < phiMatrix.length; topic++) {
-				for (int type = 0; type < phiMatrix[topic].length; type++) {
-					phiMatrix[topic][type] *= topicPriors[topic][type];
-				}
-			}
-		}
-	}
-	
-	protected static double [][] calculatePriors(String topicPriorFilename, int numTopics, 
-			int numTypes, Alphabet alphabet) throws IOException {
-		Map<String,Boolean> issuedWarnings = new HashMap<String, Boolean>();
-		double [][] priors = new double[numTopics][numTypes];
-		for (int i = 0; i < priors.length; i++) {			
-			Arrays.fill(priors[i], 1.0);
-		}
-		List<String> lines = Files.readAllLines(Paths.get(topicPriorFilename), Charset.defaultCharset());
-		@SuppressWarnings("rawtypes")
-		Collection [] zeroOut = extractPriorSpec(lines, numTopics);
-		for (int topic = 0; topic < zeroOut.length; topic++) {
-			for (Object wordToZero : zeroOut[topic]) {
-				String word = wordToZero.toString().trim();
-				int wordIdx = alphabet.lookupIndex(word,false);
-				if( wordIdx < 0) {
-					if(issuedWarnings.get(word) == null || !issuedWarnings.get(word)) {
-						System.err.println("WARNING: UncollapsedParallelLDA.calculatePriors: Word \"" + word + "\" does not exist in the dictionary!");
-						issuedWarnings.put(word, Boolean.TRUE);
-					}
-					continue;
-				}
-				priors[topic][wordIdx] = 0.0;
-			}
-		}
-		ensureConsistentPriors(priors,alphabet);
-		return priors;
-	}
-	
-	protected static void ensureConsistentPriors(double[][] priors, Alphabet alphabet) {
-		double [] colsum = new double[priors[0].length];
-		for (int i = 0; i < priors.length; i++) {
-			double rowsum = 0;
-			for (int j = 0; j < priors[i].length; j++) {
-				rowsum += priors[i][j];
-				colsum[j] += priors[i][j];
-			}
-			if(rowsum==0.0) throw new IllegalArgumentException("Inconsistent prior spec, one topic has all Zero priors!");
-		}
-		List<String> zeroWords = new ArrayList<String>();
-		for (int i = 0; i < colsum.length; i++) {			
-			if(colsum[i]==0.0) {
-				String word = alphabet.lookupObject(i).toString();
-				zeroWords.add(word);
-			}
-		}
-		if(zeroWords.size()>0)
-			throw new IllegalArgumentException("Inconsistent prior spec, '" + zeroWords + "' has all Zero priors!");
-	}
-
-	
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	static Collection [] extractPriorSpec(List<String> lines, int numTopics) {
-		TreeSet [] toZeroOut = new TreeSet[numTopics];
-		TreeSet [] toKeep = new TreeSet[numTopics];
-		for (int i = 0; i < numTopics; i++) {
-			toZeroOut[i] = new TreeSet<String>();
-		}
-		for (int i = 0; i < numTopics; i++) {
-			toKeep[i] = new TreeSet<String>();
-		}
 		
-		// Each line will be in the format topic, word1, word2, word3 ...
-		for (String string : lines) {
-			// Skip comments
-			if(string.trim().startsWith("#")) continue;
-			// Skip empty lines
-			if(string.trim().length()==0) continue;
-			String [] spec = string.split(",");
-			// First find the topic we are specifying, it is stored first
-			int currentTopic;
-			try {
-				currentTopic = Integer.parseInt(spec[0]);
-			} catch (NumberFormatException e) {
-				System.err.println("Cant extract topic number from: " + spec[0]);
-				throw new IllegalArgumentException(e);
-			}
-			for (int i = 1; i < spec.length; i++) {
-				String word = spec[i];
-				for (int topic = 0; topic < numTopics; topic++) {
-					if(topic==currentTopic) {
-						toKeep[topic].add(word);
-					} else {
-						toZeroOut[topic].add(word);
-					}
-				}
-			}
-		}
-		
-		for (int topic = 0; topic < numTopics; topic++) {
-			toZeroOut[topic].removeAll(toKeep[topic]);
-		}
-		
-		
-		return toZeroOut;
-	}
-	
-	protected void initializePriors(LDAConfiguration config) {
-		if(config.getTopicPriorFilename()!=null) {
-			try {
-				topicPriors = calculatePriors(config.getTopicPriorFilename(), numTopics, numTypes, alphabet);
-				haveTopicPriors = true;
-			} catch (IOException e) {
-				e.printStackTrace();
-				throw new IllegalArgumentException(e);
-			}
-			if(logger.getLevel()==Level.INFO) {
-				System.out.println("UncollapsedParallelLDA: Set priors from: " + config.getTopicPriorFilename());
-			}
-		} else {
-			double [][] priors = new double[numTopics][numTypes];
-			for (int i = 0; i < priors.length; i++) {			
-				Arrays.fill(priors[i], 1.0);
-			}
-			topicPriors = priors;
-		}
-	}
-	
-	
 	@Override
 	protected LDADocSamplingResult sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
@@ -253,7 +106,7 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 			//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
 			 
 			int topic = nonZeroTopics[0];
-			double score = localTopicCounts[topic] * phi[topic][type];
+			double score = localTopicCounts[topic] * phi[topic][type] * topicPriors[topic][type];
 			cumsum[0] = score;
 			// Now calculate and add up the scores for each topic for this word
 			// We build a cumsum indexed by topicIndex
