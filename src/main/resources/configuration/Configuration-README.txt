@@ -274,3 +274,14 @@ keep_connecting_punctuation = true
 # Saves csv files with the topic indicators per iteration in the log directory
 # the files are named z_XX.csv where XX is the iteration number
 log_topic_indicators = true
+
+# Do minimal pre-processing of the text. With this option all pre-processing is
+# expected to have been done beforehand. It just tokenizes the text to words 
+# based on Unicode SPACE and LINE separator classes
+# It does NOT:
+# * lowercase
+# * remove punctuation (commas, periods, colon, etc) or quotes
+# * remove special characters parenthesis, underscores, split compound words ("hell-bent")
+# * remove numbers
+no_preprocess = true
+

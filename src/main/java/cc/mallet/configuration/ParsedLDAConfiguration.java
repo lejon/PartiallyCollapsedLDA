@@ -423,7 +423,6 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public boolean saveDocumentThetaEstimate() {
 		String key = "save_doc_theta_estimate";
 		return getBooleanProperty(key);
-
 	}
 
 	@Override
@@ -582,7 +581,8 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 				getHDPKPercentile(LDAConfiguration.HDP_K_PERCENTILE),
 				logTopicIndicators(false),
 				getSamplerClass(LDAConfiguration.MODEL_DEFAULT),
-				getOriginalDatasetFilename());
+				getOriginalDatasetFilename(),
+				noPreprocess());
 		
 		return conf;
 	}
@@ -596,5 +596,11 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	@Override
 	public String getOriginalDatasetFilename() {
 		return getStringProperty("original_dataset");
+	}
+
+	@Override
+	public boolean noPreprocess() {
+		String key = "no_preprocess";
+		return getBooleanProperty(key);
 	}
 }

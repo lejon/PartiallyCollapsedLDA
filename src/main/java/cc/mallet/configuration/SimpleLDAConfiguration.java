@@ -79,6 +79,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private double hdpKPercentile = LDAConfiguration.HDP_K_PERCENTILE;
 	private boolean logTopicIndicators;
 	private String samplerClass = LDAConfiguration.MODEL_DEFAULT;
+	private boolean noPreprocess;
 	
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -120,7 +121,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 			int maxDocBufferSize, int phiMeanThinDefault, String dirichletSamplerBuilderClassName,
 			int aliasPoissonThreshold, String fileRegex, Integer hyperparamOptimInterval, boolean symmetricAlpha,
 			double hdpGgamma, int hdpNrStartTopics, int documentSamplerSplitLimit, double hdpKPercentile,
-			boolean logTopicIndicators, String samplerClass, String original_dataset_fn) {
+			boolean logTopicIndicators, String samplerClass, String original_dataset_fn, boolean noPreprocess) {
 		super();
 		this.logUtil = logUtil;
 		this.scheme = scheme;
@@ -193,6 +194,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.hdpKPercentile = hdpKPercentile;
 		this.logTopicIndicators = logTopicIndicators;
 		this.samplerClass = samplerClass;
+		this.noPreprocess = noPreprocess;
 	}
 
 	public void setPrintPhi(boolean printPhi) {
@@ -893,5 +895,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	@Override
 	public String getSamplerClass(String modelDefault) {
 		return samplerClass;
+	}
+
+	public void setNoPreprocess(boolean val) {
+		noPreprocess = val;
+	}
+	
+	@Override
+	public boolean noPreprocess() {
+		return noPreprocess;
 	}
 }

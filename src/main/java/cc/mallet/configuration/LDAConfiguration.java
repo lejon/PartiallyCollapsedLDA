@@ -218,4 +218,6 @@ public interface LDAConfiguration {
 	public String getSamplerClass(String modelDefault);
 	
 	public String getOriginalDatasetFilename();
+
+	public boolean noPreprocess();
 }

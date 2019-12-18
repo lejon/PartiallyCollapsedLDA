@@ -39,6 +39,7 @@ import cc.mallet.pipe.KeepConnectorPunctuationNumericAlsoTokenizer;
 import cc.mallet.pipe.KeepConnectorPunctuationTokenizerLarge;
 import cc.mallet.pipe.NumericAlsoTokenizer;
 import cc.mallet.pipe.Pipe;
+import cc.mallet.pipe.RawTokenizer;
 import cc.mallet.pipe.SerialPipes;
 import cc.mallet.pipe.SimpleTokenizer;
 import cc.mallet.pipe.SimpleTokenizerLarge;
@@ -91,15 +92,15 @@ public class LDAUtils {
 	//
 	//		return new InstanceList (new SerialPipes(pipeList));
 	//	}
-	
+
 	public static Pipe buildSerialPipe(String stoplistFile) {
 		return buildSerialPipe(stoplistFile, null);
 	}
-	
+
 	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet) {
 		return buildSerialPipe(stoplistFile, dataAlphabet, null);
 	}
-	
+
 	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) { 		
 		int maxBufSize = 10000;
 		SimpleTokenizerLarge tokenizer = null;
@@ -108,7 +109,7 @@ public class LDAUtils {
 		} else {
 			tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
 		}
-		
+
 		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
 		Alphabet alphabet = null;
 		if(dataAlphabet==null) {
@@ -128,7 +129,7 @@ public class LDAUtils {
 		}
 
 		Target2Label ttl = new Target2Label (tAlphabet);
-		
+
 		pipes.add(csl);
 		pipes.add(tokenizer);
 		pipes.add(sl2fs);
@@ -137,72 +138,85 @@ public class LDAUtils {
 		Pipe serialPipe = new SerialPipes(pipes);
 		return serialPipe;
 	}
-	
+
 	public static InstanceList loadDataset(LDAConfiguration config, String dataset_fn) throws FileNotFoundException {
 		return loadDataset(config, dataset_fn, null);
 	}
-	
+
 	public static InstanceList loadDataset(LDAConfiguration config, String dataset_fn, Alphabet alphabet) throws FileNotFoundException {
 		return loadDataset(config, dataset_fn, alphabet, null);
 	}
-	
+
 	public static InstanceList loadDataset(LDAConfiguration config, String dataset_fn, Alphabet alphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
 		InstanceList instances;
-		
-		File dsf = new File(dataset_fn); 
-		if(dsf.isDirectory()) {
-			instances = LDAUtils.loadInstanceDirectory(
-					dataset_fn, 
-					config.getFileRegex(LDAConfiguration.FILE_REGEX_DEFAULT),
+
+		if(config.noPreprocess()) {
+			instances = LDAUtils.loadInstancesRaw(dataset_fn, 
 					config.getStoplistFilename("stoplist.txt"), 
-					config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), 
-					config.keepNumbers(), 
-					config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
-					config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION),
-					alphabet);
-			if(instances.size()==0) {
-				System.err.println("No instances loaded. Perhaps your filename REGEX ('" 
-						+ config.getFileRegex(LDAConfiguration.FILE_REGEX_DEFAULT) + "') was wrong?");
-				System.err.println("Remember that Java RE's are not the same as Perls. \nTo match a filename that ends with '.txt', the regex would be '" 
-						+ LDAConfiguration.FILE_REGEX_DEFAULT + "'");
-				System.err.println("The filename given to match the regex against is the _full absolute path_ of the file.");
-				System.exit(-1);
-			}
+					config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT));
 		} else {
-			if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
-				instances = LDAUtils.loadInstancesKeep(
-						dataset_fn, 
-						config.getStoplistFilename("stoplist.txt"), 
-						config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
-						config.keepNumbers(), 
-						config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
-						config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), 
-						alphabet,
-						targetAlphabet);					
-			} else {					
-				instances = LDAUtils.loadInstancesPrune(
-						dataset_fn, 
-						config.getStoplistFilename("stoplist.txt"), 
-						config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), 
-						config.keepNumbers(), 
-						config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
-						config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), 
-						alphabet,
-						targetAlphabet);
+
+			File dsf = new File(dataset_fn); 
+			if(dsf.isDirectory()) {
+				instances = loadFromDir(config, dataset_fn, alphabet);
+			} else {
+				if(config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT)>0) {
+					instances = LDAUtils.loadInstancesKeep(
+							dataset_fn, 
+							config.getStoplistFilename("stoplist.txt"), 
+							config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
+							config.keepNumbers(), 
+							config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+							config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), 
+							alphabet,
+							targetAlphabet);					
+				} else {					
+					instances = LDAUtils.loadInstancesPrune(
+							dataset_fn, 
+							config.getStoplistFilename("stoplist.txt"), 
+							config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), 
+							config.keepNumbers(), 
+							config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+							config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), 
+							alphabet,
+							targetAlphabet);
+				}
 			}
 		}
 		return instances;
 	}
-	
+
+	static InstanceList loadFromDir(LDAConfiguration config, String dataset_fn, Alphabet alphabet) {
+		InstanceList instances;
+		instances = LDAUtils.loadInstanceDirectory(
+				dataset_fn, 
+				config.getFileRegex(LDAConfiguration.FILE_REGEX_DEFAULT),
+				config.getStoplistFilename("stoplist.txt"), 
+				config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), 
+				config.keepNumbers(), 
+				config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+				config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION),
+				alphabet);
+		if(instances.size()==0) {
+			System.err.println("No instances loaded. Perhaps your filename REGEX ('" 
+					+ config.getFileRegex(LDAConfiguration.FILE_REGEX_DEFAULT) + "') was wrong?");
+			System.err.println("Remember that Java RE's are not the same as Perls. \nTo match a filename that ends with '.txt', the regex would be '" 
+					+ LDAConfiguration.FILE_REGEX_DEFAULT + "'");
+			System.err.println("The filename given to match the regex against is the _full absolute path_ of the file.");
+			System.exit(-1);
+		}
+		return instances;
+	}
+
 	public static TfIdfPipe getTfIdfPipeFromConfig(LDAConfiguration config) throws FileNotFoundException {
 		TfIdfPipe tfIdfPipe = LDAUtils.getTfIdfPipe(
-						config.getDatasetFilename(), 
-						config.getStoplistFilename("stoplist.txt"), 
-						config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
-						config.keepNumbers(), 
-						config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
-						config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), 
-						null, null);					
+				config.getDatasetFilename(), 
+				config.getStoplistFilename("stoplist.txt"), 
+				config.getTfIdfVocabSize(LDAConfiguration.TF_IDF_VOCAB_SIZE_DEFAULT), 
+				config.keepNumbers(), 
+				config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT), 
+				config.getKeepConnectingPunctuation(LDAConfiguration.KEEP_CONNECTING_PUNCTUATION), 
+				null, null);					
 		return tfIdfPipe;
 	}
 
@@ -217,11 +231,11 @@ public class LDAUtils {
 	public static InstanceList loadInstances(String inputFile, String stoplistFile, int pruneCount) throws FileNotFoundException {
 		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, true, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, null);
 	}
-	
+
 	public static InstanceList loadInstances(String inputFile, String stoplistFile, int pruneCount, Alphabet dataAlphabet) throws FileNotFoundException {
 		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, true, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, dataAlphabet);
 	}
-	
+
 	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers) throws FileNotFoundException {
 		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, null);
 	}
@@ -230,7 +244,7 @@ public class LDAUtils {
 			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) throws FileNotFoundException {
 		return loadInstancesPrune(inputFile, stoplistFile, pruneCount, keepNumbers,	maxBufSize, keepConnectors, dataAlphabet, null);
 	}
-	
+
 	/**
 	 * Loads instances and prunes away low occurring words
 	 * 
@@ -345,13 +359,132 @@ public class LDAUtils {
 	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers) throws FileNotFoundException {
 		return loadInstancesKeep(inputFile, stoplistFile, keepCount, keepNumbers, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, false, null);
 	}
-	
+
 	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, 
 			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet) throws FileNotFoundException {
 		return loadInstancesKeep(inputFile, stoplistFile, keepCount, keepNumbers, 
 				maxBufSize, keepConnectors, dataAlphabet, null);
 	}
-	
+
+	public static InstanceList loadInstancesRaw(String inputFile, String stoplistFile, int keepCount) throws FileNotFoundException {
+		return loadInstancesRaw(inputFile, stoplistFile, keepCount, LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT, null, null);
+	}
+
+	public static InstanceList loadInstancesRaw(String inputFile, String stoplistFile, int keepCount, int maxBufSize) throws FileNotFoundException {
+		return loadInstancesRaw(inputFile, stoplistFile, keepCount, maxBufSize, null, null);
+	}
+
+	public static InstanceList loadInstancesRaw(String inputFile, String stoplistFile, int maxBufSize, int keepCount, Alphabet dataAlphabet) throws FileNotFoundException {
+		return loadInstancesRaw(inputFile, stoplistFile, keepCount, maxBufSize, dataAlphabet, null);
+	}
+	/**
+	 * Loads instances and keeps the <code>keepCount</code> number of words with 
+	 * the highest TF-IDF
+	 * 
+	 * @param inputFile Input file to load
+	 * @param stoplistFile File with stopwords, one per line
+	 * @param keepCount The number of words to keep (based on TF-IDF)
+	 * @param keepNumbers Boolean flag to signal to keep numbers or not
+	 * @param keepConnectors Keep connectors. General category "Pc" in the Unicode specification.
+	 * @param dataAlphabet And optional (null else) data alphabet to use (typically used when loading a test set)
+	 * @return An InstanceList with the data in the input file
+	 * @throws FileNotFoundException
+	 */
+	public static InstanceList loadInstancesRaw(String inputFile, String stoplistFile, int keepCount, int maxBufSize, 
+			Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
+		RawTokenizer tokenizer;
+		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
+		int dataGroup = 3;
+		int labelGroup = 2;
+		int nameGroup = 1; // data, label, name fields
+
+		tokenizer = initRawTokenizer(stoplistFile, maxBufSize);
+
+		if (keepCount > 0) {
+			CsvIterator reader = new CsvIterator(
+					new FileReader(inputFile),
+					lineRegex,
+					dataGroup,
+					labelGroup,
+					nameGroup);
+
+			ArrayList<Pipe> pipes = new ArrayList<Pipe>();
+			Alphabet alphabet = null;
+			if(dataAlphabet==null) {
+				alphabet = new Alphabet();
+			} else {
+				alphabet = dataAlphabet;
+			}
+
+			SimpleTokenizer st = tokenizer.deepClone();
+			StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
+			TfIdfPipe tfIdfPipe = new TfIdfPipe(alphabet, null);
+
+			pipes.add(st);
+			pipes.add(sl2fs);
+			if (keepCount > 0) {
+				pipes.add(tfIdfPipe);
+			}
+
+			Pipe serialPipe = new SerialPipes(pipes);
+
+			Iterator<Instance> iterator = serialPipe.newIteratorFrom(reader);
+
+			int count = 0;
+
+			// We aren't really interested in the instance itself,
+			//  just the total feature counts.
+			while (iterator.hasNext()) {
+				count++;
+				if (count % 100000 == 0) {
+					System.out.println(count);
+				}
+				iterator.next();
+			}
+
+			if (keepCount > 0) {
+				tfIdfPipe.addPrunedWordsToStoplist(tokenizer, keepCount);
+			}
+		}
+
+		CsvIterator reader = new CsvIterator(
+				new FileReader(inputFile),
+				lineRegex,
+				dataGroup,
+				labelGroup,
+				nameGroup);
+
+		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
+		Alphabet alphabet = null;
+		if(dataAlphabet==null) {
+			alphabet = new Alphabet();
+		} else {
+			alphabet = dataAlphabet;
+		}
+
+		StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
+
+		LabelAlphabet tAlphabet = null;
+		if(targetAlphabet==null) {
+			tAlphabet = new LabelAlphabet();
+		} else {
+			tAlphabet = targetAlphabet;
+		}
+
+		Target2Label ttl = new Target2Label (tAlphabet);
+
+		pipes.add(tokenizer);
+		pipes.add(sl2fs);
+		pipes.add(ttl);
+
+		Pipe serialPipe = new SerialPipes(pipes);
+
+		InstanceList instances = new InstanceList(serialPipe);
+		instances.addThruPipe(reader);
+
+		return instances;
+	}
+
 	/**
 	 * Loads instances and keeps the <code>keepCount</code> number of words with 
 	 * the highest TF-IDF
@@ -450,7 +583,7 @@ public class LDAUtils {
 		}
 
 		Target2Label ttl = new Target2Label (tAlphabet);
-		
+
 		pipes.add(csl);
 		pipes.add(tokenizer);
 		pipes.add(sl2fs);
@@ -463,7 +596,7 @@ public class LDAUtils {
 
 		return instances;
 	}
-	
+
 	/**
 	 * Re-creates the pipe that is used if loading with TF-IDF
 	 * This is ugly as hell, but I wanted ti to be as similar as
@@ -542,6 +675,10 @@ public class LDAUtils {
 		return null;
 	}
 
+	static RawTokenizer initRawTokenizer(String stoplistFile, int maxBuffSize) {
+		return new RawTokenizer(new File(stoplistFile),maxBuffSize);
+	}
+
 	static SimpleTokenizerLarge initTokenizer(String stoplistFile, boolean keepNumbers, int maxBufSize, boolean keepConnectors) {
 		SimpleTokenizerLarge tokenizer;
 		if(keepConnectors) {
@@ -575,7 +712,7 @@ public class LDAUtils {
 		}
 		return tokenizer;
 	}
-	
+
 	public static String[][] getTopRelevanceWords(int noWords, int numTypes, int numTopics, 
 			int[][] typeTopicCounts, double beta, double lambda, Alphabet alphabet) {
 		if(noWords>numTypes) {
@@ -583,7 +720,7 @@ public class LDAUtils {
 		}
 		IDSorter[] sortedWords = new IDSorter[numTypes];
 		String [][] topTopicWords = new String[numTopics][noWords];
-		
+
 		double [][] p_w_k = calcWordProbGivenTopic(typeTopicCounts, beta);
 		double [] p_w = calcWordProb(typeTopicCounts, beta);
 
@@ -601,7 +738,7 @@ public class LDAUtils {
 		}
 		return topTopicWords;
 	}
-	
+
 	public static String[][] getTopDistinctiveWords(int noWords, int numTypes, int numTopics, 
 			int[][] typeTopicCounts, double beta, Alphabet alphabet) {
 		if(noWords>numTypes) {
@@ -609,12 +746,12 @@ public class LDAUtils {
 		}
 		IDSorter[] sortedWords = new IDSorter[numTypes];
 		String [][] topTopicWords = new String[numTopics][noWords];
-		
+
 		double [][] p_w_k = calcTopicProbGivenWord(typeTopicCounts, beta);
 		double [] p_w = calcWordProb(typeTopicCounts, beta);
 
 		double [][] distinctiveness = calcWordDistinctiveness(p_w_k, p_w);
-		
+
 		for (int topic = 0; topic < numTopics; topic++) {
 			for (int type = 0; type < numTypes; type++) {
 				sortedWords[type] = new IDSorter(type, distinctiveness[type][topic]);
@@ -628,7 +765,7 @@ public class LDAUtils {
 		}
 		return topTopicWords;
 	}
-	
+
 	public static String[][] getTopSalientWords(int noWords, int numTypes, int numTopics, 
 			int[][] typeTopicCounts, double beta, Alphabet alphabet) {
 		if(noWords>numTypes) {
@@ -636,10 +773,10 @@ public class LDAUtils {
 		}
 		IDSorter[] sortedWords = new IDSorter[numTypes];
 		String [][] topTopicWords = new String[numTopics][noWords];
-		
+
 		double [][] p_w_k = calcTopicProbGivenWord(typeTopicCounts, beta);
 		double [] p_w = calcWordProb(typeTopicCounts, beta);
-		
+
 		double [][] saliency = calcWordSaliency(p_w_k,p_w);
 
 		for (int topic = 0; topic < numTopics; topic++) {
@@ -655,7 +792,7 @@ public class LDAUtils {
 		}
 		return topTopicWords;
 	}
-	
+
 	/**
 	 * Calculate word distinctiveness as defined in: 
 	 * Termite: Visualization Techniques for Assessing Textual Topic Models
@@ -675,7 +812,7 @@ public class LDAUtils {
 		}
 		return wordDistinctiveness;
 	}
-	
+
 	/**
 	 * Calculate word saliency as defined in: 
 	 * Termite: Visualization Techniques for Assessing Textual Topic Models
@@ -717,7 +854,7 @@ public class LDAUtils {
 	public static double[] calcWordProb(int[][] typeTopicCounts, double beta) {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords = typeTopicCounts.length;
-		
+
 		double [] wordProbs = new double[nrWords];
 		double wordMass = 0;
 		for (int w = 0; w < nrWords; w++) {
@@ -731,7 +868,7 @@ public class LDAUtils {
 		}
 		return wordProbs;
 	}
-	
+
 	public static double[] calcUnsmoothedWordProb(int[][] typeTopicCounts) {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords  = typeTopicCounts.length;
@@ -748,8 +885,8 @@ public class LDAUtils {
 		}
 		return wordProbs;
 	}
-	
-	
+
+
 	/**
 	 * Calculate KR1 re-weighting scheme as defined in "Topic and Keyword Re-ranking for LDA-based Topic Modeling"
 	 * Yangqiu Song, Shimei Pan, Shixia Liu, Michelle X. Zhou, Weihong Qian
@@ -769,7 +906,7 @@ public class LDAUtils {
 		}
 		IDSorter[] sortedWords = new IDSorter[numTypes];
 		String [][] topTopicWords = new String[numTopics][noWords];
-	
+
 		double[][] k1ReWeighted = calcK1(typeTopicCounts, beta); 
 
 		for (int topic = 0; topic < numTopics; topic++) {
@@ -786,7 +923,7 @@ public class LDAUtils {
 		}
 		return topTopicWords;
 	}
-	
+
 	/**
 	 * Keyword Re-ranking as described in 'Topic and Keyword Re-ranking for LDA-based Topic Modeling', 
 	 * by Yangqiu Song, Shimei Pan, Shixia Liu, Michelle X. Zhou, Weihong Qian
@@ -800,7 +937,7 @@ public class LDAUtils {
 		int nrWords = typeTopicCounts.length;
 		double [][] wordK1GivenTopic = new double[nrWords][nrTopics];
 		double [][] p_w_k = calcWordProbGivenTopic(typeTopicCounts, beta);
-		
+
 		for (int w = 0; w < nrWords; w++) {
 			double wordMass = 0;
 			for (int k = 0; k < nrTopics; k++) { 
@@ -816,7 +953,7 @@ public class LDAUtils {
 	public static double[][] calcWordProbGivenTopic(int[][] typeTopicCounts, double beta) {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords = typeTopicCounts.length;
-		
+
 		double [][] wordProbGivenTopic = new double[nrWords][nrTopics];
 		for (int k = 0; k < nrTopics; k++) { 
 			double wordMass = 0;
@@ -829,7 +966,7 @@ public class LDAUtils {
 		}
 		return wordProbGivenTopic;
 	}
-	
+
 	/**
 	 * Calculate topic probability given a word
 	 * @param typeTopicCounts
@@ -839,7 +976,7 @@ public class LDAUtils {
 	public static double[][] calcTopicProbGivenWord(int[][] typeTopicCounts, double beta) {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords  = typeTopicCounts.length;
-		
+
 		double [] topicProbability = new double[nrTopics];
 		double [] typeSum = new double[nrWords];
 		double totalTokencount = 0;
@@ -855,19 +992,19 @@ public class LDAUtils {
 		for (int type = 0; type < typeTopicCounts.length; type++) {
 			for (int topic = 0; topic < typeTopicCounts[type].length; topic++) {
 				double weight = typeTopicCounts[type][topic] + beta;
-				
+
 				double p_w_t = weight / topicProbability[topic];
 				double p_t   = topicProbability[topic] / totalTokencount;
 				double p_w   = typeSum[type] / totalTokencount;
-				
+
 				double topicProb =  p_w_t * p_t / p_w;
 				probTopicGivenWord[type][topic] = topicProb;
 			}
 		}
-		
+
 		return probTopicGivenWord;
 	}
-	
+
 	public static double[][] calcUnsmoothedWordProbGivenTopic(int[][] typeTopicCounts) {
 		int nrTopics = typeTopicCounts[0].length;
 		int nrWords  = typeTopicCounts.length;
@@ -951,7 +1088,7 @@ public class LDAUtils {
 			System.err.println("Could not write test held out log likelihood file");
 		}
 	}
-	
+
 	public static void logLikelihoodToFile(double logLik, int iteration, 
 			String wordsPerTopic, String loggingPath, Logger logger) {
 		logger.info("\n<" + iteration + "> Log Likelihood: " + logLik + "\n" +wordsPerTopic);
@@ -963,7 +1100,7 @@ public class LDAUtils {
 			throw new IllegalStateException(e);
 		}
 	}	
-	
+
 	public static void logLikelihoodToFile(LogState parameterObject) {
 		String likelihoodFile = parameterObject.loggingPath + "/likelihood.txt";
 		try(PrintWriter out = new PrintWriter(new BufferedWriter(
@@ -973,7 +1110,7 @@ public class LDAUtils {
 			throw new IllegalStateException(e);
 		}
 	}
-	
+
 	public static void logStatstHeaderToFile(Stats statsObject) {
 		String header = "iteration\ttimestamp\tzTotalTime\tphiTotalTime\ttypeTokenDensity\tdocumentDensity";
 		if(statsObject.zTimings!=null) {
@@ -998,15 +1135,15 @@ public class LDAUtils {
 			throw new IllegalStateException(e);
 		}
 	}
-	
+
 	public static void logStatsToFile(Stats statsObject) {
 		String likelihoodFile = statsObject.loggingPath + "/stats.txt";
-		
+
 		String logString = statsObject.iteration + "\t"
 				+ statsObject.absoluteTime + "\t" + statsObject.zSamplingTokenUpdateTime + "\t" 
 				+ statsObject.phiSamplingTime + "\t" + statsObject.density
 				+ "\t" + statsObject.docDensity;
-		
+
 		if(statsObject.zTimings!=null) {
 			for (int i = 0; i < statsObject.zTimings.length; i++) {
 				logString += "\t" + statsObject.zTimings[i];
@@ -1116,9 +1253,9 @@ public class LDAUtils {
 			}
 		}
 	}
-	
+
 	public static void writeBinaryDoubleMatrix(double[][] matrix, int iteration, String filename)
-					throws FileNotFoundException, IOException {
+			throws FileNotFoundException, IOException {
 		writeBinaryDoubleMatrix(matrix, iteration, matrix.length, matrix[0].length, filename);
 	}
 
@@ -1172,7 +1309,7 @@ public class LDAUtils {
 		File file = new File(fn);
 		if (file.exists()) {
 			System.out.println("Warning : the file " + file.getName()
-					+ " already exists, overwriting...");
+			+ " already exists, overwriting...");
 		}
 		try (FileWriter fw = new FileWriter(file, false); 
 				BufferedWriter bw = new BufferedWriter(fw);
@@ -1188,14 +1325,14 @@ public class LDAUtils {
 			}
 		} catch (IOException e) {
 			throw new IllegalArgumentException("File " + file.getName()
-					+ " is unwritable : " + e.toString());
+			+ " is unwritable : " + e.toString());
 		}
 	}
 
 	public static String formatDouble(double d, DecimalFormat mydecimalFormat) {
 		return formatDouble(d, mydecimalFormat, 4);
 	}
-	
+
 	public static String formatDouble(double d, DecimalFormat mydecimalFormat, int noDigits) {
 		if ( d<0.0001 && d>0 || d > -0.0001 && d < 0) {
 			return mydecimalFormat.format(d);
@@ -1204,7 +1341,7 @@ public class LDAUtils {
 			return String.format(formatString, d);
 		}
 	}
-	
+
 	public static String formatDoubleMarkZero(double d, DecimalFormat mydecimalFormat, int noDigits) {
 		if ( d == 0.0 ) return "<0.0>";
 		if ( d<0.0001 && d>0 || d > -0.0001 && d < 0) {
@@ -1229,7 +1366,7 @@ public class LDAUtils {
 		File file = new File(fn);
 		if (file.exists()) {
 			System.out.println("Warning : the file " + file.getName()
-					+ " already exists !");
+			+ " already exists !");
 		}
 		try (FileWriter fw = new FileWriter(file, false); 
 				BufferedWriter bw = new BufferedWriter(fw);
@@ -1245,10 +1382,10 @@ public class LDAUtils {
 			}
 		} catch (IOException e) {
 			throw new IllegalArgumentException("File " + file.getName()
-					+ " is unwritable : " + e.toString());
+			+ " is unwritable : " + e.toString());
 		}
 	}
-		
+
 	public static int [][] readBinaryIntMatrix(int rows, int columns, String fn) throws IOException {
 		File matrixFile = new File(fn);
 		int [][] matrix = new int[rows][columns];
@@ -1262,67 +1399,67 @@ public class LDAUtils {
 		}
 		return matrix;
 	}
-	
+
 	public static int[][] readASCIIIntMatrix(String filename, String sep) throws IOException {
 		List<List<Integer>> rows = new ArrayList<List<Integer>>();
 		File file = new File(filename);
-	    FileReader fr = new FileReader(file);
-	    BufferedReader br = new BufferedReader(fr);
-	    String line;
-	    while((line = br.readLine()) != null){
-	    	List<Integer> row = new ArrayList<Integer>();
-	    	String [] ints = line.split(sep);
-	    	for (int i = 0; i < ints.length; i++) {
+		FileReader fr = new FileReader(file);
+		BufferedReader br = new BufferedReader(fr);
+		String line;
+		while((line = br.readLine()) != null){
+			List<Integer> row = new ArrayList<Integer>();
+			String [] ints = line.split(sep);
+			for (int i = 0; i < ints.length; i++) {
 				if(ints[i].trim().length()>0) {
 					row.add(Integer.parseInt(ints[i]));
 				}
 			}
-	    	rows.add(row);
-	    }
-	    br.close();
-	    fr.close();
-	    int [][] result = new int[rows.size()][];
-	    for (int i = 0; i < rows.size(); i++) {
-	    	List<Integer> row = rows.get(i);
-	    	int [] irow = new int[row.size()];
-	    	for (int j = 0; j < row.size(); j++) {
+			rows.add(row);
+		}
+		br.close();
+		fr.close();
+		int [][] result = new int[rows.size()][];
+		for (int i = 0; i < rows.size(); i++) {
+			List<Integer> row = rows.get(i);
+			int [] irow = new int[row.size()];
+			for (int j = 0; j < row.size(); j++) {
 				irow[j] = row.get(j);
 			}
-	    	result[i] = irow;
-	    }
+			result[i] = irow;
+		}
 		return result;
 	}
-	
+
 	public static double[][] readASCIIDoubleMatrix(String filename, String sep) throws IOException {
 		List<List<Double>> rows = new ArrayList<List<Double>>();
 		File file = new File(filename);
-	    FileReader fr = new FileReader(file);
-	    BufferedReader br = new BufferedReader(fr);
-	    String line;
-	    while((line = br.readLine()) != null){
-	    	List<Double> row = new ArrayList<Double>();
-	    	String [] ints = line.split(sep);
-	    	for (int i = 0; i < ints.length; i++) {
+		FileReader fr = new FileReader(file);
+		BufferedReader br = new BufferedReader(fr);
+		String line;
+		while((line = br.readLine()) != null){
+			List<Double> row = new ArrayList<Double>();
+			String [] ints = line.split(sep);
+			for (int i = 0; i < ints.length; i++) {
 				if(ints[i].trim().length()>0) {
 					row.add(Double.parseDouble(ints[i]));
 				}
 			}
-	    	rows.add(row);
-	    }
-	    br.close();
-	    fr.close();
-	    double [][] result = new double[rows.size()][];
-	    for (int i = 0; i < rows.size(); i++) {
-	    	List<Double> row = rows.get(i);
-	    	double [] irow = new double[row.size()];
-	    	for (int j = 0; j < row.size(); j++) {
+			rows.add(row);
+		}
+		br.close();
+		fr.close();
+		double [][] result = new double[rows.size()][];
+		for (int i = 0; i < rows.size(); i++) {
+			List<Double> row = rows.get(i);
+			double [] irow = new double[row.size()];
+			for (int j = 0; j < row.size(); j++) {
 				irow[j] = row.get(j);
 			}
-	    	result[i] = irow;
-	    }
+			result[i] = irow;
+		}
 		return result;
 	}
-	
+
 	public static double[][] readBinaryDoubleMatrix(int rows, int columns, String fn) throws FileNotFoundException, IOException {
 		File matrixFile = new File(fn);
 		double [][] matrix = new double[rows][columns];
@@ -1421,7 +1558,7 @@ public class LDAUtils {
 		return topicSortedWords;
 	}
 
-	
+
 	public static String formatTopWordsAsCsv(String[][] topWords) {
 		String result = "";
 		for (int i = 0; i < topWords.length; i++) {
@@ -1437,7 +1574,7 @@ public class LDAUtils {
 		}
 		return result;
 	}
-	
+
 	public static String formatTopWords(String[][] topWords) {
 		String result = "";
 		for (int i = 0; i < topWords.length; i++) {
@@ -1489,11 +1626,11 @@ public class LDAUtils {
 		}
 		return result.toString();
 	}
-	
+
 	public static String instanceToTokenIndexString(Instance instance) {
 		return instanceToTokenIndexString(instance,-1);
 	}
-	
+
 	public static String instanceToTokenIndexString(Instance instance, int noWords) {
 		StringBuilder result = new StringBuilder("");
 		FeatureSequence features = (FeatureSequence) instance.getData();
@@ -1520,7 +1657,7 @@ public class LDAUtils {
 
 		return result;
 	}
-	
+
 	public static String instanceToSvmLightString(Instance instance, int noWords) {
 		String result = "";
 		FeatureSequence features = (FeatureSequence) instance.getData();
@@ -1538,7 +1675,7 @@ public class LDAUtils {
 		}
 		return result;
 	}
-	
+
 	public static String indicesToString(int [] indices, Alphabet alphabet) {
 		StringBuilder result = new StringBuilder("");
 		int noWords = indices.length;
@@ -1693,7 +1830,7 @@ public class LDAUtils {
 			for (int col = 0; col < cols; col++)
 				transpose[col][row] = matrix[row][col];
 	}
-	
+
 	public static double calculateMatrixDensity(int[][] matrix) {
 		double nonZero = 0.0;
 		for (int type = 0; type < matrix.length; type++) {
@@ -1745,7 +1882,7 @@ public class LDAUtils {
 
 		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
 		Target2Label ttl = new Target2Label ();
-		
+
 		pipes.add(tokenizer);
 		//pipes.add(sl2fs);
 		pipes.add(ttl);
@@ -1762,13 +1899,13 @@ public class LDAUtils {
 			for (String string : text) {
 				result += string + " ";
 			}
-//			for (int i = 0; i < features.size(); i++) {
-//				result += alphabet.lookupObject(features.getIndexAtPosition(i)) + " ";
-//			}
+			//			for (int i = 0; i < features.size(); i++) {
+			//				result += alphabet.lookupObject(features.getIndexAtPosition(i)) + " ";
+			//			}
 			files.add(result);
 		}
 		return files;	
-		}
+	}
 
 	public static String instanceLabelToString(Instance instance) {
 		String label  = instance.getLabeling().getBestLabel().toString();
@@ -1798,7 +1935,7 @@ public class LDAUtils {
 			}
 		} catch (IOException e) {
 			throw new IllegalArgumentException("File " + file.getName()
-					+ " is unwritable : " + e.toString());
+			+ " is unwritable : " + e.toString());
 		}
 	}
 
@@ -1810,26 +1947,26 @@ public class LDAUtils {
 			pw.println(string);
 		} catch (IOException e) {
 			throw new IllegalArgumentException("File " + file.getName()
-					+ " is unwritable : " + e.toString());
+			+ " is unwritable : " + e.toString());
 		}
 	}
-	
-	public static String toRowVectorString(int[] a) {
-        if (a == null)
-            return "null";
-        int iMax = a.length - 1;
-        if (iMax == -1)
-            return "";
 
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; ; i++) {
-            b.append(a[i]);
-            if (i == iMax)
-                return b.toString();
-            b.append(", ");
-        }
-    }
-	
+	public static String toRowVectorString(int[] a) {
+		if (a == null)
+			return "null";
+		int iMax = a.length - 1;
+		if (iMax == -1)
+			return "";
+
+		StringBuilder b = new StringBuilder();
+		for (int i = 0; ; i++) {
+			b.append(a[i]);
+			if (i == iMax)
+				return b.toString();
+			b.append(", ");
+		}
+	}
+
 	public static void writeIntRowArray(int[] iarr, String fileName) {
 		File file = new File(fileName);
 		try (FileWriter fw = new FileWriter(file, true); 
@@ -1838,10 +1975,10 @@ public class LDAUtils {
 			pw.println(toRowVectorString(iarr));
 		} catch (IOException e) {
 			throw new IllegalArgumentException("File " + file.getName()
-					+ " is unwritable : " + e.toString());
+			+ " is unwritable : " + e.toString());
 		}
 	}
-	
+
 	public static void writeIntArray(int[] iarr, String fileName) {
 		File file = new File(fileName);
 		try (FileWriter fw = new FileWriter(file, false); 
@@ -1852,11 +1989,11 @@ public class LDAUtils {
 			}
 		} catch (IOException e) {
 			throw new IllegalArgumentException("File " + file.getName()
-					+ " is unwritable : " + e.toString());
+			+ " is unwritable : " + e.toString());
 		}
 	}
 
-	
+
 	public static int[] extractTermCounts(InstanceList instances) {
 		int [] termCounts = new int[instances.getDataAlphabet().size()];
 		for (int i = 0; i < instances.size(); i++) {
@@ -1879,18 +2016,18 @@ public class LDAUtils {
 		}
 		return docLens;
 	}
-	
+
 	public static InstanceList loadInstanceDirectory(String directory, String fileRegex, String stoplistFile,
 			Integer rareThreshold, boolean keepNumbers, int maxDocumentBufferSize, boolean keepConnectors, Alphabet alphabet) {
-			return loadInstanceDirectories(new String[] {directory}, fileRegex, stoplistFile, rareThreshold,
-				 keepNumbers, maxDocumentBufferSize, keepConnectors, alphabet);
+		return loadInstanceDirectories(new String[] {directory}, fileRegex, stoplistFile, rareThreshold,
+				keepNumbers, maxDocumentBufferSize, keepConnectors, alphabet);
 	}
 
 	public static InstanceList loadInstanceDirectory(String directory, String fileRegex, String stoplistFile,
 			Integer rareThreshold, boolean keepNumbers, int maxDocumentBufferSize, boolean keepConnectors, 
 			Alphabet alphabet, LabelAlphabet targetAlphabet) {
-			return loadInstanceDirectories(new String[] {directory}, fileRegex, stoplistFile, rareThreshold,
-				 keepNumbers, maxDocumentBufferSize, keepConnectors, alphabet, targetAlphabet);
+		return loadInstanceDirectories(new String[] {directory}, fileRegex, stoplistFile, rareThreshold,
+				keepNumbers, maxDocumentBufferSize, keepConnectors, alphabet, targetAlphabet);
 	}
 
 	public static InstanceList loadInstanceDirectories(String [] directories, final String fileRegex, String stoplistFile, Integer keepCount,
@@ -1901,25 +2038,25 @@ public class LDAUtils {
 
 	public static InstanceList loadInstanceDirectories(String [] directories, final String fileRegex, String stoplistFile, Integer keepCount,
 			boolean keepNumbers, int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) {
-		
+
 		File [] fdirectories = new File[directories.length];
 		for (int i = 0; i < fdirectories.length; i++) {
 			fdirectories[i] = new File(directories[i]);
 		}
-		
+
 		SimpleTokenizerLarge tokenizer;
 
 		tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
 
 		if (keepCount > 0) {
 			FileIterator iterator = new FileIterator(fdirectories,
-                    new FileFilter() {
-						@Override
-						public boolean accept(File pathname) {
-							return pathname.toString().matches(fileRegex);
-						}
-					},
-                    FileIterator.LAST_DIRECTORY);
+					new FileFilter() {
+				@Override
+				public boolean accept(File pathname) {
+					return pathname.toString().matches(fileRegex);
+				}
+			},
+					FileIterator.LAST_DIRECTORY);
 
 			Alphabet alphabet = null;
 			if(dataAlphabet==null) {
@@ -1933,21 +2070,21 @@ public class LDAUtils {
 
 			ArrayList<Pipe> pipes = new ArrayList<Pipe>();
 			pipes.add(new Input2CharSequence("UTF-8"));
-			
+
 			Pattern tokenPattern =
-		            Pattern.compile("[\\p{L}\\p{N}_]+");
+					Pattern.compile("[\\p{L}\\p{N}_]+");
 
 			pipes.add(new CharSequence2TokenSequence(tokenPattern));
 			pipes.add(new TokenSequenceLowercase());
-			
+
 			TokenSequenceRemoveStopwords stopwordFilter =
 					new TokenSequenceRemoveStopwords(new File(stoplistFile),
-													 Charset.defaultCharset().displayName(),
-													 false, // don't include default list
-													 false,
-													 false);
+							Charset.defaultCharset().displayName(),
+							false, // don't include default list
+							false,
+							false);
 			pipes.add(stopwordFilter);
-			
+
 			TokenSequencePredicateMatcher reMatchPipe = new TokenSequencePredicateMatcher(new TokenSequencePredicateMatcher.Predicate<String>() {
 				@Override
 				public boolean test(String query) {
@@ -1955,7 +2092,7 @@ public class LDAUtils {
 				}
 			});
 			pipes.add(reMatchPipe);
-			
+
 			pipes.add(sl2fs);
 			if (keepCount > 0) {
 				pipes.add(tfIdfPipe);
@@ -1984,11 +2121,11 @@ public class LDAUtils {
 
 		FileIterator iterator = new FileIterator(fdirectories,
 				new FileFilter() {
-					@Override
-					public boolean accept(File pathname) {
-						return pathname.toString().matches(fileRegex);
-					}
-				},
+			@Override
+			public boolean accept(File pathname) {
+				return pathname.toString().matches(fileRegex);
+			}
+		},
 				FileIterator.LAST_DIRECTORY);
 
 		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
@@ -2002,20 +2139,20 @@ public class LDAUtils {
 		TokenSequence2FeatureSequence sl2fs = new TokenSequence2FeatureSequence(alphabet);
 
 		pipes.add(new Input2CharSequence("UTF-8"));
-		
+
 		Pattern tokenPattern =
-	            Pattern.compile("[\\p{L}\\p{N}_]+");
+				Pattern.compile("[\\p{L}\\p{N}_]+");
 
 		pipes.add(new CharSequence2TokenSequence(tokenPattern));
 		pipes.add(new TokenSequenceLowercase());
 		TokenSequenceRemoveStopwords stopwordFilter =
 				new TokenSequenceRemoveStopwords(new File(stoplistFile),
-												 Charset.defaultCharset().displayName(),
-												 false, // don't include default list
-												 false,
-												 false);
+						Charset.defaultCharset().displayName(),
+						false, // don't include default list
+						false,
+						false);
 		pipes.add(stopwordFilter);
-		
+
 		TokenSequencePredicateMatcher reMatchPipe = new TokenSequencePredicateMatcher(new TokenSequencePredicateMatcher.Predicate<String>() {
 			@Override
 			public boolean test(String query) {
@@ -2023,7 +2160,7 @@ public class LDAUtils {
 			}
 		});
 		pipes.add(reMatchPipe);
-		
+
 		pipes.add(sl2fs);
 
 		LabelAlphabet tAlphabet = null;
@@ -2071,9 +2208,9 @@ public class LDAUtils {
 				resultTrain.add((String)alphabet.lookupObject(trainFeatures.getIndexAtPosition(i)));
 			}
 		}
-		
+
 		resultTrain.retainAll(resultTest);
-		
+
 		return resultTrain.stream().collect(Collectors.toList());
 	}
 
@@ -2091,19 +2228,19 @@ public class LDAUtils {
 	public static InstanceList loadInstancesStrings(String [] doclines, Pipe pipe) {
 		return loadInstancesStrings(doclines, "X", "stoplist.txt", pipe);
 	}
-	
+
 	public static InstanceList loadInstancesStrings(String [] doclines) {
 		return loadInstancesStrings(doclines, "X", "stoplist.txt");
 	}
-	
+
 	public static InstanceList loadInstancesStrings(String [] doclines, String className) {
 		return loadInstancesStrings(doclines, className, "stoplist.txt");
 	}
-	
+
 	public static InstanceList loadInstancesStrings(String [] doclines, String className, String stoplistFile) {
 		return loadInstancesStrings(doclines, className, stoplistFile, null);
 	}
-	
+
 	public static InstanceList loadInstancesStrings(String [] doclines, String className, String stoplistFile, Pipe pipe) {
 		StringClassArrayIterator readerTrain = new StringClassArrayIterator(doclines, className); 
 
