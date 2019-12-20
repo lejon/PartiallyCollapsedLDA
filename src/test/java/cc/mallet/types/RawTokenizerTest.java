@@ -23,10 +23,8 @@ public class RawTokenizerTest {
 	String fn = "stoplist.txt";
 
 	@Test
-	public void testRwaTokenizer() throws ConfigurationException, ParseException {
-		String [] args = {"--run_cfg=src/test/resources/max_doc_buf.cfg"};
-		ConfigFactory.setMainConfiguration(null);
-		RawTokenizer rt = new RawTokenizer(new File(fn));
+	public void testRawTokenizer() throws ConfigurationException, ParseException {
+		new RawTokenizer(new File(fn));
 	}
 	
 	@Test
@@ -34,10 +32,10 @@ public class RawTokenizerTest {
 		String [] args = {"--run_cfg=src/test/resources/max_doc_buf-small.cfg"};
 		LDACommandLineParser cp = new LDACommandLineParser(args);
 		ParsedLDAConfiguration config = (ParsedLDAConfiguration) ConfigFactory.getMainConfiguration(cp);
-		config.activateSubconfig("large_wiki_random_100_spalias_cores_16_seed_4711");
+		config.forceActivateSubconfig("default");
 		String stlfn = config.getStoplistFilename("stoplist.txt");
 		SimpleTokenizerLarge stl = new SimpleTokenizerLarge(new File(stlfn), config.getMaxDocumentBufferSize(10));
-		assertEquals(471100,stl.getTokenBufferSize());	
+		assertEquals(10,stl.getTokenBufferSize());	
 	}
 	
 	@Test
@@ -47,7 +45,7 @@ public class RawTokenizerTest {
 		
 		LDACommandLineParser cp = new LDACommandLineParser(args);
 		ParsedLDAConfiguration config = (ParsedLDAConfiguration) ConfigFactory.getMainConfiguration(cp);
-		config.activateSubconfig("tf_idf_prune");
+		config.forceActivateSubconfig("tf_idf_prune");
 		
 		assertEquals(10,config.getMaxDocumentBufferSize(LDAConfiguration.MAX_DOC_BUFFFER_SIZE_DEFAULT));
 
