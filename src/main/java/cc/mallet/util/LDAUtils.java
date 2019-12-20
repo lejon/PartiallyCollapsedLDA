@@ -98,16 +98,28 @@ public class LDAUtils {
 	}
 
 	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet) {
-		return buildSerialPipe(stoplistFile, dataAlphabet, null);
+		return buildSerialPipe(stoplistFile, dataAlphabet, null, false);
 	}
 
-	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) { 		
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, boolean raw) {
+		return buildSerialPipe(stoplistFile, dataAlphabet, null, raw);
+	}
+	
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, LabelAlphabet targetAlphabet, boolean raw) { 		
 		int maxBufSize = 10000;
-		SimpleTokenizerLarge tokenizer = null;
-		if(stoplistFile==null) {
-			tokenizer = new SimpleTokenizerLarge(new HashSet<String>(), maxBufSize);
+		Pipe tokenizer = null;
+		if(raw) {
+			if(stoplistFile==null) {
+				tokenizer = new RawTokenizer(new HashSet<String>(), maxBufSize);
+			} else {
+				tokenizer = new RawTokenizer(new File(stoplistFile), maxBufSize);
+			}
 		} else {
-			tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
+			if(stoplistFile==null) {
+				tokenizer = new SimpleTokenizerLarge(new HashSet<String>(), maxBufSize);
+			} else {
+				tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
+			}
 		}
 
 		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
@@ -130,7 +142,7 @@ public class LDAUtils {
 
 		Target2Label ttl = new Target2Label (tAlphabet);
 
-		pipes.add(csl);
+		if(!raw) pipes.add(csl);
 		pipes.add(tokenizer);
 		pipes.add(sl2fs);
 		pipes.add(ttl);

@@ -97,7 +97,8 @@
 	<!-- v8.1.0: Added Polya Urn with seeding (fixed small bug in Spalias with prior)-->
 	<!-- v8.1.1: Added 'raw' mode, i.e no pre-processing of input data-->
 	<!-- v8.2.1: Added 'continue sampling' and 'init from' functionality -->
-	<version>8.2.1</version>
+	<!-- v8.2.2: Support 'raw' mode when reading corpus from string -->
+	<version>8.2.2</version>
 
 	<name>Partially Collapsed Parallel LDA</name>
 
