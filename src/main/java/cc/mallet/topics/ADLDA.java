@@ -575,4 +575,9 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 		return null;
 	}
 
+	@Override
+	public InstanceList getTestSet() {
+		return null;
+	}
+
 }

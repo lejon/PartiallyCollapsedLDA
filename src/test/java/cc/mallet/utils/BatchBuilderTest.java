@@ -202,6 +202,11 @@ public class BatchBuilderTest {
 		public double[] getHeldOutLogLikelihood() {
 			return null;
 		}
+
+		@Override
+		public InstanceList getTestSet() {
+			return null;
+		}
 	}
 
 	@Test

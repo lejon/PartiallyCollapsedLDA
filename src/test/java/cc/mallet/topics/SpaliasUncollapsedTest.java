@@ -704,21 +704,34 @@ public class SpaliasUncollapsedTest {
 
 		// Runs the model
 		model.sample(noIterations);
-
-		LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
-		assertEquals(0, ((SpaliasUncollapsedParallelLDA)model).getNoSampledPhi()); 
-		assertTrue(modelWithPhi.getPhiMeans()==null);
 		
-		
-		File storedFn = new File("/tmp/UnitTestSpaliasSampler.bin");
+		File storedFn = new File("/tmp/UnitTestSpaliasSampler.ser");
 		((SpaliasUncollapsedParallelLDA) model).write(storedFn);
 		
+		double [] lls = ((SpaliasUncollapsedParallelLDA) model).getLogLikelihood();
+		System.out.println("LL (start): " + lls[0] + " LL(end):" + lls[lls.length-1]);
+
+		int additionalIterations = 200;
+		System.out.println("Starting additional iterations (" + additionalIterations + " total).");
+		model.continueSampling(additionalIterations);
+		lls = ((SpaliasUncollapsedParallelLDA) model).getLogLikelihood();
+		System.out.println("LL (start): " + lls[0] + " LL(end):" + lls[lls.length-1]);
+		double origFinal = lls[lls.length-1];
 		
 		LDASamplerWithPhi newModel = SpaliasUncollapsedParallelLDA.read(storedFn);
 
-		LDASamplerWithPhi model3 = new SpaliasUncollapsedParallelLDA(config);
-		model3.setZIndicators(model.getZIndicators());
-		model3.setPhi(newModel.getPhi(), newModel.getDataset().getAlphabet(), newModel.getDataset().getDataAlphabet());
+		LDASamplerInitiable model3 = new SpaliasUncollapsedParallelLDA(config);
+		model3.initFrom(newModel);
+
+		System.out.println("Starting additional iterations new model (" + additionalIterations + " total).");
+
+		// Runs the model
+		model3.sample(additionalIterations);
+		lls = ((SpaliasUncollapsedParallelLDA) model3).getLogLikelihood();
+
+		System.out.println("LL (start): " + lls[0] + " LL(end):" + lls[lls.length-1]);
+		
+		assertEquals(origFinal, lls[lls.length-1], 0.001E7);
 	}
 
 

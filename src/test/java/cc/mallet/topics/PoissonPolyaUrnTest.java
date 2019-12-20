@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
@@ -346,5 +347,71 @@ public class PoissonPolyaUrnTest {
 		model.continueSampling(noIterations);
 		
 		assertEquals(noIterations*2, model.getCurrentIteration());
+	}
+	
+	@Test
+	public void testSaveAndContinueSampling() throws Exception {
+		String whichModel = "polyaurn";
+
+		Integer numIter = 20;
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter);
+		config.setSavePhi(false);
+		config.setPhiBurnIn(20);
+
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("Using dataset: " + dataset_fn);
+		System.out.println("Scheme: " + whichModel);
+		LoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("TestRuns");
+		config.setLoggingUtil(lu);
+
+		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
+				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+
+		LDASamplerContinuable model = new PolyaUrnSpaliasLDA(config);
+		System.out.println(
+				String.format("Polya Urn Parallell LDA (%d batches).", 
+						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		model.addInstances(instances);
+
+		Integer noIterations = config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT);
+		System.out.println("Starting iterations (" + noIterations + " total).");
+
+		// Runs the model
+		model.sample(noIterations);
+		
+		File storedFn = new File("/tmp/UnitTestPloyaUrnSpaliasSampler.ser");
+		((PolyaUrnSpaliasLDA) model).write(storedFn);
+		
+		double [] lls = ((PolyaUrnSpaliasLDA) model).getLogLikelihood();
+		System.out.println("LL (start): " + lls[0] + " LL(end):" + lls[lls.length-1]);
+
+		int additionalIterations = 200;
+		System.out.println("Starting additional iterations (" + additionalIterations + " total).");
+		model.continueSampling(additionalIterations);
+		lls = ((PolyaUrnSpaliasLDA) model).getLogLikelihood();
+		System.out.println("LL (start): " + lls[0] + " LL(end):" + lls[lls.length-1]);
+		double origFinal = lls[lls.length-1];
+		
+		LDASamplerWithPhi newModel = PolyaUrnSpaliasLDA.read(storedFn);
+
+		LDASamplerInitiable model3 = new PolyaUrnSpaliasLDA(config);
+		model3.initFrom(newModel);
+
+		System.out.println("Starting additional iterations new model (" + additionalIterations + " total).");
+
+		// Runs the model
+		model3.sample(additionalIterations);
+		lls = ((PolyaUrnSpaliasLDA) model3).getLogLikelihood();
+
+		System.out.println("LL (start): " + lls[0] + " LL(end):" + lls[lls.length-1]);
+		
+		assertEquals(origFinal, lls[lls.length-1], 0.001E7);
 	}
 }

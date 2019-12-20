@@ -33,7 +33,7 @@ import cc.mallet.util.Randoms;
  * 
  * @author Leif Jonsson
  */
-public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Serializable {
+public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, LDASamplerInitiable, Serializable {
 
 	protected static Logger logger = MalletLogger.getLogger(ModifiedSimpleLDA.class.getName());
 
@@ -914,7 +914,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 
 	@Override
 	public void addTestInstances(InstanceList testSet) {
-		if(!testSet.getAlphabet().equals(alphabet)) {
+		if(testSet != null && !testSet.getAlphabet().equals(alphabet)) {
 			throw new IllegalStateException("Alphabets on training and test sets do not match!");
 		}
 		this.testSet = testSet;
@@ -973,5 +973,11 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, Ser
 	public int[][] getTypeTopicCounts() { return typeTopicCounts; }
 	public int[] getTopicTotals() { return tokensPerTopic; }
 
+	@Override
+	public void initFrom(LDAGibbsSampler source) {
+		addInstances(source.getDataset());
+		addTestInstances(source.getTestSet());
+		setZIndicators(source.getZIndicators());
+	}
 
 }

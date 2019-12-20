@@ -2189,4 +2189,12 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	public void postContinuedSampling() {
 		shutdownThreadPools();		
 	}
+	
+	@Override
+	public void initFrom(LDAGibbsSampler source) {
+		super.initFrom(source);
+		LDASamplerWithPhi phiSampler = (LDASamplerWithPhi) source;
+		setPhi(phiSampler.getPhi());
+		phiMean = phiSampler.getPhiMeans();
+	}
 }
