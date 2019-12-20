@@ -26,7 +26,7 @@ import cc.mallet.util.WalkerAliasTable;
 
 //public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGibbsSampler, LDASamplerWithCallback {
 public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGibbsSampler {
-	
+
 	{ 
 		logger = MalletLogger.getLogger(PolyaUrnSpaliasLDA.class.getName());
 	}
@@ -66,7 +66,14 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	@Override
 	public void preSample() {
 		super.preSample();
-		int poolSize = 2; // Parallel alias table pool (why 2?)
+		int poolSize = 2;
+		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
+	}
+	
+	@Override
+	public void preContinuedSampling() {
+		super.preContinuedSampling();
+		int poolSize = 2;
 		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
 	}
 	
@@ -179,6 +186,12 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	@Override
 	public void postSample() {
 		super.postSample();
+		tableBuilderExecutor.shutdown();
+	}
+	
+	@Override
+	public void postContinuedSampling() {
+		super.postContinuedSampling();
 		tableBuilderExecutor.shutdown();
 	}
 

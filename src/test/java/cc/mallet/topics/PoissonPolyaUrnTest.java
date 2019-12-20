@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -12,12 +13,37 @@ import org.apache.commons.math3.stat.inference.ChiSquareTest;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.configuration.SimpleLDAConfiguration;
+import cc.mallet.types.InstanceList;
 import cc.mallet.types.PolyaUrnDirichlet;
+import cc.mallet.util.LDAUtils;
+import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 
 public class PoissonPolyaUrnTest {
+	
+	SimpleLDAConfiguration getStdCfg(String whichModel, Integer numIter, Integer numBatches) {
+		Integer numTopics = 20;
+		Double alpha = 0.1; 
+		Double beta = 0.01;
+		Integer rareWordThreshold = 0;
+		Integer showTopicsInterval = 10;
+		Integer startDiagnosticOutput = 0;
+
+		SimpleLDAConfiguration config = new SimpleLDAConfiguration(new LoggingUtils(), whichModel,
+				numTopics, alpha, beta, numIter,
+				numBatches, rareWordThreshold, showTopicsInterval,
+				startDiagnosticOutput,4711,"src/main/resources/datasets/nips.txt");
+		
+		return config;
+	}
+
+	SimpleLDAConfiguration getStdCfg(String whichModel, Integer numIter) {
+		return getStdCfg(whichModel, numIter, 2);
+	}
 
 	@Test
 	public void testCreateTopicTranslationTable() {
@@ -273,5 +299,52 @@ public class PoissonPolyaUrnTest {
 				assertTrue(test1 > alpha);
 			}
 		}
+	}
+	
+	@Test
+	public void testContinueSampling() throws IOException {
+		String whichModel = "polyaurn";
+
+		Integer numIter = 20;
+		SimpleLDAConfiguration config = getStdCfg(whichModel, numIter);
+		config.setSavePhi(false);
+		config.setPhiBurnIn(20);
+
+		String dataset_fn = config.getDatasetFilename();
+		System.out.println("Using dataset: " + dataset_fn);
+		System.out.println("Scheme: " + whichModel);
+		LoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("TestRuns");
+		config.setLoggingUtil(lu);
+
+		InstanceList instances = LDAUtils.loadInstances(dataset_fn, 
+				"stoplist.txt", config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD));
+
+		LDASamplerContinuable model = new PolyaUrnSpaliasLDA(config);
+		System.out.println(
+				String.format("Spalias Uncollapsed Parallell LDA (%d batches).", 
+						config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT)));
+
+		System.out.println("Vocabulary size: " + instances.getDataAlphabet().size() + "\n");
+		System.out.println("Instance list is: " + instances.size());
+		System.out.println("Loading data instances...");
+
+		model.setRandomSeed(config.getSeed(LDAConfiguration.SEED_DEFAULT));
+		model.addInstances(instances);
+
+		Integer noIterations = config.getNoIterations(LDAConfiguration.NO_ITER_DEFAULT);
+		System.out.println("Starting iterations (" + noIterations + " total).");
+
+		// Runs the model
+		model.sample(noIterations);
+
+		LDASamplerWithPhi modelWithPhi = (LDASamplerWithPhi) model;
+		assertEquals(0, ((PolyaUrnSpaliasLDA)model).getNoSampledPhi()); 
+		assertTrue(modelWithPhi.getPhiMeans()==null);
+		
+		// Continue the sampling
+		model.continueSampling(noIterations);
+		
+		assertEquals(noIterations*2, model.getCurrentIteration());
 	}
 }

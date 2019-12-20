@@ -66,7 +66,7 @@ import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
 
 
-public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibbsSampler, LDASamplerWithPhi {
+public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibbsSampler, LDASamplerWithPhi, LDASamplerContinuable {
 	
 	//protected static Logger logger = MalletLogger.getLogger(UncollapsedParallelLDA.class.getName());
 
@@ -738,14 +738,234 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				abort();
 			}
 
-			//long iterEnd = System.currentTimeMillis();
-			//System.out.println("Iteration "+ currentIteration + " took: " + (iterEnd-iterStart) + " milliseconds...");
+			long iterEnd = System.currentTimeMillis();
+			logger.finer("Iteration "+ currentIteration + " took: " + (iterEnd-iterationStart) + " milliseconds...");
 		}
 
 		postSample();
 
 	}
 
+	/** 
+	 * 
+	 * @see cc.mallet.topics.ModifiedSimpleLDA#sample(int)
+	 */
+	@Override
+	public void continueSampling(int iterations) throws IOException {
+		// Reset abort if the previous sampler was aborted
+		abort = false;
+		preContinuedSampling();
+		int [] printFirstNDocs = config.getPrintNDocsInterval();
+		int nDocs = config.getPrintNDocs();
+		int [] printFirstNTopWords = config.getPrintNTopWordsInterval();
+		int nWords = config.getPrintNTopWords();
+
+		int [] defaultVal = {-1};
+		int [] output_interval = config.getIntArrayProperty("diagnostic_interval",defaultVal);
+		File binOutput = null;
+		if(output_interval.length>1||printFirstNDocs.length>1||printFirstNTopWords.length>1) {
+			binOutput = LoggingUtils.checkCreateAndCreateDir(config.getLoggingUtil().getLogDir().getAbsolutePath() + "/binaries");
+		}
+		boolean printPhi = config.getPrintPhi();
+		int startDiagnostic = config.getStartDiagnostic(LDAConfiguration.START_DIAG_DEFAULT);
+
+		String loggingPath = config.getLoggingUtil().getLogDir().getAbsolutePath();
+
+		double logLik = modelLogLikelihood();	
+		String tw = topWords (wordsPerTopic);
+		LogState logState = new LogState(logLik, currentIteration, tw, loggingPath, logger);
+		loglikelihood.add(logLik);
+		LDAUtils.logLikelihoodToFile(logState);
+
+		boolean logTypeTopicDensity = config.logTypeTopicDensity(LDAConfiguration.LOG_TYPE_TOPIC_DENSITY_DEFAULT);
+		boolean logDocumentDensity = config.logDocumentDensity(LDAConfiguration.LOG_DOCUMENT_DENSITY_DEFAULT);
+		boolean logPhiDensity = config.logPhiDensity(LDAConfiguration.LOG_PHI_DENSITY_DEFAULT);
+		boolean logTokensPerTopics = config.logTokensPerTopic(LDAConfiguration.LOG_TOKENS_PER_TOPIC);
+		double density;
+		double docDensity = -1;
+		double phiDensity;
+		Stats stats;
+	
+		MarginalProbEstimatorPlain evaluator = null;
+		if(testSet != null) {
+			evaluator = new MarginalProbEstimatorPlain(numTopics,
+					alpha, alphaSum,
+					beta,
+					typeTopicCounts, 
+					tokensPerTopic);
+		}
+		
+		Double heldOutLL = null;
+		
+		int numParticles = 100;
+		if(logTypeTopicDensity || logDocumentDensity || logPhiDensity) {
+			density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
+			docDensity = kdDensities.get() / (double) numTopics / data.size();
+			phiDensity = logPhiDensity ? LDAUtils.calculatePhiDensity(phi) : -1;
+			
+			if(testSet != null) {
+				heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
+			}
+			
+			if(testSet!=null) {
+				stats = new Stats(0, loggingPath, System.currentTimeMillis(), 0, 0, 
+						density, docDensity, zTimings, countTimings,phiDensity,heldOutLL);						
+			} else {
+				stats = new Stats(0, loggingPath, System.currentTimeMillis(), 0, 0, 
+					density, docDensity, zTimings, countTimings,phiDensity);
+			} 
+			
+			LDAUtils.logStatstHeaderToFile(stats);
+			LDAUtils.logStatsToFile(stats);
+		}
+		
+		if(config.logTopicIndicators(false)) {
+			logTopicIndicators();
+			System.out.println("Logged topic indicators for iteration: " + getCurrentIteration());
+		}
+
+		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
+			currentIteration++;
+			if(hyperparameterOptimizationInterval > 1  && iteration % hyperparameterOptimizationInterval == 0) {
+				saveHistStats = true;
+			}
+			preIteration();
+
+			// Saves timestamp
+			long iterationStart = System.currentTimeMillis();
+			for (int i = 0; i < zTimings.length; i++) {
+				zTimings[i] = iterationStart;
+			}
+
+			// Sample z by dividing the corpus in batches
+			preZ();
+			loopOverBatches();
+
+			long beforeSync = System.currentTimeMillis();
+			try {
+				updateCounts();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			postZ();
+			long endTypeTopicUpdate = System.currentTimeMillis();
+			long zSamplingTokenUpdateTime = endTypeTopicUpdate - iterationStart;
+			logger.finer("Time for updating type-topic counts: " + 
+					(endTypeTopicUpdate - beforeSync) + "ms\t");
+			
+			// In the HDP the numTopics can change after the Z sampling 
+			if(testSet != null) {
+				evaluator = new MarginalProbEstimatorPlain(numTopics,
+						alpha, alphaSum,
+						beta,
+						typeTopicCounts, 
+						tokensPerTopic);
+			}
+
+			//long beforeSamplePhi = System.currentTimeMillis();
+			prePhi();
+			samplePhi();
+			postPhi();
+
+			long elapsedMillis = System.currentTimeMillis();
+			long phiSamplingTime = elapsedMillis - endTypeTopicUpdate;
+
+			logger.finer("Time for sampling phi: " + phiSamplingTime + "ms\t");
+
+			if (startDiagnostic > 0 && iteration >= startDiagnostic && printPhi) {
+				LDAUtils.writeBinaryDoubleMatrix(phi, iteration, numTopics, numTypes, loggingPath + "/phi");	
+			}
+			if(output_interval.length == 2 && iteration >= output_interval[0] && iteration <= output_interval[1]) {
+				LDAUtils.writeBinaryDoubleMatrix(phi, iteration, numTopics, numTypes, binOutput.getAbsolutePath() + "/phi");
+				LDAUtils.writeBinaryIntMatrix(typeTopicCounts, iteration, numTypes, numTopics, binOutput.getAbsolutePath() + "/N");
+				LDAUtils.writeBinaryIntMatrix(LDAUtils.getDocumentTopicCounts(data, numTopics), iteration, data.size(), numTopics, binOutput.getAbsolutePath() + "/M");
+			}
+
+			logger.finer("\nIteration " + currentIteration + "\tTotal time: " + elapsedMillis + "ms\t");
+			logger.finer("--------------------");
+
+			// Occasionally print more information
+			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
+				
+				if(testSet != null) {
+					heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
+					LDAUtils.heldOutLLToFile(loggingPath, iteration, heldOutLL, logger);
+					heldOutLoglikelihood.add(heldOutLL);
+				}
+
+				logLik = modelLogLikelihood();	
+				tw = topWords (wordsPerTopic);
+				logState = new LogState(logLik, currentIteration, tw, loggingPath, logger);
+				loglikelihood.add(logLik);
+				LDAUtils.logLikelihoodToFile(logState);
+				logger.info("<" + currentIteration + "> Log Likelihood: " + logLik);
+				logger.fine(tw);
+				if(logTypeTopicDensity || logDocumentDensity) {
+					density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
+					docDensity = kdDensities.get() / (double) numTopics / data.size();
+					phiDensity = logPhiDensity ? LDAUtils.calculatePhiDensity(phi) : -1;
+					if(testSet!=null) {
+						stats = new Stats(currentIteration, loggingPath, elapsedMillis, zSamplingTokenUpdateTime, phiSamplingTime, 
+								density, docDensity, zTimings, countTimings,phiDensity,heldOutLL);						
+					} else {
+						stats = new Stats(currentIteration, loggingPath, elapsedMillis, zSamplingTokenUpdateTime, phiSamplingTime, 
+							density, docDensity, zTimings, countTimings,phiDensity);
+					}
+					LDAUtils.logStatsToFile(stats);
+				}
+				
+				// WARNING: This will SUBSTANTIALLY slow down the sampler
+				if(config.logTopicIndicators(false)) {
+					logTopicIndicators();
+					System.out.println("Logged topic indicators for iteration: " + getCurrentIteration());
+				}
+				
+				if(logTokensPerTopics) {
+					LDAUtils.writeIntRowArray(tokensPerTopic, loggingPath +  "/tokens_per_topic.csv");
+				}
+			}
+
+			if( printFirstNDocs.length > 1 && LDAUtils.inRangeInterval(iteration, printFirstNDocs)) {
+				int [][] docTopicCounts = LDAUtils.getDocumentTopicCounts(data, numTopics, nDocs);
+				double [][] theta = LDAUtils.drawDirichlets(docTopicCounts);
+				LDAUtils.writeBinaryDoubleMatrix(theta, iteration, binOutput.getAbsolutePath() + "/Theta_DxK");				
+			}
+			if( printFirstNTopWords.length > 1 && LDAUtils.inRangeInterval(iteration, printFirstNTopWords)) {
+				// Assign these once
+				if(topIndices==null) {
+					topIndices = LDAUtils.getTopWordIndices(nWords, numTypes, numTopics, typeTopicCounts, alphabet);
+				}
+				LDAUtils.writeBinaryDoubleMatrixIndices(phi, currentIteration, binOutput.getAbsolutePath() + "/Phi_KxV", topIndices);
+			}
+			
+			if( hyperparameterOptimizationInterval > 1 && iteration % hyperparameterOptimizationInterval == 0) {
+				optimizeAlpha();
+				optimizeBeta();
+				
+				// Reset counts
+				for (int i = 0; i < documentTopicHistogram.length; i++) {
+					for (int j = 0; j < documentTopicHistogram[i].length; j++) {
+						documentTopicHistogram[i][j].set(0);
+					}
+				}
+				saveHistStats = false;
+			}
+
+			kdDensities.set(0);
+
+			postIteration();
+
+			if(abortFile.exists()) {
+				abort();
+			}
+
+			long iterEnd = System.currentTimeMillis();
+			logger.finer("Iteration "+ currentIteration + " took: " + (iterEnd-iterationStart) + " milliseconds...");
+		}
+
+		postContinuedSampling();
+	}
+	
 	protected void logTopicIndicators() {
 		File ld = config.getLoggingUtil().getLogDir();
 		File z_file = new File(ld.getAbsolutePath() + "/z_" + getCurrentIteration() + ".csv");
@@ -1958,5 +2178,15 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		ois.close();
 
 		return topicModel;
+	}
+
+	@Override
+	public void preContinuedSampling() {
+		startupThreadPools();
+	}
+
+	@Override
+	public void postContinuedSampling() {
+		shutdownThreadPools();		
 	}
 }

@@ -67,6 +67,13 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	}
 
 	@Override
+	public void preContinuedSampling() {
+		super.preContinuedSampling();
+		int poolSize = 2; // Parallel alias table pool (why 2?)
+		tableBuilderExecutor = Executors.newFixedThreadPool(Math.max(1, poolSize));
+	}
+	
+	@Override
 	public void preIteration() {
 		doPreIterationTableBuling();
 		super.preIteration();
@@ -117,6 +124,12 @@ public class SpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA implem
 	@Override
 	public void postSample() {
 		super.postSample();
+		tableBuilderExecutor.shutdown();
+	}
+	
+	@Override
+	public void postContinuedSampling() {
+		super.postContinuedSampling();
 		tableBuilderExecutor.shutdown();
 	}
 
