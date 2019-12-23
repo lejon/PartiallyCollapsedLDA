@@ -582,7 +582,10 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 				logTopicIndicators(false),
 				getSamplerClass(LDAConfiguration.MODEL_DEFAULT),
 				getOriginalDatasetFilename(),
-				noPreprocess());
+				noPreprocess(),
+				saveSampler(false),
+				getSavedSamplerDirectory(LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT)
+				);
 		
 		return conf;
 	}
@@ -602,5 +605,17 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public boolean noPreprocess() {
 		String key = "no_preprocess";
 		return getBooleanProperty(key);
+	}
+
+	@Override
+	public boolean saveSampler(boolean b) {
+		String key = "save_sampler";
+		return getBooleanProperty(key);
+	}
+
+	@Override
+	public String getSavedSamplerDirectory(String default_dir) {
+		String configProperty = getStringProperty("saved_sampler_dir");
+		return (configProperty == null) ? default_dir : configProperty;
 	}
 }

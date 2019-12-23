@@ -44,6 +44,7 @@ public interface LDAConfiguration {
 	public static final int DOCUMENT_SAMPLER_SPLIT_LIMIT_DEFAULT = 100;
 	public static final double HDP_K_PERCENTILE = .8;
 	public static final String MODEL_DEFAULT = "cc.mallet.topics.PolyaUrnSpaliasLDA";
+	public static final String STORED_SAMPLER_DIR_DEFAULT = "stored_samplers";
 
 	public LoggingUtils getLoggingUtil();
 
@@ -220,4 +221,8 @@ public interface LDAConfiguration {
 	public String getOriginalDatasetFilename();
 
 	public boolean noPreprocess();
+
+	public boolean saveSampler(boolean b);
+
+	public String getSavedSamplerDirectory(String string);
 }

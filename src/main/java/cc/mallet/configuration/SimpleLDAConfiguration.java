@@ -80,6 +80,8 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private boolean logTopicIndicators;
 	private String samplerClass = LDAConfiguration.MODEL_DEFAULT;
 	private boolean noPreprocess;
+	private boolean saveSampler;
+	private String savedSamplerDir = LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT;
 	
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -121,7 +123,8 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 			int maxDocBufferSize, int phiMeanThinDefault, String dirichletSamplerBuilderClassName,
 			int aliasPoissonThreshold, String fileRegex, Integer hyperparamOptimInterval, boolean symmetricAlpha,
 			double hdpGgamma, int hdpNrStartTopics, int documentSamplerSplitLimit, double hdpKPercentile,
-			boolean logTopicIndicators, String samplerClass, String original_dataset_fn, boolean noPreprocess) {
+			boolean logTopicIndicators, String samplerClass, String original_dataset_fn, boolean noPreprocess,
+			boolean saveSampler, String savedSamplerDir) {
 		super();
 		this.logUtil = logUtil;
 		this.scheme = scheme;
@@ -195,6 +198,8 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.logTopicIndicators = logTopicIndicators;
 		this.samplerClass = samplerClass;
 		this.noPreprocess = noPreprocess;
+		this.saveSampler = saveSampler;
+		this.savedSamplerDir = savedSamplerDir;
 	}
 
 	public void setPrintPhi(boolean printPhi) {
@@ -904,5 +909,19 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	@Override
 	public boolean noPreprocess() {
 		return noPreprocess;
+	}
+
+	@Override
+	public boolean saveSampler(boolean b) {
+		return saveSampler;
+	}
+
+	@Override
+	public String getSavedSamplerDirectory(String string) {
+		return savedSamplerDir;
+	}
+
+	public void setSavedSamplerDirectory(String savedSamplerDir) {
+		this.savedSamplerDir = savedSamplerDir;
 	}
 }
