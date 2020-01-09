@@ -1,5 +1,8 @@
 package cc.mallet.topics;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -230,5 +233,20 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 			pw.flush();
 			pw.close();
 		}
+	}
+	
+	private void writeObject(ObjectOutputStream out) throws IOException {
+		out.writeObject(topicPriors);
+	}
+
+	private void readObject (ObjectInputStream in) throws IOException, ClassNotFoundException {
+		topicPriors = (double[][]) in.readObject();
+	}
+
+	@Override
+	public void initFrom(LDAGibbsSampler source) {
+		super.initFrom(source);
+		LDASamplerWithPriors phiSampler = (LDASamplerWithPriors) source;
+		topicPriors = phiSampler.getTopicPriors();
 	}
 }

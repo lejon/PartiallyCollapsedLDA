@@ -48,6 +48,31 @@ public class LoggingUtils implements Serializable {
 		this.timings.addAll(timings);
 	}
 
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((baseDir == null) ? 0 : baseDir.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		LoggingUtils other = (LoggingUtils) obj;
+		if (baseDir == null) {
+			if (other.baseDir != null)
+				return false;
+		} else if (!baseDir.equals(other.baseDir))
+			return false;
+		return true;
+	}
+
 	public synchronized File getLogDir() {
 		if(currentLogDirf==null) throw new IllegalArgumentException("You havent initialized the Logger before usage");
 		return currentLogDirf;

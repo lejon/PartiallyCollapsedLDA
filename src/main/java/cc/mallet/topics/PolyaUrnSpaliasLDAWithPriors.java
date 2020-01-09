@@ -1,5 +1,9 @@
 package cc.mallet.topics;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.VariableSelectionResult;
@@ -70,4 +74,20 @@ public class PolyaUrnSpaliasLDAWithPriors extends PolyaUrnSpaliasLDA implements 
 		}
 		return phi;
 	}
+	
+	private void writeObject(ObjectOutputStream out) throws IOException {
+		out.writeObject(topicPriors);
+	}
+
+	private void readObject (ObjectInputStream in) throws IOException, ClassNotFoundException {
+		topicPriors = (double[][]) in.readObject();
+	}
+	
+	@Override
+	public void initFrom(LDAGibbsSampler source) {
+		super.initFrom(source);
+		LDASamplerWithPriors phiSampler = (LDASamplerWithPriors) source;
+		topicPriors = phiSampler.getTopicPriors();
+	}
+
 }

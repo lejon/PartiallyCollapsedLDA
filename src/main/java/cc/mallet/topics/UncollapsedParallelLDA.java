@@ -566,17 +566,19 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		Stats stats;
 	
 		MarginalProbEstimatorPlain evaluator = null;
+		Double heldOutLL = null;
+		int numParticles = 100;
 		if(testSet != null) {
 			evaluator = new MarginalProbEstimatorPlain(numTopics,
 					alpha, alphaSum,
 					beta,
 					typeTopicCounts, 
 					tokensPerTopic);
+			heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
+			LDAUtils.heldOutLLToFile(loggingPath, 0, heldOutLL, logger);
+			heldOutLoglikelihood.add(heldOutLL);
 		}
 		
-		Double heldOutLL = null;
-		
-		int numParticles = 100;
 		if(logTypeTopicDensity || logDocumentDensity || logPhiDensity) {
 			density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 			docDensity = kdDensities.get() / (double) numTopics / data.size();
@@ -787,17 +789,19 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		Stats stats;
 	
 		MarginalProbEstimatorPlain evaluator = null;
+		Double heldOutLL = null;
+		int numParticles = 100;
 		if(testSet != null) {
 			evaluator = new MarginalProbEstimatorPlain(numTopics,
 					alpha, alphaSum,
 					beta,
 					typeTopicCounts, 
 					tokensPerTopic);
+			heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
+			LDAUtils.heldOutLLToFile(loggingPath, 0, heldOutLL, logger);
+			heldOutLoglikelihood.add(heldOutLL);
 		}
 		
-		Double heldOutLL = null;
-		
-		int numParticles = 100;
 		if(logTypeTopicDensity || logDocumentDensity || logPhiDensity) {
 			density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 			docDensity = kdDensities.get() / (double) numTopics / data.size();
@@ -2026,8 +2030,11 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			try {
 				config = new ParsedLDAConfiguration(cfg_file);
 
-				String logSuitePath = "StoredSamplerLogs/logdir-" + LoggingUtils.getDateStamp();
-				System.out.println("Will do logging to: " + logSuitePath);
+				String expDir = config.getExperimentOutputDirectory("");
+				if(!expDir.equals("")) {
+					expDir += "/";
+				}
+				String logSuitePath = "Runs/" + expDir + "RunSuite" + LoggingUtils.getDateStamp();
 				LoggingUtils lu = new LoggingUtils();
 				lu.checkAndCreateCurrentLogDir(logSuitePath);
 				config.setLoggingUtil(lu);

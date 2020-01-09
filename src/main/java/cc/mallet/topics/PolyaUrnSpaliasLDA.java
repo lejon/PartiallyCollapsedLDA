@@ -32,19 +32,19 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	}
 	
 	private static final long serialVersionUID = 1L;
-	WalkerAliasTable [] aliasTables; 
-	double [] typeNorm; // Array with doubles with sum of alpha * phi
+	transient WalkerAliasTable [] aliasTables; 
+	transient double [] typeNorm; // Array with doubles with sum of alpha * phi
 	transient ExecutorService tableBuilderExecutor;
 	
 	// #### Sparsity handling
 	// Jagged array containing the topics that are non-zero for each type
-	int [][] nonZeroTypeTopicIdxs = null;
+	transient int [][] nonZeroTypeTopicIdxs = null;
 	// How many indices  are zero for each type, i.e the column count for the zeroTypeTopicIdxs array
-	int [] nonZeroTypeTopicColIdxs = null;
+	transient int [] nonZeroTypeTopicColIdxs = null;
 	
-	boolean staticPhiAliasTableIsBuild = false;
+	transient boolean staticPhiAliasTableIsBuild = false;
 
-	private IterationListener iterListener;
+	transient private IterationListener iterListener;
 	
 	public PolyaUrnSpaliasLDA(LDAConfiguration config) {
 		super(config);

@@ -10,6 +10,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 import org.apache.commons.lang.NotImplementedException;
 
@@ -978,6 +980,8 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, LDA
 		addInstances(source.getDataset());
 		addTestInstances(source.getTestSet());
 		setZIndicators(source.getZIndicators());
+		loglikelihood = DoubleStream.of(source.getLogLikelihood()).boxed().collect(Collectors.toList());
+		heldOutLoglikelihood = DoubleStream.of(source.getHeldOutLogLikelihood()).boxed().collect(Collectors.toList());
 	}
 
 }

@@ -780,8 +780,11 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 				try {
 					config = new ParsedLDAConfiguration(cfg_file);
 
-					String logSuitePath = "StoredSamplerLogs/logdir-" + LoggingUtils.getDateStamp();
-					System.out.println("Will do logging to: " + logSuitePath);
+					String expDir = config.getExperimentOutputDirectory("");
+					if(!expDir.equals("")) {
+						expDir += "/";
+					}
+					String logSuitePath = "Runs/" + expDir + "RunSuite" + LoggingUtils.getDateStamp();
 					LoggingUtils lu = new LoggingUtils();
 					lu.checkAndCreateCurrentLogDir(logSuitePath);
 					config.setLoggingUtil(lu);

@@ -44,7 +44,8 @@ public class LDACommandLineParser {
 	@SuppressWarnings("static-access")
 	protected void addOptions() {
 		options.addOption( "dbg", "debug", true, "use debugging " );
-		options.addOption( "cm", "comment", true, "a comment ot be added to the logfile " );
+		options.addOption( "c", "continue", false, "continue sampling from a saved state (give in config file by option 'saved_sampler_dir') " );
+		options.addOption( "cm", "comment", true, "a comment to be added to the logfile " );
 		options.addOption( "ds", "dataset", true, "filename of dataset file" );
 		options.addOption( "ts", "topics", true, "number of topics" );
 		options.addOption( "a", "alpha", true, "uniform alpha prior" );
@@ -66,7 +67,11 @@ public class LDACommandLineParser {
 	public boolean hasOption(String key) {
 		return options.hasOption(key);
 	}
-	
+
+	public boolean isOptionSet(String key) {
+		return parsedCommandLine.hasOption(key);
+	}
+
 	public String getOption(String key) {
 		return parsedCommandLine.getOptionValue(key);
 	}

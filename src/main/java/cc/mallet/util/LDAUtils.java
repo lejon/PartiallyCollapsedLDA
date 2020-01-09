@@ -15,9 +15,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +37,8 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import cc.mallet.configuration.LDAConfiguration;
+import cc.mallet.configuration.ModelFactory;
+import cc.mallet.configuration.ParsedLDAConfiguration;
 import cc.mallet.pipe.CharSequence2TokenSequence;
 import cc.mallet.pipe.CharSequenceLowercase;
 import cc.mallet.pipe.FeatureCountPipe;
@@ -52,7 +60,11 @@ import cc.mallet.pipe.TokenSequencePredicateMatcher;
 import cc.mallet.pipe.TokenSequenceRemoveStopwords;
 import cc.mallet.pipe.iterator.CsvIterator;
 import cc.mallet.pipe.iterator.FileIterator;
+import cc.mallet.topics.LDAGibbsSampler;
+import cc.mallet.topics.LDASamplerWithPhi;
 import cc.mallet.topics.LogState;
+import cc.mallet.topics.PolyaUrnSpaliasLDA;
+import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.topics.TopicAssignment;
 import cc.mallet.topics.TopicInferencer;
 import cc.mallet.types.Alphabet;
@@ -65,6 +77,8 @@ import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 
 public class LDAUtils {
+	
+	private static final String SAVED_SIMILARITY_SAMPLERNAME_PREFIX = "saved_lda_sampler";
 
 	public LDAUtils() {
 	}
@@ -2264,4 +2278,123 @@ public class LDAUtils {
 		instances.addThruPipe(readerTrain);
 		return instances;
 	}
+	
+	public static LDASamplerWithPhi loadStoredSampler(InstanceList trainingset, LDAConfiguration config, String saveDir) {
+		String configHash = getConfigSetHash(config);
+		if(!saveDir.endsWith(File.separator)) saveDir = saveDir + File.separator;
+		String samplerFn = saveDir + buildSamplerSaveFilename(configHash);
+		String storedConfigHash = readStoredTrainingsetHash(saveDir + SAVED_SIMILARITY_SAMPLERNAME_PREFIX + "-config_hash-" + configHash);
+		File storedSampler = new File(samplerFn);
+		LDASamplerWithPhi trainedSampler = null;
+		if(storedSampler.exists() && configHash.equals(storedConfigHash)) {
+			try {
+				System.out.println("Using pretrained sampler @:" + storedSampler.getAbsolutePath());
+				LDASamplerWithPhi tmp = (LDASamplerWithPhi) ModelFactory.get(config);
+				if(tmp instanceof PolyaUrnSpaliasLDA) {
+					System.out.println("Loading PolyaUrn sampler...");
+					trainedSampler = PolyaUrnSpaliasLDA.read(storedSampler);
+				} else if (tmp instanceof SpaliasUncollapsedParallelLDA) {
+					System.out.println("Loading Spalias sampler...");
+					trainedSampler = SpaliasUncollapsedParallelLDA.read(storedSampler);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+			System.out.println("No stored samplers found for hash: " + configHash);
+		}
+		return trainedSampler;
+	}
+
+	static String buildSamplerSaveFilename(String configHash) {
+		return SAVED_SIMILARITY_SAMPLERNAME_PREFIX + "-" + configHash + ".ser";
+	}
+	
+	public static void saveSampler(LDAGibbsSampler trainedSampler, LDAConfiguration config, String saveDir) {
+		String configHash = getConfigSetHash(config);
+		if(!saveDir.endsWith(File.separator)) saveDir = saveDir + File.separator;
+		String samplerFn = saveDir + buildSamplerSaveFilename(configHash);
+		File storedSampler = new File(samplerFn);
+		File tmpDir = new File(saveDir);
+		if(!tmpDir.exists()) {
+			tmpDir.mkdir();
+		}
+		if(trainedSampler instanceof PolyaUrnSpaliasLDA) {
+			System.out.println("Storing PolyaUrn sampler (hash="+configHash+")...");
+			((PolyaUrnSpaliasLDA) trainedSampler).write(storedSampler);
+		} else if (trainedSampler instanceof SpaliasUncollapsedParallelLDA) {
+			System.out.println("Storing SpaliasUncollapsedParallelLDA sampler (hash="+configHash+")...");
+			((SpaliasUncollapsedParallelLDA) trainedSampler).write(storedSampler);
+		}
+		writeHash(configHash,saveDir + SAVED_SIMILARITY_SAMPLERNAME_PREFIX + "-config_hash-" + configHash);
+	}
+	
+	static String getConfigSetHash(LDAConfiguration config) {
+		if(config instanceof ParsedLDAConfiguration) {
+			return getParsedConfigSetHash(config);
+		} else {
+			return getSimpleConfigHash(config);
+		}
+	}
+
+	static String getSimpleConfigHash(LDAConfiguration config) {
+		return config.hashCode() + "";
+	}
+
+	static String getParsedConfigSetHash(LDAConfiguration config) {
+		String configFn = config.whereAmI();
+
+		byte[] bytes = null;
+		try {
+			bytes = Files.readAllBytes(Paths.get(configFn));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		String hashtext = hashFrombytes(bytes); 
+		return hashtext; 
+	}
+
+	private static String hashFrombytes(byte[] bytes) {
+		// Static getInstance method is called with hashing MD5 
+		MessageDigest md = null;
+		try {
+			md = MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		} 
+
+		// digest() method is called to calculate message digest 
+		// of an input digest() return array of byte 
+		byte[] messageDigest = md.digest(bytes); 
+
+		// Convert byte array into signum representation 
+		BigInteger no = new BigInteger(1, messageDigest);
+
+		// Convert message digest into hex value 
+		String hashtext = no.toString(16); 
+		while (hashtext.length() < 32) { 
+			hashtext = "0" + hashtext; 
+		}
+		return hashtext;
+	} 
+
+	static void writeHash(String hash, String string) {
+		try {
+			Files.write(Paths.get(string), hash.getBytes());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	static String readStoredTrainingsetHash(String filePath) {
+		String hash = null;
+		try {
+			hash = new String(Files.readAllBytes(Paths.get(filePath)), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+		}
+
+		return hash;
+	}
+
 }
