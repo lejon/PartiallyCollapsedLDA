@@ -80,6 +80,10 @@ in bash.
 ## Public DOI
 [![DOI](https://zenodo.org/badge/13374/lejon/PartiallyCollapsedLDA.svg)](http://dx.doi.org/10.5281/zenodo.18102)
 
+## R-Wrapper
+
+There is an R-wrapper for this sampler at [pcldar](https://github.com/lejon/pcldar)
+
 Acknowledgements
 ----------------
 I'm a very satisfied user of the YourKit profiler. A Great product with great support. It has been sucessfully used for profiling in this project.
