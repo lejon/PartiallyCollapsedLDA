@@ -12,7 +12,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.topics.tui.IterationListener;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
@@ -43,8 +42,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	transient int [] nonZeroTypeTopicColIdxs = null;
 	
 	transient boolean staticPhiAliasTableIsBuild = false;
-
-	transient private IterationListener iterListener;
 	
 	public PolyaUrnSpaliasLDA(LDAConfiguration config) {
 		super(config);
@@ -178,9 +175,6 @@ public class PolyaUrnSpaliasLDA extends UncollapsedParallelLDA implements LDAGib
 	@Override
 	public void postIteration() {
 		super.postIteration();
-		if(iterListener!=null) {
-			iterListener.iterationCallback(this);
-		}
 	}
 
 	@Override

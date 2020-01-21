@@ -45,6 +45,7 @@ public interface LDAConfiguration {
 	public static final double HDP_K_PERCENTILE = .8;
 	public static final String MODEL_DEFAULT = "cc.mallet.topics.PolyaUrnSpaliasLDA";
 	public static final String STORED_SAMPLER_DIR_DEFAULT = "stored_samplers";
+	public static final String MODEL_CALLBACK_DEFAULT = null;
 
 	public LoggingUtils getLoggingUtil();
 
@@ -225,4 +226,6 @@ public interface LDAConfiguration {
 	public boolean saveSampler(boolean b);
 
 	public String getSavedSamplerDirectory(String string);
+
+	public String getIterationCallbackClass(String modelCallbackDefault);
 }

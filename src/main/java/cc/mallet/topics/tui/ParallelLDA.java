@@ -32,7 +32,7 @@ import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.TeeStream;
 import cc.mallet.util.Timer;
 
-public class ParallelLDA implements IterationListener {
+public class ParallelLDA {
 	public static String PROGRAM_NAME = "ParallelLDA";
 	public static Thread.UncaughtExceptionHandler exHandler;
 	protected static volatile boolean abort = false;
@@ -50,7 +50,7 @@ public class ParallelLDA implements IterationListener {
 	public static final String POLYAURN_PRIORS_MODEL =  "polyaurn_priors";
 	public static final String PPU_HLDA_MODEL =  "ppu_hlda";
 	public static final String PPU_HDPLDA_MODEL =  "ppu_hdplda";
-	public static final String PPU_HDP_ALL_TOPICS_MODEL =  "ppu_hdp_all_topics";
+	public static final String PPU_HDP_ALL_TOPICS_MODEL =  "ppu_hdplda_all_topics";
 	public static final String SPALIAS_PRIORS_MODEL =  "spalias_priors";
 	public static final String LIGHTPCLDA_MODEL =  "lightpclda";
 	public static final String LIGHTPCLDA_PROPOSAL_MODEL =  "lightpclda_proposal";
@@ -221,9 +221,11 @@ public class ParallelLDA implements IterationListener {
 		System.out.println();
 		plda = model;
 		
-		if(model instanceof LDASamplerWithCallback) {
+		IterationListener iterListener = createIterationListener(config);
+		
+		if(model instanceof LDASamplerWithCallback && iterListener != null) {
 			System.out.println("Setting callback...");
-			((LDASamplerWithCallback)model).setIterationCallback(this);
+			((LDASamplerWithCallback)model).setIterationCallback(iterListener);
 			//vis = new TopicMatrixPanel(900, 400, config.getNoTopics(-1) , 1);
 		}
 		
@@ -514,6 +516,10 @@ public class ParallelLDA implements IterationListener {
 		System.out.println(cdfs);
 	}
 
+	public static IterationListener createIterationListener(LDAConfiguration config) {
+		return ModelFactory.getIterationCallback(config);
+	}
+	
 	public static LDAGibbsSampler createModel(LDAConfiguration config, String whichModel) {
 		LDAGibbsSampler model;
 		switch(whichModel) {
@@ -601,13 +607,5 @@ public class ParallelLDA implements IterationListener {
 		}
 		}
 		return model;
-	}
-
-	@Override
-	public void iterationCallback(LDAGibbsSampler model) {
-//		if(vis != null && printIter % 10 == 0) {
-//			vis.setTopics(LDAUtils.transpose(model.getTypeTopicMatrix()));
-//		}
-//		printIter++;
 	}
 }	

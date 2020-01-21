@@ -584,7 +584,8 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 				getOriginalDatasetFilename(),
 				noPreprocess(),
 				saveSampler(false),
-				getSavedSamplerDirectory(LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT)
+				getSavedSamplerDirectory(LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT),
+				getIterationCallbackClass(LDAConfiguration.MODEL_CALLBACK_DEFAULT)
 				);
 		
 		return conf;
@@ -593,6 +594,12 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	@Override
 	public String getSamplerClass(String modelDefault) {
 		String configProperty = getStringProperty("sampler_class");
+		return (configProperty == null) ? modelDefault : configProperty;
+	}
+
+	@Override
+	public String getIterationCallbackClass(String modelDefault) {
+		String configProperty = getStringProperty("iteration_callback_class");
 		return (configProperty == null) ? modelDefault : configProperty;
 	}
 

@@ -83,6 +83,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private boolean noPreprocess;
 	private boolean saveSampler;
 	private String savedSamplerDir = LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT;
+	private String iterationCallbackClass = LDAConfiguration.MODEL_CALLBACK_DEFAULT;
 	
 	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -125,7 +126,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 			int aliasPoissonThreshold, String fileRegex, Integer hyperparamOptimInterval, boolean symmetricAlpha,
 			double hdpGgamma, int hdpNrStartTopics, int documentSamplerSplitLimit, double hdpKPercentile,
 			boolean logTopicIndicators, String samplerClass, String original_dataset_fn, boolean noPreprocess,
-			boolean saveSampler, String savedSamplerDir) {
+			boolean saveSampler, String savedSamplerDir, String iterationCallbackClass) {
 		super();
 		this.logUtil = logUtil;
 		this.scheme = scheme;
@@ -201,6 +202,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.noPreprocess = noPreprocess;
 		this.saveSampler = saveSampler;
 		this.savedSamplerDir = savedSamplerDir;
+		this.iterationCallbackClass = iterationCallbackClass;
 	}
 
 	public void setPrintPhi(boolean printPhi) {
@@ -932,7 +934,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	
 	
 	// Eclipse generated equals and hashCode
-	// Needs to be re-generated if adding fields to class
+	// Needs to be re-generated if adding fields to class (that we care about)
 	// LoggingUtils needs to be excluded since it generates temporary dirnames 
 	// we do not want to affect the hashCode
 	// Consider if it is worth pulling in Lombok for this... 
@@ -1295,6 +1297,15 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		} else if (!vocabularyFn.equals(other.vocabularyFn))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String getIterationCallbackClass(String modelCallbackDefault) {
+		return iterationCallbackClass;
+	}
+
+	public void setIterationCallbackClass(String modelCallback) {
+		this.iterationCallbackClass = modelCallback;
 	}
 
 }

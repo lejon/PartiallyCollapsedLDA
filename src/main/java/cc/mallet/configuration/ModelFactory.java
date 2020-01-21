@@ -62,6 +62,34 @@ public class ModelFactory {
 	}
 	
 	@SuppressWarnings("unchecked")
+	public static synchronized IterationListener getIterationCallback(LDAConfiguration config) {
+		String model_name = config.getIterationCallbackClass(LDAConfiguration.MODEL_CALLBACK_DEFAULT);
+		if(model_name == null) return null;
+		@SuppressWarnings("rawtypes")
+		Class modelClass = null;
+		try {
+			modelClass = Class.forName(model_name);
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			throw new IllegalArgumentException(e);
+		}
+
+		@SuppressWarnings("rawtypes")
+		Class[] argumentTypes = new Class[1];
+		argumentTypes[0] = LDAConfiguration.class; 
+
+		try {
+			return (IterationListener) modelClass.getDeclaredConstructor(argumentTypes)
+					.newInstance(config);
+		} catch (InstantiationException | IllegalAccessException
+				| InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			e.printStackTrace();
+			throw new IllegalArgumentException(e);
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
 	public static synchronized LDASamplerWithCallback get(LDAConfiguration config, IterationListener callback) {
 		String model_name = config.getSamplerClass(LDAConfiguration.MODEL_DEFAULT);
 

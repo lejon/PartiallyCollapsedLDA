@@ -47,6 +47,7 @@ import cc.mallet.topics.randomscan.topic.TopicBatchBuilder;
 import cc.mallet.topics.randomscan.topic.TopicBatchBuilderFactory;
 import cc.mallet.topics.randomscan.topic.TopicIndexBuilder;
 import cc.mallet.topics.randomscan.topic.TopicIndexBuilderFactory;
+import cc.mallet.topics.tui.IterationListener;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.ConditionalDirichlet;
 import cc.mallet.types.Dirichlet;
@@ -66,7 +67,7 @@ import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
 
 
-public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibbsSampler, LDASamplerWithPhi, LDASamplerContinuable {
+public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibbsSampler, LDASamplerWithPhi, LDASamplerContinuable, LDASamplerWithCallback {
 	
 	//protected static Logger logger = MalletLogger.getLogger(UncollapsedParallelLDA.class.getName());
 
@@ -124,6 +125,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	File abortFile = new File("abort");
 	protected boolean haveTopicPriors = false;
 	protected double[][] topicPriors;
+	
+	transient private IterationListener iterListener;
 	
 	public UncollapsedParallelLDA(LDAConfiguration config) {
 		super(config);
@@ -735,6 +738,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			kdDensities.set(0);
 
 			postIteration();
+
+			if(iterListener!=null) {
+				iterListener.iterationCallback(this);
+			}
 
 			if(abortFile.exists()) {
 				abort();
@@ -2203,5 +2210,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		LDASamplerWithPhi phiSampler = (LDASamplerWithPhi) source;
 		setPhi(phiSampler.getPhi());
 		phiMean = phiSampler.getPhiMeans();
+	}
+
+	@Override
+	public void setIterationCallback(IterationListener iterListener) {
+		this.iterListener = iterListener;
 	}
 }
