@@ -704,8 +704,8 @@ public class SpaliasUncollapsedTest {
 
 		// Runs the model
 		model.sample(noIterations);
-		
-		File storedFn = new File("/tmp/UnitTestSpaliasSampler.ser");
+		File tmp = File.createTempFile("PCLDAUnitTest", "save_sampler");
+		File storedFn = new File(tmp.getAbsolutePath() + "-UnitTestSpaliasSampler.ser");
 		((SpaliasUncollapsedParallelLDA) model).write(storedFn);
 		
 		double [] lls = ((SpaliasUncollapsedParallelLDA) model).getLogLikelihood();
@@ -731,7 +731,7 @@ public class SpaliasUncollapsedTest {
 
 		System.out.println("LL (start): " + lls[0] + " LL(end):" + lls[lls.length-1]);
 		
-		assertEquals(origFinal, lls[lls.length-1], 0.001E7);
+		assertEquals(origFinal, lls[lls.length-1], 0.002E7);
 	}
 
 
