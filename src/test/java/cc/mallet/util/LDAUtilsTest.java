@@ -1,6 +1,7 @@
 package cc.mallet.util;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,8 +14,8 @@ import java.util.Random;
 
 import org.junit.Test;
 
+import cc.mallet.configuration.SimpleLDAConfiguration;
 import cc.mallet.types.InstanceList;
-import cc.mallet.util.LDAUtils;
 import cc.mallet.utils.TestUtils;
 
 public class LDAUtilsTest {
@@ -743,4 +744,41 @@ public class LDAUtilsTest {
 		assertEquals(k1W2GivenT2, probsWordGivenTopic[1][1], 0.00000001);
 		assertEquals(k1W3GivenT1, probsWordGivenTopic[2][0], 0.00000001);
 	}
+	
+	@Test
+	public void testLoadPlainInputFile() throws FileNotFoundException {
+		SimpleLDAConfiguration config = new SimpleLDAConfiguration();
+		String dataset_fn = "src/main/resources/datasets/small.txt";
+		InstanceList instances = LDAUtils.loadDataset(config, dataset_fn);
+		assertEquals(10, instances.size());
+		assertEquals("X", LDAUtils.instanceLabelToString(instances.get(0)));
+		assertEquals("docno:1", LDAUtils.instanceIdToString(instances.get(0)));
+		assertEquals("X", LDAUtils.instanceLabelToString(instances.get(9)));
+		assertEquals("docno:10", LDAUtils.instanceIdToString(instances.get(9)));
+	}
+
+	@Test
+	public void testLoadZippedInputFile() throws FileNotFoundException {
+		SimpleLDAConfiguration config = new SimpleLDAConfiguration();
+		String dataset_fn = "src/main/resources/datasets/small.txt.zip";
+		InstanceList instances = LDAUtils.loadDataset(config, dataset_fn);
+		assertEquals(10, instances.size());
+		assertEquals("X", LDAUtils.instanceLabelToString(instances.get(0)));
+		assertEquals("docno:1", LDAUtils.instanceIdToString(instances.get(0)));
+		assertEquals("X", LDAUtils.instanceLabelToString(instances.get(9)));
+		assertEquals("docno:10", LDAUtils.instanceIdToString(instances.get(9)));
+	}
+	
+	@Test
+	public void testLoadGZippedInputFile() throws FileNotFoundException {
+		SimpleLDAConfiguration config = new SimpleLDAConfiguration();
+		String dataset_fn = "src/main/resources/datasets/small.txt.gz";
+		InstanceList instances = LDAUtils.loadDataset(config, dataset_fn);
+		assertEquals(10, instances.size());
+		assertEquals("X", LDAUtils.instanceLabelToString(instances.get(0)));
+		assertEquals("docno:1", LDAUtils.instanceIdToString(instances.get(0)));
+		assertEquals("X", LDAUtils.instanceLabelToString(instances.get(9)));
+		assertEquals("docno:10", LDAUtils.instanceIdToString(instances.get(9)));
+	}
+
 }

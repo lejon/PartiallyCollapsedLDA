@@ -5,6 +5,7 @@ import static java.lang.Math.log;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileFilter;
@@ -13,6 +14,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
@@ -35,6 +38,10 @@ import java.util.TreeSet;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipFile;
+
+import com.google.common.io.ByteStreams;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.ModelFactory;
@@ -77,7 +84,7 @@ import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 
 public class LDAUtils {
-	
+
 	private static final String SAVED_SIMILARITY_SAMPLERNAME_PREFIX = "saved_lda_sampler";
 
 	public LDAUtils() {
@@ -118,7 +125,7 @@ public class LDAUtils {
 	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, boolean raw) {
 		return buildSerialPipe(stoplistFile, dataAlphabet, null, raw);
 	}
-	
+
 	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, LabelAlphabet targetAlphabet, boolean raw) { 		
 		int maxBufSize = 10000;
 		Pipe tokenizer = null;
@@ -285,17 +292,46 @@ public class LDAUtils {
 	 */
 	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers, 
 			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
+		BufferedInputStream in;
+		try {
+			in = new BufferedInputStream(streamFromFile(inputFile));
+			in.mark(Integer.MAX_VALUE);
+		} catch (IOException e) {
+			throw new IllegalArgumentException(e);
+		}
+
+		return loadInstancesPrune(in, stoplistFile, pruneCount, keepNumbers, 
+				maxBufSize, keepConnectors, dataAlphabet, targetAlphabet); 
+	}
+	
+	
+	/**
+	 * Loads instances and prunes away low occurring words
+	 * 
+	 * @param inputFile Input file to load
+	 * @param stoplistFile File with stopwords, one per line
+	 * @param pruneCount The number of times a word must occur in the corpus to be included
+	 * @param keepNumbers Boolean flag to signal to keep numbers or not
+	 * @param keepConnectors Keep connectors. General category "Pc" in the Unicode specification.
+	 * @param dataAlphabet And optional (null else) data alphabet to use (typically used when loading a test set)
+	 * @return An InstanceList with the data in the input file
+	 * @throws FileNotFoundException
+	 */
+	public static InstanceList loadInstancesPrune(BufferedInputStream in, String stoplistFile, int pruneCount, boolean keepNumbers, 
+			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
 		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
 		int labelGroup = 2;
 		int nameGroup = 1; // data, label, name fields
+		
+		in.mark(Integer.MAX_VALUE);
 
 		tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
 
 		if (pruneCount > 0) {
 			CsvIterator reader = new CsvIterator(
-					new FileReader(inputFile),
+					new InputStreamReader(in),
 					lineRegex,
 					dataGroup,
 					labelGroup,
@@ -342,8 +378,16 @@ public class LDAUtils {
 			}
 		}
 
+		// Now we reset the BufferedInput stream so we don't have to read from disk again.
+		try {
+			in.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+
 		CsvIterator reader = new CsvIterator(
-				new FileReader(inputFile),
+				new InputStreamReader(in),
 				lineRegex,
 				dataGroup,
 				labelGroup,
@@ -403,11 +447,56 @@ public class LDAUtils {
 	public static InstanceList loadInstancesRaw(String inputFile, String stoplistFile, int maxBufSize, int keepCount, Alphabet dataAlphabet) throws FileNotFoundException {
 		return loadInstancesRaw(inputFile, stoplistFile, keepCount, maxBufSize, dataAlphabet, null);
 	}
+
+	public static InputStream streamFromFile(String inputFile) throws FileNotFoundException, IOException {
+		InputStream in = null;
+		if(inputFile.toLowerCase().endsWith(".gz")) {
+			in = new GZIPInputStream(new FileInputStream(inputFile));
+			byte[] buffer = ByteStreams.toByteArray(in);
+			ByteArrayInputStream sout = new ByteArrayInputStream(buffer);
+			return sout;
+		} else if(inputFile.toLowerCase().endsWith(".zip")) {
+			ZipFile zf = new ZipFile(inputFile);
+			try {
+				String nameWithoutDotZip = inputFile.substring(0, inputFile.length() - ".zip".length());
+				String shortNameWithoutDotZip = ((new File(nameWithoutDotZip)).getName());
+				in = zf.getInputStream(zf.getEntry(shortNameWithoutDotZip));
+				byte[] buffer = ByteStreams.toByteArray(in);
+				zf.close();
+				ByteArrayInputStream sout = new ByteArrayInputStream(buffer);
+				return sout;
+			} finally {
+				zf.close();
+			}
+		} else {
+			FileInputStream fs = new FileInputStream(new File(inputFile));
+			byte[] buffer = ByteStreams.toByteArray(fs);
+			ByteArrayInputStream sout = new ByteArrayInputStream(buffer);
+			return sout;
+		}
+	}
+	
+	public static InstanceList loadInstancesRaw(String inputFile, String stoplistFile, int keepCount, int maxBufSize, 
+			Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
+		
+		BufferedInputStream in;
+		try {
+			in = new BufferedInputStream(streamFromFile(inputFile));
+			in.mark(Integer.MAX_VALUE);
+		} catch (IOException e) {
+			throw new IllegalArgumentException(e);
+		}
+		
+		return loadInstancesRaw(in, stoplistFile, keepCount, maxBufSize, dataAlphabet, targetAlphabet);
+	}
+	
+	
 	/**
 	 * Loads instances and keeps the <code>keepCount</code> number of words with 
-	 * the highest TF-IDF
+	 * the highest TF-IDF. Does no preprocessing of the input other than splitting
+	 * on \s
 	 * 
-	 * @param inputFile Input file to load
+	 * @param in BufferedInputStream to read data from
 	 * @param stoplistFile File with stopwords, one per line
 	 * @param keepCount The number of words to keep (based on TF-IDF)
 	 * @param keepNumbers Boolean flag to signal to keep numbers or not
@@ -416,19 +505,21 @@ public class LDAUtils {
 	 * @return An InstanceList with the data in the input file
 	 * @throws FileNotFoundException
 	 */
-	public static InstanceList loadInstancesRaw(String inputFile, String stoplistFile, int keepCount, int maxBufSize, 
+	public static InstanceList loadInstancesRaw(BufferedInputStream in, String stoplistFile, int keepCount, int maxBufSize, 
 			Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
 		RawTokenizer tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
 		int dataGroup = 3;
 		int labelGroup = 2;
 		int nameGroup = 1; // data, label, name fields
+		
+		in.mark(Integer.MAX_VALUE);
 
 		tokenizer = initRawTokenizer(stoplistFile, maxBufSize);
-
+		
 		if (keepCount > 0) {
 			CsvIterator reader = new CsvIterator(
-					new FileReader(inputFile),
+					new InputStreamReader(in),
 					lineRegex,
 					dataGroup,
 					labelGroup,
@@ -473,8 +564,16 @@ public class LDAUtils {
 			}
 		}
 
+		// Now we reset the BufferedInput stream so we don't have to read from disk again.
+		try {
+			in.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+
 		CsvIterator reader = new CsvIterator(
-				new FileReader(inputFile),
+				new InputStreamReader(in),
 				lineRegex,
 				dataGroup,
 				labelGroup,
@@ -510,12 +609,29 @@ public class LDAUtils {
 
 		return instances;
 	}
+	
+	
+	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, 
+			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
+		
+		BufferedInputStream in;
+		try {
+			in = new BufferedInputStream(streamFromFile(inputFile));
+			in.mark(Integer.MAX_VALUE);
+		} catch (IOException e) {
+			throw new IllegalArgumentException(e);
+		}
+		
+		return loadInstancesKeep(in, stoplistFile, keepCount, keepNumbers, 
+				maxBufSize, keepConnectors, dataAlphabet, targetAlphabet);
+
+	}
 
 	/**
 	 * Loads instances and keeps the <code>keepCount</code> number of words with 
 	 * the highest TF-IDF
 	 * 
-	 * @param inputFile Input file to load
+	 * @param in BufferedInputStream to read data from
 	 * @param stoplistFile File with stopwords, one per line
 	 * @param keepCount The number of words to keep (based on TF-IDF)
 	 * @param keepNumbers Boolean flag to signal to keep numbers or not
@@ -524,7 +640,7 @@ public class LDAUtils {
 	 * @return An InstanceList with the data in the input file
 	 * @throws FileNotFoundException
 	 */
-	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, 
+	public static InstanceList loadInstancesKeep(BufferedInputStream in, String stoplistFile, int keepCount, boolean keepNumbers, 
 			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
 		SimpleTokenizerLarge tokenizer;
 		String lineRegex = "^(\\S*)[\\s,]*([^\\t]+)[\\s,]*(.*)$";
@@ -532,11 +648,12 @@ public class LDAUtils {
 		int labelGroup = 2;
 		int nameGroup = 1; // data, label, name fields
 
+		in.mark(Integer.MAX_VALUE);
 		tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
 
 		if (keepCount > 0) {
 			CsvIterator reader = new CsvIterator(
-					new FileReader(inputFile),
+					new InputStreamReader(in),
 					lineRegex,
 					dataGroup,
 					labelGroup,
@@ -583,8 +700,16 @@ public class LDAUtils {
 			}
 		}
 
+		// Now we reset the BufferedInput stream so we don't have to read from disk again.
+		try {
+			in.reset();
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+
 		CsvIterator reader = new CsvIterator(
-				new FileReader(inputFile),
+				new InputStreamReader(in),
 				lineRegex,
 				dataGroup,
 				labelGroup,
@@ -647,9 +772,16 @@ public class LDAUtils {
 
 		tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
 
+		BufferedInputStream in;
+		try {
+			in = new BufferedInputStream(streamFromFile(inputFile));
+		} catch (IOException e) {
+			throw new IllegalArgumentException(e);
+		}
+
 		if (keepCount > 0) {
 			CsvIterator reader = new CsvIterator(
-					new FileReader(inputFile),
+					new InputStreamReader(in),
 					lineRegex,
 					dataGroup,
 					labelGroup,
@@ -2278,7 +2410,7 @@ public class LDAUtils {
 		instances.addThruPipe(readerTrain);
 		return instances;
 	}
-	
+
 	public static LDASamplerWithPhi loadStoredSampler(InstanceList trainingset, LDAConfiguration config, String saveDir) {
 		String configHash = getConfigSetHash(config);
 		if(!saveDir.endsWith(File.separator)) saveDir = saveDir + File.separator;
@@ -2309,7 +2441,7 @@ public class LDAUtils {
 	static String buildSamplerSaveFilename(String configHash) {
 		return SAVED_SIMILARITY_SAMPLERNAME_PREFIX + "-" + configHash + ".ser";
 	}
-	
+
 	public static void saveSampler(LDAGibbsSampler trainedSampler, LDAConfiguration config, String saveDir) {
 		String configHash = getConfigSetHash(config);
 		if(!saveDir.endsWith(File.separator)) saveDir = saveDir + File.separator;
@@ -2328,7 +2460,7 @@ public class LDAUtils {
 		}
 		writeHash(configHash,saveDir + SAVED_SIMILARITY_SAMPLERNAME_PREFIX + "-config_hash-" + configHash);
 	}
-	
+
 	static String getConfigSetHash(LDAConfiguration config) {
 		if(config instanceof ParsedLDAConfiguration) {
 			return getParsedConfigSetHash(config);
