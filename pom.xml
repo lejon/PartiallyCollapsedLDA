@@ -100,7 +100,9 @@
 	<!-- v8.2.2: Support 'raw' mode when reading corpus from string -->
 	<!-- v8.3.0: Support saving sampler from main Java application -->
 	<!-- v8.4.0: Added support for continued sampling in main, controlled by 'continue' CMD line option -->
-	<version>8.4.0</version>
+	<!-- v8.5.0: Support for compressed input files (zip, gz). Improved iteration callback support -->
+	<version>8.5.0</version>
+
 
 	<name>Partially Collapsed Parallel LDA</name>
 
