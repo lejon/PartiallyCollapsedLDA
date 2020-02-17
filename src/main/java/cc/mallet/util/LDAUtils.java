@@ -292,19 +292,17 @@ public class LDAUtils {
 	 */
 	public static InstanceList loadInstancesPrune(String inputFile, String stoplistFile, int pruneCount, boolean keepNumbers, 
 			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
-		BufferedInputStream in;
-		try {
-			in = new BufferedInputStream(streamFromFile(inputFile));
+
+		try (BufferedInputStream in = new BufferedInputStream(streamFromFile(inputFile))) {
 			in.mark(Integer.MAX_VALUE);
+			return loadInstancesPrune(in, stoplistFile, pruneCount, keepNumbers, 
+					maxBufSize, keepConnectors, dataAlphabet, targetAlphabet);
 		} catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
-
-		return loadInstancesPrune(in, stoplistFile, pruneCount, keepNumbers, 
-				maxBufSize, keepConnectors, dataAlphabet, targetAlphabet); 
 	}
-	
-	
+
+
 	/**
 	 * Loads instances and prunes away low occurring words
 	 * 
@@ -324,7 +322,7 @@ public class LDAUtils {
 		int dataGroup = 3;
 		int labelGroup = 2;
 		int nameGroup = 1; // data, label, name fields
-		
+
 		in.mark(Integer.MAX_VALUE);
 
 		tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
@@ -475,22 +473,18 @@ public class LDAUtils {
 			return sout;
 		}
 	}
-	
+
 	public static InstanceList loadInstancesRaw(String inputFile, String stoplistFile, int keepCount, int maxBufSize, 
-			Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
-		
-		BufferedInputStream in;
-		try {
-			in = new BufferedInputStream(streamFromFile(inputFile));
+			Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {		
+		try (BufferedInputStream in = new BufferedInputStream(streamFromFile(inputFile))){
 			in.mark(Integer.MAX_VALUE);
+			return loadInstancesRaw(in, stoplistFile, keepCount, maxBufSize, dataAlphabet, targetAlphabet);
 		} catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
-		
-		return loadInstancesRaw(in, stoplistFile, keepCount, maxBufSize, dataAlphabet, targetAlphabet);
 	}
-	
-	
+
+
 	/**
 	 * Loads instances and keeps the <code>keepCount</code> number of words with 
 	 * the highest TF-IDF. Does no preprocessing of the input other than splitting
@@ -512,11 +506,11 @@ public class LDAUtils {
 		int dataGroup = 3;
 		int labelGroup = 2;
 		int nameGroup = 1; // data, label, name fields
-		
+
 		in.mark(Integer.MAX_VALUE);
 
 		tokenizer = initRawTokenizer(stoplistFile, maxBufSize);
-		
+
 		if (keepCount > 0) {
 			CsvIterator reader = new CsvIterator(
 					new InputStreamReader(in),
@@ -609,22 +603,18 @@ public class LDAUtils {
 
 		return instances;
 	}
-	
-	
+
+
 	public static InstanceList loadInstancesKeep(String inputFile, String stoplistFile, int keepCount, boolean keepNumbers, 
-			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {
-		
-		BufferedInputStream in;
-		try {
-			in = new BufferedInputStream(streamFromFile(inputFile));
+			int maxBufSize, boolean keepConnectors, Alphabet dataAlphabet, LabelAlphabet targetAlphabet) throws FileNotFoundException {		
+		try (BufferedInputStream in = new BufferedInputStream(streamFromFile(inputFile))){
 			in.mark(Integer.MAX_VALUE);
+			return loadInstancesKeep(in, stoplistFile, keepCount, keepNumbers, 
+					maxBufSize, keepConnectors, dataAlphabet, targetAlphabet);
+
 		} catch (IOException e) {
 			throw new IllegalArgumentException(e);
 		}
-		
-		return loadInstancesKeep(in, stoplistFile, keepCount, keepNumbers, 
-				maxBufSize, keepConnectors, dataAlphabet, targetAlphabet);
-
 	}
 
 	/**
@@ -750,7 +740,7 @@ public class LDAUtils {
 
 	/**
 	 * Re-creates the pipe that is used if loading with TF-IDF
-	 * This is ugly as hell, but I wanted ti to be as similar as
+	 * This is ugly as hell, but I wanted it to be as similar as
 	 * possible as when using loadDataset
 	 * 
 	 * @param inputFile Input file to load
@@ -770,63 +760,60 @@ public class LDAUtils {
 		int labelGroup = 2;
 		int nameGroup = 1; // data, label, name fields
 
-		tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
-
-		BufferedInputStream in;
-		try {
-			in = new BufferedInputStream(streamFromFile(inputFile));
-		} catch (IOException e) {
-			throw new IllegalArgumentException(e);
-		}
-
 		if (keepCount > 0) {
-			CsvIterator reader = new CsvIterator(
-					new InputStreamReader(in),
-					lineRegex,
-					dataGroup,
-					labelGroup,
-					nameGroup);
+			tokenizer = initTokenizer(stoplistFile, keepNumbers, maxBufSize, keepConnectors);
+			try (BufferedInputStream in = new BufferedInputStream(streamFromFile(inputFile))) {
+				CsvIterator reader = new CsvIterator(
+						new InputStreamReader(in),
+						lineRegex,
+						dataGroup,
+						labelGroup,
+						nameGroup);
 
-			ArrayList<Pipe> pipes = new ArrayList<Pipe>();
-			Alphabet alphabet = null;
-			if(dataAlphabet==null) {
-				alphabet = new Alphabet();
-			} else {
-				alphabet = dataAlphabet;
-			}
-
-			CharSequenceLowercase csl = new CharSequenceLowercase();
-			SimpleTokenizer st = tokenizer.deepClone();
-			StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
-			TfIdfPipe tfIdfPipe = new TfIdfPipe(alphabet, null);
-
-			pipes.add(csl);
-			pipes.add(st);
-			pipes.add(sl2fs);
-			if (keepCount > 0) {
-				pipes.add(tfIdfPipe);
-			}
-
-			Pipe serialPipe = new SerialPipes(pipes);
-
-			Iterator<Instance> iterator = serialPipe.newIteratorFrom(reader);
-
-			int count = 0;
-
-			// We aren't really interested in the instance itself,
-			//  just the total feature counts.
-			while (iterator.hasNext()) {
-				count++;
-				if (count % 100000 == 0) {
-					System.out.println(count);
+				ArrayList<Pipe> pipes = new ArrayList<Pipe>();
+				Alphabet alphabet = null;
+				if(dataAlphabet==null) {
+					alphabet = new Alphabet();
+				} else {
+					alphabet = dataAlphabet;
 				}
-				iterator.next();
+
+				CharSequenceLowercase csl = new CharSequenceLowercase();
+				SimpleTokenizer st = tokenizer.deepClone();
+				StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
+				TfIdfPipe tfIdfPipe = new TfIdfPipe(alphabet, null);
+
+				pipes.add(csl);
+				pipes.add(st);
+				pipes.add(sl2fs);
+				if (keepCount > 0) {
+					pipes.add(tfIdfPipe);
+				}
+
+				Pipe serialPipe = new SerialPipes(pipes);
+
+				Iterator<Instance> iterator = serialPipe.newIteratorFrom(reader);
+
+				int count = 0;
+
+				// We aren't really interested in the instance itself,
+				//  just the total feature counts.
+				while (iterator.hasNext()) {
+					count++;
+					if (count % 100000 == 0) {
+						System.out.println(count);
+					}
+					iterator.next();
+				}
+
+				if (keepCount > 0) {
+					tfIdfPipe.addPrunedWordsToStoplist(tokenizer, keepCount);
+					return tfIdfPipe;
+				}
+			} catch (IOException e) {
+				throw new IllegalArgumentException(e);
 			}
 
-			if (keepCount > 0) {
-				tfIdfPipe.addPrunedWordsToStoplist(tokenizer, keepCount);
-				return tfIdfPipe;
-			}
 		} else {
 			return null;
 		}
@@ -2411,7 +2398,7 @@ public class LDAUtils {
 		return instances;
 	}
 
-	public static LDASamplerWithPhi loadStoredSampler(InstanceList trainingset, LDAConfiguration config, String saveDir) {
+	public static LDASamplerWithPhi loadStoredSampler(LDAConfiguration config, String saveDir) {
 		String configHash = getConfigSetHash(config);
 		if(!saveDir.endsWith(File.separator)) saveDir = saveDir + File.separator;
 		String samplerFn = saveDir + buildSamplerSaveFilename(configHash);

@@ -2046,11 +2046,16 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				lu.checkAndCreateCurrentLogDir(logSuitePath);
 				config.setLoggingUtil(lu);
 				if(activeSubconfig==null) {
-					activeSubconfig = config.getSubConfigs()[0];
-					System.out.println("Active subconfig not set, activating first available (" + activeSubconfig + ") ...");
+					String [] subconfs = config.getSubConfigs();
+					if(subconfs!= null && subconfs.length > 0) {
+						System.out.println("Active subconfig not set, activating first available (" + activeSubconfig + ") ...");
+						activeSubconfig = subconfs[0];
+						config.activateSubconfig(activeSubconfig);
+						System.out.println("Activating subconfig: " + activeSubconfig);
+					}
+				} else {
+					config.activateSubconfig(activeSubconfig);					
 				}
-				System.out.println("Activating subconfig: " + activeSubconfig);
-				config.activateSubconfig(activeSubconfig);
 
 				System.out.println("Done Reading config!");
 			} catch (ConfigurationException e) {

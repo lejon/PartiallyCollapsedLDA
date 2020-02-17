@@ -208,15 +208,18 @@ public class ParallelLDA {
 		}
 		System.out.println("Scheme: " + whichModel);
 
-		InstanceList instances = LDAUtils.loadDataset(config, dataset_fn);
-		instances.getAlphabet().stopGrowth();
 
 		boolean continueSampling = isContinuation(cp);
 		LDAGibbsSampler model = createModel(config, whichModel);
+		InstanceList instances = null;
 		if(continueSampling) {
 			System.out.println("Continuing sampling from previously stored model...");
-			initSamplerFromSaved(config, instances, model); 
-		} 
+			initSamplerFromSaved(config, model);
+			instances = model.getDataset();
+		} else {
+			instances = LDAUtils.loadDataset(config, dataset_fn);
+			instances.getAlphabet().stopGrowth();			
+		}
 
 		if(model==null) {
 			System.out.println("No valid model selected ('" + whichModel + "' is not a recognized model), please select a valid model...");
@@ -414,9 +417,9 @@ public class ParallelLDA {
 		System.out.println(new Date() + ": I am done!");
 	}
 
-	private void initSamplerFromSaved(LDAConfiguration config, InstanceList instances, LDAGibbsSampler model) {
+	private void initSamplerFromSaved(LDAConfiguration config, LDAGibbsSampler model) {
 		String storedDir = config.getSavedSamplerDirectory(LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT);
-		LDASamplerWithPhi newModel = LDAUtils.loadStoredSampler(instances, config, storedDir);
+		LDASamplerWithPhi newModel = LDAUtils.loadStoredSampler(config, storedDir);
 		// Since the user asked us to continue using this sampler, we assume it is "initiable"
 		LDASamplerInitiable toInit = (LDASamplerInitiable) model;			
 		toInit.initFrom(newModel);
