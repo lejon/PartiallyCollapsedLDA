@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
@@ -42,7 +41,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
  * @author Leif Jonsson
  *
  */
-public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDPSamplerWithPhi {
+public class PoissonPolyaUrnHDPLDA extends SparseHDPSampler implements HDPSamplerWithPhi {
 
 	private static final long serialVersionUID = 1L;
 
@@ -56,13 +55,7 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 	DocTopicTokenFreqTable docTopicTokenFreqTable; 
 	int nrStartTopics;
 	// numTopics is the same as K_max in paper, the maximum number of topics.
-	
-	// activeTopicHistory, activeTopicInDataHistory,topicOcurrenceCount is only used for post analysis, not used in algorithm.
-	List<Integer> activeTopicHistory = new ArrayList<Integer>(); 
-	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
-	// topicOcurrenceCount stores how many times the topic has been active?
-	int [] topicOcurrenceCount;
-	
+		
 	// The prior Gamma distribution
 	GammaDist gd;
 //	AtomicInteger countBernBin = new AtomicInteger();
@@ -70,18 +63,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 //	AtomicInteger countExactBin = new AtomicInteger();
 //	AtomicInteger countAliasBin = new AtomicInteger();
 //	AtomicInteger countNormalBin = new AtomicInteger();
-
-	WalkerAliasTable [] aliasTables; 
-	double [] typeNorm; // Array with doubles with sum of alpha * phi
-	private ExecutorService tableBuilderExecutor;
-
-	// #### Sparsity handling
-	// Jagged array containing the topics that are non-zero for each type
-	int [][] nonZeroTypeTopicIdxs = null;
-	// How many indices  are zero for each type, i.e the column count for the zeroTypeTopicIdxs array
-	int [] nonZeroTypeTopicColIdxs = null;
-
-	boolean staticPhiAliasTableIsBuild = false;
 
 	private Dirichlet phiDirichletPrior;
 
@@ -976,82 +957,13 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 			//numLikelihood++;
 			//double u_lik = (u_sigma - typeNorm[type]) / sum; // Cumsum is not normalized so don't divide by sum 
 			double u_lik = (u_sigma - typeNorm[type]);
-			int slot = SpaliasUncollapsedParallelLDA.findIdx(cumsum,u_lik,nonZeroTopicCnt);
+			int slot = findIdx(cumsum,u_lik,nonZeroTopicCnt);
 			newTopic = nonZeroTopics[slot];
 			//System.out.println("Sampled topic: " + newTopic);
 			// Make sure we actually sampled a valid topic
 		}
 		return newTopic;
 	}
-	// TODO: Can be removed if inherited from other class.
-	protected static int removeIfIn(int oldTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		if (nonZeroTopicCnt<1) {
-			return nonZeroTopicCnt;
-		}
-		// We have one less non-zero topic, move the last to its place, and decrease the non-zero count
-		int nonZeroIdx = nonZeroTopicsBackMapping[oldTopic];
-		if( nonZeroIdx == 0 &&  nonZeroTopics[nonZeroIdx] != oldTopic) {
-			return nonZeroTopicCnt; 
-		} else {
-			nonZeroTopics[nonZeroIdx] = nonZeroTopics[--nonZeroTopicCnt];
-			nonZeroTopicsBackMapping[nonZeroTopics[nonZeroIdx]] = nonZeroIdx;
-			return nonZeroTopicCnt;
-		}
-	}
-
-	// TODO: Can be removed if inherited from other class.
-	protected static int remove(int oldTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		if (nonZeroTopicCnt<1) {
-			throw new IllegalArgumentException ("SpaliasUncollapsedParallelLDA: Cannot remove, count is less than 1 => " + nonZeroTopicCnt);
-		}
-		// We have one less non-zero topic, move the last to its place, and decrease the non-zero count
-		int nonZeroIdx = nonZeroTopicsBackMapping[oldTopic];
-		//nonZeroTopicsBackMapping[oldTopic] = NOT_IN_SET;
-		nonZeroTopics[nonZeroIdx] = nonZeroTopics[--nonZeroTopicCnt];
-		nonZeroTopicsBackMapping[nonZeroTopics[nonZeroIdx]] = nonZeroIdx;
-		return nonZeroTopicCnt;
-	}
-	// TODO: Can be removed if inherited from other class.
-	protected static int insert(int newTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		//// We have a new non-zero topic put it in the last empty slot and increase the count
-		nonZeroTopics[nonZeroTopicCnt] = newTopic;
-		nonZeroTopicsBackMapping[newTopic] = nonZeroTopicCnt;
-		return ++nonZeroTopicCnt;
-	}
-	// TODO: Can be removed if inherited from other class.
-	protected static int removeSorted(int oldTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		if (nonZeroTopicCnt<1) {
-			throw new IllegalArgumentException ("PolyaUrnLDA: Cannot remove, count is less than 1");
-		}
-		//System.out.println("New empty topic. Cnt = " + nonZeroTopicCnt);	
-		int nonZeroIdx = nonZeroTopicsBackMapping[oldTopic];
-		nonZeroTopicCnt--;
-		// Shift the ones above one step to the left
-		for(int i=nonZeroIdx; i<nonZeroTopicCnt;i++) {
-			// Move the last non-zero topic to this new empty slot 
-			nonZeroTopics[i] = nonZeroTopics[i+1];
-			// Do the corresponding for the back mapping
-			nonZeroTopicsBackMapping[nonZeroTopics[i]] = i;
-		}
-		return nonZeroTopicCnt;
-	}
-	// TODO: Can be removed if inherited from other class.
-	protected static int insertSorted(int newTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		//// We have a new non-zero topic put it in the last empty slot
-		int slot = 0;
-		while(newTopic > nonZeroTopics[slot] && slot < nonZeroTopicCnt) slot++;
-
-		for(int i=nonZeroTopicCnt; i>slot;i--) {
-			// Move the last non-zero topic to this new empty slot 
-			nonZeroTopics[i] = nonZeroTopics[i-1];
-			// Do the corresponding for the back mapping
-			nonZeroTopicsBackMapping[nonZeroTopics[i]] = i;
-		}				
-		nonZeroTopics[slot] = newTopic;
-		nonZeroTopicsBackMapping[newTopic] = slot;
-		nonZeroTopicCnt++;
-		return nonZeroTopicCnt;
-	}	
 
 	/**
 	 * Samples new Phi's.
@@ -1163,16 +1075,6 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		return sample; 
 	}
 	
-	@Override
-	public LDAConfiguration getConfiguration() {
-		return config;
-	}
-
-	@Override
-	public int getNoTypes() {
-		return numTypes;
-	}
-
 	protected int updateNrActiveTopics(int[] emptyTopics, List<Integer> activeTopics) {
 		for (int i = 0; i < emptyTopics.length; i++) {
 			if(activeTopics.contains(emptyTopics[i])) {
@@ -1188,29 +1090,5 @@ public class PoissonPolyaUrnHDPLDA extends UncollapsedParallelLDA implements HDP
 		// The next time this topic occurs (is sampled again) it
 		// is considered a completely "new" topic
 		topicOcurrenceCount[topic] = 0;
-	}
-
-	public int[] getTopicOcurrenceCount() {
-		return topicOcurrenceCount;
-	}
-
-	public void setTopicOcurrenceCount(int[] topicOcurrenceCount) {
-		this.topicOcurrenceCount = topicOcurrenceCount;
-	}
-
-	public List<Integer> getActiveTopicHistory() {
-		return activeTopicHistory;
-	}
-
-	public void setActiveTopicHistory(List<Integer> activeTopicHistory) {
-		this.activeTopicHistory = activeTopicHistory;
-	}
-
-	public List<Integer> getActiveTopicInDataHistory() {
-		return activeTopicInDataHistory;
-	}
-
-	public void setActiveTopicInDataHistory(List<Integer> activeInDataTopicHistory) {
-		this.activeTopicInDataHistory = activeInDataTopicHistory;
 	}
 }

@@ -2,14 +2,9 @@
 package cc.mallet.topics;
 
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.apache.commons.math3.distribution.PoissonDistribution;
@@ -51,7 +46,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
  * @author Leif Jonsson
  *
  */
-public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSamplerWithPhi {
+public class PoissonPolyaUrnHLDA extends SparseHDPSampler implements HDPSamplerWithPhi {
 
 	private static final long serialVersionUID = 1L;
 
@@ -62,9 +57,6 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 	DocTopicTokenFreqTable docTopicTokenFreqTable; 
 	int nrStartTopics;
 	int maxTopics;
-	List<Integer> activeTopicHistory = new ArrayList<Integer>();
-	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
-	int [] topicOcurrenceCount;
 	static final int BINOMIAL_TABLE_START_IDX = 50;
 	static final int BINOMIAL_TABLE_SIZE = 50;
 	static final int BINOMIAL_TABLE_MAXWIDTH = 200;
@@ -74,17 +66,6 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 //	AtomicInteger countAliasBin = new AtomicInteger();
 //	AtomicInteger countNormalBin = new AtomicInteger();
 
-	WalkerAliasTable [] aliasTables; 
-	double [] typeNorm; // Array with doubles with sum of alpha * phi
-	private ExecutorService tableBuilderExecutor;
-
-	// #### Sparsity handling
-	// Jagged array containing the topics that are non-zero for each type
-	int [][] nonZeroTypeTopicIdxs = null;
-	// How many indices  are zero for each type, i.e the column count for the zeroTypeTopicIdxs array
-	int [] nonZeroTypeTopicColIdxs = null;
-
-	boolean staticPhiAliasTableIsBuild = false;
 
 	Int2IntArrayMap topicMappingTable;
 
@@ -205,11 +186,10 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 			return new WalkerAliasTableBuildResult(type, aliasTables[type], typeMass);
 		}   
 	}
-
+	
 	@Override
-	public void preIteration() {	
-		doPreIterationTableBuilding();
-		super.preIteration();
+	protected Callable<WalkerAliasTableBuildResult> getAliasTableBuilder(int type) {
+		return new ParallelTableBuilder(type);
 	}
 
 	@Override
@@ -231,48 +211,6 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 //		System.out.println("Exact: " + countExactBin.get() + " Normal: " + countNormalBin.get() + " Table: " + countAliasBin.get() + " Bern: " + countBernBin.get() + " BernSum: " + countBernSumBin.get());
 	}
 	
-	protected void doPreIterationTableBuilding() {
-		List<ParallelTableBuilder> builders = new ArrayList<>();
-		final int [][] topicTypeIndices = topicIndexBuilder.getTopicTypeIndices();
-		if(topicTypeIndices!=null) {
-			// The topicIndexBuilder supports having different types per topic,
-			// this is currently not used, so we can just pick the first topic
-			// since it will be the same for all topics
-			int [] typesToSample = topicTypeIndices[0];
-			for (int typeIdx = 0; typeIdx < typesToSample.length; typeIdx++) {
-				builders.add(new ParallelTableBuilder(typesToSample[typeIdx]));
-			}
-			// if the topicIndexBuilder returns null it means sample ALL types
-		} else {
-			for (int type = 0; type < numTypes; type++) {
-				builders.add(new ParallelTableBuilder(type));
-			}			
-		}
-
-		List<Future<WalkerAliasTableBuildResult>> results;
-		try {
-			results = tableBuilderExecutor.invokeAll(builders);
-			for (Future<WalkerAliasTableBuildResult> result : results) {
-				aliasTables[result.get().type] = result.get().table;
-				typeNorm[result.get().type] = result.get().typeNorm; // typeNorm is sigma_prior
-			}
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-			System.exit(-1);
-		}
-	}
-
-	public void preIterationGivenPhi() {
-		if(!staticPhiAliasTableIsBuild) {
-			doPreIterationTableBuilding();
-			super.preIterationGivenPhi();
-			staticPhiAliasTableIsBuild = true;
-		}
-	}
-
 	@Override
 	public void prePhi() {
 		super.prePhi();
@@ -283,7 +221,6 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 	public void postSample() {
 		setNumTopics(activeTopicHistory.get(activeTopicHistory.size()-1));
 		super.postSample();
-		tableBuilderExecutor.shutdown();
 	}
 	
 	@Override
@@ -683,123 +620,6 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		return new LDADocSamplingResultSparseSimple(localTopicCounts,nonZeroTopicCnt,nonZeroTopics);
 	}
 
-	double calcCumSum(int type, double[] localTopicCounts, int[] nonZeroTopics, int nonZeroTopicCnt, double[] cumsum) { 
-		int topic = nonZeroTopics[0];
-		double score = localTopicCounts[topic] * phi[topic][type];
-		cumsum[0] = score;
-		// Now calculate and add up the scores for each topic for this word
-		// We build a cumsum indexed by topicIndex
-		int topicIdx = 1;
-		while ( topicIdx < nonZeroTopicCnt ) {
-			topic = nonZeroTopics[topicIdx];
-			score = localTopicCounts[topic] * phi[topic][type];
-			cumsum[topicIdx] = score + cumsum[topicIdx-1];
-			topicIdx++;
-		}
-		return cumsum[topicIdx-1];
-	}
-
-	/*
-	 * Sample a topic indicator
-	 * 
-	 * @param type Type of the current token to sample
-	 * @param nonZeroTopics Indices of the topics with p(z=k|.) > 0
-	 * @param nonZeroTopicCnt Number of indicies in nonZeroTopics
-	 * @param sum The sum of Sum_{nonzero_topic} localTopicCounts[topic] * phiType[topic] (also cumsum[nonZeroTopicCnt-1])
-	 * @param cumsum The cumulative sum over Sum_{nonzero_topic} localTopicCounts[topic] * phiType[topic]
-	 * @param u Uniform value within (0,1)
-	 * @param u_sigma Same uniform value within (0,(typeNorm[type] + sum))
-	 * 
-	 * @return 
-	 * 
-	 */
-	int sampleNewTopic(int type, int[] nonZeroTopics, int nonZeroTopicCnt, double sum, double[] cumsum, double u,
-			double u_sigma) {
-		int newTopic;
-		if(u < (typeNorm[type]/(typeNorm[type] + sum))) {
-			//numPrior++;
-			newTopic = aliasTables[type].generateSample(u+((sum*u)/typeNorm[type])); // uniform (0,1)
-			//System.out.println("Prior Sampled topic: " + newTopic);
-		} else {
-			//numLikelihood++;
-			//double u_lik = (u_sigma - typeNorm[type]) / sum; // Cumsum is not normalized so don't divide by sum 
-			double u_lik = (u_sigma - typeNorm[type]);
-			int slot = SpaliasUncollapsedParallelLDA.findIdx(cumsum,u_lik,nonZeroTopicCnt);
-			newTopic = nonZeroTopics[slot];
-			// Make sure we actually sampled a valid topic
-		}
-		return newTopic;
-	}
-
-	protected static int removeIfIn(int oldTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		if (nonZeroTopicCnt<1) {
-			return nonZeroTopicCnt;
-		}
-		// We have one less non-zero topic, move the last to its place, and decrease the non-zero count
-		int nonZeroIdx = nonZeroTopicsBackMapping[oldTopic];
-		if( nonZeroIdx == 0 &&  nonZeroTopics[nonZeroIdx] != oldTopic) {
-			return nonZeroTopicCnt; 
-		} else {
-			nonZeroTopics[nonZeroIdx] = nonZeroTopics[--nonZeroTopicCnt];
-			nonZeroTopicsBackMapping[nonZeroTopics[nonZeroIdx]] = nonZeroIdx;
-			return nonZeroTopicCnt;
-		}
-	}
-
-
-	protected static int remove(int oldTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		if (nonZeroTopicCnt<1) {
-			throw new IllegalArgumentException ("SpaliasUncollapsedParallelLDA: Cannot remove, count is less than 1 => " + nonZeroTopicCnt);
-		}
-		// We have one less non-zero topic, move the last to its place, and decrease the non-zero count
-		int nonZeroIdx = nonZeroTopicsBackMapping[oldTopic];
-		//nonZeroTopicsBackMapping[oldTopic] = NOT_IN_SET;
-		nonZeroTopics[nonZeroIdx] = nonZeroTopics[--nonZeroTopicCnt];
-		nonZeroTopicsBackMapping[nonZeroTopics[nonZeroIdx]] = nonZeroIdx;
-		return nonZeroTopicCnt;
-	}
-
-	protected static int insert(int newTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		//// We have a new non-zero topic put it in the last empty slot and increase the count
-		nonZeroTopics[nonZeroTopicCnt] = newTopic;
-		nonZeroTopicsBackMapping[newTopic] = nonZeroTopicCnt;
-		return ++nonZeroTopicCnt;
-	}
-
-	protected static int removeSorted(int oldTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		if (nonZeroTopicCnt<1) {
-			throw new IllegalArgumentException ("PolyaUrnLDA: Cannot remove, count is less than 1");
-		}
-		//System.out.println("New empty topic. Cnt = " + nonZeroTopicCnt);	
-		int nonZeroIdx = nonZeroTopicsBackMapping[oldTopic];
-		nonZeroTopicCnt--;
-		// Shift the ones above one step to the left
-		for(int i=nonZeroIdx; i<nonZeroTopicCnt;i++) {
-			// Move the last non-zero topic to this new empty slot 
-			nonZeroTopics[i] = nonZeroTopics[i+1];
-			// Do the corresponding for the back mapping
-			nonZeroTopicsBackMapping[nonZeroTopics[i]] = i;
-		}
-		return nonZeroTopicCnt;
-	}
-
-	protected static int insertSorted(int newTopic, int[] nonZeroTopics, int[] nonZeroTopicsBackMapping, int nonZeroTopicCnt) {
-		//// We have a new non-zero topic put it in the last empty slot
-		int slot = 0;
-		while(newTopic > nonZeroTopics[slot] && slot < nonZeroTopicCnt) slot++;
-
-		for(int i=nonZeroTopicCnt; i>slot;i--) {
-			// Move the last non-zero topic to this new empty slot 
-			nonZeroTopics[i] = nonZeroTopics[i-1];
-			// Do the corresponding for the back mapping
-			nonZeroTopicsBackMapping[nonZeroTopics[i]] = i;
-		}				
-		nonZeroTopics[slot] = newTopic;
-		nonZeroTopicsBackMapping[newTopic] = slot;
-		nonZeroTopicCnt++;
-		return nonZeroTopicCnt;
-	}	
-
 	/**
 	 * Samples new Phi's.
 	 * 
@@ -908,16 +728,6 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		return sample; 
 	}
 	
-	@Override
-	public LDAConfiguration getConfiguration() {
-		return config;
-	}
-
-	@Override
-	public int getNoTypes() {
-		return numTypes;
-	}
-
 	protected int updateNrActiveTopics(int[] emptyTopics, boolean [] active_topics, int[] topicOcurrenceCount, int numTopics) {
 		int nrActiveTopics = 0;
 		
@@ -940,29 +750,5 @@ public class PoissonPolyaUrnHLDA extends UncollapsedParallelLDA implements HDPSa
 		}
 
 		return nrActiveTopics;
-	}
-
-	public int[] getTopicOcurrenceCount() {
-		return topicOcurrenceCount;
-	}
-
-	public void setTopicOcurrenceCount(int[] topicOcurrenceCount) {
-		this.topicOcurrenceCount = topicOcurrenceCount;
-	}
-
-	public List<Integer> getActiveTopicHistory() {
-		return activeTopicHistory;
-	}
-
-	public void setActiveTopicHistory(List<Integer> activeTopicHistory) {
-		this.activeTopicHistory = activeTopicHistory;
-	}
-
-	public List<Integer> getActiveTopicInDataHistory() {
-		return activeTopicInDataHistory;
-	}
-
-	public void setActiveTopicInDataHistory(List<Integer> activeInDataTopicHistory) {
-		this.activeTopicInDataHistory = activeInDataTopicHistory;
 	}
 }

@@ -10,9 +10,7 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 import org.apache.commons.configuration.ConfigurationException;
 
@@ -26,7 +24,6 @@ import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IndexSorter;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.MalletLogger;
-import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.ParallelRandoms;
 
 /**
@@ -42,7 +39,7 @@ import cc.mallet.util.ParallelRandoms;
  * @author Leif Jonsson
  *
  */
-public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA implements HDPSamplerWithPhi {
+public class PoissonPolyaUrnHDPLDAInfiniteTopics extends SparseHDPSampler implements HDPSamplerWithPhi {
 
 	{ 
 		logger = MalletLogger.getLogger(PoissonPolyaUrnHDPLDAInfiniteTopics.class.getName());
@@ -65,12 +62,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	
 	// numTopics is the same as K_max in paper, the maximum number of topics.
 	
-	// activeTopicHistory, activeTopicInDataHistory,topicOcurrenceCount is only used for post analysis, not used in algorithm.
-	List<Integer> activeTopicHistory = new ArrayList<Integer>(); 
-	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
-	// topicOcurrenceCount stores how many times the topic has been active?
-	int [] topicOcurrenceCount;
-
 	double k_percentile;
 
 	boolean[] deceasedTopics;
@@ -112,35 +103,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 	int initialDrawTopicIndicator() {
 		return random.nextInt(nrStartTopics);
 	}
-
-	class ParallelTableBuilder implements Callable<WalkerAliasTableBuildResult> {
-		int type;
-		public ParallelTableBuilder(int type) {
-			this.type = type;
-		}
-		@Override
-		public WalkerAliasTableBuildResult call() {
-			double [] probs = new double[numTopics];
-			double typeMass = 0; // Type prior mass
-			for (int topic = 0; topic < numTopics; topic++) {
-				// In the HDP the sampled psi takes the place of the alpha vector in LDA but
-				// it is still multiplied with the LDA alpha scalar (alphaCoef)
-				typeMass += probs[topic] = phi[topic][type] * alphaCoef * psiSampler.getPsi()[topic];
-				if(phi[topic][type]!=0) {
-					int newSize = nonZeroTypeTopicColIdxs[type]++;
-					nonZeroTypeTopicIdxs[type][newSize] = topic;
-				}
-			}
-
-			if(aliasTables[type]==null) {
-				aliasTables[type] = new OptimizedGentleAliasMethod(probs,typeMass);
-			} else {
-				aliasTables[type].reGenerateAliasTable(probs, typeMass);
-			}
-
-			return new WalkerAliasTableBuildResult(type, aliasTables[type], typeMass);
-		}   
-	}
 	
 	/**
 	 * This method can only be called from threads working
@@ -179,11 +141,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		// This is a global parameter so normalization need to be done after psi_k has been sampled in parallel.
 		psiSampler.finalizeSampling();
 	}
-	
-	Callable<WalkerAliasTableBuildResult> getAliasTableBuilder(int type) {
-		return new ParallelTableBuilder(type);
-	}
-	
+		
 	/**
 	 * Re-arranges the topics in the typeTopic matrix based
 	 * on tokensPerTopic
@@ -346,34 +304,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 		}
 
 		psiSampler.reset();
-	}
-	
-	public static int calcK(double percentile, int [] tokensPerTopic) {
-		int [] sortedAllocation = Arrays.copyOf(tokensPerTopic, tokensPerTopic.length);
-		Arrays.sort(sortedAllocation);
-		int [] ecdf = calcEcdf(sortedAllocation);  
-		int k95 = findPercentile(ecdf,percentile);
-		return k95;
-	}
-
-	public static int findPercentile(int[] ecdf, double percentile) {
-		double total = ecdf[ecdf.length-1];
-		for (int j = 0; j < ecdf.length; j++) {
-			if(ecdf[j]/total > percentile) {
-				return j;
-			}
-		}
-		return ecdf.length;
-	}
-
-	public static int[] calcEcdf(int[] sortedAllocation) {
-		int [] ecdf = new int[sortedAllocation.length]; 
-		ecdf[0] = sortedAllocation[sortedAllocation.length-1];
-		for(int i = 1; i < sortedAllocation.length; i++) {
-			ecdf[i] = sortedAllocation[sortedAllocation.length - i - 1] + ecdf[i-1]; 
-		}
-
-		return ecdf;
 	}
 	
 	@Override
@@ -621,30 +551,6 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends PolyaUrnSpaliasLDA impl
 //
 //		return logLikelihood;
 //	}
-		
-	public int[] getTopicOcurrenceCount() {
-		return topicOcurrenceCount;
-	}
-
-	public void setTopicOcurrenceCount(int[] topicOcurrenceCount) {
-		this.topicOcurrenceCount = topicOcurrenceCount;
-	}
-
-	public List<Integer> getActiveTopicHistory() {
-		return activeTopicHistory;
-	}
-
-	public void setActiveTopicHistory(List<Integer> activeTopicHistory) {
-		this.activeTopicHistory = activeTopicHistory;
-	}
-
-	public List<Integer> getActiveTopicInDataHistory() {
-		return activeTopicInDataHistory;
-	}
-
-	public void setActiveTopicInDataHistory(List<Integer> activeInDataTopicHistory) {
-		this.activeTopicInDataHistory = activeInDataTopicHistory;
-	}
 	
 	// Serialization
 
