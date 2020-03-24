@@ -447,28 +447,41 @@ public class LDAUtils {
 	}
 
 	public static InputStream streamFromFile(String inputFile) throws FileNotFoundException, IOException {
-		InputStream in = null;
 		if(inputFile.toLowerCase().endsWith(".gz")) {
-			in = new GZIPInputStream(new FileInputStream(inputFile));
-			byte[] buffer = ByteStreams.toByteArray(in);
+			return streamFromGZipped(inputFile);
+		} else if(inputFile.toLowerCase().endsWith(".zip")) {
+			return streamFromZipped(inputFile);
+		} else {
+			return streamFromPlain(inputFile);
+		}
+	}
+
+	static InputStream streamFromPlain(String inputFile) throws FileNotFoundException, IOException {
+		try(FileInputStream fs = new FileInputStream(new File(inputFile))) {
+			byte[] buffer = ByteStreams.toByteArray(fs);
+			fs.close();
 			ByteArrayInputStream sout = new ByteArrayInputStream(buffer);
 			return sout;
-		} else if(inputFile.toLowerCase().endsWith(".zip")) {
-			ZipFile zf = new ZipFile(inputFile);
-			try {
-				String nameWithoutDotZip = inputFile.substring(0, inputFile.length() - ".zip".length());
-				String shortNameWithoutDotZip = ((new File(nameWithoutDotZip)).getName());
-				in = zf.getInputStream(zf.getEntry(shortNameWithoutDotZip));
-				byte[] buffer = ByteStreams.toByteArray(in);
-				zf.close();
-				ByteArrayInputStream sout = new ByteArrayInputStream(buffer);
-				return sout;
-			} finally {
-				zf.close();
-			}
-		} else {
-			FileInputStream fs = new FileInputStream(new File(inputFile));
-			byte[] buffer = ByteStreams.toByteArray(fs);
+		}
+	}
+
+	static InputStream streamFromZipped(String inputFile) throws IOException {
+		String nameWithoutDotZip = inputFile.substring(0, inputFile.length() - ".zip".length());
+		String shortNameWithoutDotZip = ((new File(nameWithoutDotZip)).getName());
+		try(ZipFile zf = new ZipFile(inputFile);
+				InputStream in = zf.getInputStream(zf.getEntry(shortNameWithoutDotZip))) {
+			byte[] buffer = ByteStreams.toByteArray(in);
+			in.close();
+			zf.close();
+			ByteArrayInputStream sout = new ByteArrayInputStream(buffer);
+			return sout;
+		} 
+	}
+
+	static ByteArrayInputStream streamFromGZipped(String inputFile) throws IOException, FileNotFoundException {
+		try(InputStream in = new GZIPInputStream(new FileInputStream(inputFile))) {
+			byte[] buffer = ByteStreams.toByteArray(in);
+			in.close();
 			ByteArrayInputStream sout = new ByteArrayInputStream(buffer);
 			return sout;
 		}
