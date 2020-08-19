@@ -20,7 +20,7 @@ import cc.mallet.types.VSDirichlet;
 import cc.mallet.types.VariableSelectionDirichlet;
 import cc.mallet.types.VariableSelectionResult;
 import cc.mallet.util.IntArraySortUtils;
-import cc.mallet.util.LoggingUtils;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
 
@@ -543,9 +543,10 @@ public class NZVSSpaliasUncollapsedParallelLDA extends UncollapsedParallelLDA im
 		long elapsedMillis = System.currentTimeMillis();
 		long threadId = Thread.currentThread().getId();
 
+		LDALoggingUtils lu = config.getLoggingUtil();
 		if(measureTimings) {
-			PrintWriter pw = LoggingUtils.checkCreateAndCreateLogPrinter(
-					config.getLoggingUtil().getLogDir() + "/timing_data",
+			PrintWriter pw = lu.checkCreateAndCreateLogPrinter(
+					lu.getLogDir() + "/timing_data",
 					"thr_" + threadId + "_Phi_sampling.txt");
 			pw.println(beforeSamplePhi + "," + elapsedMillis);
 			pw.flush();

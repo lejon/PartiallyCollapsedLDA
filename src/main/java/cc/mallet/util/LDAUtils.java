@@ -69,7 +69,6 @@ import cc.mallet.pipe.iterator.CsvIterator;
 import cc.mallet.pipe.iterator.FileIterator;
 import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.LDASamplerWithPhi;
-import cc.mallet.topics.LogState;
 import cc.mallet.topics.PolyaUrnSpaliasLDA;
 import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.topics.TopicAssignment;
@@ -1219,57 +1218,19 @@ public class LDAUtils {
 	}
 
 
-	public static void perplexityToFile(String loggingPath, int iteration,
+	public static void perplexityToFile(PrintWriter out, int iteration,
 			double testPerplexity, Logger logger) {
-		String likelihoodFile;
 		logger.info("Perplexity on testset is: " + testPerplexity);
-		likelihoodFile = loggingPath + "/test_perplexity.txt";
-		try(PrintWriter out = new PrintWriter(new BufferedWriter(
-				new FileWriter(likelihoodFile, true)))) {
-			out.println(iteration + "\t" + testPerplexity);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.err.println("Could not write test perplexity file");
-		}
+		out.println(iteration + "\t" + testPerplexity);
 	}
 
-	public static void heldOutLLToFile(String loggingPath, int iteration,
+	public static void heldOutLLToFile(PrintWriter out, int iteration,
 			double testPerplexity, Logger logger) {
-		String likelihoodFile;
 		logger.info("Held out Loglikelihood on testset is: " + testPerplexity);
-		likelihoodFile = loggingPath + "/test_held_out_log_likelihood.txt";
-		try(PrintWriter out = new PrintWriter(new BufferedWriter(
-				new FileWriter(likelihoodFile, true)))) {
-			out.println(iteration + "\t" + testPerplexity);
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.err.println("Could not write test held out log likelihood file");
-		}
+		out.println(iteration + "\t" + testPerplexity);
 	}
 
-	public static void logLikelihoodToFile(double logLik, int iteration, 
-			String wordsPerTopic, String loggingPath, Logger logger) {
-		logger.info("\n<" + iteration + "> Log Likelihood: " + logLik + "\n" +wordsPerTopic);
-		String likelihoodFile = loggingPath + "/likelihood.txt";
-		try(PrintWriter out = new PrintWriter(new BufferedWriter(
-				new FileWriter(likelihoodFile, true)))) {
-			out.println(iteration + "\t" + logLik + "\t" + System.currentTimeMillis());
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
-		}
-	}	
-
-	public static void logLikelihoodToFile(LogState parameterObject) {
-		String likelihoodFile = parameterObject.loggingPath + "/likelihood.txt";
-		try(PrintWriter out = new PrintWriter(new BufferedWriter(
-				new FileWriter(likelihoodFile, true)))) {
-			out.println(parameterObject.iteration + "\t" + parameterObject.logLik);
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
-		}
-	}
-
-	public static void logStatstHeaderToFile(Stats statsObject) {
+	public static void logStatstHeaderToFile(Stats statsObject, PrintWriter out) {
 		String header = "iteration\ttimestamp\tzTotalTime\tphiTotalTime\ttypeTokenDensity\tdocumentDensity";
 		if(statsObject.zTimings!=null) {
 			for (int i = 0; i < statsObject.zTimings.length; i++) {
@@ -1285,18 +1246,11 @@ public class LDAUtils {
 		if(statsObject.heldOutLL!=null) {
 			header += "\theldOutLL";
 		}
-		String likelihoodFile = statsObject.loggingPath + "/stats.txt";
-		try(PrintWriter out = new PrintWriter(new BufferedWriter(
-				new FileWriter(likelihoodFile, true)))) {
-			out.println(header);
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
-		}
+
+		out.println(header);
 	}
 
-	public static void logStatsToFile(Stats statsObject) {
-		String likelihoodFile = statsObject.loggingPath + "/stats.txt";
-
+	public static void logStatsToFile(Stats statsObject, PrintWriter out) {
 		String logString = statsObject.iteration + "\t"
 				+ statsObject.absoluteTime + "\t" + statsObject.zSamplingTokenUpdateTime + "\t" 
 				+ statsObject.phiSamplingTime + "\t" + statsObject.density
@@ -1316,12 +1270,7 @@ public class LDAUtils {
 		if(statsObject.heldOutLL != null) {
 			logString += "\t" + statsObject.heldOutLL.doubleValue();
 		}
-		try(PrintWriter out = new PrintWriter(new BufferedWriter(
-				new FileWriter(likelihoodFile, true)))) {
-			out.println(logString);
-		} catch (IOException e) {
-			throw new IllegalStateException(e);
-		}
+		out.println(logString);
 	}
 
 
@@ -1511,36 +1460,38 @@ public class LDAUtils {
 	}
 
 
-	public static void writeASCIIDoubleMatrix(double[][] matrix, String fn, String sep) throws FileNotFoundException, IOException {
-		writeASCIIDoubleMatrix(matrix, matrix.length, matrix[0].length, fn, sep, 4);
+	public static void writeASCIIDoubleMatrix(double[][] matrix, String sep, PrintWriter pw) throws FileNotFoundException, IOException {
+		writeASCIIDoubleMatrix(matrix, matrix.length, matrix[0].length, sep, 4, pw);
 	}
 
-	public static void writeASCIIDoubleMatrix(double[][] matrix, int rows, int columns, String fn, String sep) throws FileNotFoundException, IOException {
-		writeASCIIDoubleMatrix(matrix, rows, columns, fn, sep, 4);
+	public static void writeASCIIDoubleMatrix(double[][] matrix, int rows, int columns, String sep, PrintWriter pw) throws FileNotFoundException, IOException {
+		writeASCIIDoubleMatrix(matrix, rows, columns, sep, 4, pw);
 	}
 
-	public static void writeASCIIDoubleMatrix(double[][] matrix, int rows, int columns, String fn, String sep, int noDigits) throws FileNotFoundException, IOException {
+	public static void writeASCIIDoubleMatrix(double[][] matrix, int rows, int columns, String sep, int noDigits, PrintWriter pw) throws FileNotFoundException, IOException {
 		DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0");
-		File file = new File(fn);
-		if (file.exists()) {
-			System.out.println("Warning : the file " + file.getName()
-			+ " already exists !");
-		}
-		try (FileWriter fw = new FileWriter(file, false); 
-				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter pw  = new PrintWriter(bw)) {
-			for (int i = 0; i < matrix.length; i++) {
-				for (int j = 0; j < matrix[i].length; j++) {
-					pw.print(formatDouble(matrix[i][j],mydecimalFormat,noDigits) + "");
-					if((j+1)<matrix[i].length) {
-						pw.print(sep);
-					}
+		for (int i = 0; i < matrix.length; i++) {
+			for (int j = 0; j < matrix[i].length; j++) {
+				pw.print(formatDouble(matrix[i][j],mydecimalFormat,noDigits) + "");
+				if((j+1)<matrix[i].length) {
+					pw.print(sep);
 				}
-				pw.println();
 			}
-		} catch (IOException e) {
-			throw new IllegalArgumentException("File " + file.getName()
-			+ " is unwritable : " + e.toString());
+			pw.println();
+		}
+		pw.flush();
+	}
+	
+	public static void writeASCIIDoubleMatrix(double[][] matrix, int rows, int columns, String sep, 
+			int noDigits, DecimalFormat mydecimalFormat, PrintWriter pw) throws FileNotFoundException, IOException {
+		for (int i = 0; i < matrix.length; i++) {
+			for (int j = 0; j < matrix[i].length; j++) {
+				pw.print(formatDouble(matrix[i][j],mydecimalFormat,noDigits) + "");
+				if((j+1)<matrix[i].length) {
+					pw.print(sep);
+				}
+			}
+			pw.println();
 		}
 	}
 
@@ -2083,7 +2034,7 @@ public class LDAUtils {
 		return vocab;
 	}
 
-	public static void writeStringArray(String[] vocabulary, String fileName) {
+	public static void writeStringArrayUtil(String[] vocabulary, String fileName) {
 		File file = new File(fileName);
 		try (FileWriter fw = new FileWriter(file, false); 
 				BufferedWriter bw = new BufferedWriter(fw);
@@ -2091,18 +2042,6 @@ public class LDAUtils {
 			for (int i = 0; i < vocabulary.length; i++) {
 				pw.println(vocabulary[i]);
 			}
-		} catch (IOException e) {
-			throw new IllegalArgumentException("File " + file.getName()
-			+ " is unwritable : " + e.toString());
-		}
-	}
-
-	public static void writeString(String string, String fileName) {
-		File file = new File(fileName);
-		try (FileWriter fw = new FileWriter(file, false); 
-				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter pw  = new PrintWriter(bw)) {
-			pw.println(string);
 		} catch (IOException e) {
 			throw new IllegalArgumentException("File " + file.getName()
 			+ " is unwritable : " + e.toString());
@@ -2384,23 +2323,45 @@ public class LDAUtils {
 	}
 
 	public static InstanceList loadInstancesStrings(String [] doclines, Pipe pipe) {
-		return loadInstancesStrings(doclines, "X", "stoplist.txt", pipe);
+		String [] classNames = new String [doclines.length];
+		for (int i = 0; i < classNames.length; i++) {
+			classNames[i] = "X";
+		}
+
+		return loadInstancesStrings(doclines, classNames, null, "stoplist.txt", pipe);
 	}
 
 	public static InstanceList loadInstancesStrings(String [] doclines) {
-		return loadInstancesStrings(doclines, "X", "stoplist.txt");
+		return loadInstancesStrings(doclines, "X");
 	}
 
 	public static InstanceList loadInstancesStrings(String [] doclines, String className) {
-		return loadInstancesStrings(doclines, className, "stoplist.txt");
+		String [] classNames = new String [doclines.length];
+		for (int i = 0; i < classNames.length; i++) {
+			classNames[i] = "X";
+		}
+		return loadInstancesStrings(doclines, classNames, "stoplist.txt");
 	}
 
-	public static InstanceList loadInstancesStrings(String [] doclines, String className, String stoplistFile) {
-		return loadInstancesStrings(doclines, className, stoplistFile, null);
+	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames) {
+		return loadInstancesStrings(doclines, classNames, (String) null);
 	}
 
-	public static InstanceList loadInstancesStrings(String [] doclines, String className, String stoplistFile, Pipe pipe) {
-		StringClassArrayIterator readerTrain = new StringClassArrayIterator(doclines, className); 
+	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, String [] docIds) {
+		return loadInstancesStrings(doclines, classNames, docIds, "stoplist.txt", null);
+	}
+
+	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, String [] docIds, Pipe pipe) {
+		return loadInstancesStrings(doclines, classNames, docIds, "stoplist.txt", pipe);
+	}
+
+	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, String stoplistFile) {
+		return loadInstancesStrings(doclines, classNames, null, stoplistFile, null);
+	}
+
+	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, String [] docIds, 
+			String stoplistFile, Pipe pipe) {
+		StringClassArrayIterator readerTrain = new StringClassArrayIterator(doclines, classNames, docIds); 
 
 		if(pipe == null) {
 			pipe = LDAUtils.buildSerialPipe(stoplistFile,null);

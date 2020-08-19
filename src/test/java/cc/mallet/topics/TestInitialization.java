@@ -16,6 +16,7 @@ import cc.mallet.topics.randomscan.document.BatchBuilderFactory;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.utils.TestUtils;
@@ -44,7 +45,7 @@ public class TestInitialization {
 				numBatches, rareWordThreshold, showTopicsInterval,
 				startDiagnosticOutput,seed,"src/main/resources/datasets/nips.txt");
 
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setLoggingUtil(lu);
 		config.activateSubconfig("demo-nips");
@@ -244,7 +245,7 @@ public class TestInitialization {
 				numBatches, rareWordThreshold, showTopicsInterval,
 				startDiagnosticOutput,4711,"src/main/resources/datasets/nips.txt");
 
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setBatchBuildingScheme(BatchBuilderFactory.PERCENTAGE_SPLIT);
 		config.setLoggingUtil(lu);
@@ -472,7 +473,7 @@ public class TestInitialization {
 				numBatches, rareWordThreshold, showTopicsInterval,
 				startDiagnosticOutput,4711,"src/main/resources/datasets/nips.txt");
 
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setLoggingUtil(lu);
 		config.activateSubconfig("demo-nips");

@@ -14,6 +14,7 @@ import cc.mallet.configuration.SimpleLDAConfiguration;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
@@ -34,7 +35,7 @@ public class TfIdfPipeTest {
 			numBatches, rareWordThreshold, showTopicsInterval,
 			startDiagnosticOutput,seed,"src/main/resources/datasets/tfidf-samples.txt");
 	
-	LoggingUtils lu = new LoggingUtils();
+	LDALoggingUtils lu = new LoggingUtils();
 
 	
 	@Test
@@ -264,7 +265,7 @@ public class TfIdfPipeTest {
 				numBatches, rareWordThreshold, showTopicsInterval,
 				startDiagnosticOutput,seed,"src/main/resources/datasets/nips.txt");
 		
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		nipsCfg.setLoggingUtil(lu);
 		nipsCfg.activateSubconfig("demo-nips");
 		String dataset_fn = nipsCfg.getDatasetFilename();

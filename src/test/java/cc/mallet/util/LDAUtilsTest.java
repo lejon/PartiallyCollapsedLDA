@@ -5,7 +5,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -514,7 +516,8 @@ public class LDAUtilsTest {
 			}
 		}
 		File tmp = File.createTempFile("testLDAUtils", "");
-		LDAUtils.writeASCIIDoubleMatrix(dMatrix, tmp.getAbsolutePath(), SEP);
+		PrintWriter tzbOut = new PrintWriter(new FileWriter(tmp.getAbsolutePath()));
+		LDAUtils.writeASCIIDoubleMatrix(dMatrix, SEP, tzbOut);
 		
 		double [][] readMatrix = LDAUtils.readASCIIDoubleMatrix(tmp.getAbsolutePath(),SEP);
 		TestUtils.assertEqualArrays(dMatrix,readMatrix, 0.0001);

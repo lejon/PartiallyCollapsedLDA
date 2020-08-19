@@ -3,11 +3,21 @@ package cc.mallet.configuration;
 import java.io.Serializable;
 import java.util.Arrays;
 
-import cc.mallet.util.LoggingUtils;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import cc.mallet.util.LDALoggingUtils;
+import cc.mallet.util.LDANullLogger;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter @Setter
+//@JsonIgnoreProperties(ignoreUnknown = true)
 public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private static final long serialVersionUID = 1L;
-	LoggingUtils logUtil = new LoggingUtils(".");
+	@JsonIgnore LDALoggingUtils logUtil = new LDANullLogger();
 	private String scheme;
 	private Integer noTopics       = LDAConfiguration.NO_TOPICS_DEFAULT;
 	private Double alpha           = LDAConfiguration.ALPHA_DEFAULT;
@@ -22,12 +32,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private Integer startDiagnostic = -1;
 	private Integer seed = 0;
 	private boolean debug = false;
-	private String original_dataset_fn;
-	private String dataset_fn;
-	private String test_dataset_fn;
-	private String building_scheme;
-	private double percentage_split_size_doc;
-	private double percentage_split_size_topic;
+	private String originalDatasetFilename;
+	private String datasetFilename;
+	private String testDatasetFilename;
+	private String buildingScheme;
+	private double percentageSplitSizeDoc;
+	private double percentageSplitSizeTopic;
 	private int resultSetSize = 1;
 	private Integer fullPhiPeriod;
 	private Double topTokensToSample;
@@ -45,7 +55,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private boolean saveDocLengths;
 	private String termFrequencyFilename;
 	private boolean saveTermFrequencies;
-	private String vocabularyFn;
+	private String vocabularyFilename;
 	private boolean saveVocabulary;
 	private String corpusFn;
 	private boolean saveCorpus;
@@ -84,8 +94,9 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private boolean saveSampler;
 	private String savedSamplerDir = LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT;
 	private String iterationCallbackClass = LDAConfiguration.MODEL_CALLBACK_DEFAULT;
+	private String subConfig = "default";
 	
-	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme,
+	public SimpleLDAConfiguration(LDALoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
 			Integer noBatches, Integer rareThreshold, Integer topicInterval,
 			Integer startDiagnostic, int seed, String datasetFn) {
@@ -101,13 +112,13 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.topicInterval = topicInterval;
 		this.startDiagnostic = startDiagnostic;
 		this.seed = seed;
-		this.dataset_fn = datasetFn;
+		this.datasetFilename = datasetFn;
 	}
 
 	public SimpleLDAConfiguration() {
 	}
 	
-	public SimpleLDAConfiguration(LoggingUtils logUtil, String scheme, Integer noTopics, Double alpha, Double beta,
+	public SimpleLDAConfiguration(LDALoggingUtils logUtil, String scheme, Integer noTopics, Double alpha, Double beta,
 			Double lambda, Integer noIters, Integer noBatches, Integer noTopicBatches, Integer rareThreshold,
 			Integer tfIdfThreshold, Integer topicInterval, Integer startDiagnostic, Integer seed, boolean debug,
 			String dataset_fn, String test_dataset_fn, String building_scheme, double percentage_split_size_doc,
@@ -143,12 +154,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.startDiagnostic = startDiagnostic;
 		this.seed = seed;
 		this.debug = debug;
-		this.dataset_fn = dataset_fn;
-		this.original_dataset_fn = original_dataset_fn;
-		this.test_dataset_fn = test_dataset_fn;
-		this.building_scheme = building_scheme;
-		this.percentage_split_size_doc = percentage_split_size_doc;
-		this.percentage_split_size_topic = percentage_split_size_topic;
+		this.datasetFilename = dataset_fn;
+		this.originalDatasetFilename = original_dataset_fn;
+		this.testDatasetFilename = test_dataset_fn;
+		this.buildingScheme = building_scheme;
+		this.percentageSplitSizeDoc = percentage_split_size_doc;
+		this.percentageSplitSizeTopic = percentage_split_size_topic;
 		this.resultSetSize = resultSetSize;
 		this.fullPhiPeriod = fullPhiPeriod;
 		this.topTokensToSample = topTokensToSample;
@@ -164,7 +175,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.saveDocLengths = saveDocLengths;
 		this.termFrequencyFilename = termFrequencyFilename;
 		this.saveTermFrequencies = saveTermFrequencies;
-		this.vocabularyFn = vocabularyFn;
+		this.vocabularyFilename = vocabularyFn;
 		this.saveVocabulary = saveVocabulary;
 		this.corpusFn = corpusFn;
 		this.saveCorpus = saveCorpus;
@@ -274,7 +285,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	}
 
 	public void setVocabularyFn(String vocabularyFn) {
-		this.vocabularyFn = vocabularyFn;
+		this.vocabularyFilename = vocabularyFn;
 	}
 
 	public void setSaveVocabulary(boolean saveVocabulary) {
@@ -286,32 +297,32 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	}
 
 	@Override
-	public LoggingUtils getLoggingUtil() {
+	@JsonIgnore public LDALoggingUtils getLoggingUtil() {
 		return logUtil;
 	}
 
 	@Override
-	public void setLoggingUtil(LoggingUtils logger) {
+	public void setLoggingUtil(LDALoggingUtils logger) {
 		logUtil = logger;
 	}
 
 	@Override
-	public void activateSubconfig(String subConfName) {
+	@JsonIgnore public void activateSubconfig(String subConfName) {
 
 	}
 
 	@Override
-	public void forceActivateSubconfig(String subConfName) {
+	@JsonIgnore public void forceActivateSubconfig(String subConfName) {
 
 	}
 
 	@Override
-	public String getActiveSubConfig() {
-		return "default";
+	@JsonIgnore public String getActiveSubConfig() {
+		return subConfig;
 	}
 
 	@Override
-	public String[] getSubConfigs() {
+	@JsonIgnore public String[] getSubConfigs() {
 		return new String[] {};
 	}
 
@@ -322,26 +333,26 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 
 	@Override
 	public String getDatasetFilename() {
-		return dataset_fn;
+		return datasetFilename;
 	}
 
 	@Override
 	public String getOriginalDatasetFilename() {
-		return original_dataset_fn;
+		return originalDatasetFilename;
 	}
 
 	@Override
 	public String getTestDatasetFilename() {
-		return test_dataset_fn;
+		return testDatasetFilename;
 	}
 
 
 	public void setDatasetFilename(String fn) {
-		dataset_fn = fn;
+		datasetFilename = fn;
 	}
 
 	public void setOriginalDatasetFilename(String fn) {
-		original_dataset_fn = fn;
+		originalDatasetFilename = fn;
 	}
 	
 	@Override
@@ -389,7 +400,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		return startDiagnostic;
 	}
 	
-	public void setLogUtil(LoggingUtils logUtil) {
+	public void setLogUtil(LDALoggingUtils logUtil) {
 		this.logUtil = logUtil;
 	}
 
@@ -438,6 +449,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		return this.seed;
 	}
 
+	public void setSeed(int seed) {
+		this.seed = seed;
+	}
+	
 	@Override
 	public boolean getDebug() {
 		return debug;
@@ -483,12 +498,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	}
 	
 	public void setBatchBuildingScheme(String string) {
-		this.building_scheme = string;
+		this.buildingScheme = string;
 	}
 
 	@Override
 	public String getDocumentBatchBuildingScheme(String batchBuildSchemeDefault) {
-		return building_scheme == null ? batchBuildSchemeDefault : building_scheme;
+		return buildingScheme == null ? batchBuildSchemeDefault : buildingScheme;
 	}
 
 	@Override
@@ -498,20 +513,20 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 
 	@Override
 	public double getDocPercentageSplitSize() {
-		return percentage_split_size_doc;
+		return percentageSplitSizeDoc;
 	}
 	
 	public void setDocPercentageSplitSize(double splitSize) {
-		this.percentage_split_size_doc = splitSize;
+		this.percentageSplitSizeDoc = splitSize;
 	}
 
 	@Override
 	public double getTopicPercentageSplitSize() {
-		return percentage_split_size_topic;
+		return percentageSplitSizeTopic;
 	}
 	
 	public void setTopicPercentageSplitSize(double splitSize) {
-		this.percentage_split_size_topic = splitSize;
+		this.percentageSplitSizeTopic = splitSize;
 	}
 
 	@Override
@@ -571,22 +586,22 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	}
 
 	@Override
-	public int[] getPrintNDocsInterval() {
+	@JsonIgnore public int[] getPrintNDocsInterval() {
 		return new int [0];
 	}
 
 	@Override
-	public int getPrintNDocs() {
+	@JsonIgnore public int getPrintNDocs() {
 		return 0;
 	}
 
 	@Override
-	public int[] getPrintNTopWordsInterval() {
+	@JsonIgnore public int[] getPrintNTopWordsInterval() {
 		return new int [0];
 	}
 
 	@Override
-	public int getPrintNTopWords() {
+	@JsonIgnore public int getPrintNTopWords() {
 		return 0;
 	}
 
@@ -727,7 +742,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 
 	@Override
 	public String getVocabularyFilename() {
-		return vocabularyFn;
+		return vocabularyFilename;
 	}
 
 	@Override
@@ -946,9 +961,9 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		result = prime * result + aliasPoissonThreshold;
 		result = prime * result + ((alpha == null) ? 0 : alpha.hashCode());
 		result = prime * result + ((beta == null) ? 0 : beta.hashCode());
-		result = prime * result + ((building_scheme == null) ? 0 : building_scheme.hashCode());
+		result = prime * result + ((buildingScheme == null) ? 0 : buildingScheme.hashCode());
 		result = prime * result + ((corpusFn == null) ? 0 : corpusFn.hashCode());
-		result = prime * result + ((dataset_fn == null) ? 0 : dataset_fn.hashCode());
+		result = prime * result + ((datasetFilename == null) ? 0 : datasetFilename.hashCode());
 		result = prime * result + (debug ? 1231 : 1237);
 		result = prime * result
 				+ ((dirichletSamplerBuilderClassName == null) ? 0 : dirichletSamplerBuilderClassName.hashCode());
@@ -988,10 +1003,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		result = prime * result + ((noTopicBatches == null) ? 0 : noTopicBatches.hashCode());
 		result = prime * result + ((noTopics == null) ? 0 : noTopics.hashCode());
 		result = prime * result + nrTopWords;
-		result = prime * result + ((original_dataset_fn == null) ? 0 : original_dataset_fn.hashCode());
-		temp = Double.doubleToLongBits(percentage_split_size_doc);
+		result = prime * result + ((originalDatasetFilename == null) ? 0 : originalDatasetFilename.hashCode());
+		temp = Double.doubleToLongBits(percentageSplitSizeDoc);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(percentage_split_size_topic);
+		temp = Double.doubleToLongBits(percentageSplitSizeTopic);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result + phiBurnIn;
 		result = prime * result + phiMeanThinDefault;
@@ -1017,14 +1032,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		result = prime * result + ((stoplistFilename == null) ? 0 : stoplistFilename.hashCode());
 		result = prime * result + (symmetricAlpha ? 1231 : 1237);
 		result = prime * result + ((termFrequencyFilename == null) ? 0 : termFrequencyFilename.hashCode());
-		result = prime * result + ((test_dataset_fn == null) ? 0 : test_dataset_fn.hashCode());
+		result = prime * result + ((testDatasetFilename == null) ? 0 : testDatasetFilename.hashCode());
 		result = prime * result + ((tfIdfThreshold == null) ? 0 : tfIdfThreshold.hashCode());
 		result = prime * result + ((topTokensToSample == null) ? 0 : topTokensToSample.hashCode());
 		result = prime * result + ((topicInterval == null) ? 0 : topicInterval.hashCode());
 		result = prime * result + ((topicPriorFilename == null) ? 0 : topicPriorFilename.hashCode());
 		result = prime * result + ((topic_batch_building_scheme == null) ? 0 : topic_batch_building_scheme.hashCode());
 		result = prime * result + ((topic_building_scheme == null) ? 0 : topic_building_scheme.hashCode());
-		result = prime * result + ((vocabularyFn == null) ? 0 : vocabularyFn.hashCode());
+		result = prime * result + ((vocabularyFilename == null) ? 0 : vocabularyFilename.hashCode());
 		return result;
 	}
 
@@ -1049,20 +1064,20 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 				return false;
 		} else if (!beta.equals(other.beta))
 			return false;
-		if (building_scheme == null) {
-			if (other.building_scheme != null)
+		if (buildingScheme == null) {
+			if (other.buildingScheme != null)
 				return false;
-		} else if (!building_scheme.equals(other.building_scheme))
+		} else if (!buildingScheme.equals(other.buildingScheme))
 			return false;
 		if (corpusFn == null) {
 			if (other.corpusFn != null)
 				return false;
 		} else if (!corpusFn.equals(other.corpusFn))
 			return false;
-		if (dataset_fn == null) {
-			if (other.dataset_fn != null)
+		if (datasetFilename == null) {
+			if (other.datasetFilename != null)
 				return false;
-		} else if (!dataset_fn.equals(other.dataset_fn))
+		} else if (!datasetFilename.equals(other.datasetFilename))
 			return false;
 		if (debug != other.debug)
 			return false;
@@ -1170,16 +1185,16 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 			return false;
 		if (nrTopWords != other.nrTopWords)
 			return false;
-		if (original_dataset_fn == null) {
-			if (other.original_dataset_fn != null)
+		if (originalDatasetFilename == null) {
+			if (other.originalDatasetFilename != null)
 				return false;
-		} else if (!original_dataset_fn.equals(other.original_dataset_fn))
+		} else if (!originalDatasetFilename.equals(other.originalDatasetFilename))
 			return false;
-		if (Double.doubleToLongBits(percentage_split_size_doc) != Double
-				.doubleToLongBits(other.percentage_split_size_doc))
+		if (Double.doubleToLongBits(percentageSplitSizeDoc) != Double
+				.doubleToLongBits(other.percentageSplitSizeDoc))
 			return false;
-		if (Double.doubleToLongBits(percentage_split_size_topic) != Double
-				.doubleToLongBits(other.percentage_split_size_topic))
+		if (Double.doubleToLongBits(percentageSplitSizeTopic) != Double
+				.doubleToLongBits(other.percentageSplitSizeTopic))
 			return false;
 		if (phiBurnIn != other.phiBurnIn)
 			return false;
@@ -1256,10 +1271,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 				return false;
 		} else if (!termFrequencyFilename.equals(other.termFrequencyFilename))
 			return false;
-		if (test_dataset_fn == null) {
-			if (other.test_dataset_fn != null)
+		if (testDatasetFilename == null) {
+			if (other.testDatasetFilename != null)
 				return false;
-		} else if (!test_dataset_fn.equals(other.test_dataset_fn))
+		} else if (!testDatasetFilename.equals(other.testDatasetFilename))
 			return false;
 		if (tfIdfThreshold == null) {
 			if (other.tfIdfThreshold != null)
@@ -1291,10 +1306,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 				return false;
 		} else if (!topic_building_scheme.equals(other.topic_building_scheme))
 			return false;
-		if (vocabularyFn == null) {
-			if (other.vocabularyFn != null)
+		if (vocabularyFilename == null) {
+			if (other.vocabularyFilename != null)
 				return false;
-		} else if (!vocabularyFn.equals(other.vocabularyFn))
+		} else if (!vocabularyFilename.equals(other.vocabularyFilename))
 			return false;
 		return true;
 	}
@@ -1307,5 +1322,21 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setIterationCallbackClass(String modelCallback) {
 		this.iterationCallbackClass = modelCallback;
 	}
-
+	
+	@Override
+	public String toString() {
+		ObjectMapper mapper  = new ObjectMapper();
+		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
+		                .withFieldVisibility(JsonAutoDetect.Visibility.ANY));
+//		                .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+//		                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+//		                .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+		
+		try {
+			return mapper.writeValueAsString(this);
+		} catch (JsonProcessingException e) {
+			System.err.println("Could not serialize config to JSON:" + e.toString());
+			return hashCode() + "";
+		}
+	}
 }

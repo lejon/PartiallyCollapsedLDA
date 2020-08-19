@@ -12,7 +12,7 @@ import cc.mallet.types.LabelSequence;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
 import cc.mallet.types.VariableSelectionResult;
-import cc.mallet.util.LoggingUtils;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.OptimizedGentleAliasMethod;
 import cc.mallet.util.WalkerAliasTable;
@@ -314,9 +314,10 @@ public class PolyaUrnSpaliasLDA extends SparseUncollapsedSampler implements LDAG
 		long elapsedMillis = System.currentTimeMillis();
 		long threadId = Thread.currentThread().getId();
 
+		LDALoggingUtils lu = config.getLoggingUtil();
 		if(measureTimings) {
-			PrintWriter pw = LoggingUtils.checkCreateAndCreateLogPrinter(
-					config.getLoggingUtil().getLogDir() + "/timing_data",
+			PrintWriter pw = lu.checkCreateAndCreateLogPrinter(
+					lu.getLogDir() + "/timing_data",
 					"thr_" + threadId + "_Phi_sampling.txt");
 			pw.println(beforeSamplePhi + "," + elapsedMillis);
 			pw.flush();

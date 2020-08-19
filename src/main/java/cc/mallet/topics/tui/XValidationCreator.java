@@ -14,6 +14,8 @@ import cc.mallet.topics.SpaliasUncollapsedParallelLDA;
 import cc.mallet.types.CrossValidationIterator;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.FileLoggingUtils;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
@@ -32,10 +34,10 @@ public class XValidationCreator {
 		
 		System.out.println("We have: " + Runtime.getRuntime().availableProcessors() 
 				+ " processors avaiable");
-		String buildVer = LoggingUtils.getManifestInfo("Implementation-Build","PCPLDA");
-		String implVer  = LoggingUtils.getManifestInfo("Implementation-Version", "PCPLDA");
+		String buildVer = FileLoggingUtils.getManifestInfo("Implementation-Build","PCPLDA");
+		String implVer  = FileLoggingUtils.getManifestInfo("Implementation-Version", "PCPLDA");
 		if(buildVer==null||implVer==null) {
-			System.out.println("GIT info:" + LoggingUtils.getLatestCommit());
+			System.out.println("GIT info:" + FileLoggingUtils.getLatestCommit());
 		} else {
 			System.out.println("Build info:" 
 					+ "Implementation-Build = " + buildVer + ", " 
@@ -44,12 +46,12 @@ public class XValidationCreator {
 		
 		LDACommandLineParser cp = new LDACommandLineParser(args);	
 		LDAConfiguration config = (LDAConfiguration) ConfigFactory.getMainConfiguration(cp);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		String expDir = config.getExperimentOutputDirectory("");
 		if(!expDir.equals("")) {
 			expDir += "/";
 		}
-		String logSuitePath = "Runs/" + expDir + "RunSuite" + LoggingUtils.getDateStamp();
+		String logSuitePath = "Runs/" + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
 		System.out.println("Logging to: " + logSuitePath);
 		lu.checkAndCreateCurrentLogDir(logSuitePath);
 		config.setLoggingUtil(lu);
@@ -79,7 +81,7 @@ public class XValidationCreator {
 			
 		}
 		if(buildVer==null||implVer==null) {
-			System.out.println("GIT info:" + LoggingUtils.getLatestCommit());
+			System.out.println("GIT info:" + FileLoggingUtils.getLatestCommit());
 		} else {
 		System.out.println("Build info:" 
 				+ "Implementation-Build = " + buildVer + ", " 
@@ -120,11 +122,13 @@ public class XValidationCreator {
 		
 		String docTopicMeanFn = config.getDocumentTopicMeansOutputFilename();
 		double [][] dtMeans = spalias.getZbar();
-		LDAUtils.writeASCIIDoubleMatrix(dtMeans, config.getLoggingUtil().getLogDir().getAbsolutePath() + "/train-" + docTopicMeanFn, ",");
+		PrintWriter dtmOut = config.getLoggingUtil().getLogPrinter("train-" + docTopicMeanFn);
+		LDAUtils.writeASCIIDoubleMatrix(dtMeans, ",", dtmOut);
 
 		String phiMeanFn = config.getPhiMeansOutputFilename();
 		double [][] phiMeans = spalias.getPhiMeans();
-		LDAUtils.writeASCIIDoubleMatrix(phiMeans, config.getLoggingUtil().getLogDir().getAbsolutePath() + "/train-" + phiMeanFn, ",");
+		PrintWriter phiOut = config.getLoggingUtil().getLogPrinter("train-" + phiMeanFn);
+		LDAUtils.writeASCIIDoubleMatrix(phiMeans, ",", phiOut);
 
 		PrintWriter out = new PrintWriter(config.getLoggingUtil().getLogDir().getAbsolutePath() + "/train-ids.txt");
 		String [] ids = extractRowIds(trainingInstances);
@@ -154,7 +158,8 @@ public class XValidationCreator {
 		String docTopicMeanFn = config.getDocumentTopicMeansOutputFilename();
 		
 		double [][] dtMeans = spalias.getZbar();
-		LDAUtils.writeASCIIDoubleMatrix(dtMeans, config.getLoggingUtil().getLogDir().getAbsolutePath() + "/test-" + docTopicMeanFn, ",");
+		PrintWriter dtmOut = config.getLoggingUtil().getLogPrinter("test-" + docTopicMeanFn);
+		LDAUtils.writeASCIIDoubleMatrix(dtMeans, ",", dtmOut);
 		
 		PrintWriter out = new PrintWriter(config.getLoggingUtil().getLogDir().getAbsolutePath() + "/test-ids.txt");
 		String [] ids = extractRowIds(testInstances);

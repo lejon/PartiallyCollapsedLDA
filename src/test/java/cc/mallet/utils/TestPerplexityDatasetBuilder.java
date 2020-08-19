@@ -20,6 +20,7 @@ import cc.mallet.types.Alphabet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.PerplexityDatasetBuilder;
@@ -127,7 +128,7 @@ public class TestPerplexityDatasetBuilder {
 		
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 		

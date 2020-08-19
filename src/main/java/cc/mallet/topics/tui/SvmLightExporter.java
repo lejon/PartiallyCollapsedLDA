@@ -2,6 +2,7 @@ package cc.mallet.topics.tui;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.configuration.ConfigurationException;
@@ -12,6 +13,8 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.ParsedLDAConfiguration;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.FileLoggingUtils;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
@@ -30,12 +33,12 @@ public class SvmLightExporter {
 			System.out.println("Starting run: " + i);
 			
 			LDAConfiguration config = (LDAConfiguration) ConfigFactory.getMainConfiguration(cp);
-			LoggingUtils lu = new LoggingUtils();
+			LDALoggingUtils lu = new LoggingUtils();
 			String expDir = config.getExperimentOutputDirectory("");
 			if(!expDir.equals("")) {
 				expDir += "/";
 			}
-			String logSuitePath = "Runs/" + expDir + "RunSuite" + LoggingUtils.getDateStamp();
+			String logSuitePath = "Runs/" + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
 			System.out.println("Logging to: " + logSuitePath);
 			lu.checkAndCreateCurrentLogDir(logSuitePath);
 			config.setLoggingUtil(lu);
@@ -58,12 +61,14 @@ public class SvmLightExporter {
 				System.out.println("Scheme: " + whichModel);
 
 				InstanceList instances = LDAUtils.loadDataset(config, dataset_fn);
-				//writeSvnLight(instances,lgDir.getAbsolutePath(),"cgcbib.corpus", "cgcbib.vocab");
-				writeTokensPerRow(instances,lgDir.getAbsolutePath(),conf + "-corpus.txt");
+				writeSvnLight(instances,lgDir.getAbsolutePath(),"cgcbib.corpus");
+				//writeTokensPerRow(instances,lgDir.getAbsolutePath(),conf + "-corpus.txt");
 				String vocabFn = conf + "-vocabulary.txt";
 				String [] vobaculary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
-				LDAUtils.writeStringArray(vobaculary,lgDir.getAbsolutePath() + "/" + vocabFn);
-
+				PrintWriter out = lu.getLogPrinter(vocabFn);
+				for(String line : vobaculary) {
+					out.print(line);
+				}
 			}
 		}
 	}
@@ -74,7 +79,8 @@ public class SvmLightExporter {
 		for(Instance instance : instances) {
 			smvLightInstances[sidx++] = LDAUtils.instanceToSvmLightString(instance, -1);
 		}
-		LDAUtils.writeStringArray(smvLightInstances,targetDir + "/" + corpusFn);
+
+		LDAUtils.writeStringArrayUtil(smvLightInstances,targetDir + "/" + corpusFn);
 	}
 	
 	public static void writeTokensPerRow(InstanceList instances, String targetDir, String corpusFn) {
@@ -83,6 +89,6 @@ public class SvmLightExporter {
 		for(Instance instance : instances) {
 			stringInstances[sidx++] = LDAUtils.instanceToTokenIndexString(instance, -1);
 		}
-		LDAUtils.writeStringArray(stringInstances,targetDir + "/" + corpusFn);
+		LDAUtils.writeStringArrayUtil(stringInstances,targetDir + "/" + corpusFn);
 	}
 }

@@ -10,6 +10,7 @@ import cc.mallet.topics.ADLDA;
 import cc.mallet.topics.SerialCollapsedLDA;
 import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.utils.TestUtils;
@@ -43,7 +44,7 @@ public class TestBetweenProcessInitialization {
 				numBatches, rareWordThreshold, showTopicsInterval,
 				startDiagnosticOutput,fixedSeed,"src/main/resources/datasets/nips.txt");
 
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setLoggingUtil(lu);
 		config.activateSubconfig("demo-nips");

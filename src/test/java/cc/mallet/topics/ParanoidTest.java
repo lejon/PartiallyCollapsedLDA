@@ -13,6 +13,7 @@ import cc.mallet.topics.ParanoidUncollapsedParallelLDA;
 import cc.mallet.topics.ParanoidVSSpaliasUncollapsedLDA;
 import cc.mallet.topics.randomscan.document.BatchBuilderFactory;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
@@ -45,7 +46,7 @@ public class ParanoidTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -87,7 +88,7 @@ public class ParanoidTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -131,7 +132,7 @@ public class ParanoidTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -173,7 +174,7 @@ public class ParanoidTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -215,7 +216,7 @@ public class ParanoidTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -257,7 +258,7 @@ public class ParanoidTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -299,7 +300,7 @@ public class ParanoidTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 		config.setBatchBuildingScheme(BatchBuilderFactory.PERCENTAGE_SPLIT);
@@ -344,7 +345,7 @@ public class ParanoidTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 		config.setBatchBuildingScheme(BatchBuilderFactory.ADAPTIVE_SPLIT);
@@ -390,7 +391,7 @@ public class ParanoidTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 		config.setBatchBuildingScheme(BatchBuilderFactory.FIXED_SPLIT);

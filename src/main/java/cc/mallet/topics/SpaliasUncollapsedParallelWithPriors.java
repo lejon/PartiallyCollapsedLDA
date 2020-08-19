@@ -14,7 +14,7 @@ import cc.mallet.types.ConditionalDirichlet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
-import cc.mallet.util.LoggingUtils;
+import cc.mallet.util.LDALoggingUtils;
 
 
 /**
@@ -225,9 +225,10 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 		long elapsedMillis = System.currentTimeMillis();
 		long threadId = Thread.currentThread().getId();
 
+		LDALoggingUtils lu = config.getLoggingUtil();
 		if(measureTimings) {
-			PrintWriter pw = LoggingUtils.checkCreateAndCreateLogPrinter(
-					config.getLoggingUtil().getLogDir() + "/timing_data",
+			PrintWriter pw = lu.checkCreateAndCreateLogPrinter(
+					lu.getLogDir() + "/timing_data",
 					"thr_" + threadId + "_Phi_sampling.txt");
 			pw.println(beforeSamplePhi + "," + elapsedMillis);
 			pw.flush();

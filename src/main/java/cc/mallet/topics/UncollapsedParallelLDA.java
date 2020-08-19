@@ -58,7 +58,9 @@ import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.SparseDirichlet;
+import cc.mallet.util.FileLoggingUtils;
 import cc.mallet.util.IndexSorter;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAThreadFactory;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
@@ -555,9 +557,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 		double logLik = modelLogLikelihood();	
 		String tw = topWords (wordsPerTopic);
-		LogState logState = new LogState(logLik, 0, tw, loggingPath, logger);
 		loglikelihood.add(logLik);
-		LDAUtils.logLikelihoodToFile(logState);
+		
+		config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(0 + "\t" + logLik);
 
 		boolean logTypeTopicDensity = config.logTypeTopicDensity(LDAConfiguration.LOG_TYPE_TOPIC_DENSITY_DEFAULT);
 		boolean logDocumentDensity = config.logDocumentDensity(LDAConfiguration.LOG_DOCUMENT_DENSITY_DEFAULT);
@@ -577,8 +579,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					beta,
 					typeTopicCounts, 
 					tokensPerTopic);
-			heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
-			LDAUtils.heldOutLLToFile(loggingPath, 0, heldOutLL, logger);
+			heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);
+			PrintWriter holl = config.getLoggingUtil().getAppendingLogPrinter("test_held_out_log_likelihood.txt");
+			LDAUtils.heldOutLLToFile(holl, 0, heldOutLL, logger);
 			heldOutLoglikelihood.add(heldOutLL);
 		}
 		
@@ -599,8 +602,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					density, docDensity, zTimings, countTimings,phiDensity);
 			} 
 			
-			LDAUtils.logStatstHeaderToFile(stats);
-			LDAUtils.logStatsToFile(stats);
+			PrintWriter statsout = config.getLoggingUtil().getAppendingLogPrinter("stats.txt");
+			LDAUtils.logStatstHeaderToFile(stats,statsout);
+			LDAUtils.logStatsToFile(stats,statsout);
 		}
 		
 		if(config.logTopicIndicators(false)) {
@@ -672,16 +676,16 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
 				
 				if(testSet != null) {
-					heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
-					LDAUtils.heldOutLLToFile(loggingPath, iteration, heldOutLL, logger);
+					heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);
+					PrintWriter holl = config.getLoggingUtil().getAppendingLogPrinter("test_perplexity.txt");
+					LDAUtils.heldOutLLToFile(holl, iteration, heldOutLL, logger);
 					heldOutLoglikelihood.add(heldOutLL);
 				}
 
 				logLik = modelLogLikelihood();	
 				tw = topWords (wordsPerTopic);
-				logState = new LogState(logLik, iteration, tw, loggingPath, logger);
 				loglikelihood.add(logLik);
-				LDAUtils.logLikelihoodToFile(logState);
+				config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(iteration + "\t" + logLik);
 				logger.info("<" + iteration + "> Log Likelihood: " + logLik);
 				logger.fine(tw);
 				if(logTypeTopicDensity || logDocumentDensity) {
@@ -695,7 +699,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 						stats = new Stats(iteration, loggingPath, elapsedMillis, zSamplingTokenUpdateTime, phiSamplingTime, 
 							density, docDensity, zTimings, countTimings,phiDensity);
 					}
-					LDAUtils.logStatsToFile(stats);
+					PrintWriter statsout = config.getLoggingUtil().getAppendingLogPrinter("stats.txt");
+					LDAUtils.logStatsToFile(stats,statsout);
 				}
 				
 				// WARNING: This will SUBSTANTIALLY slow down the sampler
@@ -782,9 +787,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 		double logLik = modelLogLikelihood();	
 		String tw = topWords (wordsPerTopic);
-		LogState logState = new LogState(logLik, currentIteration, tw, loggingPath, logger);
 		loglikelihood.add(logLik);
-		LDAUtils.logLikelihoodToFile(logState);
+		config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(currentIteration + "\t" + logLik);
 
 		boolean logTypeTopicDensity = config.logTypeTopicDensity(LDAConfiguration.LOG_TYPE_TOPIC_DENSITY_DEFAULT);
 		boolean logDocumentDensity = config.logDocumentDensity(LDAConfiguration.LOG_DOCUMENT_DENSITY_DEFAULT);
@@ -804,8 +808,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					beta,
 					typeTopicCounts, 
 					tokensPerTopic);
-			heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
-			LDAUtils.heldOutLLToFile(loggingPath, 0, heldOutLL, logger);
+			heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);
+			PrintWriter holl = config.getLoggingUtil().getAppendingLogPrinter("test_held_out_log_likelihood.txt");
+			LDAUtils.heldOutLLToFile(holl, 0, heldOutLL, logger);
 			heldOutLoglikelihood.add(heldOutLL);
 		}
 		
@@ -826,8 +831,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					density, docDensity, zTimings, countTimings,phiDensity);
 			} 
 			
-			LDAUtils.logStatstHeaderToFile(stats);
-			LDAUtils.logStatsToFile(stats);
+			PrintWriter statsout = config.getLoggingUtil().getAppendingLogPrinter("stats.txt");
+			LDAUtils.logStatstHeaderToFile(stats,statsout);
+			LDAUtils.logStatsToFile(stats,statsout);
 		}
 		
 		if(config.logTopicIndicators(false)) {
@@ -899,16 +905,16 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
 				
 				if(testSet != null) {
-					heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);					
-					LDAUtils.heldOutLLToFile(loggingPath, iteration, heldOutLL, logger);
+					heldOutLL = evaluator.evaluateLeftToRight(testSet, numParticles, null);
+					PrintWriter holl = config.getLoggingUtil().getAppendingLogPrinter("test_held_out_log_likelihood.txt");
+					LDAUtils.heldOutLLToFile(holl, iteration, heldOutLL, logger);
 					heldOutLoglikelihood.add(heldOutLL);
 				}
 
 				logLik = modelLogLikelihood();	
 				tw = topWords (wordsPerTopic);
-				logState = new LogState(logLik, currentIteration, tw, loggingPath, logger);
 				loglikelihood.add(logLik);
-				LDAUtils.logLikelihoodToFile(logState);
+				config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(currentIteration + "\t" + logLik);
 				logger.info("<" + currentIteration + "> Log Likelihood: " + logLik);
 				logger.fine(tw);
 				if(logTypeTopicDensity || logDocumentDensity) {
@@ -922,7 +928,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 						stats = new Stats(currentIteration, loggingPath, elapsedMillis, zSamplingTokenUpdateTime, phiSamplingTime, 
 							density, docDensity, zTimings, countTimings,phiDensity);
 					}
-					LDAUtils.logStatsToFile(stats);
+					PrintWriter statsout = config.getLoggingUtil().getAppendingLogPrinter("stats.txt");
+					LDAUtils.logStatsToFile(stats,statsout);
 				}
 				
 				// WARNING: This will SUBSTANTIALLY slow down the sampler
@@ -1373,9 +1380,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 		long elapsedMillis = System.currentTimeMillis();
 		long threadId = Thread.currentThread().getId();
 
+		LDALoggingUtils lu = config.getLoggingUtil();
 		if(measureTimings) {
-			PrintWriter pw = LoggingUtils.checkCreateAndCreateLogPrinter(
-					config.getLoggingUtil().getLogDir() + "/timing_data",
+			PrintWriter pw = lu.checkCreateAndCreateLogPrinter(
+					lu.getLogDir() + "/timing_data",
 					"thr_" + threadId + "_Phi_sampling.txt");
 			pw.println(beforeSamplePhi + "," + elapsedMillis);
 			pw.flush();
@@ -2041,8 +2049,8 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				if(!expDir.equals("")) {
 					expDir += "/";
 				}
-				String logSuitePath = "Runs/" + expDir + "RunSuite" + LoggingUtils.getDateStamp();
-				LoggingUtils lu = new LoggingUtils();
+				String logSuitePath = "Runs/" + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
+				LDALoggingUtils lu = new LoggingUtils();
 				lu.checkAndCreateCurrentLogDir(logSuitePath);
 				config.setLoggingUtil(lu);
 				if(activeSubconfig==null) {

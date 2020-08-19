@@ -70,10 +70,8 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 
 	@Override
 	public void sample (int iterations) throws IOException {
-		String loggingPath = config.getLoggingUtil().getLogDir().getAbsolutePath();
 		double logLik = modelLogLikelihood();
-		String tw = topWords (wordsPerTopic);
-		LDAUtils.logLikelihoodToFile(logLik,0,tw,loggingPath,logger);
+		config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(0 + "\t" + logLik);
 		
 		int [] printFirstNDocs = config.getPrintNDocsInterval();
 		int nDocs = config.getPrintNDocs();
@@ -118,9 +116,7 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 				System.out.println("Iteration: " + currentIteration);
 				logLik = modelLogLikelihood();
 				if(config!= null) { 
-					tw = topWords (wordsPerTopic);
-					loggingPath = config.getLoggingUtil().getLogDir().getAbsolutePath();
-					LDAUtils.logLikelihoodToFile(logLik,iteration,tw,loggingPath,logger);
+					config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(iteration + "\t" + logLik);;
 				}
 			}
 			if( printFirstNDocs.length > 1 && LDAUtils.inRangeInterval(iteration, printFirstNDocs)) {

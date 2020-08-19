@@ -18,6 +18,7 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.ParsedLDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.utils.TestUtils;
@@ -47,7 +48,7 @@ public class ReadWriteTest {
 		
 		UncollapsedParallelLDA uncollapsed;
 		{
-			LoggingUtils lu = new LoggingUtils();
+			LDALoggingUtils lu = new LoggingUtils();
 			lu.checkAndCreateCurrentLogDir("Runs");
 			config.setLoggingUtil(lu);
 			config.activateSubconfig("demo-nips");
@@ -159,7 +160,7 @@ public class ReadWriteTest {
 		
 		UncollapsedParallelLDA uncollapsed;
 		{
-			LoggingUtils lu = new LoggingUtils();
+			LDALoggingUtils lu = new LoggingUtils();
 			lu.checkAndCreateCurrentLogDir("Runs");
 			config.setLoggingUtil(lu);
 			config.activateSubconfig("demo");
@@ -280,7 +281,7 @@ public class ReadWriteTest {
 		
 		PoissonPolyaUrnHDPLDAInfiniteTopics origHDP;
 		{
-			LoggingUtils lu = new LoggingUtils();
+			LDALoggingUtils lu = new LoggingUtils();
 			lu.checkAndCreateCurrentLogDir("Runs");
 			config.setLoggingUtil(lu);
 			config.activateSubconfig("demo-nips");
@@ -407,7 +408,7 @@ public class ReadWriteTest {
 		
 		PoissonPolyaUrnHDPLDAInfiniteTopics origHDP;
 		{
-			LoggingUtils lu = new LoggingUtils();
+			LDALoggingUtils lu = new LoggingUtils();
 			lu.checkAndCreateCurrentLogDir("Runs");
 			config.setLoggingUtil(lu);
 			config.activateSubconfig("demo");

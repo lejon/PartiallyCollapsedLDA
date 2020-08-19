@@ -23,6 +23,7 @@ import cc.mallet.topics.randomscan.document.FixedSplitBatchBuilder;
 import cc.mallet.topics.randomscan.topic.ProportionalTopicIndexBuilder;
 import cc.mallet.types.Alphabet;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
@@ -217,7 +218,7 @@ public class BatchBuilderTest {
 				
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setLoggingUtil(lu);
 		config.activateSubconfig("demo-nips");
@@ -269,7 +270,7 @@ public class BatchBuilderTest {
 				
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setLoggingUtil(lu);
 		config.activateSubconfig("demo-nips");
@@ -360,7 +361,7 @@ public class BatchBuilderTest {
 
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setLoggingUtil(lu);
 		config.activateSubconfig("demo-nips");
@@ -465,7 +466,7 @@ public class BatchBuilderTest {
 
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setLoggingUtil(lu);
 		config.activateSubconfig("demo-nips");
@@ -572,7 +573,7 @@ public class BatchBuilderTest {
 
 		SimpleLDAConfiguration config = getStdConfig(whichModel, numIter, numBatches);
 
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setLoggingUtil(lu);
 		config.activateSubconfig("demo-nips");
@@ -618,7 +619,7 @@ public class BatchBuilderTest {
 		int n = 200;
 		config.setProportionalTopicIndexBuilderSkipStep(n);
 
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("Runs");
 		config.setLoggingUtil(lu);
 		config.activateSubconfig("demo-nips");

@@ -13,6 +13,7 @@ import org.junit.Test;
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
@@ -50,7 +51,7 @@ public class SpaliasUncollapsedTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -92,7 +93,7 @@ public class SpaliasUncollapsedTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -151,7 +152,7 @@ public class SpaliasUncollapsedTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -207,7 +208,7 @@ public class SpaliasUncollapsedTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -249,7 +250,7 @@ public class SpaliasUncollapsedTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 
@@ -296,7 +297,7 @@ public class SpaliasUncollapsedTest {
 		String dataset_fn = config.getDatasetFilename();
 		System.out.println("Using dataset: " + dataset_fn);
 		System.out.println("Scheme: " + whichModel);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("TestRuns");
 		config.setLoggingUtil(lu);
 

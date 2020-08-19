@@ -258,8 +258,12 @@ public class KLDivergenceClassifier extends Classifier {
 		// Save example doc-topic means if that is turned on in config
 		if(config.saveDocumentTopicMeans() && config.getDatasetFilename()!=null) {
 			String dtFn = config.getDocumentTopicMeansOutputFilename();
-			LDAUtils.writeASCIIDoubleMatrix(trainedSampler.getZbar(), lgDir.getAbsolutePath() + "/" + foldPrefix + fold + "-" + dtFn, ",");
-			LDAUtils.writeASCIIDoubleMatrix(sampledTestTopics,lgDir.getAbsolutePath() + "/" + foldPrefix + fold + "-TESTSET-" + dtFn, ",");
+			String trainedZBar = foldPrefix + fold + "-" + dtFn;
+			PrintWriter tzbOut = config.getLoggingUtil().getLogPrinter(trainedZBar);
+			LDAUtils.writeASCIIDoubleMatrix(trainedSampler.getZbar(), ",", tzbOut);
+			String testZBar = foldPrefix + fold + "-TESTSET-" + dtFn;
+			PrintWriter testzbOut = config.getLoggingUtil().getLogPrinter(testZBar);
+			LDAUtils.writeASCIIDoubleMatrix(sampledTestTopics, ",",testzbOut);
 		}
 		
 		PrintWriter idsOut = new PrintWriter(config.getLoggingUtil().getLogDir().getAbsolutePath() + "/test-ids-fold-" + fold + ".txt");

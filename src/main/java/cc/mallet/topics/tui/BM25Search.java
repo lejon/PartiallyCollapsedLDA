@@ -16,6 +16,8 @@ import cc.mallet.similarity.CorpusStatistics;
 import cc.mallet.types.CrossValidationIterator;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.FileLoggingUtils;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.Timer;
@@ -47,10 +49,10 @@ public class BM25Search {
 
 		System.out.println("We have: " + Runtime.getRuntime().availableProcessors() 
 				+ " processors avaiable");
-		String buildVer = LoggingUtils.getManifestInfo("Implementation-Build","PCPLDA");
-		String implVer  = LoggingUtils.getManifestInfo("Implementation-Version", "PCPLDA");
+		String buildVer = FileLoggingUtils.getManifestInfo("Implementation-Build","PCPLDA");
+		String implVer  = FileLoggingUtils.getManifestInfo("Implementation-Version", "PCPLDA");
 		if(buildVer==null||implVer==null) {
-			System.out.println("GIT info:" + LoggingUtils.getLatestCommit());
+			System.out.println("GIT info:" + FileLoggingUtils.getLatestCommit());
 		} else {
 			System.out.println("Build info:" 
 					+ "Implementation-Build = " + buildVer + ", " 
@@ -69,12 +71,12 @@ public class BM25Search {
 			System.out.println("Starting run: " + i);
 
 			LDAConfiguration config = (LDAConfiguration) ConfigFactory.getMainConfiguration(cp);
-			LoggingUtils lu = new LoggingUtils();
+			LDALoggingUtils lu = new LoggingUtils();
 			String expDir = config.getExperimentOutputDirectory("");
 			if(!expDir.equals("")) {
 				expDir += "/";
 			}
-			String logSuitePath = "Runs/" + expDir + "RunSuite" + LoggingUtils.getDateStamp();
+			String logSuitePath = "Runs/" + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
 			System.out.println("Logging to: " + logSuitePath);
 			lu.checkAndCreateCurrentLogDir(logSuitePath);
 			config.setLoggingUtil(lu);
@@ -181,7 +183,7 @@ public class BM25Search {
 				System.out.println("I am done!");
 			}
 			if(buildVer==null||implVer==null) {
-				System.out.println("GIT info:" + LoggingUtils.getLatestCommit());
+				System.out.println("GIT info:" + FileLoggingUtils.getLatestCommit());
 			} else {
 				System.out.println("Build info:" 
 						+ "Implementation-Build = " + buildVer + ", " 

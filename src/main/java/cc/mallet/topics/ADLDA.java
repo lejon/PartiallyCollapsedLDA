@@ -2,6 +2,7 @@ package cc.mallet.topics;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeSet;
@@ -71,8 +72,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 		String loggingPath = config.getLoggingUtil().getLogDir().getAbsolutePath();
 		double logLik = modelLogLikelihood();
 		String tw = topWords (wordsPerTopic);
-		LogState logState = new LogState(logLik, 0, tw, loggingPath, logger);
-		LDAUtils.logLikelihoodToFile(logState);
+		config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(0 + "\t" + logLik);
 		
 		boolean logTypeTopicDensity = config.logTypeTopicDensity(LDAConfiguration.LOG_TYPE_TOPIC_DENSITY_DEFAULT);
 		boolean logDocumentDensity = config.logDocumentDensity(LDAConfiguration.LOG_DOCUMENT_DENSITY_DEFAULT);
@@ -82,12 +82,13 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 		int numThreads = config.getNoBatches(LDAConfiguration.NO_BATCHES_DEFAULT);
 		kdDensities = new double[numThreads];
 
+		PrintWriter statsout = config.getLoggingUtil().getAppendingLogPrinter("stats.txt");
 		if(logTypeTopicDensity || logDocumentDensity) {
 			density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 			docDensity = logDocumentDensity ? LDAUtils.calculateDocDensity(kdDensities, numTopics, data.size()) : -1;
 			stats = new Stats(0, loggingPath, System.currentTimeMillis(), 0, 0, density, docDensity, null, null,0);
-			LDAUtils.logStatstHeaderToFile(stats);
-			LDAUtils.logStatsToFile(stats);
+			LDAUtils.logStatstHeaderToFile(stats,statsout);
+			LDAUtils.logStatsToFile(stats,statsout);
 		}
 
 		setNumThreads(numThreads);
@@ -269,9 +270,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 			long elapsedMillis = System.currentTimeMillis() - iterationStart;
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
 				logLik = modelLogLikelihood();
-				String wt = displayTopWords (wordsPerTopic, false);
-				logState = new LogState(logLik, iteration, wt, loggingPath, logger);
-				LDAUtils.logLikelihoodToFile(logState);
+				config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(iteration + "\t" + logLik);
 				logger.info("<" + iteration + "> Log Likelihood: " + logLik);
 				logger.fine(tw);
 				
@@ -282,7 +281,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 					}
 					docDensity = logDocumentDensity ? LDAUtils.calculateDocDensity(kdDensities, numTopics, data.size()) : -1;
 					stats = new Stats(iteration, loggingPath, System.currentTimeMillis(), elapsedMillis, 0, density, docDensity, null, null,0);
-					LDAUtils.logStatsToFile(stats);
+					LDAUtils.logStatsToFile(stats,statsout);
 				}
 			}
 

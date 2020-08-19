@@ -2,20 +2,21 @@ package cc.mallet.configuration;
 
 import org.apache.commons.configuration.ConfigurationException;
 
-import cc.mallet.util.LoggingUtils;
+import cc.mallet.util.LDALoggingUtils;
+import cc.mallet.util.LDANullLogger;
 
 public class ParsedLDAConfiguration extends SubConfig implements Configuration, LDAConfiguration {
 
 	private static final long serialVersionUID = 1L;
 
-	LoggingUtils logger;
+	LDALoggingUtils logger;
 
 	/* (non-Javadoc)
 	 * @see configuration.LDAConfiguration#getLoggingUtil()
 	 */
 	@Override
-	public LoggingUtils getLoggingUtil() {
-		if(logger==null) throw new IllegalArgumentException("You havent initialized the Logger before usage");
+	public LDALoggingUtils getLoggingUtil() {
+		if(logger==null) { logger = new LDANullLogger(); }
 		return logger;
 	}
 
@@ -23,7 +24,7 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	 * @see configuration.LDAConfiguration#setLoggingUtil(utils.LoggingUtils)
 	 */
 	@Override
-	public void setLoggingUtil(LoggingUtils logger) {
+	public void setLoggingUtil(LDALoggingUtils logger) {
 		this.logger = logger;
 	}
 

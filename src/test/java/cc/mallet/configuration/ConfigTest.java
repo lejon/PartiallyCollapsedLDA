@@ -5,11 +5,18 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalINIConfiguration;
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LoggingUtils;
 
 public class ConfigTest {
@@ -190,7 +197,7 @@ public class ConfigTest {
 		String whichModel = "spalias";
 		int numIter = 100;
 		int numBatches = 11;
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir("/tmp");
 		SimpleLDAConfiguration config = new SimpleLDAConfiguration(lu, whichModel,
 				numTopics, alpha, beta, numIter,
@@ -204,6 +211,42 @@ public class ConfigTest {
 
 		assertEquals(config,config2);
 		assertEquals(config.hashCode(),config2.hashCode());
+	}
+	
+	@Test
+	public void testSimpleConfigToString() throws ConfigurationException, ParseException, JsonParseException, JsonMappingException, IOException {
+		Integer numTopics = 20;
+		Double alpha = 0.1; 
+		Double beta = 0.01;
+		Integer rareWordThreshold = 0;
+		Integer showTopicsInterval = 10;
+		Integer startDiagnosticOutput = 0;
+		String whichModel = "spalias";
+		int numIter = 100;
+		int numBatches = 11;
+		LDALoggingUtils lu = new LoggingUtils();
+		lu.checkAndCreateCurrentLogDir("/tmp");
+		SimpleLDAConfiguration config = new SimpleLDAConfiguration(lu, whichModel,
+				numTopics, alpha, beta, numIter,
+				numBatches, rareWordThreshold, showTopicsInterval,
+				startDiagnosticOutput,4711,"src/main/resources/datasets/nips.txt");
+
+		SimpleLDAConfiguration config2 = new SimpleLDAConfiguration(new LoggingUtils(), whichModel,
+				numTopics, alpha, beta, numIter,
+				numBatches, rareWordThreshold, showTopicsInterval,
+				startDiagnosticOutput,4711,"src/main/resources/datasets/nips.txt");
+		
+		assertEquals(4711, config.getSeed(0));
+		
+		System.out.println(config.toString());
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+		SimpleLDAConfiguration reReadConfig = objectMapper.readValue(config.toString(), SimpleLDAConfiguration.class);
+
+		
+		assertEquals(4711, reReadConfig.getSeed(0));
+		assertEquals("src/main/resources/datasets/nips.txt", reReadConfig.getDatasetFilename());
+		assertEquals(config.toString(),config2.toString());
 	}
 
 }

@@ -27,6 +27,8 @@ import cc.mallet.topics.LDASamplerWithPhi;
 import cc.mallet.topics.TopicModelDiagnosticsPlain;
 import cc.mallet.types.InstanceList;
 import cc.mallet.util.EclipseDetector;
+import cc.mallet.util.FileLoggingUtils;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 import cc.mallet.util.TeeStream;
@@ -91,10 +93,10 @@ public class ParallelLDA {
 
 		System.out.println("We have: " + Runtime.getRuntime().availableProcessors() 
 				+ " processors avaiable");
-		String buildVer = LoggingUtils.getManifestInfo("Implementation-Build","PCPLDA");
-		String implVer  = LoggingUtils.getManifestInfo("Implementation-Version", "PCPLDA");
+		String buildVer = FileLoggingUtils.getManifestInfo("Implementation-Build","PCPLDA");
+		String implVer  = FileLoggingUtils.getManifestInfo("Implementation-Version", "PCPLDA");
 		if(buildVer==null||implVer==null) {
-			System.out.println("GIT info:" + LoggingUtils.getLatestCommit());
+			System.out.println("GIT info:" + FileLoggingUtils.getLatestCommit());
 		} else {
 			System.out.println("Build info:" 
 					+ "Implementation-Build = " + buildVer + ", " 
@@ -117,12 +119,12 @@ public class ParallelLDA {
 			System.out.println("Starting run: " + i);
 
 			LDAConfiguration config = (LDAConfiguration) ConfigFactory.getMainConfiguration(cp);
-			LoggingUtils lu = new LoggingUtils();
+			LDALoggingUtils lu = new LoggingUtils();
 			String expDir = config.getExperimentOutputDirectory("");
 			if(!expDir.equals("")) {
 				expDir += "/";
 			}
-			String logSuitePath = "Runs/" + expDir + "RunSuite" + LoggingUtils.getDateStamp();
+			String logSuitePath = "Runs/" + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
 			System.out.println("Logging to: " + logSuitePath);
 			lu.checkAndCreateCurrentLogDir(logSuitePath);
 			config.setLoggingUtil(lu);
@@ -141,7 +143,7 @@ public class ParallelLDA {
 				doIteration(cp, config, lu, conf);				
 			}
 			if(buildVer==null||implVer==null) {
-				System.out.println("GIT info:" + LoggingUtils.getLatestCommit());
+				System.out.println("GIT info:" + FileLoggingUtils.getLatestCommit());
 			} else {
 				System.out.println("Build info:" 
 						+ "Implementation-Build = " + buildVer + ", " 
@@ -179,7 +181,7 @@ public class ParallelLDA {
 		return cp.isOptionSet("continue");
 	}
 
-	void doIteration(LDACommandLineParser cp, LDAConfiguration config, LoggingUtils lu, String conf)
+	void doIteration(LDACommandLineParser cp, LDAConfiguration config, LDALoggingUtils lu, String conf)
 			throws FileNotFoundException, IOException, Exception {
 		int commonSeed = config.getSeed(LDAConfiguration.SEED_DEFAULT);
 
@@ -287,13 +289,15 @@ public class ParallelLDA {
 		if(config.saveDocumentTopicMeans()) {
 			String docTopicMeanFn = config.getDocumentTopicMeansOutputFilename();
 			double [][] means = model.getZbar();
-			LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
+			PrintWriter dtmOut = config.getLoggingUtil().getLogPrinter(docTopicMeanFn);
+			LDAUtils.writeASCIIDoubleMatrix(means, ",", dtmOut);
 		}
 
 		if(config.saveDocumentThetaEstimate()) {
 			String docTopicThetaFn = config.getDocumentTopicThetaOutputFilename();
 			double [][] means = model.getThetaEstimate();
-			LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicThetaFn, ",");
+			PrintWriter dtmOut = config.getLoggingUtil().getLogPrinter(docTopicThetaFn);
+			LDAUtils.writeASCIIDoubleMatrix(means, ",", dtmOut);
 		}
 
 		if(model instanceof LDASamplerWithPhi) {
@@ -302,7 +306,8 @@ public class ParallelLDA {
 				String docTopicMeanFn = config.getPhiMeansOutputFilename();
 				double [][] means = modelWithPhi.getPhiMeans();
 				if(means!=null) {
-					LDAUtils.writeASCIIDoubleMatrix(means, lgDir.getAbsolutePath() + "/" + docTopicMeanFn, ",");
+					PrintWriter dtmOut = config.getLoggingUtil().getLogPrinter(docTopicMeanFn);
+					LDAUtils.writeASCIIDoubleMatrix(means, ",",dtmOut);
 				} else {
 					System.err.println("WARNING: ParallelLDA: No Phi means where sampled, not saving Phi means! This is likely due to a combination of configuration settings of phi_mean_burnin, phi_mean_thin and save_phi_mean");
 				}
@@ -310,14 +315,20 @@ public class ParallelLDA {
 				String vocabFn = config.getVocabularyFilename();
 				if(vocabFn==null || vocabFn.length()==0) { vocabFn = "phi_vocabulary.txt"; }
 				String [] vobaculary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
-				LDAUtils.writeStringArray(vobaculary,lgDir.getAbsolutePath() + "/" + vocabFn);
+				PrintWriter out = lu.getAppendingLogPrinter(vocabFn);
+				for(String line : vobaculary) {
+					out.println(line);
+				}
 			}
 		}
 
 		if(config.saveVocabulary(false)) {
 			String vocabFn = config.getVocabularyFilename();
 			String [] vocabulary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
-			LDAUtils.writeStringArray(vocabulary,lgDir.getAbsolutePath() + "/" + vocabFn);
+			PrintWriter out = lu.getAppendingLogPrinter(vocabFn);
+			for(String line : vocabulary) {
+				out.println(line);
+			}
 		}
 
 		if(config.saveCorpus(false)) {
@@ -486,12 +497,14 @@ public class ParallelLDA {
 		System.out.println("Active topics:");
 		List<Integer> activeTopicHistoryList = modelWithPhi.getActiveTopicHistory();
 		System.out.println(activeTopicHistoryList);
-		LDAUtils.writeString(activeTopicHistoryList.toString().substring(1, activeTopicHistoryList.toString().length()-1), lgDir.getAbsolutePath() + "/ActiveTopics.csv");
+		String historySubset = activeTopicHistoryList.toString().substring(1, activeTopicHistoryList.toString().length()-1);
+		model.getConfiguration().getLoggingUtil().getLogPrinter("ActiveTopics.csv").println(historySubset);
+
 		System.out.println("Active topics in data:");
 		List<Integer> activeTopicInDataHistory = modelWithPhi.getActiveTopicInDataHistory();
 		System.out.println(activeTopicInDataHistory);
-		LDAUtils.writeString(activeTopicInDataHistory.toString().substring(1, activeTopicInDataHistory.toString().length()-1), 
-				lgDir.getAbsolutePath() + "/ActiveTopicsInData.csv");
+		String subsetInData = activeTopicInDataHistory.toString().substring(1, activeTopicInDataHistory.toString().length()-1);
+		model.getConfiguration().getLoggingUtil().getLogPrinter("ActiveTopicsInData.csv").println(subsetInData);
 
 		int [] tokenAllocation = modelWithPhi.getTopicTotals();
 		double [] tokenAllocationPercent = new double[tokenAllocation.length]; 

@@ -3,7 +3,7 @@ package cc.mallet.configuration;
 import cc.mallet.topics.randomscan.document.BatchBuilderFactory;
 import cc.mallet.topics.randomscan.topic.TopicBatchBuilderFactory;
 import cc.mallet.topics.randomscan.topic.TopicIndexBuilderFactory;
-import cc.mallet.util.LoggingUtils;
+import cc.mallet.util.LDALoggingUtils;
 
 public interface LDAConfiguration {
 
@@ -47,9 +47,9 @@ public interface LDAConfiguration {
 	public static final String STORED_SAMPLER_DIR_DEFAULT = "stored_samplers";
 	public static final String MODEL_CALLBACK_DEFAULT = null;
 
-	public LoggingUtils getLoggingUtil();
+	public LDALoggingUtils getLoggingUtil();
 
-	public void setLoggingUtil(LoggingUtils logger);
+	public void setLoggingUtil(LDALoggingUtils logger);
 
 	public void activateSubconfig(String subConfName);
 

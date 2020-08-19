@@ -26,7 +26,6 @@ import cc.mallet.types.LabelAlphabet;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.types.SparseDirichlet;
 import cc.mallet.types.SparseDirichletSamplerBuilder;
-import cc.mallet.util.LDAUtils;
 import cc.mallet.util.MalletLogger;
 import cc.mallet.util.Randoms;
 
@@ -375,10 +374,8 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, LDA
 	 * of using the new logger (the original one was set on too low a level, I needed Level.FINE)
 	 */
 	public void sample (int iterations) throws IOException {
-		String loggingPath = config.getLoggingUtil().getLogDir().getAbsolutePath();
 		double logLik = modelLogLikelihood();
-		String tw = topWords (wordsPerTopic);
-		LDAUtils.logLikelihoodToFile(logLik,0,tw,loggingPath,logger);
+		config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(0 + "\t" + logLik);
 
 		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
 			currentIteration = iteration;
@@ -400,8 +397,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, LDA
 
 			if (showTopicsInterval > 0 && iteration % showTopicsInterval == 0) {
 				logLik = modelLogLikelihood();
-				tw = topWords (wordsPerTopic);
-				LDAUtils.logLikelihoodToFile(logLik,iteration,tw,loggingPath,logger);
+				config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(iteration + "\t" + logLik);
 			}
 		}
 	}

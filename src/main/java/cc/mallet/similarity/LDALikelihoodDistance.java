@@ -117,7 +117,14 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		} else {
 			InstanceList currentTestset = new InstanceList(trainingset.getDataAlphabet(), trainingset.getTargetAlphabet());
 			currentTestset.add(instance);
-			SimpleLDAConfiguration sc = ((ParsedLDAConfiguration) config).simpleLDAConfiguration();
+			
+			// Yuck...
+			SimpleLDAConfiguration sc;
+			if(config instanceof ParsedLDAConfiguration) {
+				sc = ((ParsedLDAConfiguration) config).simpleLDAConfiguration();
+			} else {
+				sc = (SimpleLDAConfiguration) config;
+			}
 			sc.setTopicInterval(10);
 			PolyaUrnSpaliasLDA spalias = new PolyaUrnSpaliasLDA(sc);
 			spalias.addInstances(currentTestset);
@@ -141,6 +148,8 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 			if(trainTokenSeq.getLength()==0 && testTokenSeq.getLength()==0) {
 				distances[i] = 0.0;
 			} else if(trainTokenSeq.getLength()==0 || testTokenSeq.getLength()==0) {
+				//FeatureSequence nonZero = trainTokenSeq.getLength()!=0 ? trainTokenSeq : testTokenSeq;
+				//distances[i] = documentLikelihood(nonZero, i);
 				distances[i] = Double.POSITIVE_INFINITY;
 			} else {
 				//System.out.println("Doc-topic: " + arrToStr(docTopicMeans));
@@ -158,6 +167,17 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		
 		return distances;
 	}
+
+	private double documentLikelihood(FeatureSequence nonZero, int sampleId) {
+		double [] theta = trainingSetTopicDists[sampleId];
+
+		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer();
+		int [] v2 = Arrays
+				.stream(tv.instanceToVector(trainingset.get(sampleId)))
+				.mapToInt(x -> (int)x)
+				.toArray();
+		
+		return -ldaLoglikelihood(v2, theta);	}
 
 	public LDASamplerWithPhi train(InstanceList trainingset) throws IOException {
 		instancePipe = trainingset.getPipe();
@@ -358,6 +378,38 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 				if(p_w_d.get(word) != null) {
 					wordProb = p_w_d.get(word);
 				}
+				p_q_d += Math.log(lambda * (mixtureRatio * wordProb + 
+						(1-mixtureRatio) * wordCorpusProb) + 
+						(1-lambda) * wordTopicProb);	
+			}
+		}
+				
+		return p_q_d;
+	}
+	
+	/**
+	 * Calculate p(query|document) 
+	 * @param query Frequency encoded query (query.length == vocabulary.length)
+	 * @param document Frequency encoded document (document.length == vocabulary.length)
+	 * @param theta
+	 * @return logLikelihood of document generating query
+	 */
+	public double ldaLoglikelihood(int[] document, double[] theta) {
+		double doclength = getDocLength(document);
+		
+		if(mixtureRatio<0) {
+			mixtureRatio = (doclength / (doclength + mu));
+		}
+
+		double p_q_d = 0.0;		
+		for (int i = 0; i < document.length; i++) {
+			double wordProb = 0.0;
+			int wordFreq = (int)document[i];
+			if(wordFreq > 0) {
+				int word = i;
+				double wordTopicProb = calcProbWordGivenTheta(theta, word, phi);
+				double wordCorpusProb = calcProbWordGivenCorpus(word);
+				
 				p_q_d += Math.log(lambda * (mixtureRatio * wordProb + 
 						(1-mixtureRatio) * wordCorpusProb) + 
 						(1-lambda) * wordTopicProb);	

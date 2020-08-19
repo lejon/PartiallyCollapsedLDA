@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -417,8 +418,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 		double logLik = modelLogLikelihood();	
 		String tw = topWords (wordsPerTopic);
-		LogState logState = new LogState(logLik, 0, tw, loggingPath, logger);
-		LDAUtils.logLikelihoodToFile(logState);
+		config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(0 + "\t" + logLik);
 
 		boolean logTypeTopicDensity = config.logTypeTopicDensity(LDAConfiguration.LOG_TYPE_TOPIC_DENSITY_DEFAULT);
 		boolean logDocumentDensity = config.logDocumentDensity(LDAConfiguration.LOG_DOCUMENT_DENSITY_DEFAULT);
@@ -426,12 +426,13 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 		double density;
 		double docDensity = -1;
 		Stats stats;
+		PrintWriter statsout = config.getLoggingUtil().getAppendingLogPrinter("stats.txt");
 		if(logTypeTopicDensity || logDocumentDensity) {
 			density = logTypeTopicDensity ? LDAUtils.calculateMatrixDensity(typeTopicCounts) : -1;
 			docDensity = kdDensities.get() / (double) numTopics / numTypes;
 			stats = new Stats(0, loggingPath, System.currentTimeMillis(), 0, 0, density, docDensity, zTimings, countTimings, -1);
-			LDAUtils.logStatstHeaderToFile(stats);
-			LDAUtils.logStatsToFile(stats);
+			LDAUtils.logStatstHeaderToFile(stats,statsout);
+			LDAUtils.logStatsToFile(stats,statsout);
 		}
 
 		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
@@ -479,8 +480,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 				logLik = modelLogLikelihood();	
 				tw = topWords (wordsPerTopic);
-				logState = new LogState(logLik, iteration, tw, loggingPath, logger);
-				LDAUtils.logLikelihoodToFile(logState);
+				config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(iteration + "\t" + logLik);
 				logger.info("<" + iteration + "> Log Likelihood: " + logLik);
 				logger.fine(tw);
 				if(logTypeTopicDensity || logDocumentDensity) {
@@ -488,7 +488,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 					docDensity = kdDensities.get() / (double) numTopics / numTypes;
 					stats = new Stats(iteration, loggingPath, elapsedMillis, zSamplingTokenUpdateTime, -1, 
 							density, docDensity, zTimings, countTimings,-1);
-					LDAUtils.logStatsToFile(stats);
+					LDAUtils.logStatsToFile(stats,statsout);
 				}
 			}
 

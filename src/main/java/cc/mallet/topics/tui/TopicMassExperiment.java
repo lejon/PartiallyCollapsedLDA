@@ -17,6 +17,8 @@ import cc.mallet.configuration.SimpleLDAConfiguration;
 import cc.mallet.topics.LDAGibbsSampler;
 import cc.mallet.topics.UncollapsedParallelLDA;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.FileLoggingUtils;
+import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
 
@@ -52,9 +54,9 @@ public class TopicMassExperiment {
 
 	static void topicMassExperiment(String[] args) throws ParseException, ConfigurationException, FileNotFoundException {
 		LDACommandLineParser cp = new LDACommandLineParser(args);
-		String logSuitePath = "Runs/RunSuite" + LoggingUtils.getDateStamp();
+		String logSuitePath = "Runs/RunSuite" + FileLoggingUtils.getDateStamp();
 		LDAConfiguration config = (LDAConfiguration) ConfigFactory.getMainConfiguration(cp);
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir(logSuitePath);
 		config.setLoggingUtil(lu);
 
@@ -116,14 +118,14 @@ public class TopicMassExperiment {
 	static void rareWordsExperiment(String[] args, int rareWordTh) throws ParseException, 
 	ConfigurationException, IOException {
 		LDACommandLineParser cp = new LDACommandLineParser(args);
-		String logSuitePath = "Runs/RunSuite" + LoggingUtils.getDateStamp();
+		String logSuitePath = "Runs/RunSuite" + FileLoggingUtils.getDateStamp();
 		ParsedLDAConfiguration origConfig = (ParsedLDAConfiguration) ConfigFactory.getMainConfiguration(cp);
 		
 		SimpleLDAConfiguration config = origConfig.simpleLDAConfiguration();
 		
 		config.setRareThreshold(rareWordTh);
 		
-		LoggingUtils lu = new LoggingUtils();
+		LDALoggingUtils lu = new LoggingUtils();
 		lu.checkAndCreateCurrentLogDir(logSuitePath);
 		config.setLoggingUtil(lu);
 

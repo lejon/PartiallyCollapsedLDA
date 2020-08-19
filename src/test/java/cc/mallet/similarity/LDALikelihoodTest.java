@@ -357,7 +357,13 @@ public class LDALikelihoodTest {
 		String [] doclines = {
 				"Xyzzy reports a profit but revenue is down", 
 				"Quorus narrows quarter loss but revenue decreases further"};
-		InstanceList train = LDAUtils.loadInstancesStrings(doclines, "X", null, null);
+		
+		String [] classNames = new String [doclines.length];
+		for (int i = 0; i < classNames.length; i++) {
+			classNames[i] = "X";
+		}
+		
+		InstanceList train = LDAUtils.loadInstancesStrings(doclines, classNames);
 		//System.out.println(train.getAlphabet());
 		assertEquals(14,train.getAlphabet().size());
 		
