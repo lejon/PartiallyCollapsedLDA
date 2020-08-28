@@ -2328,19 +2328,35 @@ public class LDAUtils {
 			classNames[i] = "X";
 		}
 
-		return loadInstancesStrings(doclines, classNames, null, "stoplist.txt", pipe);
+		return loadInstancesStrings(doclines, classNames, null, "stoplist.txt", pipe, false);
 	}
 
 	public static InstanceList loadInstancesStrings(String [] doclines) {
 		return loadInstancesStrings(doclines, "X");
 	}
 
+	/**
+	 * Do no preprocessing of the input data at all, no lowercase, no stoplist
+	 * 
+	 * @param doclines
+	 * @param className
+	 * @return
+	 */
+	public static InstanceList loadInstancesStringsRaw(String [] doclines, String className) {
+		return loadInstancesStrings(doclines, className, true);
+	}
+
 	public static InstanceList loadInstancesStrings(String [] doclines, String className) {
+		return loadInstancesStrings(doclines, className, false);
+	}
+	
+	
+	public static InstanceList loadInstancesStrings(String [] doclines, String className, boolean raw) {
 		String [] classNames = new String [doclines.length];
 		for (int i = 0; i < classNames.length; i++) {
 			classNames[i] = "X";
 		}
-		return loadInstancesStrings(doclines, classNames, "stoplist.txt");
+		return loadInstancesStrings(doclines, classNames, (String []) null, null, null, raw);
 	}
 
 	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames) {
@@ -2348,23 +2364,23 @@ public class LDAUtils {
 	}
 
 	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, String [] docIds) {
-		return loadInstancesStrings(doclines, classNames, docIds, "stoplist.txt", null);
+		return loadInstancesStrings(doclines, classNames, docIds, "stoplist.txt", null, false);
 	}
 
 	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, String [] docIds, Pipe pipe) {
-		return loadInstancesStrings(doclines, classNames, docIds, "stoplist.txt", pipe);
+		return loadInstancesStrings(doclines, classNames, docIds, "stoplist.txt", pipe, false);
 	}
 
 	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, String stoplistFile) {
-		return loadInstancesStrings(doclines, classNames, null, stoplistFile, null);
+		return loadInstancesStrings(doclines, classNames, null, stoplistFile, null, false);
 	}
 
 	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, String [] docIds, 
-			String stoplistFile, Pipe pipe) {
+			String stoplistFile, Pipe pipe, boolean raw) {
 		StringClassArrayIterator readerTrain = new StringClassArrayIterator(doclines, classNames, docIds); 
 
 		if(pipe == null) {
-			pipe = LDAUtils.buildSerialPipe(stoplistFile,null);
+			pipe = LDAUtils.buildSerialPipe(stoplistFile,null,raw);
 		}
 
 		InstanceList instances = new InstanceList(pipe);
