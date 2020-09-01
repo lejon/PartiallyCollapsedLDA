@@ -119,7 +119,7 @@ public class PoissonPolyaUrnHDPLDA extends SparseHDPSampler implements HDPSample
 	 * @see cc.mallet.topics.UncollapsedParallelLDA#initialDrawTopicIndicator()
 	 */
 	@Override
-	int initialDrawTopicIndicator() {
+	int initialDrawTopicIndicator(int docIdx) {
 		return random.nextInt(nrStartTopics);
 	}
 

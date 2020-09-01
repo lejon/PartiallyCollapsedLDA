@@ -288,6 +288,11 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	}
 	
 	@Override
+	public String getDocumentPriorFilename() {
+		return getStringProperty("document_prior_filename");
+	}
+	
+	@Override
 	public String getStoplistFilename(String defaultStoplist) {
 		String stoplistFn = getStringProperty("stoplist");
 		if(stoplistFn==null || stoplistFn.length()==0) {
@@ -535,7 +540,8 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 				getResultSize(LDAConfiguration.RESULTS_SIZE_DEFAULT), 
 				getFullPhiPeriod(5), 
 				topTokensToSample(100),
-				getTopicPriorFilename(), 
+				getTopicPriorFilename(),
+				getDocumentPriorFilename(),
 				getTopicIndexBuildingScheme(LDAConfiguration.TOPIC_INDEX_BUILD_SCHEME_DEFAULT), 
 				getTopicBatchBuildingScheme(LDAConfiguration.TOPIC_BATCH_BUILD_SCHEME_DEFAULT),
 				getInstabilityPeriod(100), 
@@ -626,4 +632,5 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		String configProperty = getStringProperty("saved_sampler_dir");
 		return (configProperty == null) ? default_dir : configProperty;
 	}
+
 }

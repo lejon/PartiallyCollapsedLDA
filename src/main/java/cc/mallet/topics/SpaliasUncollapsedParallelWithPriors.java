@@ -5,7 +5,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
 import cc.mallet.configuration.LDAConfiguration;
@@ -15,6 +19,7 @@ import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
 import cc.mallet.types.LabelSequence;
 import cc.mallet.util.LDALoggingUtils;
+import cc.mallet.util.WalkerAliasTable;
 
 
 /**
@@ -24,14 +29,15 @@ import cc.mallet.util.LDALoggingUtils;
  * @author Leif Jonsson
  *
  */
-public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedParallelLDA implements LDASamplerWithPhi, LDASamplerWithPriors {
-	
+public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedParallelLDA 
+implements LDASamplerWithPhi, LDASamplerWithTopicPriors, LDASamplerWithDocumentPriors {
+
 	private static final long serialVersionUID = 1L;
-	
+
 	public SpaliasUncollapsedParallelWithPriors(LDAConfiguration config) {
 		super(config);
 	}
-	
+
 	@Override
 	public void addInstances (InstanceList training) {
 		alphabet = training.getDataAlphabet();
@@ -44,18 +50,23 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 	public double[][] getTopicPriors() {
 		return topicPriors;
 	}
-		
+
+	@Override
+	public Map<Integer,int[]> getDocumentPriors() {
+		return documentPriors;
+	}
+
 	@Override
 	protected LDADocSamplingResult sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();
 		LabelSequence topics = ctx.getTopics();
 		int myBatch = ctx.getMyBatch();
-		
+
 		int type, oldTopic, newTopic;
 
 		final int docLength = tokens.getLength();
 		if(docLength==0) return new LDADocSamplingResultSparseSimple(new int[0],0,new int[0]);
-		
+
 		int [] tokenSequence = tokens.getFeatures();
 		int [] oneDocTopics = topics.getFeatures();
 
@@ -67,7 +78,7 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 
 		// So we can map back from a topic to where it is in nonZeroTopics vector
 		int [] nonZeroTopicsBackMapping = new int[numTopics];
-		
+
 		// Populate topic counts
 		int nonZeroTopicCnt = 0;
 		for (int position = 0; position < docLength; position++) {
@@ -77,15 +88,33 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 				nonZeroTopicCnt = insert(topicInd, nonZeroTopics, nonZeroTopicsBackMapping, nonZeroTopicCnt);
 			}
 		}
-		
+
+		double[] thisDocumentPriors = null;
+		Set<Integer> forbidden = null;
+		if(haveDocumentPriors) {
+			// Can we use the sparsity mechanism to this, i.e add forbidden to => zero topic?
+			// No, because we still have the same problem when we draw from the prior...
+			thisDocumentPriors = initDocumentPriors(ctx);
+
+			forbidden = new HashSet<>();
+			for (int i = 0; i < thisDocumentPriors.length; i++) {
+				if(thisDocumentPriors[i]==0.0) {
+					forbidden.add(i);
+				}
+			}
+		} else {
+			thisDocumentPriors = new double[numTopics]; 
+			Arrays.fill(thisDocumentPriors, 1);
+		}
+
 		//kdDensities[myBatch] += nonZeroTopicCnt;
 		kdDensities.addAndGet(nonZeroTopicCnt);
-		
-		double sum; // sigma_likelihood
+
 		double[] cumsum = new double[numTopics]; 
 
 		//	Iterate over the words in the document
 		for (int position = 0; position < docLength; position++) {
+			double [] collectedScores = new double [numTopics];
 			type = tokenSequence[position];
 			oldTopic = oneDocTopics[position]; // z_position
 			localTopicCounts[oldTopic]--;
@@ -106,21 +135,28 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 			 * topic assignment z
 			 */
 			decrement(myBatch, oldTopic, type);
-			//System.out.println("(Batch=" + myBatch + ") Decremented: topic=" + oldTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][oldTopic][type]);
-			 
+
 			int topic = nonZeroTopics[0];
-			double score = localTopicCounts[topic] * phi[topic][type] * topicPriors[topic][type];
+			double score = localTopicCounts[topic] * phi[topic][type] * topicPriors[topic][type] * thisDocumentPriors[topic];
 			cumsum[0] = score;
+
+			if(ctx.getDocIdx()==0 || ctx.getDocIdx()==19) {
+				collectedScores[topic] = score;
+			}
+
 			// Now calculate and add up the scores for each topic for this word
 			// We build a cumsum indexed by topicIndex
 			int topicIdx = 1;
 			while ( topicIdx < nonZeroTopicCnt ) {
 				topic = nonZeroTopics[topicIdx];
-				score = localTopicCounts[topic] * phi[topic][type] * topicPriors[topic][type];
+				score = localTopicCounts[topic] * phi[topic][type] * topicPriors[topic][type] * thisDocumentPriors[topic];
+				if(ctx.getDocIdx()==0 || ctx.getDocIdx()==19) {
+					collectedScores[topic] += score;
+				}
 				cumsum[topicIdx] = score + cumsum[topicIdx-1];
 				topicIdx++;
 			}
-			sum = cumsum[topicIdx-1]; // sigma_likelihood
+			double sum = cumsum[topicIdx-1]; // sigma_likelihood
 
 			// Choose a random point between 0 and the sum of all topic scores
 			// The thread local random performs better in concurrent situations 
@@ -137,7 +173,15 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 			// u_prior = u_sigma / typeNorm[type] -> u_prior (0,1)
 			// u_likelihood = (u_sigma - typeNorm[type]) / sum  -> u_likelihood (0,1)
 
+			// TODO: Hack: This should not happen too often, but we should get rid of it 
+			// by ensuring that when we draw from the correct set of topics even when we
+			// draw from the prior...
+
 			newTopic = sampleNewTopic(type, nonZeroTopics, nonZeroTopicCnt, sum, cumsum, u, u_sigma);
+			if(haveDocumentPriors && forbidden.contains(newTopic)) {
+				WalkerAliasTable extraTable = getExtraAliasTable(type,ctx.getDocIdx());
+				newTopic = extraTable.generateSample();
+			}
 
 			// Make sure we actually sampled a valid topic
 			if (newTopic < 0 || newTopic > numTopics) {
@@ -162,10 +206,10 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 			increment(myBatch, newTopic, type);
 			//System.out.println("(Batch=" + myBatch + ") Incremented: topic=" + newTopic + " type=" + type + " => " + batchLocalTopicUpdates[myBatch][newTopic][type]);		
 		}
-		//System.out.println("Ratio: " + ((double)numPrior/(double)numLikelihood));
+
 		return new LDADocSamplingResultSparseSimple(localTopicCounts,nonZeroTopicCnt,nonZeroTopics);
 	}
-	
+
 	/**
 	 * Samples new Phi's. If <code>topicTypeIndices</code> is NOT null it will sample phi conditionally
 	 * on the indices in <code>topicTypeIndices</code>. This version takes topic priors into consideration
@@ -189,12 +233,12 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 					int thisCount = relevantTypeTopicCounts[type];
 					dirichletParams[type] = beta + thisCount; 
 				}
-				
+
 				if(topicTypeIndices==null) {
 					topicTypeIndices = AllWordsTopicIndexBuilder.getAllIndicesMatrix(numTypes, numTopics);
 				}
 				int[] typeIndicesToSample = topicTypeIndices[topic];
-				
+
 				// If we have priors, remove any type in this topic that has zero probability
 				if(haveTopicPriors) {
 					List<Integer> mergedIndexList = new ArrayList<Integer>();
@@ -210,10 +254,10 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 					}
 					typeIndicesToSample = newTypeIndicesToSample;
 				}
-								
+
 				ConditionalDirichlet dist = new ConditionalDirichlet(dirichletParams);
 				double [] newPhi = dist.nextConditionalDistribution(phiMatrix[topic],typeIndicesToSample); 
-				
+
 				phiMatrix[topic] = newPhi;
 			}
 			if(savePhiMeans() && samplePhiThisIteration()) {
@@ -235,19 +279,24 @@ public class SpaliasUncollapsedParallelWithPriors extends SpaliasUncollapsedPara
 			pw.close();
 		}
 	}
-	
+
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		out.writeObject(topicPriors);
+		out.writeObject(documentPriors);
 	}
 
+	@SuppressWarnings("unchecked")
 	private void readObject (ObjectInputStream in) throws IOException, ClassNotFoundException {
 		topicPriors = (double[][]) in.readObject();
+		documentPriors = (Map<Integer, int[]>) in.readObject();
 	}
 
 	@Override
 	public void initFrom(LDAGibbsSampler source) {
 		super.initFrom(source);
-		LDASamplerWithPriors phiSampler = (LDASamplerWithPriors) source;
+		LDASamplerWithTopicPriors phiSampler = (LDASamplerWithTopicPriors) source;
 		topicPriors = phiSampler.getTopicPriors();
+		LDASamplerWithDocumentPriors phiSamplerWithDocPriors = (LDASamplerWithDocumentPriors) source;
+		documentPriors =  phiSamplerWithDocPriors.getDocumentPriors();
 	}
 }

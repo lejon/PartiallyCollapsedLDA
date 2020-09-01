@@ -95,7 +95,8 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private String savedSamplerDir = LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT;
 	private String iterationCallbackClass = LDAConfiguration.MODEL_CALLBACK_DEFAULT;
 	private String subConfig = "default";
-	
+	private String documentPriorFilename;
+
 	public SimpleLDAConfiguration(LDALoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
 			Integer noBatches, Integer rareThreshold, Integer topicInterval,
@@ -117,13 +118,13 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 
 	public SimpleLDAConfiguration() {
 	}
-	
+
 	public SimpleLDAConfiguration(LDALoggingUtils logUtil, String scheme, Integer noTopics, Double alpha, Double beta,
 			Double lambda, Integer noIters, Integer noBatches, Integer noTopicBatches, Integer rareThreshold,
 			Integer tfIdfThreshold, Integer topicInterval, Integer startDiagnostic, Integer seed, boolean debug,
 			String dataset_fn, String test_dataset_fn, String building_scheme, double percentage_split_size_doc,
 			double percentage_split_size_topic, int resultSetSize, Integer fullPhiPeriod, Double topTokensToSample,
-			String topicPriorFilename, String topic_building_scheme, String topic_batch_building_scheme,
+			String topicPriorFilename, String documentPriorFilename, String topic_building_scheme, String topic_batch_building_scheme,
 			int instability_period, double[] fixed_split_size_doc, int skipStep, boolean savePhi, int phiBurnIn,
 			String docLengthsFilename, boolean saveDocLengths, String termFrequencyFilename,
 			boolean saveTermFrequencies, String vocabularyFn, boolean saveVocabulary, String corpusFn,
@@ -164,6 +165,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.fullPhiPeriod = fullPhiPeriod;
 		this.topTokensToSample = topTokensToSample;
 		this.topicPriorFilename = topicPriorFilename;
+		this.documentPriorFilename = documentPriorFilename;
 		this.topic_building_scheme = topic_building_scheme;
 		this.topic_batch_building_scheme = topic_batch_building_scheme;
 		this.instability_period = instability_period;
@@ -354,7 +356,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setOriginalDatasetFilename(String fn) {
 		originalDatasetFilename = fn;
 	}
-	
+
 	@Override
 	public String getScheme() {
 		return scheme;
@@ -399,7 +401,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public Integer getStartDiagnostic(int defaultValue) {
 		return startDiagnostic;
 	}
-	
+
 	public void setLogUtil(LDALoggingUtils logUtil) {
 		this.logUtil = logUtil;
 	}
@@ -443,7 +445,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setStartDiagnostic(Integer startDiagnostic) {
 		this.startDiagnostic = startDiagnostic;
 	}
-	
+
 	@Override
 	public int getSeed(int seedDefault) {
 		return this.seed;
@@ -452,7 +454,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setSeed(int seed) {
 		this.seed = seed;
 	}
-	
+
 	@Override
 	public boolean getDebug() {
 		return debug;
@@ -496,7 +498,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setResultSize(int resultsSize) {
 		this.resultSetSize = resultsSize;
 	}
-	
+
 	public void setBatchBuildingScheme(String string) {
 		this.buildingScheme = string;
 	}
@@ -515,7 +517,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public double getDocPercentageSplitSize() {
 		return percentageSplitSizeDoc;
 	}
-	
+
 	public void setDocPercentageSplitSize(double splitSize) {
 		this.percentageSplitSizeDoc = splitSize;
 	}
@@ -524,7 +526,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public double getTopicPercentageSplitSize() {
 		return percentageSplitSizeTopic;
 	}
-	
+
 	public void setTopicPercentageSplitSize(double splitSize) {
 		this.percentageSplitSizeTopic = splitSize;
 	}
@@ -533,7 +535,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public Integer getNoTopicBatches(int defaultValue) {
 		return noTopicBatches == null ? defaultValue : noTopicBatches;
 	}
-	
+
 	public void setTopicBuildingScheme(String topic_building_scheme) {
 		this.topic_building_scheme = topic_building_scheme;
 	}
@@ -574,7 +576,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public String[] getSubTopicIndexBuilders(int i) {
 		return null;
 	}
-	
+
 	@Override
 	public double topTokensToSample(double defaultValue) {
 		return topTokensToSample == null ? defaultValue : topTokensToSample.doubleValue();
@@ -628,7 +630,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public String getExperimentOutputDirectory(String defaultDir) {
 		return experimentOutputDirectory;
 	}
-	
+
 	@Override
 	public double getVariableSelectionPrior(double vsPriorDefault) {
 		return vsPriorDefault;
@@ -641,6 +643,11 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 
 	public String getTopicPriorFilename() {
 		return topicPriorFilename;
+	}
+
+	@Override
+	public String getDocumentPriorFilename() {
+		return documentPriorFilename;
 	}
 
 	public void setTopicPriorFilename(String topicPriorFilename) {
@@ -680,7 +687,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public String getDocumentTopicDiagnosticsOutputFilename() {
 		return documentTopicDiagnosticsOutputFilename;
 	}
-	
+
 	@Override
 	public String getPhiMeansOutputFilename() {
 		return phiMeansOutputFilename;
@@ -699,7 +706,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public int getPhiBurnInPercent(int phiBurnInDefault) {
 		return phiBurnIn;
 	}
-	
+
 	@Override
 	public int getPhiMeanThin(int phiMeanThinDefault) {
 		return this.phiMeanThinDefault < 0 ? phiMeanThinDefault : this.phiMeanThinDefault;
@@ -708,7 +715,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setSavePhi(boolean savePhi) {
 		this.savePhi = savePhi;
 	}
-	
+
 	@Override
 	public Integer getTfIdfVocabSize(int defaultValue) {
 		return tfIdfThreshold == null ? defaultValue : tfIdfThreshold;
@@ -769,7 +776,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public double getLambda(double lambdaDefault) {
 		return lambda;
 	}
-	
+
 	public void setSaveDocumentTopicTheta(boolean saveDocumentTopicTheta) {
 		this.saveDocumentTopicTheta = saveDocumentTopicTheta;
 	}
@@ -794,12 +801,12 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setDirichletSamplerBuilderClassName(String dirichletSamplerBuilderClassName) {
 		this.dirichletSamplerBuilderClassName = dirichletSamplerBuilderClassName;
 	}
-	
+
 	@Override
 	public String getDirichletSamplerBuilderClass(String defaultName) {
 		return getDirichletSamplerBuilderClassName();
 	}
-	
+
 	public int getAliasPoissonThreshold() {
 		return aliasPoissonThreshold;
 	}
@@ -816,7 +823,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setFileRegex(String string) {
 		fileRegex = string;
 	}
-	
+
 	@Override
 	public String getFileRegex(String string) {
 		return fileRegex == null ? string : fileRegex;
@@ -842,7 +849,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public boolean useSymmetricAlpha(boolean defaultAlpha) {
 		return symmetricAlpha;
 	}
-	
+
 	public void setUseSymmetricAlpha(boolean symmetricAlpha) {
 		this.symmetricAlpha = symmetricAlpha;
 	}
@@ -855,7 +862,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setHdpGgamma(double hdpGgamma) {
 		this.hdpGgamma = hdpGgamma;
 	}
-	
+
 	@Override
 	public int getHDPNrStartTopics(int defaultValue) {
 		return hdpNrStartTopics;
@@ -878,7 +885,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setDocumentSamplerSplitLimit(int documentSamplerSplitLimitDefault) {
 		this.documentSamplerSplitLimit = documentSamplerSplitLimitDefault;
 	}
-	
+
 	@Override
 	public double getHDPKPercentile(double hdpKPercentile) {
 		return this.hdpKPercentile ;
@@ -923,7 +930,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setNoPreprocess(boolean val) {
 		noPreprocess = val;
 	}
-	
+
 	@Override
 	public boolean noPreprocess() {
 		return noPreprocess;
@@ -946,14 +953,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setSavedSamplerDirectory(String savedSamplerDir) {
 		this.savedSamplerDir = savedSamplerDir;
 	}
-	
-	
+
+
 	// Eclipse generated equals and hashCode
 	// Needs to be re-generated if adding fields to class (that we care about)
 	// LoggingUtils needs to be excluded since it generates temporary dirnames 
 	// we do not want to affect the hashCode
 	// Consider if it is worth pulling in Lombok for this... 
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -1037,6 +1044,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		result = prime * result + ((topTokensToSample == null) ? 0 : topTokensToSample.hashCode());
 		result = prime * result + ((topicInterval == null) ? 0 : topicInterval.hashCode());
 		result = prime * result + ((topicPriorFilename == null) ? 0 : topicPriorFilename.hashCode());
+		result = prime * result + ((documentPriorFilename == null) ? 0 : documentPriorFilename.hashCode());
 		result = prime * result + ((topic_batch_building_scheme == null) ? 0 : topic_batch_building_scheme.hashCode());
 		result = prime * result + ((topic_building_scheme == null) ? 0 : topic_building_scheme.hashCode());
 		result = prime * result + ((vocabularyFilename == null) ? 0 : vocabularyFilename.hashCode());
@@ -1296,6 +1304,11 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 				return false;
 		} else if (!topicPriorFilename.equals(other.topicPriorFilename))
 			return false;
+		if (documentPriorFilename == null) {
+			if (other.documentPriorFilename != null)
+				return false;
+		} else if (!documentPriorFilename.equals(other.documentPriorFilename))
+			return false;
 		if (topic_batch_building_scheme == null) {
 			if (other.topic_batch_building_scheme != null)
 				return false;
@@ -1322,16 +1335,16 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	public void setIterationCallbackClass(String modelCallback) {
 		this.iterationCallbackClass = modelCallback;
 	}
-	
+
 	@Override
 	public String toString() {
 		ObjectMapper mapper  = new ObjectMapper();
 		mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
-		                .withFieldVisibility(JsonAutoDetect.Visibility.ANY));
-//		                .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
-//		                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
-//		                .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
-		
+				.withFieldVisibility(JsonAutoDetect.Visibility.ANY));
+		//		                .withGetterVisibility(JsonAutoDetect.Visibility.NONE)
+		//		                .withSetterVisibility(JsonAutoDetect.Visibility.NONE)
+		//		                .withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
+
 		try {
 			return mapper.writeValueAsString(this);
 		} catch (JsonProcessingException e) {

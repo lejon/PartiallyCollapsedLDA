@@ -580,7 +580,7 @@ public class ParallelLDA {
 		}
 		case POLYAURN_PRIORS_MODEL: {
 			model = ModelFactory.get(config, "cc.mallet.topics.PolyaUrnSpaliasLDAWithPriors");
-			System.out.println("PolyaUrnSpaliasLDA Parallell LDA.");
+			System.out.println("PolyaUrnSpaliasLDA Parallell LDA With Priors.");
 			break;
 		}
 		case PPU_HLDA_MODEL: {

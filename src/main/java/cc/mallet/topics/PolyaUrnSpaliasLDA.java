@@ -94,11 +94,6 @@ public class PolyaUrnSpaliasLDA extends SparseUncollapsedSampler implements LDAG
 		Arrays.fill(nonZeroTypeTopicColIdxs,0);
 	}
 	
-//	@Override
-//	public void setIterationCallback(IterationListener iterListener) {
-//		this.iterListener = iterListener;
-//	}
-
 	@Override
 	protected LDADocSamplingResult sampleTopicAssignmentsParallel(LDADocSamplingContext ctx) {
 		FeatureSequence tokens = ctx.getTokens();

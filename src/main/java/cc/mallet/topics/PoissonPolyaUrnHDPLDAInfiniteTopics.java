@@ -102,7 +102,7 @@ public class PoissonPolyaUrnHDPLDAInfiniteTopics extends SparseHDPSampler implem
 	 * @see cc.mallet.topics.UncollapsedParallelLDA#initialDrawTopicIndicator()
 	 */
 	@Override
-	int initialDrawTopicIndicator() {
+	int initialDrawTopicIndicator(int docIdx) {
 		return random.nextInt(nrStartTopics);
 	}
 	

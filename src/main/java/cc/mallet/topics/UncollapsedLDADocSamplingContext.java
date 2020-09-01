@@ -7,14 +7,14 @@ public class UncollapsedLDADocSamplingContext implements LDADocSamplingContext {
 	FeatureSequence tokens;
 	LabelSequence topics;
 	int myBatch;
-	int docId = -1;
+	int docIdx = -1;
 	
-	public UncollapsedLDADocSamplingContext(FeatureSequence tokens, LabelSequence topics, int myBatch, int docId) {
+	public UncollapsedLDADocSamplingContext(FeatureSequence tokens, LabelSequence topics, int myBatch, int docIdx) {
 		super();
 		this.tokens = tokens;
 		this.topics = topics;
 		this.myBatch = myBatch;
-		this.docId = docId;
+		this.docIdx = docIdx;
 	}
 	/* (non-Javadoc)
 	 * @see cc.mallet.topics.LDADocSamplingContext#getTokens()
@@ -62,14 +62,14 @@ public class UncollapsedLDADocSamplingContext implements LDADocSamplingContext {
 	 * @see cc.mallet.topics.LDADocSamplingContext#getDocId()
 	 */
 	@Override
-	public int getDocId() {
-		return docId;
+	public int getDocIdx() {
+		return docIdx;
 	}
 	/* (non-Javadoc)
 	 * @see cc.mallet.topics.LDADocSamplingContext#setDocId(int)
 	 */
 	@Override
-	public void setDocId(int docId) {
-		this.docId = docId;
+	public void setDocIdx(int docId) {
+		this.docIdx = docId;
 	}
 }

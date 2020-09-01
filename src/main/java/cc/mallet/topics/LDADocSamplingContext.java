@@ -17,8 +17,8 @@ public interface LDADocSamplingContext {
 
 	void setMyBatch(int myBatch);
 
-	int getDocId();
+	int getDocIdx();
 
-	void setDocId(int docId);
+	void setDocIdx(int docId);
 
 }

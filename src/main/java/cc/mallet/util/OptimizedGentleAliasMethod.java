@@ -110,8 +110,12 @@ public class OptimizedGentleAliasMethod implements WalkerAliasTable, Serializabl
 	}
 	
 	public static void main(String [] args) {
-		double [] pi = {2.0/15.0,7.0/15.0,6.0/15.0};
-		OptimizedGentleAliasMethod ga = new OptimizedGentleAliasMethod(pi);		
+//		double [] pi = {2.0/15.0,7.0/15.0,6.0/15.0};
+//		OptimizedGentleAliasMethod ga = new OptimizedGentleAliasMethod(pi);		
+
+		double [] pi = {2.0,7.0,6.0};
+		OptimizedGentleAliasMethod ga = new OptimizedGentleAliasMethod(pi,15);		
+
 		
 		int noSamples = 1_000_000;
 		int [] samples = new int[noSamples];

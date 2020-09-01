@@ -228,4 +228,6 @@ public interface LDAConfiguration {
 	public String getSavedSamplerDirectory(String string);
 
 	public String getIterationCallbackClass(String modelCallbackDefault);
+
+	public String getDocumentPriorFilename();
 }
