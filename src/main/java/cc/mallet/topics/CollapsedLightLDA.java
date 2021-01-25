@@ -63,7 +63,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 
 	AtomicInteger [][] batchLocalTopicTypeUpdates;
 	
-	int corpusWordCount = 0;
+	long corpusWordCount = 0;
 
 	// Matrix M of topic-token assignments
 	// We keep this since we often want fast access to a whole topic
@@ -161,7 +161,7 @@ public class CollapsedLightLDA extends ModifiedSimpleLDA implements LDAGibbsSamp
 	public int[] getTopicTotals() { return tokensPerTopic; }
 
 	@Override 
-	public int getCorpusSize() { return corpusWordCount;	}
+	public long getCorpusSize() { return corpusWordCount;	}
 
 
 	@Override

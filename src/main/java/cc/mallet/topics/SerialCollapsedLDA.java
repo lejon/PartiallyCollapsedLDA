@@ -9,8 +9,6 @@ import java.util.logging.Logger;
 import org.apache.commons.lang.NotImplementedException;
 
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.topics.SimpleLDA;
-import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.Dirichlet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.InstanceList;
@@ -363,8 +361,8 @@ public class SerialCollapsedLDA extends SimpleLDA implements LDAGibbsSampler {
 	}
 
 	@Override
-	public int getCorpusSize() {
-		int corpusWordCount = 0;
+	public long getCorpusSize() {
+		long corpusWordCount = 0;
 		for (int doc = 0; doc < data.size(); doc++) {
 			FeatureSequence tokens =
 					(FeatureSequence) data.get(doc).instance.getData();

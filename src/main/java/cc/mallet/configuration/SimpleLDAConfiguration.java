@@ -650,6 +650,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		return documentPriorFilename;
 	}
 
+	public void setDocumentPriorFilename(String fn) {
+		this.documentPriorFilename = fn;
+	}
+
 	public void setTopicPriorFilename(String topicPriorFilename) {
 		this.topicPriorFilename = topicPriorFilename;
 	}

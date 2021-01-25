@@ -13,6 +13,10 @@ public class OptimizedGentleAliasMethodDynamicSize extends OptimizedGentleAliasM
 	int [] highs;
 	*/
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	int tableSize;
 	
 	public OptimizedGentleAliasMethodDynamicSize() {

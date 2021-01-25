@@ -12,6 +12,7 @@ public class ModifiedSimpleLDATest {
 	double [] alphas = {0.01, 5.0, 0.04, 0.1, 0.000001};
 	int docLength = 10;
 	int [] oneDocTopics = {1,2,0,1,0,1,2,0,1,0};
+	double normalizer;
 	double alphaSum;
 	int [] localTopicCounts = new int[numTopics];
 	
@@ -21,7 +22,8 @@ public class ModifiedSimpleLDATest {
 		}
 		
 		for (int i = 0; i < numTopics; i++) {
-			alphaSum += localTopicCounts[i] + alphas[i];
+			normalizer += localTopicCounts[i] + alphas[i];
+			alphaSum += alphas[i];
 		}
 	}
 
@@ -30,26 +32,30 @@ public class ModifiedSimpleLDATest {
 	public void testThetaEstimate() {
 		double [] thetaEstimate = ModifiedSimpleLDA.calcThetaEstimate(numTopics, alpha, docLength, oneDocTopics);
 		double docSum = 0.0;
-		double alphaSum = 0;
+		double normalizer = 0;
 		for (int k = 0; k < numTopics; k++) {
-			alphaSum += localTopicCounts[k] + alpha;
+			normalizer += localTopicCounts[k] + alpha;
 		}
 		for (int i = 0; i < thetaEstimate.length; i++) {
 			docSum += thetaEstimate[i];
 			assertTrue(thetaEstimate[i]!=0.0);
-			assertTrue(thetaEstimate[i]==(localTopicCounts[i] + alpha) / alphaSum);
+			assertEquals("Expected " + thetaEstimate[i] + " but got " + ((localTopicCounts[i] + alpha) / normalizer),
+					thetaEstimate[i],(localTopicCounts[i] + alpha) / normalizer, 
+					0.000000000000001);
 		}
+
 		assertEquals(1.0, docSum, 0.0000000001);
 	}
 	
 	@Test
 	public void testThetaEstimateNonSymAlpha() {
-		double [] thetaEstimate = ModifiedSimpleLDA.calcThetaEstimate(numTopics, alphas, docLength, oneDocTopics);
+		double [] thetaEstimate = ModifiedSimpleLDA.calcThetaEstimate(numTopics, alphas, alphaSum, docLength, oneDocTopics);
 		double docSum = 0.0;
 		for (int i = 0; i < thetaEstimate.length; i++) {
 			docSum += thetaEstimate[i];
 			assertTrue(thetaEstimate[i]!=0.0);
-			assertTrue(thetaEstimate[i]==(localTopicCounts[i] + alphas[i]) / alphaSum);
+			assertEquals("Expected " + thetaEstimate[i] + " but got " + ((localTopicCounts[i] + alpha) / normalizer),
+					thetaEstimate[i],(localTopicCounts[i] + alphas[i]) / normalizer,0.000000000000001);
 		}
 		assertEquals(1.0, docSum, 0.0000000001);
 	}
@@ -58,17 +64,18 @@ public class ModifiedSimpleLDATest {
 	public void testThetaEstimateNonSymAlphaEmptyDoc() {
 		int [] localTopicCounts = new int[numTopics];
 		int [] oneDocTopics = {0,0,0,0,0,0,0,0,0,0};
-		double alphaSum = 0;
+		double normalizer = 0;
 		for (int i = 0; i < alphas.length; i++) {
-			alphaSum += localTopicCounts[i] + alphas[i];
+			normalizer += localTopicCounts[i] + alphas[i];
 		}
 		int docLength = 0;
-		double [] thetaEstimate = ModifiedSimpleLDA.calcThetaEstimate(numTopics, alphas, docLength, oneDocTopics);
+		double [] thetaEstimate = ModifiedSimpleLDA.calcThetaEstimate(numTopics, alphas, alphaSum, docLength, oneDocTopics);
 		double docSum = 0.0;
 		for (int i = 0; i < thetaEstimate.length; i++) {
 			docSum += thetaEstimate[i];
 			assertTrue(thetaEstimate[i]!=0.0);
-			assertTrue(thetaEstimate[i]==(localTopicCounts[i] + alphas[i]) / alphaSum);
+			assertEquals("Expected " + thetaEstimate[i] + " but got " + ((localTopicCounts[i] + alphas[i]) / normalizer),
+					thetaEstimate[i],(localTopicCounts[i] + alphas[i]) / normalizer,0.000000000000001);
 		}
 		assertEquals(1.0, docSum, 0.0000000001);
 	}
@@ -82,19 +89,24 @@ public class ModifiedSimpleLDATest {
 		for (int i = 0; i < thetaEstimate.length; i++) {
 			docSum += thetaEstimate[i];
 			assertTrue(thetaEstimate[i]!=0.0);
-			assertTrue(thetaEstimate[i]==alpha/(numTopics*alpha));
+			assertEquals("Expected " + thetaEstimate[i] + " but got " + (alpha/(numTopics*alpha)),
+					thetaEstimate[i],alpha/(numTopics*alpha),0.000000000000001);
+
 		}
 		assertEquals(1.0, docSum, 0.0000000001);
 	}
 
 	@Test
 	public void testThetaEstimates() {
-		double [] thetaEstimate = ModifiedSimpleLDA.calcThetaEstimate(numTopics, alphas,  docLength, oneDocTopics);
+		double [] thetaEstimate = ModifiedSimpleLDA.calcThetaEstimate(numTopics, alphas, alphaSum, docLength, oneDocTopics);
 		double docSum = 0.0;
 		for (int i = 0; i < thetaEstimate.length; i++) {
 			docSum += thetaEstimate[i];
 			assertTrue(thetaEstimate[i]!=0.0);
-			assertTrue(thetaEstimate[i]==(localTopicCounts[i] + alphas[i]) / alphaSum);
+			assertEquals("Expected " + thetaEstimate[i] + " but got " + ((localTopicCounts[i] + alphas[i]) / normalizer),
+					thetaEstimate[i],(localTopicCounts[i] + alphas[i]) / normalizer,0.000000000000001);
+
+			
 		}
 		assertEquals(1.0,docSum, 0.0000000001);
 	}

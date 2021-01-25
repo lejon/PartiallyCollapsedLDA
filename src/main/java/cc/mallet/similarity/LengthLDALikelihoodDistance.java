@@ -8,7 +8,7 @@ import cc.mallet.topics.LDASamplerWithPhi;
 public class LengthLDALikelihoodDistance extends LDALikelihoodDistance {
 
 	public LengthLDALikelihoodDistance(int K, double alpha) {
-		super(K,alpha);
+		super(alpha);
 	}
 	
 	public LengthLDALikelihoodDistance(LDASamplerWithPhi trainedSampler) {

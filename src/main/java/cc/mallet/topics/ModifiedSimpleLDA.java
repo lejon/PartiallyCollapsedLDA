@@ -517,8 +517,8 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, LDA
 	}
 
 	@Override
-	public int getCorpusSize() {
-		int corpusWordCount = 0;
+	public long getCorpusSize() {
+		long corpusWordCount = 0;
 		for (int doc = 0; doc < data.size(); doc++) {
 			FeatureSequence tokens =
 					(FeatureSequence) data.get(doc).instance.getData();
@@ -701,20 +701,19 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, LDA
 
 		return calcThetaEstimate(numTopics, alpha, docLength, oneDocTopics);
 	}
-
-	static double [] calcThetaEstimate(int numTopics, double [] alpha, int docLength, 	int[] oneDocTopics) {
+	
+	static double [] calcThetaEstimate(int numTopics, double [] alpha, double alphaSum, int docLength, 	int[] oneDocTopics) {
 		double [] thetaEstimate = new double[numTopics];
 		double[] localTopicCounts = new double[numTopics];
 
+		double normalizer = 0.0;
 		for (int position = 0; position < docLength; position++) {
 			int topicInd = oneDocTopics[position];
 			localTopicCounts[topicInd]++;
+			normalizer++;
 		}
-
-		double normalizer = 0.0;
-		for (int k = 0; k < numTopics; k++) {
-			normalizer += localTopicCounts[k] + alpha[k];
-		}
+		
+		normalizer += alphaSum;
 
 		for (int k = 0; k < numTopics; k++) {
 			thetaEstimate[k] = (localTopicCounts[k] + alpha[k]) / normalizer;
@@ -725,19 +724,19 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, LDA
 		return thetaEstimate;
 	}
 
+
 	static double [] calcThetaEstimate(int numTopics, double alpha, int docLength, int[] oneDocTopics) {
 		double [] thetaEstimate = new double[numTopics];
 		double[] localTopicCounts = new double[numTopics];
 
+		double normalizer = 0.0;
 		for (int position = 0; position < docLength; position++) {
 			int topicInd = oneDocTopics[position];
 			localTopicCounts[topicInd]++;
+			normalizer++;
 		}
 
-		double normalizer = 0.0;
-		for (int k = 0; k < numTopics; k++) {
-			normalizer += localTopicCounts[k] + alpha;
-		}
+		normalizer += numTopics * alpha;
 
 		for (int k = 0; k < numTopics; k++) {
 			thetaEstimate[k] = (localTopicCounts[k] + alpha) / normalizer;
@@ -758,6 +757,11 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, LDA
 	 * @return estimate of theta
 	 */
 	public static double [][] getThetaEstimate(ArrayList<TopicAssignment> data, int numTopics, double [] alpha) {
+		
+		double alphaSum = 0.0;
+		for (int i = 0; i < alpha.length; i++) {
+			alphaSum += alpha[i];
+		}
 		double [][] thetaEstimate = new double [data.size()][numTopics];
 		for (int docIdx = 0; docIdx < data.size(); docIdx++) {
 			FeatureSequence tokenSequence =
@@ -768,7 +772,7 @@ public class ModifiedSimpleLDA implements LDAGibbsSampler, AbortableSampler, LDA
 			int docLength = tokenSequence.getLength();
 			int [] oneDocTopics = topicSequence.getFeatures();
 
-			thetaEstimate[docIdx] = calcThetaEstimate(numTopics, alpha, docLength, oneDocTopics);
+			thetaEstimate[docIdx] = calcThetaEstimate(numTopics, alpha, alphaSum, docLength, oneDocTopics);
 		}
 		return thetaEstimate;
 	}

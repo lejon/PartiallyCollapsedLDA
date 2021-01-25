@@ -28,7 +28,7 @@ public interface LDAGibbsSampler extends AbortableSampler {
 	int[][] getDeltaStatistics();
 	int[] getTopTypeFrequencyIndices();
 	int[] getTypeFrequencies();
-	int getCorpusSize();
+	long getCorpusSize();
 	Alphabet getAlphabet();
 	int getStartSeed();
 	double[] getTypeMassCumSum();

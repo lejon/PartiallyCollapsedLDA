@@ -92,7 +92,7 @@ public class BatchBuilderTest {
 		public double[] getTypeMassCumSum() {return null;}
 
 		@Override
-		public int getCorpusSize() {
+		public long getCorpusSize() {
 			return -1;
 		}
 

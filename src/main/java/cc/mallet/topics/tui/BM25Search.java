@@ -13,6 +13,7 @@ import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.ParsedLDAConfiguration;
 import cc.mallet.similarity.BM25Distance;
 import cc.mallet.similarity.CorpusStatistics;
+import cc.mallet.similarity.TokenIndexVectorizer;
 import cc.mallet.types.CrossValidationIterator;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
@@ -100,7 +101,9 @@ public class BM25Search {
 							config.getStoplistFilename("stoplist.txt"), config.getRareThreshold(LDAConfiguration.RARE_WORD_THRESHOLD), config.keepNumbers());
 				}
 				
-				CorpusStatistics cs = new CorpusStatistics(instances); 
+				System.out.println("Calculating corpus stats...");
+				CorpusStatistics cs = new CorpusStatistics(instances);
+				System.out.println("Calculating corpus stats... done...");
 				List<String> strInstances = LDAUtils.loadDatasetAsString(dataset_fn);
 				
 				System.out.println("Loaded plain text...");
@@ -145,9 +148,11 @@ public class BM25Search {
 					double [] scores = new double[train.size()];
 					for (int trainDocIdx = 0; trainDocIdx < train.size(); trainDocIdx++) {
 						Instance trainDoc = train.get(trainDocIdx);
-						double[] trainTf = CorpusStatistics.calcTf(cs, trainDoc);
-						double [] tf = CorpusStatistics.calcQueryTf(cs, instance, trainDocIdx);
-						scores[trainDocIdx] = bm25.calculate(tf,trainTf);
+						System.out.println("Looking at: " + LDAUtils.instanceIdToString(trainDoc));
+						TokenIndexVectorizer tv = new TokenIndexVectorizer();
+						double[] trainTf = tv.instanceToVector(trainDoc);
+						double [] queryDoc = tv.instanceToVector(instance);
+						scores[trainDocIdx] = bm25.calculate(queryDoc,trainTf);
 					}
 					for (int j = 0; j < scores.length; j++) {
 						if(maxScore<scores[j]) {

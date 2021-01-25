@@ -14,8 +14,6 @@ import java.util.logging.Logger;
 import org.apache.commons.lang.NotImplementedException;
 
 import cc.mallet.configuration.LDAConfiguration;
-import cc.mallet.topics.ParallelTopicModel;
-import cc.mallet.topics.TopicAssignment;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.IDSorter;
 import cc.mallet.types.InstanceList;
@@ -456,7 +454,7 @@ public class ADLDA extends ParallelTopicModel implements LDAGibbsSampler {
 	}
 
 	@Override
-	public int getCorpusSize() {
+	public long getCorpusSize() {
 		return totalTokens;
 	}
 	

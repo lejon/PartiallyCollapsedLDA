@@ -125,8 +125,12 @@ public class LDAUtils {
 		return buildSerialPipe(stoplistFile, dataAlphabet, null, raw);
 	}
 
-	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, LabelAlphabet targetAlphabet, boolean raw) { 		
-		int maxBufSize = 10000;
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, LabelAlphabet targetAlphabet, boolean raw) {
+		return buildSerialPipe(stoplistFile, dataAlphabet, targetAlphabet, raw, 10000);
+	}
+
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, 
+			LabelAlphabet targetAlphabet, boolean raw, int maxBufSize) { 		
 		Pipe tokenizer = null;
 		if(raw) {
 			if(stoplistFile==null) {
@@ -1482,7 +1486,7 @@ public class LDAUtils {
 		}
 		pw.flush();
 	}
-	
+
 	public static void writeASCIIDoubleMatrix(double[][] matrix, int rows, int columns, String sep, 
 			int noDigits, DecimalFormat mydecimalFormat, PrintWriter pw) throws FileNotFoundException, IOException {
 		for (int i = 0; i < matrix.length; i++) {
@@ -2332,6 +2336,11 @@ public class LDAUtils {
 		return loadInstancesStrings(doclines, classNames, null, "stoplist.txt", pipe, false);
 	}
 
+	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, Pipe pipe) {
+		return loadInstancesStrings(doclines, classNames, null, "stoplist.txt", pipe, false);
+	}
+
+
 	public static InstanceList loadInstancesStrings(String [] doclines) {
 		return loadInstancesStrings(doclines, "X");
 	}
@@ -2350,8 +2359,8 @@ public class LDAUtils {
 	public static InstanceList loadInstancesStrings(String [] doclines, String className) {
 		return loadInstancesStrings(doclines, className, false);
 	}
-	
-	
+
+
 	public static InstanceList loadInstancesStrings(String [] doclines, String className, boolean raw) {
 		String [] classNames = new String [doclines.length];
 		for (int i = 0; i < classNames.length; i++) {
@@ -2378,16 +2387,43 @@ public class LDAUtils {
 
 	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, String [] docIds, 
 			String stoplistFile, Pipe pipe, boolean raw) {
+		InstanceList instances;
+		int bufferSize = 10000;
+		int tries = 0;
+
+		instances = loadInstancesStrings(doclines, classNames, docIds, stoplistFile, pipe, raw, bufferSize);
+
+		if(instances == null) {
+			// For really large documents we might need to increase the size of the 
+			// tokenizer buffer...
+			do {
+				tries++;
+				bufferSize = bufferSize * 2;
+				System.out.println("Doubling buffer size to: " + bufferSize);
+				instances = loadInstancesStrings(doclines, classNames, docIds, stoplistFile, pipe, raw, bufferSize);
+			} while(instances == null && tries < 10);
+		}
+		return instances;
+	}
+
+
+	public static InstanceList loadInstancesStrings(String [] doclines, String [] classNames, String [] docIds, 
+			String stoplistFile, Pipe pipe, boolean raw, int bufferSize) {
+
 		StringClassArrayIterator readerTrain = new StringClassArrayIterator(doclines, classNames, docIds); 
 
 		if(pipe == null) {
-			pipe = LDAUtils.buildSerialPipe(stoplistFile,null,raw);
+			pipe = LDAUtils.buildSerialPipe(stoplistFile, null, null, raw, bufferSize);
 		}
 
 		InstanceList instances = new InstanceList(pipe);
-		instances.addThruPipe(readerTrain);
+		try {
+			instances.addThruPipe(readerTrain);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			return null;
+		}
 		return instances;
-	}
+	}	
 
 	public static LDASamplerWithPhi loadStoredSampler(LDAConfiguration config, String saveDir) {
 		String configHash = getConfigSetHash(config);

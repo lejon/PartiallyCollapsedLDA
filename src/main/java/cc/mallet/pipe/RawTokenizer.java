@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 
-import cc.mallet.pipe.SimpleTokenizer;
 import cc.mallet.types.Instance;
 
 /**

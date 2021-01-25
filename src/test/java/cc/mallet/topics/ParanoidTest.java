@@ -7,10 +7,6 @@ import org.junit.Test;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.SimpleLDAConfiguration;
-import cc.mallet.topics.LDAGibbsSampler;
-import cc.mallet.topics.ParanoidSpaliasUncollapsedLDA;
-import cc.mallet.topics.ParanoidUncollapsedParallelLDA;
-import cc.mallet.topics.ParanoidVSSpaliasUncollapsedLDA;
 import cc.mallet.topics.randomscan.document.BatchBuilderFactory;
 import cc.mallet.types.InstanceList;
 import cc.mallet.util.LDALoggingUtils;

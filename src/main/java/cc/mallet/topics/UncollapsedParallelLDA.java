@@ -106,7 +106,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 	AtomicInteger [][] batchLocalTopicTypeUpdates;
 
-	int corpusWordCount = 0;
+	long corpusWordCount = 0;
 
 	// Matrix M of topic-token assignments
 	// We keep this since we often want fast access to a whole topic
@@ -194,7 +194,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	}
 
 	@Override 
-	public int getCorpusSize() { return corpusWordCount;	}
+	public long getCorpusSize() { return corpusWordCount;	}
 
 
 	@Override
@@ -272,10 +272,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 
 	public void ensureConsistentTopicTypeCounts(int [][] topicTypeCounts, int[][] typeTopicCounts, int[] tokensPerTopic) {
-		int sumtotalTypeTopic = 0;
+		long sumtotalTypeTopic = 0;
 		int [] typeTopicTTCount = new int [numTopics]; 
 
-		int sumtotalTopicType = 0;
+		long sumtotalTopicType = 0;
 		int [] topicTypeTTCount = new int [numTopics]; 
 
 		for (int topic = 0; topic < numTopics; topic++ ) {
@@ -1819,7 +1819,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			tokensPerTopic[topic] = 0;
 		}
 
-		int sumtotal = 0;
+		long sumtotal = 0;
 		for (int docCnt = 0; docCnt < data.size(); docCnt++) {
 			data.get(docCnt).topicSequence = 
 					new LabelSequence(topicAlphabet, zIndicators[docCnt]);

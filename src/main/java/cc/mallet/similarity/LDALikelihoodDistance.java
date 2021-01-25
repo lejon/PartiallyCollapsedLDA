@@ -11,9 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import cc.mallet.configuration.LDAConfiguration;
 import cc.mallet.configuration.ParsedLDAConfiguration;
@@ -35,7 +33,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 
 	public boolean abort = false;
 	LDAConfiguration config;
-	
+
 	InstanceList trainingset;
 	LDASamplerWithPhi trainedSampler;
 	int noClassified = 0;
@@ -45,23 +43,28 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	Map<Integer, double []> sampledQueryTopics = new HashMap<>();
 	double [][] trainingSetTopicDists;
 	Map<Integer,double []> cache = new HashMap<>();
-	
+
 	int testSampleIter = 500;
+
+	// the query likelihood vs. topic model weight
 	double lambda = 0.7;
+
 	double mu = 1.0;
+
+	// The document vs. corpus weight of a word
 	double mixtureRatio = -1;
-	
+
 	double [][] phi;
 
 	Pipe instancePipe;
-	
+
 	String samplerFn = "stored_samplers/saved_similarity_sampler.bin";
 	private double[] p_w_coll;
 
-	public LDALikelihoodDistance(int K, double alpha) {
+	public LDALikelihoodDistance(double alpha) {
 		this.alpha = alpha;
 	}
-	
+
 	public LDALikelihoodDistance(LDASamplerWithPhi trainedSampler) {
 		this(trainedSampler.getConfiguration());
 		this.trainedSampler = trainedSampler;
@@ -75,7 +78,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		this.config = config;
 		alpha = config.getAlpha(0.01);
 	}
-	
+
 	public double getMixtureRatio() {
 		return mixtureRatio;
 	}
@@ -91,7 +94,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	public void setPhi(double[][] phi) {
 		this.phi = phi;
 	}
-	
+
 	public double getLambda() {
 		return lambda;
 	}
@@ -99,7 +102,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	public void setLambda(double lambda) {
 		this.lambda = lambda;
 	}
-		
+
 	public double [] getSampledTopics(Instance instance) {
 		return sampledTopics.get(instance);
 	}
@@ -117,7 +120,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		} else {
 			InstanceList currentTestset = new InstanceList(trainingset.getDataAlphabet(), trainingset.getTargetAlphabet());
 			currentTestset.add(instance);
-			
+
 			// Yuck...
 			SimpleLDAConfiguration sc;
 			if(config instanceof ParsedLDAConfiguration) {
@@ -134,12 +137,12 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 			docTheta = thetaEstimate[0];
 			cache.put(hashCode, docTheta);
 		}
-		
+
 		sampledTopics.put(instance, docTheta);
-		
+
 		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer();
 		double [] testDoc = tv.instanceToVector(instance);
-		
+
 		for (int i = 0 ; i < trainingSetTopicDists.length; i++) {
 			Instance trainInst = trainingset.get(i);
 			FeatureSequence trainTokenSeq = (FeatureSequence) trainInst.getData();
@@ -162,42 +165,43 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 				distances[i] = distance;
 			}
 		}
-				
+
 		//System.out.println("["  + instance.getTarget().toString() + "]: Scores are: " + arrToStr(scores));
-		
+
 		return distances;
 	}
 
-	private double documentLikelihood(FeatureSequence nonZero, int sampleId) {
-		double [] theta = trainingSetTopicDists[sampleId];
-
-		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer();
-		int [] v2 = Arrays
-				.stream(tv.instanceToVector(trainingset.get(sampleId)))
-				.mapToInt(x -> (int)x)
-				.toArray();
-		
-		return -ldaLoglikelihood(v2, theta);	}
+//	private double documentLikelihood(FeatureSequence nonZero, int sampleId) {
+//		double [] theta = trainingSetTopicDists[sampleId];
+//
+//		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer();
+//		int [] v2 = Arrays
+//				.stream(tv.instanceToVector(trainingset.get(sampleId)))
+//				.mapToInt(x -> (int)x)
+//				.toArray();
+//
+//		return -ldaLoglikelihood(v2, theta);	
+//	}
 
 	public LDASamplerWithPhi train(InstanceList trainingset) throws IOException {
 		instancePipe = trainingset.getPipe();
-		
+
 		this.trainingset = trainingset;
-				
+
 		trainedSampler = new PolyaUrnSpaliasLDA(config);
 		trainedSampler.addInstances(trainingset);
 		trainedSampler.sample(config.getNoIterations(3000));
-		
+
 		trainingSetTopicDists = trainedSampler.getThetaEstimate();
-		
+
 		for (int i = 0; i < trainingset.size(); i++) {
 			Instance instance = trainingset.get(i);
 			sampledTopics.put(instance, trainingSetTopicDists[i]);
 		}
-		
+
 		return trainedSampler;
 	}
-		
+
 	public static String arrToStr(double [] arr) {
 		return arrToStr(arr, "DoubleArray", Integer.MAX_VALUE, false);
 	}
@@ -209,7 +213,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	public static String arrToStr(double [] arr, String title, boolean mark) {
 		return arrToStr(arr, title, Integer.MAX_VALUE, mark);
 	}
-	
+
 	public static String arrToStr(double [] arr, String title, int maxLen, boolean mark) {
 		String res = "";
 		res += title + "[" +  arr.length + "]:";
@@ -225,7 +229,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 
 	public static String arrToIdxStr(double [] arr, String title, int maxLen, Instance instance) {
 		Alphabet alphabet = instance.getAlphabet();
-		
+
 		String res = "";
 		res += title + "[" +  arr.length + "]:";
 		for (int j = 0; j < arr.length && j < maxLen; j++) {
@@ -239,7 +243,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		return res;
 	}
 
-	
+
 	public static String [] extractRowIds(InstanceList trainingSet) {
 		String [] result = new String[trainingSet.size()];
 		int copied = 0;
@@ -248,7 +252,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		}
 		return result;
 	}
-	
+
 	public boolean getAbort() {
 		return abort;
 	}
@@ -260,7 +264,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	public LDASamplerWithPhi getTrainedSampler() {
 		return trainedSampler;
 	}
-	
+
 	public String [][] getTopWords(int wordsPerTopic) {
 		return LDAUtils.getTopWords(wordsPerTopic, 
 				trainedSampler.getAlphabet().size(), 
@@ -283,7 +287,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 
 		int [] v1Indices = new int[doc1length];
 		int [] v2Indices = new int[doc2length];
-		
+
 		int wc = 0;
 		for (int i = 0; i < v1.length; i++) {
 			int wordFreq = (int) v1[i];
@@ -303,7 +307,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 				}
 			}
 		}
-		
+
 		Alphabet alphabet = trainingset.getAlphabet();
 		String s1 = LDAUtils.indicesToString(v1Indices, alphabet);
 		String s2 = LDAUtils.indicesToString(v2Indices, alphabet);
@@ -313,7 +317,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 
 		InstanceList testInstances = new InstanceList(trainingset.getPipe());
 		testInstances.addThruPipe(readerTest);
-		
+
 		Instance instanceQuery = testInstances.get(0);
 		int[] wordTokensQuery = LDAUtils.getWordTokens(instanceQuery);
 		int hashCodeQuery = Arrays.hashCode(wordTokensQuery);
@@ -343,7 +347,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		int [] v2FreqDoc = Arrays.stream(v2).mapToInt(x -> (int) x).toArray();
 		return ldaLoglikelihood(v1FreqDoc, v2FreqDoc, thetaDoc);
 	}
-	
+
 	/**
 	 * Calculate p(query|document) 
 	 * @param query Frequency encoded query (query.length == vocabulary.length)
@@ -351,12 +355,13 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	 * @param theta
 	 * @return logLikelihood of document generating query
 	 */
-	public double ldaLoglikelihood(int[] query, int[] document, double[] theta) {
-		Map<Integer, Double> p_w_d = calcProbWordGivenDocMLFrequencyEncoding(document);
+	public double ldaLoglikelihoodOrig(int[] query, int[] document, double[] theta) {
+		//Map<Integer, Double> p_w_d = calcProbWordGivenDocMLFrequencyEncoding(document);
+		double [] p_w_d = calcProbWordGivenDocMLFrequencyEncoding(document);
 
 		double querylength = getDocLength(query);
 		double doclength = getDocLength(document);
-		
+
 		// Some sanity check first
 		if(querylength == 0 && doclength == 0) return 0;
 		if(querylength == 0 && doclength != 0) return Double.POSITIVE_INFINITY;
@@ -368,22 +373,28 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 
 		double p_q_d = 0.0;		
 		for (int i = 0; i < query.length; i++) {
-			double wordProb = 0.0;
+			double wordDocumentProb = 0.0;
 			int wordFreq = (int)query[i];
 			if(wordFreq > 0) {
 				int word = i;
-				double wordTopicProb = calcProbWordGivenTheta(theta, word, phi);
-				double wordCorpusProb = calcProbWordGivenCorpus(word);
-				
-				if(p_w_d.get(word) != null) {
-					wordProb = p_w_d.get(word);
+				double wordTopicProb;
+				// No need to calculate this if it will have no effect
+				if(lambda < 1) {
+					wordTopicProb = calcProbWordGivenTheta(theta, word, phi);
+				} else { 
+					wordTopicProb = 0.0;
 				}
-				p_q_d += Math.log(lambda * (mixtureRatio * wordProb + 
-						(1-mixtureRatio) * wordCorpusProb) + 
+				double wordCorpusProb = calcProbWordGivenCorpus(word);
+
+				wordDocumentProb = p_w_d[word];
+
+				p_q_d += Math.log(
+						lambda * (mixtureRatio    * wordDocumentProb 
+							   + (1-mixtureRatio) * wordCorpusProb) + 
 						(1-lambda) * wordTopicProb);	
 			}
 		}
-				
+
 		return p_q_d;
 	}
 	
@@ -394,30 +405,82 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	 * @param theta
 	 * @return logLikelihood of document generating query
 	 */
-	public double ldaLoglikelihood(int[] document, double[] theta) {
+	public double ldaLoglikelihood(int[] query, int[] document, double[] theta) {
+		//Map<Integer, Double> p_w_d = calcProbWordGivenDocMLFrequencyEncoding(document);
+		double [] p_w_d = calcProbWordGivenDocMLFrequencyEncoding(document);
+		double [] p_wq_d = calcProbWordGivenDocMLFrequencyEncoding(query);
+
+		double querylength = getDocLength(query);
 		double doclength = getDocLength(document);
-		
+
+		// Some sanity check first
+		if(querylength == 0 && doclength == 0) return 0;
+		if(querylength == 0 && doclength != 0) return Double.POSITIVE_INFINITY;
+		if(querylength != 0 && doclength == 0) return Double.POSITIVE_INFINITY;
+
 		if(mixtureRatio<0) {
 			mixtureRatio = (doclength / (doclength + mu));
 		}
 
 		double p_q_d = 0.0;		
-		for (int i = 0; i < document.length; i++) {
-			double wordProb = 0.0;
-			int wordFreq = (int)document[i];
+		for (int i = 0; i < query.length; i++) {
+			double wordDocumentProb = 0.0;
+			int wordFreq = (int)query[i];
 			if(wordFreq > 0) {
 				int word = i;
-				double wordTopicProb = calcProbWordGivenTheta(theta, word, phi);
+				double wordTopicProb;
+				// No need to calculate this if it will have no effect
+				if(lambda < 1) {
+					wordTopicProb = calcProbWordGivenTheta(theta, word, phi);
+				} else { 
+					wordTopicProb = 0.0;
+				}
 				double wordCorpusProb = calcProbWordGivenCorpus(word);
-				
-				p_q_d += Math.log(lambda * (mixtureRatio * wordProb + 
-						(1-mixtureRatio) * wordCorpusProb) + 
+
+				//wordDocumentProb = p_w_d[word] * p_wq_d[word];
+				wordDocumentProb = p_w_d[word];
+
+				p_q_d += Math.log(
+						lambda * (mixtureRatio    * wordDocumentProb 
+							   + (1-mixtureRatio) * wordCorpusProb) + 
 						(1-lambda) * wordTopicProb);	
 			}
 		}
-				
+
 		return p_q_d;
 	}
+
+//	/**
+//	 * Calculate p(query|document) 
+//	 * @param query Frequency encoded query (query.length == vocabulary.length)
+//	 * @param document Frequency encoded document (document.length == vocabulary.length)
+//	 * @param theta
+//	 * @return logLikelihood of document generating query
+//	 */
+//	public double ldaLoglikelihood(int[] document, double[] theta) {
+//		double doclength = getDocLength(document);
+//
+//		if(mixtureRatio<0) {
+//			mixtureRatio = (doclength / (doclength + mu));
+//		}
+//
+//		double p_q_d = 0.0;		
+//		for (int i = 0; i < document.length; i++) {
+//			double wordProb = 0.0;
+//			int wordFreq = (int)document[i];
+//			if(wordFreq > 0) {
+//				int word = i;
+//				double wordTopicProb = calcProbWordGivenTheta(theta, word, phi);
+//				double wordCorpusProb = calcProbWordGivenCorpus(word);
+//
+//				p_q_d += Math.log(lambda * (mixtureRatio * wordProb + 
+//						(1-mixtureRatio) * wordCorpusProb) + 
+//						(1-lambda) * wordTopicProb);	
+//			}
+//		}
+//
+//		return p_q_d;
+//	}
 
 	int getDocLength(int[] document) {
 		int doclength = 0;
@@ -445,8 +508,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	 * @param document
 	 * @return
 	 */
-	public static Map<Integer, Double> calcProbWordGivenDocMLFrequencyEncoding(int[] document) {
-		Set<Integer> uniqueDocumentWords = new HashSet<>();
+	public static Map<Integer, Double> calcProbWordGivenDocMLFrequencyEncodingOLD(int[] document) {
 		Map<Integer,Double> p_w_d = new HashMap<>();
 
 		double d2length = 0;
@@ -457,14 +519,13 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 			if(wordFreq>0) {
 				d2length += wordFreq;
 				int word = i;
-				uniqueDocumentWords.add(word);
 				if(p_w_d.get(word) == null) {
 					p_w_d.put(word,0.0);
 				}
 				p_w_d.put(word,p_w_d.get(word) + wordFreq);
 			}
 		}
-		
+
 		// Normalize
 		if(d2length!=0) {
 			for (Integer word : p_w_d.keySet()) {
@@ -475,6 +536,37 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		return p_w_d;
 	}
 	
+	/**
+	 * Calculate the maximum likelihood estimate of a word given a document
+	 * 
+	 * @param document
+	 * @return
+	 */
+	public static double [] calcProbWordGivenDocMLFrequencyEncoding(int[] document) {
+		double [] p_w_d = new double [document.length];
+
+		double d2length = 0;
+		// Find the number of unique words in v2
+		// Find the number of times each unique word occurs in v2
+		for (int word = 0; word < document.length; word++) {
+			int wordFreq = (int)document[word];
+			if(wordFreq>0) {
+				d2length += wordFreq;
+				p_w_d[word] += wordFreq;
+			}
+		}
+
+		// Normalize
+		if(d2length!=0) {
+			for (int word = 0; word < p_w_d.length; word++) {
+				p_w_d[word] = p_w_d[word] / d2length;
+			}
+		}
+
+		return p_w_d;
+	}
+
+
 	double calcProbWordGivenTheta(double[] theta2, int word, double [][] phi) {
 		int K = phi.length;
 		double p_w_lda = 0.0;
@@ -499,9 +591,9 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		spalias.addInstances(currentTestset);
 		spalias.setPhi(trainedSampler.getPhi(), instance.getAlphabet(), instance.getTargetAlphabet());
 		spalias.sampleZGivenPhi(testSampleIter);
-		
+
 		double [][] thetaEstimate = spalias.getThetaEstimate();
-		
+
 		sampledTopics.put(instance, thetaEstimate[0]);
 		return thetaEstimate[0];
 	}
@@ -512,9 +604,9 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		String storedHash = readStoredTrainingsetHash(samplerFn + "-training_hash-" + trainingsetHash);
 		File storedSampler = new File(samplerFn + "-sampler-" + trainingsetHash);
 		this.trainingset = trainingset;
-		
+
 		p_w_coll = calculateProbWordGivenCorpus(trainingset);
-		
+
 		if(storedSampler.exists() 
 				&& trainingsetHash != null 
 				&& trainingsetHash.equals(storedHash)) {
@@ -529,7 +621,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 			if(config==null) {
 				config = new SimpleLDAConfiguration();
 			}
-			
+
 			trainedSampler = new PolyaUrnSpaliasLDA(config);
 			trainedSampler.addInstances(trainingset);
 			try {
@@ -557,7 +649,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 			cache.put(hashCodeQuery, trainingSetTopicDists[i]);
 			sampledTopics.put(instance, trainingSetTopicDists[i]);
 		}
-		
+
 		System.out.println("Top words of the trained sampler are: \n" + 
 				LDAUtils.formatTopWords(LDAUtils.getTopWords(10, 
 						trainedSampler.getAlphabet().size(), 
@@ -569,64 +661,64 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
 
-	 double [] calculateProbWordGivenCorpus(InstanceList trainingset) {
-		 double [] p_w_coll = new double[trainingset.getAlphabet().size()];
-		 long corpusSize = 0;
-		 for (int i = 0; i < trainingset.size(); i++) {
-			 FeatureSequence words = (FeatureSequence)trainingset.get(i).getData();
-			 for (int j = 0; j < words.size(); j++) {
-				 p_w_coll[words.getIndexAtPosition(j)]++;
-				 corpusSize++;
-			 }
-		 }	
+	double [] calculateProbWordGivenCorpus(InstanceList trainingset) {
+		double [] p_w_coll = new double[trainingset.getAlphabet().size()];
+		long corpusSize = 0;
+		for (int i = 0; i < trainingset.size(); i++) {
+			FeatureSequence words = (FeatureSequence)trainingset.get(i).getData();
+			for (int j = 0; j < words.size(); j++) {
+				p_w_coll[words.getIndexAtPosition(j)]++;
+				corpusSize++;
+			}
+		}	
 
-		 //normalize
-		 for (int i = 0; i < p_w_coll.length; i++) {
-			 p_w_coll[i] /= corpusSize;
-		 }
-		 
-		 return p_w_coll;
+		//normalize
+		for (int i = 0; i < p_w_coll.length; i++) {
+			p_w_coll[i] /= corpusSize;
+		}
+
+		return p_w_coll;
 	}
 
-//	 static double [] calculateProbWordGivenCorpusMLWordEncoding(int [][] trainingset, int [] vocabulary) {
-//		 double [] p_w_coll = new double[vocabulary.length];
-//		 long corpusSize = 0;
-//		 for (int i = 0; i < trainingset.length; i++) {
-//			 int [] words = trainingset[i];
-//			 for (int j = 0; j < words.length; j++) {
-//				 p_w_coll[words[j]]++;
-//				 corpusSize++;
-//			 }
-//		 }	
-//
-//		 //normalize
-//		 for (int i = 0; i < p_w_coll.length; i++) {
-//			 p_w_coll[i] /= corpusSize;
-//		 }
-//		 
-//		 return p_w_coll;
-//	}
+	//	 static double [] calculateProbWordGivenCorpusMLWordEncoding(int [][] trainingset, int [] vocabulary) {
+	//		 double [] p_w_coll = new double[vocabulary.length];
+	//		 long corpusSize = 0;
+	//		 for (int i = 0; i < trainingset.length; i++) {
+	//			 int [] words = trainingset[i];
+	//			 for (int j = 0; j < words.length; j++) {
+	//				 p_w_coll[words[j]]++;
+	//				 corpusSize++;
+	//			 }
+	//		 }	
+	//
+	//		 //normalize
+	//		 for (int i = 0; i < p_w_coll.length; i++) {
+	//			 p_w_coll[i] /= corpusSize;
+	//		 }
+	//		 
+	//		 return p_w_coll;
+	//	}
 
-	 static double [] calculateProbWordGivenCorpusMLFrequencyEncoding(int [][] trainingset, int [] vocabulary) {
-		 double [] p_w_coll = new double[vocabulary.length];
-		 long corpusSize = 0;
-		 for (int i = 0; i < trainingset.length; i++) {
-			 int [] words = trainingset[i];
-			 for (int j = 0; j < words.length; j++) {
-				 p_w_coll[j] += words[j];
-				 corpusSize += words[j];
-			 }
-		 }	
+	static double [] calculateProbWordGivenCorpusMLFrequencyEncoding(int [][] trainingset, int [] vocabulary) {
+		double [] p_w_coll = new double[vocabulary.length];
+		long corpusSize = 0;
+		for (int i = 0; i < trainingset.length; i++) {
+			int [] words = trainingset[i];
+			for (int j = 0; j < words.length; j++) {
+				p_w_coll[j] += words[j];
+				corpusSize += words[j];
+			}
+		}	
 
-		 //normalize
-		 for (int i = 0; i < p_w_coll.length; i++) {
-			 p_w_coll[i] /= corpusSize;
-		 }
-		 
-		 return p_w_coll;
+		//normalize
+		for (int i = 0; i < p_w_coll.length; i++) {
+			p_w_coll[i] /= corpusSize;
+		}
+
+		return p_w_coll;
 	}
 
 	private String getTrainingSetHash() {
@@ -684,7 +776,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 	@Override
 	public double distanceToTrainingSample(double[] query, int sampleId) {		
 		double [] theta = trainingSetTopicDists[sampleId];
-		
+
 		int [] v1 = new int[query.length];
 		for (int i = 0; i < v1.length; i++) {
 			v1[i] = (int)query[i];
@@ -695,7 +787,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 				.stream(tv.instanceToVector(trainingset.get(sampleId)))
 				.mapToInt(x -> (int)x)
 				.toArray();
-		
+
 		return -ldaLoglikelihood(v1, v2, theta);
 	}
 
@@ -705,7 +797,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 
 	public void initModel(int[][] trainingset, int[] vocab) {
 		p_w_coll = calculateProbWordGivenCorpusMLFrequencyEncoding(trainingset,vocab);
-		
+
 	}
 
 	public void initModel(int[][] trainingset, int[] vocab, double [][] phi) {
@@ -726,7 +818,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer();
 		int [] query = tv.instanceToIntVector(instance1);
 		int [] document = tv.instanceToIntVector(instance2);
-		
+
 		double [] docTheta;
 		if(sampledTopics.get(instance2) == null) {
 			docTheta = sample(instance2);
@@ -734,7 +826,7 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 		} else {
 			docTheta = sampledTopics.get(instance2);
 		}
-		
+
 		return -ldaLoglikelihood(query, document, docTheta);
 	}
 }

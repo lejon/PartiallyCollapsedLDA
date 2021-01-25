@@ -1,7 +1,6 @@
 package cc.mallet.similarity;
 
 import java.util.Arrays;
-import java.util.Map;
 
 import org.apache.commons.math3.distribution.TDistribution;
 
@@ -16,7 +15,7 @@ import cc.mallet.util.StringClassArrayIterator;
 public class LongQueryLDALikelihoodDistance extends LDALikelihoodDistance {
 
 	public LongQueryLDALikelihoodDistance(int K, double alpha) {
-		super(K,alpha);
+		super(alpha);
 	}
 	
 	public LongQueryLDALikelihoodDistance(LDASamplerWithPhi trainedSampler) {
@@ -104,7 +103,8 @@ public class LongQueryLDALikelihoodDistance extends LDALikelihoodDistance {
 	 * @return logLikelihood of document generating query
 	 */
 	public double ldaLoglikelihood(int[] query, double[] queryTheta, int[] document, double[] documentTheta) {
-		Map<Integer, Double> p_w_d = calcProbWordGivenDocMLFrequencyEncoding(document);
+		//Map<Integer, Double> p_w_d = calcProbWordGivenDocMLFrequencyEncoding(document);
+		double [] p_w_d = calcProbWordGivenDocMLFrequencyEncoding(document);
 		
 		double querylength1 = getDocLength(query);
 		double doclength1 = getDocLength(document);
@@ -126,9 +126,8 @@ public class LongQueryLDALikelihoodDistance extends LDALikelihoodDistance {
 				int word = i;
 				double wordCorpusProb = calcProbWordGivenCorpus(word);
 				
-				if(p_w_d.get(word) != null) {
-					wordProb = p_w_d.get(word);
-				}
+				wordProb = p_w_d[word];
+				
 				p_q_d += Math.log(mixtureRatio * wordProb + 
 						(1-mixtureRatio) * wordCorpusProb);	
 			}
