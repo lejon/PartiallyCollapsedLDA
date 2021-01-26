@@ -9,6 +9,7 @@ import org.junit.Test;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDADatasetStringLoadingUtils;
 import cc.mallet.util.LDAUtils;
 
 public class LDALikelihoodTest {
@@ -366,7 +367,7 @@ public class LDALikelihoodTest {
 			classNames[i] = "X";
 		}
 		
-		InstanceList train = LDAUtils.loadInstancesStrings(doclines, classNames);
+		InstanceList train = LDADatasetStringLoadingUtils.loadInstancesStrings(doclines, classNames);
 		//System.out.println(train.getAlphabet());
 		assertEquals(14,train.getAlphabet().size());
 		
@@ -376,7 +377,7 @@ public class LDALikelihoodTest {
 		cd.setMixtureRatio(1/2.0);
 		
 		String [] doclinesTest = {"revenue down"};
-		InstanceList test = LDAUtils.loadInstancesStrings(doclinesTest,train.getPipe());
+		InstanceList test = LDADatasetStringLoadingUtils.loadInstancesStrings(doclinesTest,train.getPipe());
 		assertEquals("revenue, down", LDAUtils.instanceToString(test.get(0)));
 
 		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer(); 
@@ -409,7 +410,7 @@ public class LDALikelihoodTest {
 			classNames[i] = "X";
 		}
 		
-		InstanceList train = LDAUtils.loadInstancesStrings(doclines, classNames);
+		InstanceList train = LDADatasetStringLoadingUtils.loadInstancesStrings(doclines, classNames);
 		//System.out.println(train.getAlphabet());
 		assertEquals(14,train.getAlphabet().size());
 

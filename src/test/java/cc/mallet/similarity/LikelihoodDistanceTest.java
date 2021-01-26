@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDADatasetStringLoadingUtils;
 import cc.mallet.util.LDAUtils;
 
 public class LikelihoodDistanceTest {
@@ -12,13 +13,13 @@ public class LikelihoodDistanceTest {
 	@Test
 	public void testSimplest() {
 		String [] doclines = {"apa"};
-		InstanceList train = LDAUtils.loadInstancesStrings(doclines);
+		InstanceList train = LDADatasetStringLoadingUtils.loadInstancesStrings(doclines);
 		
 		
 		LikelihoodDistance cd = new LikelihoodDistance(train);
 		
 		String [] doclinesTest = {"apa"};
-		InstanceList test = LDAUtils.loadInstancesStrings(doclinesTest);
+		InstanceList test = LDADatasetStringLoadingUtils.loadInstancesStrings(doclinesTest);
 
 		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer(); 
 		double [] v1 = tv.instanceToVector(test.get(0));
@@ -32,13 +33,13 @@ public class LikelihoodDistanceTest {
 	@Test
 	public void testSimple() {
 		String [] doclines = {"apa", "apa banan"};
-		InstanceList train = LDAUtils.loadInstancesStrings(doclines);
+		InstanceList train = LDADatasetStringLoadingUtils.loadInstancesStrings(doclines);
 		
 		
 		LikelihoodDistance cd = new LikelihoodDistance(train);
 		
 		String [] doclinesTest = {"apa"};
-		InstanceList test = LDAUtils.loadInstancesStrings(doclinesTest,train.getPipe());
+		InstanceList test = LDADatasetStringLoadingUtils.loadInstancesStrings(doclinesTest,train.getPipe());
 
 		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer(); 
 		double [] v1 = tv.instanceToVector(test.get(0));
@@ -52,13 +53,13 @@ public class LikelihoodDistanceTest {
 	@Test
 	public void testSimplish() {
 		String [] doclines = {"apa", "apa banan"};
-		InstanceList train = LDAUtils.loadInstancesStrings(doclines);
+		InstanceList train = LDADatasetStringLoadingUtils.loadInstancesStrings(doclines);
 		
 		
 		LikelihoodDistance cd = new LikelihoodDistance(train);
 		
 		String [] doclinesTest = {"apa banan"};
-		InstanceList test = LDAUtils.loadInstancesStrings(doclinesTest,train.getPipe());
+		InstanceList test = LDADatasetStringLoadingUtils.loadInstancesStrings(doclinesTest,train.getPipe());
 
 		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer(); 
 		double [] v1 = tv.instanceToVector(test.get(0));
@@ -72,12 +73,12 @@ public class LikelihoodDistanceTest {
 	@Test
 	public void testSimplishish() {
 		String [] doclines = {"apa", "apa banan"};
-		InstanceList train = LDAUtils.loadInstancesStrings(doclines);
+		InstanceList train = LDADatasetStringLoadingUtils.loadInstancesStrings(doclines);
 		
 		LikelihoodDistance cd = new LikelihoodDistance(train);
 		
 		String [] doclinesTest = {"apa apa apa apa apa apa"};
-		InstanceList test = LDAUtils.loadInstancesStrings(doclinesTest,train.getPipe());
+		InstanceList test = LDADatasetStringLoadingUtils.loadInstancesStrings(doclinesTest,train.getPipe());
 
 		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer(); 
 		double [] v1 = tv.instanceToVector(test.get(0));
@@ -99,7 +100,7 @@ public class LikelihoodDistanceTest {
 			classNames[i] = "X";
 		}
 
-		InstanceList train = LDAUtils.loadInstancesStrings(doclines, classNames);
+		InstanceList train = LDADatasetStringLoadingUtils.loadInstancesStrings(doclines, classNames);
 		System.out.println(train.getAlphabet());
 		assertEquals(14,train.getAlphabet().size());
 		
@@ -109,7 +110,7 @@ public class LikelihoodDistanceTest {
 		String [] doclinesTest = {"revenue down"};
 		
 		
-		InstanceList test = LDAUtils.loadInstancesStrings(doclinesTest,train.getPipe());
+		InstanceList test = LDADatasetStringLoadingUtils.loadInstancesStrings(doclinesTest,train.getPipe());
 		assertEquals("revenue, down", LDAUtils.instanceToString(test.get(0)));
 
 		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer(); 
@@ -145,14 +146,14 @@ public class LikelihoodDistanceTest {
 			classNames[i] = "X";
 		}
 		
-		InstanceList train = LDAUtils.loadInstancesStrings(corpus, classNames);
+		InstanceList train = LDADatasetStringLoadingUtils.loadInstancesStrings(corpus, classNames);
 
 		LikelihoodDistance cd = new LikelihoodDistance(train);
 		cd.setMixtureRatio(1/2.0);
 		
 		String [] doclinesTest = {queryDoc};
 		
-		InstanceList test = LDAUtils.loadInstancesStrings(doclinesTest,train.getPipe());
+		InstanceList test = LDADatasetStringLoadingUtils.loadInstancesStrings(doclinesTest,train.getPipe());
 
 		TokenFrequencyVectorizer tv = new TokenFrequencyVectorizer(); 
 		double [] v1 = tv.instanceToVector(test.get(0));

@@ -11,6 +11,7 @@ import cc.mallet.types.Alphabet;
 import cc.mallet.types.FeatureSequence;
 import cc.mallet.types.Instance;
 import cc.mallet.types.InstanceList;
+import cc.mallet.util.LDADatasetStringLoadingUtils;
 import cc.mallet.util.LDAUtils;
 
 public class CorpusStatisticsTest {
@@ -61,7 +62,7 @@ public class CorpusStatisticsTest {
 			classNames[i] = "X";
 		}
 
-		InstanceList small = LDAUtils.loadInstancesStrings(doclines, classNames);
+		InstanceList small = LDADatasetStringLoadingUtils.loadInstancesStrings(doclines, classNames);
 
 		StreamCorpusStatistics cs = new StreamCorpusStatistics(small);
 
