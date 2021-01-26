@@ -103,7 +103,8 @@
 	<!-- v8.5.0: Support for compressed input files (zip, gz). Improved iteration callback support -->
 	<!-- v8.5.1: Fixed resource leaks in file loading and 'continued' sampling -->
 	<!-- v9.0.0: Major cleanups -->
-	<version>9.0.0-SNAPSHOT</version>
+	<!-- v9.1.0: Reverted back to default loading using file (instead of streams), fixed various small issues -->
+	<version>9.1.0</version>
 
 
 	<name>Partially Collapsed Parallel LDA</name>
