@@ -717,7 +717,10 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 				logLik = modelLogLikelihood();	
 				tw = topWords (wordsPerTopic);
 				loglikelihood.add(logLik);
-				config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt").println(iteration + "\t" + logLik);
+				PrintWriter lpw = config.getLoggingUtil().getAppendingLogPrinter("likelihood.txt"); 
+				lpw.println(iteration + "\t" + logLik);
+				lpw.flush();
+				
 				logger.info("<" + iteration + "> Log Likelihood: " + logLik);
 				logger.fine(tw);
 				if(logTypeTopicDensity || logDocumentDensity) {
@@ -733,6 +736,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 					}
 					PrintWriter statsout = config.getLoggingUtil().getAppendingLogPrinter("stats.txt");
 					LDAUtils.logStatsToFile(stats,statsout);
+					statsout.flush();
 				}
 
 				// WARNING: This will SUBSTANTIALLY slow down the sampler
