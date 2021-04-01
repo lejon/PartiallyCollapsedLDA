@@ -339,6 +339,11 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public boolean savePhiMeans(boolean defaultVal) {
 		String key = "save_phi_mean";
 		Object prop = super.getProperty(translateKey(key));
+		// Hack because of inconsistent naming
+		if(prop==null) {
+			key = "save_phi_means";
+			prop = super.getProperty(translateKey(key));
+		}
 		if(prop==null) return defaultVal;
 		return getBooleanProperty(key);
 	}
