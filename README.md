@@ -57,6 +57,10 @@ The variable selection parts are implemented in the 'cc.mallet.topics.NZVSSpalia
 
 An example of a "main" class is cc.mallet.topics.tui.ParallelLDA
 
+## Config File Documentation
+
+[Configuration file docs](src/main/resources/configuration/Configuration-README.md)
+
 ## Installation
 
 1. Install Apache Maven
