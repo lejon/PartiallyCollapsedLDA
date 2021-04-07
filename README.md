@@ -63,7 +63,7 @@ An example of a "main" class is cc.mallet.topics.tui.ParallelLDA
 
 ## Minimal config file example
 
-[Configuration file docs](src/main/resources/configuration/minimal.cfg)
+[Minimal Configuration file example](src/main/resources/configuration/minimal.cfg)
 
 
 ## Installation
