@@ -1,4 +1,4 @@
-![Build/Test](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
+![Build/Test](https://github.com/github/docs/actions/workflows/maven.yml/badge.svg)
 
 ![YourKit](https://www.yourkit.com/images/yklogo.png)
 
