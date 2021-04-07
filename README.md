@@ -1,5 +1,4 @@
-![Build/Test](https://github.com/github/docs/actions/workflows/tests/badge.svg)
-
+![Build/Test](https://github.com/lejon/PartiallyCollapsedLDA/actions/workflows/maven.yml/badge.svg)
 
 ![YourKit](https://www.yourkit.com/images/yklogo.png)
 
