@@ -61,6 +61,11 @@ An example of a "main" class is cc.mallet.topics.tui.ParallelLDA
 
 [Configuration file docs](src/main/resources/configuration/Configuration-README.md)
 
+## Minimal config file example
+
+[Configuration file docs](src/main/resources/configuration/minimal.cfg)
+
+
 ## Installation
 
 1. Install Apache Maven
