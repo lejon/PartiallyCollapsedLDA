@@ -1,11 +1,78 @@
-# Confiuration file documentation
+# Confiuration File Documentation
+
+During research you typically want to test a lot of different options. 
+Hence, the configuration tends to become more and more complex. You 
+certainly don't need to know most of what is in this documentation. 
+Here is a minimal working configuration:
+
+```
+topics = 20
+dataset = src/main/resources/datasets/nips.txt
+iterations = 400
+```
+
+Effort has been placed on providing resonable defaults for all configuration
+parameters, but of course they won't fit everyone. 
+
+Here is a mimal config using word priors:
+
+```
+topics = 20
+dataset = src/main/resources/datasets/20newsgroups.txt
+iterations = 400
+topic_prior_filename = src/main/resources/configuration/20ng_priors.txt
+tfidf_vocab_size = 10000
+stoplist = stoplist-20ng-large.txt
+scheme = polyaurn_priors
+```
+
+'20ng_priors.txt'
+
+```
+# Class sports:
+0, sports
+# Class politics:
+1, politics 
+# Class religion:
+2, religion
+# Class motor:
+3, motor, car
+# Class science:
+4, science
+# Class computing:
+5, computing
+# Class space:
+6, space
+# Class gun related:
+7, gun
+# Class baseball related:
+8, baseball
+# Class hockey related:
+9, hockey
+```
+
+Minimal HDP config:
+
+```
+# K_max - max number of topics acceptable
+topics = 1000
+alpha = 0.1
+beta = 0.01
+hdp_gamma = 1
+# K_init - number of topics to init the HDP with
+hdp_nr_start_topics = 1
+iterations = 200
+scheme = ppu_hdplda_all_topics
+dataset = src/main/resources/datasets/nips.txt
+```
 
 ## Configs: 
+
 Configs that will be run by the program. The program calls
-the method getSubConfigs() on the config object it will then 
+the method getSubConfigs() on the config object, it will then 
 get a list of the sub-configs listed in this variable. The program 
 then MUST "activate" using activateSubconfig(conf) the subconfig that 
-it wants to run
+it wants to run.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -88,9 +155,9 @@ Recommended LDA models:
 
 ```
 scheme = "spalias"
-scheme =  "spalias_priors"
-scheme = "polyaurn" // Default
-scheme =  "polyaurn_priors"
+scheme = "spalias_priors"
+scheme = "polyaurn" // Default - fastest
+scheme = "polyaurn_priors"
 scheme = "adlda"
 ```
 
