@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/lejon/PartiallyCollapsedLDA.svg?branch=master)](https://travis-ci.org/lejon/PartiallyCollapsedLDA) 
+![Build/Test](https://github.com/github/docs/actions/workflows/main.yml/badge.svg)
 
 ![YourKit](https://www.yourkit.com/images/yklogo.png)
 
