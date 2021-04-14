@@ -65,6 +65,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private boolean logTypeTopicDensity;
 	private boolean logDocumentDensity;
 	private String experimentOutputDirectory;
+	private String baseOutputDirectory;
 	private boolean logPhiDensity;
 	private boolean keepNumbers;
 	private boolean saveDocumentTopicMeans;
@@ -138,7 +139,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 			int aliasPoissonThreshold, String fileRegex, Integer hyperparamOptimInterval, boolean symmetricAlpha,
 			double hdpGgamma, int hdpNrStartTopics, int documentSamplerSplitLimit, double hdpKPercentile,
 			boolean logTopicIndicators, String samplerClass, String original_dataset_fn, boolean noPreprocess,
-			boolean saveSampler, String savedSamplerDir, String iterationCallbackClass) {
+			boolean saveSampler, String savedSamplerDir, String iterationCallbackClass, String baseOutputDir) {
 		super();
 		this.logUtil = logUtil;
 		this.scheme = scheme;
@@ -216,6 +217,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.saveSampler = saveSampler;
 		this.savedSamplerDir = savedSamplerDir;
 		this.iterationCallbackClass = iterationCallbackClass;
+		this.baseOutputDirectory = baseOutputDir;
 	}
 
 	public void setPrintPhi(boolean printPhi) {
@@ -987,6 +989,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		result = prime * result
 				+ ((documentTopicThetaOutputFilename == null) ? 0 : documentTopicThetaOutputFilename.hashCode());
 		result = prime * result + ((experimentOutputDirectory == null) ? 0 : experimentOutputDirectory.hashCode());
+		result = prime * result + ((baseOutputDirectory == null) ? 0 : baseOutputDirectory.hashCode());
 		result = prime * result + ((fileRegex == null) ? 0 : fileRegex.hashCode());
 		result = prime * result + Arrays.hashCode(fixed_split_size_doc);
 		result = prime * result + ((fullPhiPeriod == null) ? 0 : fullPhiPeriod.hashCode());
@@ -1122,6 +1125,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 			return false;
 		if (experimentOutputDirectory == null) {
 			if (other.experimentOutputDirectory != null)
+				return false;
+		}
+		if (baseOutputDirectory == null) {
+			if (other.baseOutputDirectory != null)
 				return false;
 		} else if (!experimentOutputDirectory.equals(other.experimentOutputDirectory))
 			return false;
@@ -1355,5 +1362,10 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 			System.err.println("Could not serialize config to JSON:" + e.toString());
 			return hashCode() + "";
 		}
+	}
+
+	@Override
+	public String getBaseOutputDirectory(String string) {
+		return baseOutputDirectory;
 	}
 }

@@ -597,7 +597,8 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 				noPreprocess(),
 				saveSampler(false),
 				getSavedSamplerDirectory(LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT),
-				getIterationCallbackClass(LDAConfiguration.MODEL_CALLBACK_DEFAULT)
+				getIterationCallbackClass(LDAConfiguration.MODEL_CALLBACK_DEFAULT),
+				getBaseOutputDirectory(LDAConfiguration.BASE_OUTPUT_DIR_DEFAULT)
 				);
 		
 		return conf;
@@ -636,6 +637,13 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public String getSavedSamplerDirectory(String default_dir) {
 		String configProperty = getStringProperty("saved_sampler_dir");
 		return (configProperty == null) ? default_dir : configProperty;
+	}
+	
+	@Override
+	public String getBaseOutputDirectory(String defaultDir) {
+		String dir = getStringProperty("base_out_dir");
+		if(dir != null && dir.endsWith("/")) dir = dir.substring(0,dir.length()-1);
+		return (dir == null) ? defaultDir : dir;
 	}
 
 }

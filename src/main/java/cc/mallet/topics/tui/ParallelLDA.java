@@ -59,6 +59,8 @@ public class ParallelLDA {
 	public static final String NZVSSPALIAS_MODEL =  "nzvsspalias";
 	public static final String DEFAULT_MODEL =  POLYAURN_MODEL;
 
+	String BASE_DIR = LDAConfiguration.BASE_OUTPUT_DIR_DEFAULT;
+	
 	public static void main(String[] args) throws Exception {
 		ParallelLDA plda = new ParallelLDA();
 		plda.doSample(args);
@@ -120,11 +122,23 @@ public class ParallelLDA {
 
 			LDAConfiguration config = (LDAConfiguration) ConfigFactory.getMainConfiguration(cp);
 			LDALoggingUtils lu = new LoggingUtils();
+
+			String baseDir = config.getBaseOutputDirectory(BASE_DIR);
+			if(baseDir.equals("")) {
+				baseDir = BASE_DIR;
+			} else {
+				if(!baseDir.endsWith("/")) {
+					baseDir += "/";
+				}
+			}
+			
 			String expDir = config.getExperimentOutputDirectory("");
 			if(!expDir.equals("")) {
-				expDir += "/";
+				if(!expDir.endsWith("/")) {
+					expDir += "/";
+				}
 			}
-			String logSuitePath = "Runs/" + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
+			String logSuitePath = baseDir + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
 			System.out.println("Logging to: " + logSuitePath);
 			lu.checkAndCreateCurrentLogDir(logSuitePath);
 			config.setLoggingUtil(lu);
@@ -354,7 +368,15 @@ public class ParallelLDA {
 		metadata.add("No. Topics: " + model.getNoTopics());
 		metadata.add("Start Seed: " + model.getStartSeed());
 		// Save stats for this run
-		lu.dynamicLogRun("Runs", t, cp, (Configuration) config, null, 
+		String baseDir = config.getBaseOutputDirectory(BASE_DIR);
+		if(baseDir.equals("")) {
+			baseDir = BASE_DIR;
+		} else {
+			if(!baseDir.endsWith("/")) {
+				baseDir += "/";
+			}
+		}
+		lu.dynamicLogRun(baseDir, t, cp, (Configuration) config, null, 
 				ParallelLDA.class.getName(), "Convergence", "HEADING", "PLDA", 1, metadata);
 
 		if(requestedWords>instances.getDataAlphabet().size()) {

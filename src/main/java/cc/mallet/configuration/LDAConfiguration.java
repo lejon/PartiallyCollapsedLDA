@@ -46,6 +46,7 @@ public interface LDAConfiguration {
 	public static final String MODEL_DEFAULT = "cc.mallet.topics.PolyaUrnSpaliasLDA";
 	public static final String STORED_SAMPLER_DIR_DEFAULT = "stored_samplers";
 	public static final String MODEL_CALLBACK_DEFAULT = null;
+	public static final String BASE_OUTPUT_DIR_DEFAULT = "Runs";
 
 	public LDALoggingUtils getLoggingUtil();
 
@@ -230,4 +231,6 @@ public interface LDAConfiguration {
 	public String getIterationCallbackClass(String modelCallbackDefault);
 
 	public String getDocumentPriorFilename();
+
+	public String getBaseOutputDirectory(String string);
 }
