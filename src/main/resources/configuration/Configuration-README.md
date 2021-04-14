@@ -218,6 +218,21 @@ When to  to do a full dump of (phi, M and N), -1 means never
 ```
 diagnostic_interval = 500, 1000 # Dump diagnostics between iteration 500 and 1000
 diagnostic_interval = -1
+
+```
+
+## Base Out Dir
+Top level directory for the output
+
+```
+base_out_dir
+```
+
+## Experiment Out Dir
+Subdirectory in base_out_dir where the output will be stored
+
+```
+experiment_out_dir
 ```
 
 ## Batches: 
@@ -723,11 +738,6 @@ sub_topic_index_builders
 ## Proportional Ib Skip Step
 ```
 proportional_ib_skip_step
-```
-
-## Experiment Out Dir
-```
-experiment_out_dir
 ```
 
 ## Variable Selection Prior
