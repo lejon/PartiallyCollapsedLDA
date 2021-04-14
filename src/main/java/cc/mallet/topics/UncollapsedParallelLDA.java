@@ -2081,11 +2081,23 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			try {
 				config = new ParsedLDAConfiguration(cfg_file);
 
+				String baseDir = config.getBaseOutputDirectory(LDAConfiguration.BASE_OUTPUT_DIR_DEFAULT);
+				if(baseDir == null || baseDir.equals("")) {
+					baseDir = LDAConfiguration.BASE_OUTPUT_DIR_DEFAULT;
+				} else {
+					if(!baseDir.endsWith("/")) {
+						baseDir += "/";
+					}
+				}
+				
 				String expDir = config.getExperimentOutputDirectory("");
 				if(!expDir.equals("")) {
-					expDir += "/";
+					if(!expDir.endsWith("/")) {
+						expDir += "/";
+					}
 				}
-				String logSuitePath = "Runs/" + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
+
+				String logSuitePath = baseDir + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
 				LDALoggingUtils lu = new LoggingUtils();
 				lu.checkAndCreateCurrentLogDir(logSuitePath);
 				config.setLoggingUtil(lu);
