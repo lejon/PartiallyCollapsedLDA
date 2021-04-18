@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "partiallycollapsedlda"
+version = "0.1.0"
+description = "Python wrapper for LDA/HDP implementations using partially collapsed Gibbs sampling"
+authors = ["Armin Catovic <armin.catovic@hotmail.se>", "Leif Jonsson <leif.jonsson@gmail.co>"]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+black = "^20.8b1"
+mypy = "^0.790"
+flake8 = "^3.8.4"
+coverage = "^5.3"
+pre-commit = "^2.1.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
