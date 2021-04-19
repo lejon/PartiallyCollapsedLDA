@@ -1,0 +1,36 @@
+fail_fast: true
+default_language_version:
+    python: python3.6
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.1.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: check-added-large-files
+        args: [--maxkb=1000]
+    -   id: check-executables-have-shebangs
+    -   id: check-vcs-permalinks
+    -   id: debug-statements
+    -   id: detect-aws-credentials
+    -   id: end-of-file-fixer
+#  - repo: local
+#    hooks:
+#      - id: system
+#        name: Black
+#        entry: poetry run black python/
+#        pass_filenames: false
+#        language: system
+#  - repo: local
+#    hooks:
+#      - id: system
+#        name: MyPy
+#        entry: poetry run mypy python/
+#        pass_filenames: false
+#        language: system
+  - repo: local
+    hooks:
+      - id: system
+        name: Flake8
+        entry: poetry run flake8 --config=.flake8 python/
+        pass_filenames: false
+        language: system

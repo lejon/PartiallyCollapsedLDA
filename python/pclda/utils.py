@@ -17,6 +17,7 @@ def check_output(cmd: str):
         proc.terminate()
         raise
 
+
 def download_file(uri: str, path: str, is_binary: bool = True) -> None:
     mode = 'wb' if is_binary else 'w'
     resp = urlopen(uri)

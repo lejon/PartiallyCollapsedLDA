@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "partiallycollapsedlda"
+name = "pclda"
 version = "0.1.0"
 description = "Python wrapper for LDA/HDP implementations using partially collapsed Gibbs sampling"
-authors = ["Armin Catovic <armin.catovic@hotmail.se>", "Leif Jonsson <leif.jonsson@gmail.co>"]
+authors = ["Armin Catovic <armin.catovic@hotmail.se>", "Leif Jonsson <leif.jonsson@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.6"
