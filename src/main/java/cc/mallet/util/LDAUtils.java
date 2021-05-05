@@ -24,11 +24,13 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.logging.Logger;
@@ -70,68 +72,6 @@ public class LDAUtils {
 	private static final String SAVED_SIMILARITY_SAMPLERNAME_PREFIX = "saved_lda_sampler";
 
 	public LDAUtils() {
-	}
-
-	public static Pipe buildSerialPipe(String stoplistFile) {
-		return buildSerialPipe(stoplistFile, null);
-	}
-
-	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet) {
-		return buildSerialPipe(stoplistFile, dataAlphabet, null, false);
-	}
-
-	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, boolean raw) {
-		return buildSerialPipe(stoplistFile, dataAlphabet, null, raw);
-	}
-
-	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, LabelAlphabet targetAlphabet, boolean raw) {
-		return buildSerialPipe(stoplistFile, dataAlphabet, targetAlphabet, raw, 10000);
-	}
-
-	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, 
-			LabelAlphabet targetAlphabet, boolean raw, int maxBufSize) { 		
-		Pipe tokenizer = null;
-		if(raw) {
-			if(stoplistFile==null) {
-				tokenizer = new RawTokenizer(new HashSet<String>(), maxBufSize);
-			} else {
-				tokenizer = new RawTokenizer(new File(stoplistFile), maxBufSize);
-			}
-		} else {
-			if(stoplistFile==null) {
-				tokenizer = new SimpleTokenizerLarge(new HashSet<String>(), maxBufSize);
-			} else {
-				tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
-			}
-		}
-
-		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
-		Alphabet alphabet = null;
-		if(dataAlphabet==null) {
-			alphabet = new Alphabet();
-		} else {
-			alphabet = dataAlphabet;
-		}
-
-		CharSequenceLowercase csl = new CharSequenceLowercase();
-		StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
-
-		LabelAlphabet tAlphabet = null;
-		if(targetAlphabet==null) {
-			tAlphabet = new LabelAlphabet();
-		} else {
-			tAlphabet = targetAlphabet;
-		}
-
-		Target2Label ttl = new Target2Label (tAlphabet);
-
-		if(!raw) pipes.add(csl);
-		pipes.add(tokenizer);
-		pipes.add(sl2fs);
-		pipes.add(ttl);
-
-		Pipe serialPipe = new SerialPipes(pipes);
-		return serialPipe;
 	}
 
 	public static InstanceList loadDataset(LDAConfiguration config, String dataset_fn) throws FileNotFoundException {
@@ -982,7 +922,13 @@ public class LDAUtils {
 	}
 
 	public static void writeASCIIDoubleMatrix(double[][] matrix, int rows, int columns, String sep, int noDigits, PrintWriter pw) throws FileNotFoundException, IOException {
-		DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0");
+		DecimalFormatSymbols otherSymbols = new DecimalFormatSymbols(Locale.getDefault());
+		// Ensure that we don't use "," as decimal separator if that is also used 
+		// as a separator when writing CSV files
+		if(sep.equals(",")) {			
+			otherSymbols.setDecimalSeparator('.');
+		}
+		DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0",otherSymbols);
 		for (int i = 0; i < matrix.length; i++) {
 			for (int j = 0; j < matrix[i].length; j++) {
 				pw.print(formatDouble(matrix[i][j],mydecimalFormat,noDigits) + "");

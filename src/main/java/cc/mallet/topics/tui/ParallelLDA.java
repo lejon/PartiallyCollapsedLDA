@@ -312,20 +312,22 @@ public class ParallelLDA {
 				String vocabFn = config.getVocabularyFilename();
 				if(vocabFn==null || vocabFn.length()==0) { vocabFn = "phi_vocabulary.txt"; }
 				String [] vobaculary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
-				PrintWriter out = lu.getAppendingLogPrinter(vocabFn);
+				PrintWriter out = lu.getLogPrinter(vocabFn);
 				for(String line : vobaculary) {
 					out.println(line);
 				}
+				out.flush();
 			}
 		}
 
 		if(config.saveVocabulary(false)) {
 			String vocabFn = config.getVocabularyFilename();
 			String [] vocabulary = LDAUtils.extractVocabulaty(instances.getDataAlphabet());
-			PrintWriter out = lu.getAppendingLogPrinter(vocabFn);
+			PrintWriter out = lu.getLogPrinter(vocabFn);
 			for(String line : vocabulary) {
 				out.println(line);
 			}
+			out.flush();
 		}
 
 		if(config.saveCorpus(false)) {

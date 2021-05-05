@@ -1,7 +1,19 @@
 package cc.mallet.util;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashSet;
+
+import cc.mallet.pipe.CharSequenceLowercase;
 import cc.mallet.pipe.Pipe;
+import cc.mallet.pipe.RawTokenizer;
+import cc.mallet.pipe.SerialPipes;
+import cc.mallet.pipe.SimpleTokenizerLarge;
+import cc.mallet.pipe.StringList2FeatureSequence;
+import cc.mallet.pipe.Target2Label;
+import cc.mallet.types.Alphabet;
 import cc.mallet.types.InstanceList;
+import cc.mallet.types.LabelAlphabet;
 
 public class LDADatasetStringLoadingUtils {
 	public static InstanceList loadInstancesStrings(String [] doclines, Pipe pipe) {
@@ -90,7 +102,7 @@ public class LDADatasetStringLoadingUtils {
 		StringClassArrayIterator readerTrain = new StringClassArrayIterator(doclines, classNames, docIds); 
 
 		if(pipe == null) {
-			pipe = LDAUtils.buildSerialPipe(stoplistFile, null, null, raw, bufferSize);
+			pipe = buildSerialPipe(stoplistFile, null, null, raw, bufferSize);
 		}
 
 		InstanceList instances = new InstanceList(pipe);
@@ -101,5 +113,67 @@ public class LDADatasetStringLoadingUtils {
 		}
 		return instances;
 	}	
+	
+	public static Pipe buildSerialPipe(String stoplistFile) {
+		return buildSerialPipe(stoplistFile, null);
+	}
+
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet) {
+		return buildSerialPipe(stoplistFile, dataAlphabet, null, false);
+	}
+
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, boolean raw) {
+		return buildSerialPipe(stoplistFile, dataAlphabet, null, raw);
+	}
+
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, LabelAlphabet targetAlphabet, boolean raw) {
+		return buildSerialPipe(stoplistFile, dataAlphabet, targetAlphabet, raw, 10000);
+	}
+
+	public static Pipe buildSerialPipe(String stoplistFile, Alphabet dataAlphabet, 
+			LabelAlphabet targetAlphabet, boolean raw, int maxBufSize) { 		
+		Pipe tokenizer = null;
+		if(raw) {
+			if(stoplistFile==null) {
+				tokenizer = new RawTokenizer(new HashSet<String>(), maxBufSize);
+			} else {
+				tokenizer = new RawTokenizer(new File(stoplistFile), maxBufSize);
+			}
+		} else {
+			if(stoplistFile==null) {
+				tokenizer = new SimpleTokenizerLarge(new HashSet<String>(), maxBufSize);
+			} else {
+				tokenizer = new SimpleTokenizerLarge(new File(stoplistFile), maxBufSize);
+			}
+		}
+
+		ArrayList<Pipe> pipes = new ArrayList<Pipe>();
+		Alphabet alphabet = null;
+		if(dataAlphabet==null) {
+			alphabet = new Alphabet();
+		} else {
+			alphabet = dataAlphabet;
+		}
+
+		CharSequenceLowercase csl = new CharSequenceLowercase();
+		StringList2FeatureSequence sl2fs = new StringList2FeatureSequence(alphabet);
+
+		LabelAlphabet tAlphabet = null;
+		if(targetAlphabet==null) {
+			tAlphabet = new LabelAlphabet();
+		} else {
+			tAlphabet = targetAlphabet;
+		}
+
+		Target2Label ttl = new Target2Label (tAlphabet);
+
+		if(!raw) pipes.add(csl);
+		pipes.add(tokenizer);
+		pipes.add(sl2fs);
+		pipes.add(ttl);
+
+		Pipe serialPipe = new SerialPipes(pipes);
+		return serialPipe;
+	}
 
 }
