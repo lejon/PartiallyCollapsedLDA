@@ -504,7 +504,10 @@ debug = 0
 
 ## Document Topic Means:
 
-Save the a file with the document topic means (can include zeros)
+Save the a file with the document topic means (can include zeros). 
+Unlike Phi means which are sampled with thinning, theta means is just a simple
+average of the topic counts in the last iteration divided by the number of 
+tokens in the document thus there is not theta_burnin or theta_thinning
 
 ```
 save_doc_topic_means = true
@@ -513,10 +516,9 @@ doc_topic_mean_filename = doc_topic_means.csv
 
 ## Document Theta Estimate:
 
-Save the a file with document topic theta estimates (will not include zeros)
-Unlike Phi means which are sampled with thinning, theta means is just a simple
-average of the topic counts in the last iteration divided by the number of 
-tokens in the document thus there is not theta_burnin or theta_thinning
+Save the a file with document topic theta estimates. The theta estimate will not include zeros, 
+since it takes the prior into account also. This is probably what you want to use (rather than
+theta means) if you are doing downstream analysis of the topics
 
 ```
 save_doc_theta_estimate = true
