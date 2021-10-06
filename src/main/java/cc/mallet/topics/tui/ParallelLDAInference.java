@@ -303,6 +303,7 @@ public class ParallelLDAInference {
 
 	private void initSamplerFromSaved(LDAConfiguration config, LDASamplerWithPhi model, InstanceList instances) {
 		String storedDir = config.getSavedSamplerDirectory(LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT);
+		System.out.println("Looking for samplers in directory: " + storedDir);
 		LDASamplerWithPhi loadedModel = LDAUtils.loadStoredSampler(config, storedDir);
 		double [][] phi = loadedModel.getPhi();		
 		model.addInstances(instances);
