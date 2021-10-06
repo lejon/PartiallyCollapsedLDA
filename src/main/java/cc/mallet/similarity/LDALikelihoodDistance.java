@@ -600,13 +600,43 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 
 	@Override
 	public void init(InstanceList trainingset) {
-		String trainingsetHash = getTrainingSetHash();
-		String storedHash = readStoredTrainingsetHash(samplerFn + "-training_hash-" + trainingsetHash);
-		File storedSampler = new File(samplerFn + "-sampler-" + trainingsetHash);
 		this.trainingset = trainingset;
 
 		p_w_coll = calculateProbWordGivenCorpus(trainingset);
 
+		if(trainedSampler == null) {
+			String trainingsetHash = getTrainingSetHash();
+			String storedHash = readStoredTrainingsetHash(samplerFn + "-training_hash-" + trainingsetHash);
+			File storedSampler = new File(samplerFn + "-sampler-" + trainingsetHash);
+			initSampler(trainingset, trainingsetHash, storedHash, storedSampler);
+		}
+		
+		trainingSetTopicDists = trainedSampler.getThetaEstimate();
+		phi = trainedSampler.getPhi();
+
+		for (int i = 0; i < trainingset.size(); i++) {
+			Instance instance = trainingset.get(i);
+			int[] wordTokensQuery = LDAUtils.getWordTokens(instance);
+			int hashCodeQuery = Arrays.hashCode(wordTokensQuery);
+			cache.put(hashCodeQuery, trainingSetTopicDists[i]);
+			sampledTopics.put(instance, trainingSetTopicDists[i]);
+		}
+
+		System.out.println("Top words of the trained sampler are: \n" + 
+				LDAUtils.formatTopWords(LDAUtils.getTopWords(10, 
+						trainedSampler.getAlphabet().size(), 
+						trainedSampler.getNoTopics(), 
+						trainedSampler.getTypeTopicMatrix(), 
+						trainedSampler.getAlphabet())));
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	void initSampler(InstanceList trainingset, String trainingsetHash, String storedHash, File storedSampler) {
 		if(storedSampler.exists() 
 				&& trainingsetHash != null 
 				&& trainingsetHash.equals(storedHash)) {
@@ -639,29 +669,6 @@ public class LDALikelihoodDistance implements TrainedDistance, InstanceDistance 
 				throw new IllegalStateException(e);
 			}
 		}
-		trainingSetTopicDists = trainedSampler.getThetaEstimate();
-		phi = trainedSampler.getPhi();
-
-		for (int i = 0; i < trainingset.size(); i++) {
-			Instance instance = trainingset.get(i);
-			int[] wordTokensQuery = LDAUtils.getWordTokens(instance);
-			int hashCodeQuery = Arrays.hashCode(wordTokensQuery);
-			cache.put(hashCodeQuery, trainingSetTopicDists[i]);
-			sampledTopics.put(instance, trainingSetTopicDists[i]);
-		}
-
-		System.out.println("Top words of the trained sampler are: \n" + 
-				LDAUtils.formatTopWords(LDAUtils.getTopWords(10, 
-						trainedSampler.getAlphabet().size(), 
-						trainedSampler.getNoTopics(), 
-						trainedSampler.getTypeTopicMatrix(), 
-						trainedSampler.getAlphabet())));
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
 	}
 
 	double [] calculateProbWordGivenCorpus(InstanceList trainingset) {
