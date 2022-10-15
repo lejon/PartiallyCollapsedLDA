@@ -6,7 +6,6 @@ import cc.mallet.topics.randomscan.topic.TopicIndexBuilderFactory;
 import cc.mallet.util.LDALoggingUtils;
 
 public interface LDAConfiguration {
-
 	public static final int START_DIAG_DEFAULT = 500;
 	public static final int NO_TOPICS_DEFAULT = 10;
 	public static final double ALPHA_DEFAULT = 50.0 / NO_TOPICS_DEFAULT;
@@ -47,6 +46,7 @@ public interface LDAConfiguration {
 	public static final String STORED_SAMPLER_DIR_DEFAULT = "stored_samplers";
 	public static final String MODEL_CALLBACK_DEFAULT = null;
 	public static final String BASE_OUTPUT_DIR_DEFAULT = "Runs";
+	public static final String TOPIC_INDICATOR_LOGGING_FORMAT_DEFAULT = "standard";
 
 	public LDALoggingUtils getLoggingUtil();
 
@@ -233,4 +233,6 @@ public interface LDAConfiguration {
 	public String getDocumentPriorFilename();
 
 	public String getBaseOutputDirectory(String string);
+
+    public String getTopicIndicatorLoggingFormat(String defaultFormat);
 }

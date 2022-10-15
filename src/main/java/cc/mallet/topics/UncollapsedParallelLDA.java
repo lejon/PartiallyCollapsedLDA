@@ -1,13 +1,11 @@
 package cc.mallet.topics;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -69,8 +67,11 @@ import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDAThreadFactory;
 import cc.mallet.util.LDAUtils;
 import cc.mallet.util.LoggingUtils;
+import cc.mallet.util.MalletTopicIndicatorLogger;
 import cc.mallet.util.ReMappedAliasTable;
+import cc.mallet.util.StandardTopicIndicatorLogger;
 import cc.mallet.util.Stats;
+import cc.mallet.util.TopicIndicatorLogger;
 import cc.mallet.util.WalkerAliasTable;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
@@ -1021,28 +1022,13 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	}
 
 	protected void logTopicIndicators() {
-		File ld = config.getLoggingUtil().getLogDir();
-		File z_file = new File(ld.getAbsolutePath() + "/z_" + getCurrentIteration() + ".csv");
-		try (FileWriter fw = new FileWriter(z_file, false); 
-				BufferedWriter bw = new BufferedWriter(fw);
-				PrintWriter pw  = new PrintWriter(bw)) {
-
-			for (int docIdx = 0; docIdx < data.size(); docIdx++) {
-				String szs = "";
-				LabelSequence topicSequence =
-						(LabelSequence) data.get(docIdx).topicSequence;
-				int [] oneDocTopics = topicSequence.getFeatures();
-				for (int i = 0; i < topicSequence.size(); i++) {
-					szs += oneDocTopics[i] + ",";
-				}
-				if(szs.length()>0) {
-					szs = szs.substring(0, szs.length()-1);
-				}
-				pw.println(szs);			
-			}			
-		} catch (Exception e) {
-			e.printStackTrace();
+		TopicIndicatorLogger logger = null;
+		if(config.getTopicIndicatorLoggingFormat(LDAConfiguration.TOPIC_INDICATOR_LOGGING_FORMAT_DEFAULT).toLowerCase().equals("mallet")) {
+			logger = new MalletTopicIndicatorLogger();
+		} else {
+			logger = new StandardTopicIndicatorLogger();
 		}
+		logger.log(data,config,getCurrentIteration());
 	}
 
 	/**

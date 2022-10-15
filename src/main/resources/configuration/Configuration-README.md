@@ -825,3 +825,18 @@ sampler_class
 iteration_callback_class
 ```
 
+## Topic Indicator Logging Format
+Which format to use when logging topic indicators
+
+mallet: Use the mallet format of '#doc pos typeindex type topic'
+Example:
+    #doc pos typeindex type topic
+    0 0 0 'INSERT 20
+
+ Default: standard - vector of topic indicators
+ Example:
+   0 2 3 2 0 8
+
+```
+topic_indicator_logging_format=mallet (default = "standard")
+```

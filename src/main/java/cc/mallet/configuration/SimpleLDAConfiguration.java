@@ -97,6 +97,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private String iterationCallbackClass = LDAConfiguration.MODEL_CALLBACK_DEFAULT;
 	private String subConfig = "default";
 	private String documentPriorFilename;
+	private String topicIndicatorLoggingFormat = LDAConfiguration.TOPIC_INDICATOR_LOGGING_FORMAT_DEFAULT;
 
 	public SimpleLDAConfiguration(LDALoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -139,7 +140,8 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 			int aliasPoissonThreshold, String fileRegex, Integer hyperparamOptimInterval, boolean symmetricAlpha,
 			double hdpGgamma, int hdpNrStartTopics, int documentSamplerSplitLimit, double hdpKPercentile,
 			boolean logTopicIndicators, String samplerClass, String original_dataset_fn, boolean noPreprocess,
-			boolean saveSampler, String savedSamplerDir, String iterationCallbackClass, String baseOutputDir) {
+			boolean saveSampler, String savedSamplerDir, String iterationCallbackClass, String baseOutputDir,
+			String topicIndicatorLoggingFormat) {
 		super();
 		this.logUtil = logUtil;
 		this.scheme = scheme;
@@ -218,6 +220,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.savedSamplerDir = savedSamplerDir;
 		this.iterationCallbackClass = iterationCallbackClass;
 		this.baseOutputDirectory = baseOutputDir;
+		this.topicIndicatorLoggingFormat = topicIndicatorLoggingFormat;
 	}
 
 	public void setPrintPhi(boolean printPhi) {
@@ -1367,5 +1370,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	@Override
 	public String getBaseOutputDirectory(String string) {
 		return baseOutputDirectory;
+	}
+
+	public void setTopicIndicatorLoggingFormat(String topicIndicatorLoggingFormat) {
+		this.topicIndicatorLoggingFormat = topicIndicatorLoggingFormat;
+	}
+
+	@Override
+	public String getTopicIndicatorLoggingFormat(String defaultFormat) {
+		return topicIndicatorLoggingFormat;
 	}
 }

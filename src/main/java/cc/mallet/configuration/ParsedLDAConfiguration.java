@@ -598,7 +598,8 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 				saveSampler(false),
 				getSavedSamplerDirectory(LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT),
 				getIterationCallbackClass(LDAConfiguration.MODEL_CALLBACK_DEFAULT),
-				getBaseOutputDirectory(LDAConfiguration.BASE_OUTPUT_DIR_DEFAULT)
+				getBaseOutputDirectory(LDAConfiguration.BASE_OUTPUT_DIR_DEFAULT),
+				getTopicIndicatorLoggingFormat(LDAConfiguration.TOPIC_INDICATOR_LOGGING_FORMAT_DEFAULT)
 				);
 		
 		return conf;
@@ -644,6 +645,12 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 		String dir = getStringProperty("base_out_dir");
 		if(dir != null && dir.endsWith("/")) dir = dir.substring(0,dir.length()-1);
 		return (dir == null) ? defaultDir : dir;
+	}
+
+	@Override
+	public String getTopicIndicatorLoggingFormat(String defaultFormat) {
+		String loggingFormat = getStringProperty("topic_indicator_logging_format");
+		return (loggingFormat == null) ? defaultFormat : loggingFormat;
 	}
 
 }
