@@ -1023,7 +1023,9 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 	protected void logTopicIndicators() {
 		TopicIndicatorLogger logger = null;
-		if(config.getTopicIndicatorLoggingFormat(LDAConfiguration.TOPIC_INDICATOR_LOGGING_FORMAT_DEFAULT).toLowerCase().equals("mallet")) {
+		String topicIndicatorLoggingFormat = 
+			config.getTopicIndicatorLoggingFormat(LDAConfiguration.TOPIC_INDICATOR_LOGGING_FORMAT_DEFAULT);
+		if(topicIndicatorLoggingFormat.toLowerCase().equals("mallet")) {
 			logger = new MalletTopicIndicatorLogger();
 		} else {
 			logger = new StandardTopicIndicatorLogger();

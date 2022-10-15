@@ -25,6 +25,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -1002,19 +1004,25 @@ public class LDAUtils {
 		List<List<Double>> rows = new ArrayList<List<Double>>();
 		File file = new File(filename);
 		FileReader fr = new FileReader(file);
-		BufferedReader br = new BufferedReader(fr);
+		
 		String line;
-		while((line = br.readLine()) != null){
-			List<Double> row = new ArrayList<Double>();
-			String [] ints = line.split(sep);
-			for (int i = 0; i < ints.length; i++) {
-				if(ints[i].trim().length()>0) {
-					row.add(Double.parseDouble(ints[i]));
+
+		NumberFormat format = NumberFormat.getInstance(Locale.getDefault());
+
+		try (BufferedReader br = new BufferedReader(fr);) {
+			while((line = br.readLine()) != null){
+				List<Double> row = new ArrayList<Double>();
+				String [] ints = line.split(sep);
+				for (int i = 0; i < ints.length; i++) {
+					if(ints[i].trim().length()>0) {
+						row.add(format.parse(ints[i]).doubleValue());
+					}
 				}
-			}
-			rows.add(row);
+				rows.add(row);
+			}				
+		} catch (ParseException e) {
+			throw new RuntimeException("Double Matrix contains unparsable numbers. Perhaps there is some problems with the locale...");
 		}
-		br.close();
 		fr.close();
 		double [][] result = new double[rows.size()][];
 		for (int i = 0; i < rows.size(); i++) {
