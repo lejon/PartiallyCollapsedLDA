@@ -2,6 +2,22 @@
 
 ![YourKit](https://www.yourkit.com/images/yklogo.png)
 
+## Features
+
+* Supports priors on words (anchor words) which allows you to anchor words to a topic. 
+* supports gracefully stopping the sampler in mid sampling, and later continuing to sample from the aborted position.
+* Supports logging the topic indicators in every iteration
+* Several implemented samplers including a very fast approximate Polya Urn sampler, an exact sparse sampler (Spalias) and an HDP sampler
+* Supports stopword lists, basic text cleaning (lowercasing, removing numbers)
+* Word occurrence threshods (frequency and TF-IDF)
+* Configuration files with sub-configuratons
+* Suppports exporting stats to import in LDAVis
+* Supports setting initial seed to garantee same starting state
+* Can measure timing of basically all steps and export as tabular list
+* Supports thinning
+* Supports relevance words
+* Supports topic diagnostics
+
 PC-LDA
 =====
 Repo for our Partially Collapsed Parallel LDA implementations described in the articles: 
