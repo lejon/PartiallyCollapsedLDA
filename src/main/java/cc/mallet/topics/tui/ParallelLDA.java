@@ -106,34 +106,23 @@ public class ParallelLDA {
 			LDAConfiguration config = (LDAConfiguration) ConfigFactory.getMainConfiguration(cp);
 			LDALoggingUtils lu = new LoggingUtils();
 
-			String baseDir = config.getBaseOutputDirectory(BASE_DIR);
-			if(baseDir.equals("")) {
-				baseDir = BASE_DIR;
-			} else {
-				if(!baseDir.endsWith("/")) {
-					baseDir += "/";
-				}
-			}
-			
-			String expDir = config.getExperimentOutputDirectory("");
-			if(!expDir.equals("")) {
-				if(!expDir.endsWith("/")) {
-					expDir += "/";
-				}
-			}
-			String logSuitePath = baseDir + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
-			System.out.println("Logging to: " + logSuitePath);
-			lu.checkAndCreateCurrentLogDir(logSuitePath);
-			config.setLoggingUtil(lu);
-
 			String [] configs = config.getSubConfigs();
 			if(configs!=null && configs.length>0) {
 				for(String conf : configs) {
-					lu.checkCreateAndSetSubLogDir(conf);
 					config.activateSubconfig(conf);
+					String logSuitePath = getLogSuitePath(config);
+					System.out.println("Logging to: " + logSuitePath);
+					lu.checkAndCreateCurrentLogDir(logSuitePath);
+					config.setLoggingUtil(lu);		
+					lu.checkCreateAndSetSubLogDir(conf);
 					doIteration(cp, config, lu, conf);
 				}
 			} else {
+				String logSuitePath = getLogSuitePath(config);
+				System.out.println("Logging to: " + logSuitePath);
+				lu.checkAndCreateCurrentLogDir(logSuitePath);
+				config.setLoggingUtil(lu);		
+
 				System.out.println("No subconfigs defined, using 'default'...");
 				String conf = "default";
 				lu.checkCreateAndSetSubLogDir(conf);
@@ -148,6 +137,26 @@ public class ParallelLDA {
 			}
 			normalShutdown = true;
 		}
+	}
+
+	private String getLogSuitePath(LDAConfiguration config) {
+		String baseDir = config.getBaseOutputDirectory(BASE_DIR);
+		if(baseDir.equals("")) {
+			baseDir = BASE_DIR;
+		} else {
+			if(!baseDir.endsWith("/")) {
+				baseDir += "/";
+			}
+		}
+		
+		String expDir = config.getExperimentOutputDirectory("");
+		if(!expDir.equals("")) {
+			if(!expDir.endsWith("/")) {
+				expDir += "/";
+			}
+		}
+		String logSuitePath = baseDir + expDir + "RunSuite" + FileLoggingUtils.getDateStamp();
+		return logSuitePath;
 	}
 
 	void installAbortHandler() {
