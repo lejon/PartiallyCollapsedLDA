@@ -21,15 +21,22 @@ public class MalletTopicIndicatorLogger implements TopicIndicatorLogger {
 		try (FileWriter fw = new FileWriter(z_file, false); 
 		BufferedWriter bw = new BufferedWriter(fw);
 		PrintWriter pw  = new PrintWriter(bw)) {
-			pw.println ("#doc pos typeindex type topic");
+			pw.println ("#doc source pos typeindex type topic");
 			for (int di = 0; di < data.size(); di++) {
 				FeatureSequence fs = (FeatureSequence) data.get(di).instance.getData();
 				LabelSequence topicSequence =
 				(LabelSequence) data.get(di).topicSequence;
+				
+				String source = "NA";
+				if (data.get(di).instance.getSource() != null) {
+					source = data.get(di).instance.getSource().toString();
+				}
+
 				int [] oneDocTopics = topicSequence.getFeatures();
 				for (int si = 0; si < fs.size(); si++) {
 					int type = fs.getIndexAtPosition(si);
 					pw.print(di); pw.print(' ');
+					pw.print(source); pw.print(' ');
 					pw.print(si); pw.print(' ');
 					pw.print(type); pw.print(' ');
 					pw.print(a.lookupObject(type)); pw.print(' ');
