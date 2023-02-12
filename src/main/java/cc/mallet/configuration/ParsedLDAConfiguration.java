@@ -599,7 +599,8 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 				getSavedSamplerDirectory(LDAConfiguration.STORED_SAMPLER_DIR_DEFAULT),
 				getIterationCallbackClass(LDAConfiguration.MODEL_CALLBACK_DEFAULT),
 				getBaseOutputDirectory(LDAConfiguration.BASE_OUTPUT_DIR_DEFAULT),
-				getTopicIndicatorLoggingFormat(LDAConfiguration.TOPIC_INDICATOR_LOGGING_FORMAT_DEFAULT)
+				getTopicIndicatorLoggingFormat(LDAConfiguration.TOPIC_INDICATOR_LOGGING_FORMAT_DEFAULT),
+				showProgressBar(LDAConfiguration.SHOW_PROGRESS_BAR_DEFAULT)
 				);
 		
 		return conf;
@@ -651,6 +652,12 @@ public class ParsedLDAConfiguration extends SubConfig implements Configuration, 
 	public String getTopicIndicatorLoggingFormat(String defaultFormat) {
 		String loggingFormat = getStringProperty("topic_indicator_logging_format");
 		return (loggingFormat == null) ? defaultFormat : loggingFormat;
+	}
+
+	@Override
+	public boolean showProgressBar(boolean defaultVal) {
+		String key = "show_progress_bar";
+		return hasBooleanProperty(key) ? getBooleanProperty(key) : defaultVal;
 	}
 
 }

@@ -75,6 +75,7 @@ import cc.mallet.util.TopicIndicatorLogger;
 import cc.mallet.util.WalkerAliasTable;
 import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntIntProcedure;
+import me.tongfei.progressbar.ProgressBar;
 
 
 public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibbsSampler, LDASamplerWithPhi, LDASamplerContinuable, LDASamplerWithCallback {
@@ -112,7 +113,7 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 	// Matrix M of topic-token assignments
 	// We keep this since we often want fast access to a whole topic
 	protected int [][] topicTypeCountMapping;
-	protected Integer	noTopicBatches;
+	protected Integer	noTopicBatches = 2;
 	protected boolean	debug;
 	private ForkJoinPool documentSamplerPool;
 	private ExecutorService	phiSamplePool;
@@ -645,6 +646,12 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 			System.out.println("Logged topic indicators for iteration: " + getCurrentIteration());
 		}
 
+		boolean show_progress_bar = config.showProgressBar(true);
+
+		ProgressBar pb = null;
+		if(show_progress_bar) {
+			pb = new ProgressBar("Iteration", iterations);
+		}
 		for (int iteration = 1; iteration <= iterations && !abort; iteration++) {
 			currentIteration = iteration;
 			if(hyperparameterOptimizationInterval > 1  && iteration % hyperparameterOptimizationInterval == 0) {
@@ -791,10 +798,15 @@ public class UncollapsedParallelLDA extends ModifiedSimpleLDA implements LDAGibb
 
 			long iterEnd = System.currentTimeMillis();
 			logger.finer("Iteration "+ currentIteration + " took: " + (iterEnd-iterationStart) + " milliseconds...");
+			if(show_progress_bar) {
+				pb.step();
+			}
 		}
 
 		postSample();
-
+		if(show_progress_bar) {
+			pb.close();
+		}
 	}
 
 	/** 

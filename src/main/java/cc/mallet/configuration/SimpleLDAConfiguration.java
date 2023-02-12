@@ -1,7 +1,6 @@
 package cc.mallet.configuration;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -10,14 +9,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import cc.mallet.util.LDALoggingUtils;
 import cc.mallet.util.LDANullLogger;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter @Setter
+@Getter @Setter @EqualsAndHashCode
 //@JsonIgnoreProperties(ignoreUnknown = true)
 public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private static final long serialVersionUID = 1L;
-	@JsonIgnore LDALoggingUtils logUtil = new LDANullLogger();
+	@EqualsAndHashCode.Exclude @JsonIgnore LDALoggingUtils logUtil = new LDANullLogger();
 	private String scheme;
 	private Integer noTopics       = LDAConfiguration.NO_TOPICS_DEFAULT;
 	private Double alpha           = LDAConfiguration.ALPHA_DEFAULT;
@@ -98,6 +98,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	private String subConfig = "default";
 	private String documentPriorFilename;
 	private String topicIndicatorLoggingFormat = LDAConfiguration.TOPIC_INDICATOR_LOGGING_FORMAT_DEFAULT;
+	private boolean show_progress_bar = LDAConfiguration.SHOW_PROGRESS_BAR_DEFAULT;
 
 	public SimpleLDAConfiguration(LDALoggingUtils logUtil, String scheme,
 			Integer noTopics, Double alpha, Double beta, Integer noIters,
@@ -141,7 +142,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 			double hdpGgamma, int hdpNrStartTopics, int documentSamplerSplitLimit, double hdpKPercentile,
 			boolean logTopicIndicators, String samplerClass, String original_dataset_fn, boolean noPreprocess,
 			boolean saveSampler, String savedSamplerDir, String iterationCallbackClass, String baseOutputDir,
-			String topicIndicatorLoggingFormat) {
+			String topicIndicatorLoggingFormat, boolean show_progress_bar) {
 		super();
 		this.logUtil = logUtil;
 		this.scheme = scheme;
@@ -221,6 +222,7 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 		this.iterationCallbackClass = iterationCallbackClass;
 		this.baseOutputDirectory = baseOutputDir;
 		this.topicIndicatorLoggingFormat = topicIndicatorLoggingFormat;
+		this.show_progress_bar = show_progress_bar;
 	}
 
 	public void setPrintPhi(boolean printPhi) {
@@ -970,376 +972,378 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	// we do not want to affect the hashCode
 	// Consider if it is worth pulling in Lombok for this... 
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + aliasPoissonThreshold;
-		result = prime * result + ((alpha == null) ? 0 : alpha.hashCode());
-		result = prime * result + ((beta == null) ? 0 : beta.hashCode());
-		result = prime * result + ((buildingScheme == null) ? 0 : buildingScheme.hashCode());
-		result = prime * result + ((corpusFn == null) ? 0 : corpusFn.hashCode());
-		result = prime * result + ((datasetFilename == null) ? 0 : datasetFilename.hashCode());
-		result = prime * result + (debug ? 1231 : 1237);
-		result = prime * result
-				+ ((dirichletSamplerBuilderClassName == null) ? 0 : dirichletSamplerBuilderClassName.hashCode());
-		result = prime * result + ((docLengthsFilename == null) ? 0 : docLengthsFilename.hashCode());
-		result = prime * result + documentSamplerSplitLimit;
-		result = prime * result + ((documentTopicDiagnosticsOutputFilename == null) ? 0
-				: documentTopicDiagnosticsOutputFilename.hashCode());
-		result = prime * result
-				+ ((documentTopicMeansOutputFilename == null) ? 0 : documentTopicMeansOutputFilename.hashCode());
-		result = prime * result
-				+ ((documentTopicThetaOutputFilename == null) ? 0 : documentTopicThetaOutputFilename.hashCode());
-		result = prime * result + ((experimentOutputDirectory == null) ? 0 : experimentOutputDirectory.hashCode());
-		result = prime * result + ((baseOutputDirectory == null) ? 0 : baseOutputDirectory.hashCode());
-		result = prime * result + ((fileRegex == null) ? 0 : fileRegex.hashCode());
-		result = prime * result + Arrays.hashCode(fixed_split_size_doc);
-		result = prime * result + ((fullPhiPeriod == null) ? 0 : fullPhiPeriod.hashCode());
-		long temp;
-		temp = Double.doubleToLongBits(hdpGgamma);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(hdpKPercentile);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + hdpNrStartTopics;
-		result = prime * result + ((hyperparamOptimInterval == null) ? 0 : hyperparamOptimInterval.hashCode());
-		result = prime * result + instability_period;
-		result = prime * result + (keepConnectingPunctuation ? 1231 : 1237);
-		result = prime * result + (keepNumbers ? 1231 : 1237);
-		result = prime * result + ((lambda == null) ? 0 : lambda.hashCode());
-		result = prime * result + (logDocumentDensity ? 1231 : 1237);
-		result = prime * result + (logPhiDensity ? 1231 : 1237);
-		result = prime * result + (logTokensPerTopic ? 1231 : 1237);
-		result = prime * result + (logTopicIndicators ? 1231 : 1237);
-		result = prime * result + (logTypeTopicDensity ? 1231 : 1237);
-		result = prime * result + maxDocBufferSize;
-		result = prime * result + (measureTiming ? 1231 : 1237);
-		result = prime * result + ((noBatches == null) ? 0 : noBatches.hashCode());
-		result = prime * result + ((noIters == null) ? 0 : noIters.hashCode());
-		result = prime * result + (noPreprocess ? 1231 : 1237);
-		result = prime * result + ((noTopicBatches == null) ? 0 : noTopicBatches.hashCode());
-		result = prime * result + ((noTopics == null) ? 0 : noTopics.hashCode());
-		result = prime * result + nrTopWords;
-		result = prime * result + ((originalDatasetFilename == null) ? 0 : originalDatasetFilename.hashCode());
-		temp = Double.doubleToLongBits(percentageSplitSizeDoc);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		temp = Double.doubleToLongBits(percentageSplitSizeTopic);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
-		result = prime * result + phiBurnIn;
-		result = prime * result + phiMeanThinDefault;
-		result = prime * result + ((phiMeansOutputFilename == null) ? 0 : phiMeansOutputFilename.hashCode());
-		result = prime * result + (printPhi ? 1231 : 1237);
-		result = prime * result + ((rareThreshold == null) ? 0 : rareThreshold.hashCode());
-		result = prime * result + resultSetSize;
-		result = prime * result + ((samplerClass == null) ? 0 : samplerClass.hashCode());
-		result = prime * result + (saveCorpus ? 1231 : 1237);
-		result = prime * result + (saveDocLengths ? 1231 : 1237);
-		result = prime * result + (saveDocumentTopicDiagnostics ? 1231 : 1237);
-		result = prime * result + (saveDocumentTopicMeans ? 1231 : 1237);
-		result = prime * result + (saveDocumentTopicTheta ? 1231 : 1237);
-		result = prime * result + (savePhi ? 1231 : 1237);
-		result = prime * result + (saveSampler ? 1231 : 1237);
-		result = prime * result + (saveTermFrequencies ? 1231 : 1237);
-		result = prime * result + (saveVocabulary ? 1231 : 1237);
-		result = prime * result + ((savedSamplerDir == null) ? 0 : savedSamplerDir.hashCode());
-		result = prime * result + ((scheme == null) ? 0 : scheme.hashCode());
-		result = prime * result + ((seed == null) ? 0 : seed.hashCode());
-		result = prime * result + skipStep;
-		result = prime * result + ((startDiagnostic == null) ? 0 : startDiagnostic.hashCode());
-		result = prime * result + ((stoplistFilename == null) ? 0 : stoplistFilename.hashCode());
-		result = prime * result + (symmetricAlpha ? 1231 : 1237);
-		result = prime * result + ((termFrequencyFilename == null) ? 0 : termFrequencyFilename.hashCode());
-		result = prime * result + ((testDatasetFilename == null) ? 0 : testDatasetFilename.hashCode());
-		result = prime * result + ((tfIdfThreshold == null) ? 0 : tfIdfThreshold.hashCode());
-		result = prime * result + ((topTokensToSample == null) ? 0 : topTokensToSample.hashCode());
-		result = prime * result + ((topicInterval == null) ? 0 : topicInterval.hashCode());
-		result = prime * result + ((topicPriorFilename == null) ? 0 : topicPriorFilename.hashCode());
-		result = prime * result + ((documentPriorFilename == null) ? 0 : documentPriorFilename.hashCode());
-		result = prime * result + ((topic_batch_building_scheme == null) ? 0 : topic_batch_building_scheme.hashCode());
-		result = prime * result + ((topic_building_scheme == null) ? 0 : topic_building_scheme.hashCode());
-		result = prime * result + ((vocabularyFilename == null) ? 0 : vocabularyFilename.hashCode());
-		return result;
-	}
+	// Since we now have Lombok, it is left to handle this mess! :)
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SimpleLDAConfiguration other = (SimpleLDAConfiguration) obj;
-		if (aliasPoissonThreshold != other.aliasPoissonThreshold)
-			return false;
-		if (alpha == null) {
-			if (other.alpha != null)
-				return false;
-		} else if (!alpha.equals(other.alpha))
-			return false;
-		if (beta == null) {
-			if (other.beta != null)
-				return false;
-		} else if (!beta.equals(other.beta))
-			return false;
-		if (buildingScheme == null) {
-			if (other.buildingScheme != null)
-				return false;
-		} else if (!buildingScheme.equals(other.buildingScheme))
-			return false;
-		if (corpusFn == null) {
-			if (other.corpusFn != null)
-				return false;
-		} else if (!corpusFn.equals(other.corpusFn))
-			return false;
-		if (datasetFilename == null) {
-			if (other.datasetFilename != null)
-				return false;
-		} else if (!datasetFilename.equals(other.datasetFilename))
-			return false;
-		if (debug != other.debug)
-			return false;
-		if (dirichletSamplerBuilderClassName == null) {
-			if (other.dirichletSamplerBuilderClassName != null)
-				return false;
-		} else if (!dirichletSamplerBuilderClassName.equals(other.dirichletSamplerBuilderClassName))
-			return false;
-		if (docLengthsFilename == null) {
-			if (other.docLengthsFilename != null)
-				return false;
-		} else if (!docLengthsFilename.equals(other.docLengthsFilename))
-			return false;
-		if (documentSamplerSplitLimit != other.documentSamplerSplitLimit)
-			return false;
-		if (documentTopicDiagnosticsOutputFilename == null) {
-			if (other.documentTopicDiagnosticsOutputFilename != null)
-				return false;
-		} else if (!documentTopicDiagnosticsOutputFilename.equals(other.documentTopicDiagnosticsOutputFilename))
-			return false;
-		if (documentTopicMeansOutputFilename == null) {
-			if (other.documentTopicMeansOutputFilename != null)
-				return false;
-		} else if (!documentTopicMeansOutputFilename.equals(other.documentTopicMeansOutputFilename))
-			return false;
-		if (documentTopicThetaOutputFilename == null) {
-			if (other.documentTopicThetaOutputFilename != null)
-				return false;
-		} else if (!documentTopicThetaOutputFilename.equals(other.documentTopicThetaOutputFilename))
-			return false;
-		if (experimentOutputDirectory == null) {
-			if (other.experimentOutputDirectory != null)
-				return false;
-		}
-		if (baseOutputDirectory == null) {
-			if (other.baseOutputDirectory != null)
-				return false;
-		} else if (!experimentOutputDirectory.equals(other.experimentOutputDirectory))
-			return false;
-		if (fileRegex == null) {
-			if (other.fileRegex != null)
-				return false;
-		} else if (!fileRegex.equals(other.fileRegex))
-			return false;
-		if (!Arrays.equals(fixed_split_size_doc, other.fixed_split_size_doc))
-			return false;
-		if (fullPhiPeriod == null) {
-			if (other.fullPhiPeriod != null)
-				return false;
-		} else if (!fullPhiPeriod.equals(other.fullPhiPeriod))
-			return false;
-		if (Double.doubleToLongBits(hdpGgamma) != Double.doubleToLongBits(other.hdpGgamma))
-			return false;
-		if (Double.doubleToLongBits(hdpKPercentile) != Double.doubleToLongBits(other.hdpKPercentile))
-			return false;
-		if (hdpNrStartTopics != other.hdpNrStartTopics)
-			return false;
-		if (hyperparamOptimInterval == null) {
-			if (other.hyperparamOptimInterval != null)
-				return false;
-		} else if (!hyperparamOptimInterval.equals(other.hyperparamOptimInterval))
-			return false;
-		if (instability_period != other.instability_period)
-			return false;
-		if (keepConnectingPunctuation != other.keepConnectingPunctuation)
-			return false;
-		if (keepNumbers != other.keepNumbers)
-			return false;
-		if (lambda == null) {
-			if (other.lambda != null)
-				return false;
-		} else if (!lambda.equals(other.lambda))
-			return false;
-		if (logDocumentDensity != other.logDocumentDensity)
-			return false;
-		if (logPhiDensity != other.logPhiDensity)
-			return false;
-		if (logTokensPerTopic != other.logTokensPerTopic)
-			return false;
-		if (logTopicIndicators != other.logTopicIndicators)
-			return false;
-		if (logTypeTopicDensity != other.logTypeTopicDensity)
-			return false;
-		if (maxDocBufferSize != other.maxDocBufferSize)
-			return false;
-		if (measureTiming != other.measureTiming)
-			return false;
-		if (noBatches == null) {
-			if (other.noBatches != null)
-				return false;
-		} else if (!noBatches.equals(other.noBatches))
-			return false;
-		if (noIters == null) {
-			if (other.noIters != null)
-				return false;
-		} else if (!noIters.equals(other.noIters))
-			return false;
-		if (noPreprocess != other.noPreprocess)
-			return false;
-		if (noTopicBatches == null) {
-			if (other.noTopicBatches != null)
-				return false;
-		} else if (!noTopicBatches.equals(other.noTopicBatches))
-			return false;
-		if (noTopics == null) {
-			if (other.noTopics != null)
-				return false;
-		} else if (!noTopics.equals(other.noTopics))
-			return false;
-		if (nrTopWords != other.nrTopWords)
-			return false;
-		if (originalDatasetFilename == null) {
-			if (other.originalDatasetFilename != null)
-				return false;
-		} else if (!originalDatasetFilename.equals(other.originalDatasetFilename))
-			return false;
-		if (Double.doubleToLongBits(percentageSplitSizeDoc) != Double
-				.doubleToLongBits(other.percentageSplitSizeDoc))
-			return false;
-		if (Double.doubleToLongBits(percentageSplitSizeTopic) != Double
-				.doubleToLongBits(other.percentageSplitSizeTopic))
-			return false;
-		if (phiBurnIn != other.phiBurnIn)
-			return false;
-		if (phiMeanThinDefault != other.phiMeanThinDefault)
-			return false;
-		if (phiMeansOutputFilename == null) {
-			if (other.phiMeansOutputFilename != null)
-				return false;
-		} else if (!phiMeansOutputFilename.equals(other.phiMeansOutputFilename))
-			return false;
-		if (printPhi != other.printPhi)
-			return false;
-		if (rareThreshold == null) {
-			if (other.rareThreshold != null)
-				return false;
-		} else if (!rareThreshold.equals(other.rareThreshold))
-			return false;
-		if (resultSetSize != other.resultSetSize)
-			return false;
-		if (samplerClass == null) {
-			if (other.samplerClass != null)
-				return false;
-		} else if (!samplerClass.equals(other.samplerClass))
-			return false;
-		if (saveCorpus != other.saveCorpus)
-			return false;
-		if (saveDocLengths != other.saveDocLengths)
-			return false;
-		if (saveDocumentTopicDiagnostics != other.saveDocumentTopicDiagnostics)
-			return false;
-		if (saveDocumentTopicMeans != other.saveDocumentTopicMeans)
-			return false;
-		if (saveDocumentTopicTheta != other.saveDocumentTopicTheta)
-			return false;
-		if (savePhi != other.savePhi)
-			return false;
-		if (saveSampler != other.saveSampler)
-			return false;
-		if (saveTermFrequencies != other.saveTermFrequencies)
-			return false;
-		if (saveVocabulary != other.saveVocabulary)
-			return false;
-		if (savedSamplerDir == null) {
-			if (other.savedSamplerDir != null)
-				return false;
-		} else if (!savedSamplerDir.equals(other.savedSamplerDir))
-			return false;
-		if (scheme == null) {
-			if (other.scheme != null)
-				return false;
-		} else if (!scheme.equals(other.scheme))
-			return false;
-		if (seed == null) {
-			if (other.seed != null)
-				return false;
-		} else if (!seed.equals(other.seed))
-			return false;
-		if (skipStep != other.skipStep)
-			return false;
-		if (startDiagnostic == null) {
-			if (other.startDiagnostic != null)
-				return false;
-		} else if (!startDiagnostic.equals(other.startDiagnostic))
-			return false;
-		if (stoplistFilename == null) {
-			if (other.stoplistFilename != null)
-				return false;
-		} else if (!stoplistFilename.equals(other.stoplistFilename))
-			return false;
-		if (symmetricAlpha != other.symmetricAlpha)
-			return false;
-		if (termFrequencyFilename == null) {
-			if (other.termFrequencyFilename != null)
-				return false;
-		} else if (!termFrequencyFilename.equals(other.termFrequencyFilename))
-			return false;
-		if (testDatasetFilename == null) {
-			if (other.testDatasetFilename != null)
-				return false;
-		} else if (!testDatasetFilename.equals(other.testDatasetFilename))
-			return false;
-		if (tfIdfThreshold == null) {
-			if (other.tfIdfThreshold != null)
-				return false;
-		} else if (!tfIdfThreshold.equals(other.tfIdfThreshold))
-			return false;
-		if (topTokensToSample == null) {
-			if (other.topTokensToSample != null)
-				return false;
-		} else if (!topTokensToSample.equals(other.topTokensToSample))
-			return false;
-		if (topicInterval == null) {
-			if (other.topicInterval != null)
-				return false;
-		} else if (!topicInterval.equals(other.topicInterval))
-			return false;
-		if (topicPriorFilename == null) {
-			if (other.topicPriorFilename != null)
-				return false;
-		} else if (!topicPriorFilename.equals(other.topicPriorFilename))
-			return false;
-		if (documentPriorFilename == null) {
-			if (other.documentPriorFilename != null)
-				return false;
-		} else if (!documentPriorFilename.equals(other.documentPriorFilename))
-			return false;
-		if (topic_batch_building_scheme == null) {
-			if (other.topic_batch_building_scheme != null)
-				return false;
-		} else if (!topic_batch_building_scheme.equals(other.topic_batch_building_scheme))
-			return false;
-		if (topic_building_scheme == null) {
-			if (other.topic_building_scheme != null)
-				return false;
-		} else if (!topic_building_scheme.equals(other.topic_building_scheme))
-			return false;
-		if (vocabularyFilename == null) {
-			if (other.vocabularyFilename != null)
-				return false;
-		} else if (!vocabularyFilename.equals(other.vocabularyFilename))
-			return false;
-		return true;
-	}
+	// @Override
+	// public int hashCode() {
+	// 	final int prime = 31;
+	// 	int result = 1;
+	// 	result = prime * result + aliasPoissonThreshold;
+	// 	result = prime * result + ((alpha == null) ? 0 : alpha.hashCode());
+	// 	result = prime * result + ((beta == null) ? 0 : beta.hashCode());
+	// 	result = prime * result + ((buildingScheme == null) ? 0 : buildingScheme.hashCode());
+	// 	result = prime * result + ((corpusFn == null) ? 0 : corpusFn.hashCode());
+	// 	result = prime * result + ((datasetFilename == null) ? 0 : datasetFilename.hashCode());
+	// 	result = prime * result + (debug ? 1231 : 1237);
+	// 	result = prime * result
+	// 			+ ((dirichletSamplerBuilderClassName == null) ? 0 : dirichletSamplerBuilderClassName.hashCode());
+	// 	result = prime * result + ((docLengthsFilename == null) ? 0 : docLengthsFilename.hashCode());
+	// 	result = prime * result + documentSamplerSplitLimit;
+	// 	result = prime * result + ((documentTopicDiagnosticsOutputFilename == null) ? 0
+	// 			: documentTopicDiagnosticsOutputFilename.hashCode());
+	// 	result = prime * result
+	// 			+ ((documentTopicMeansOutputFilename == null) ? 0 : documentTopicMeansOutputFilename.hashCode());
+	// 	result = prime * result
+	// 			+ ((documentTopicThetaOutputFilename == null) ? 0 : documentTopicThetaOutputFilename.hashCode());
+	// 	result = prime * result + ((experimentOutputDirectory == null) ? 0 : experimentOutputDirectory.hashCode());
+	// 	result = prime * result + ((baseOutputDirectory == null) ? 0 : baseOutputDirectory.hashCode());
+	// 	result = prime * result + ((fileRegex == null) ? 0 : fileRegex.hashCode());
+	// 	result = prime * result + Arrays.hashCode(fixed_split_size_doc);
+	// 	result = prime * result + ((fullPhiPeriod == null) ? 0 : fullPhiPeriod.hashCode());
+	// 	long temp;
+	// 	temp = Double.doubleToLongBits(hdpGgamma);
+	// 	result = prime * result + (int) (temp ^ (temp >>> 32));
+	// 	temp = Double.doubleToLongBits(hdpKPercentile);
+	// 	result = prime * result + (int) (temp ^ (temp >>> 32));
+	// 	result = prime * result + hdpNrStartTopics;
+	// 	result = prime * result + ((hyperparamOptimInterval == null) ? 0 : hyperparamOptimInterval.hashCode());
+	// 	result = prime * result + instability_period;
+	// 	result = prime * result + (keepConnectingPunctuation ? 1231 : 1237);
+	// 	result = prime * result + (keepNumbers ? 1231 : 1237);
+	// 	result = prime * result + ((lambda == null) ? 0 : lambda.hashCode());
+	// 	result = prime * result + (logDocumentDensity ? 1231 : 1237);
+	// 	result = prime * result + (logPhiDensity ? 1231 : 1237);
+	// 	result = prime * result + (logTokensPerTopic ? 1231 : 1237);
+	// 	result = prime * result + (logTopicIndicators ? 1231 : 1237);
+	// 	result = prime * result + (logTypeTopicDensity ? 1231 : 1237);
+	// 	result = prime * result + maxDocBufferSize;
+	// 	result = prime * result + (measureTiming ? 1231 : 1237);
+	// 	result = prime * result + ((noBatches == null) ? 0 : noBatches.hashCode());
+	// 	result = prime * result + ((noIters == null) ? 0 : noIters.hashCode());
+	// 	result = prime * result + (noPreprocess ? 1231 : 1237);
+	// 	result = prime * result + ((noTopicBatches == null) ? 0 : noTopicBatches.hashCode());
+	// 	result = prime * result + ((noTopics == null) ? 0 : noTopics.hashCode());
+	// 	result = prime * result + nrTopWords;
+	// 	result = prime * result + ((originalDatasetFilename == null) ? 0 : originalDatasetFilename.hashCode());
+	// 	temp = Double.doubleToLongBits(percentageSplitSizeDoc);
+	// 	result = prime * result + (int) (temp ^ (temp >>> 32));
+	// 	temp = Double.doubleToLongBits(percentageSplitSizeTopic);
+	// 	result = prime * result + (int) (temp ^ (temp >>> 32));
+	// 	result = prime * result + phiBurnIn;
+	// 	result = prime * result + phiMeanThinDefault;
+	// 	result = prime * result + ((phiMeansOutputFilename == null) ? 0 : phiMeansOutputFilename.hashCode());
+	// 	result = prime * result + (printPhi ? 1231 : 1237);
+	// 	result = prime * result + ((rareThreshold == null) ? 0 : rareThreshold.hashCode());
+	// 	result = prime * result + resultSetSize;
+	// 	result = prime * result + ((samplerClass == null) ? 0 : samplerClass.hashCode());
+	// 	result = prime * result + (saveCorpus ? 1231 : 1237);
+	// 	result = prime * result + (saveDocLengths ? 1231 : 1237);
+	// 	result = prime * result + (saveDocumentTopicDiagnostics ? 1231 : 1237);
+	// 	result = prime * result + (saveDocumentTopicMeans ? 1231 : 1237);
+	// 	result = prime * result + (saveDocumentTopicTheta ? 1231 : 1237);
+	// 	result = prime * result + (savePhi ? 1231 : 1237);
+	// 	result = prime * result + (saveSampler ? 1231 : 1237);
+	// 	result = prime * result + (saveTermFrequencies ? 1231 : 1237);
+	// 	result = prime * result + (saveVocabulary ? 1231 : 1237);
+	// 	result = prime * result + ((savedSamplerDir == null) ? 0 : savedSamplerDir.hashCode());
+	// 	result = prime * result + ((scheme == null) ? 0 : scheme.hashCode());
+	// 	result = prime * result + ((seed == null) ? 0 : seed.hashCode());
+	// 	result = prime * result + skipStep;
+	// 	result = prime * result + ((startDiagnostic == null) ? 0 : startDiagnostic.hashCode());
+	// 	result = prime * result + ((stoplistFilename == null) ? 0 : stoplistFilename.hashCode());
+	// 	result = prime * result + (symmetricAlpha ? 1231 : 1237);
+	// 	result = prime * result + ((termFrequencyFilename == null) ? 0 : termFrequencyFilename.hashCode());
+	// 	result = prime * result + ((testDatasetFilename == null) ? 0 : testDatasetFilename.hashCode());
+	// 	result = prime * result + ((tfIdfThreshold == null) ? 0 : tfIdfThreshold.hashCode());
+	// 	result = prime * result + ((topTokensToSample == null) ? 0 : topTokensToSample.hashCode());
+	// 	result = prime * result + ((topicInterval == null) ? 0 : topicInterval.hashCode());
+	// 	result = prime * result + ((topicPriorFilename == null) ? 0 : topicPriorFilename.hashCode());
+	// 	result = prime * result + ((documentPriorFilename == null) ? 0 : documentPriorFilename.hashCode());
+	// 	result = prime * result + ((topic_batch_building_scheme == null) ? 0 : topic_batch_building_scheme.hashCode());
+	// 	result = prime * result + ((topic_building_scheme == null) ? 0 : topic_building_scheme.hashCode());
+	// 	result = prime * result + ((vocabularyFilename == null) ? 0 : vocabularyFilename.hashCode());
+	// 	return result;
+	// }
+
+	// @Override
+	// public boolean equals(Object obj) {
+	// 	if (this == obj)
+	// 		return true;
+	// 	if (obj == null)
+	// 		return false;
+	// 	if (getClass() != obj.getClass())
+	// 		return false;
+	// 	SimpleLDAConfiguration other = (SimpleLDAConfiguration) obj;
+	// 	if (aliasPoissonThreshold != other.aliasPoissonThreshold)
+	// 		return false;
+	// 	if (alpha == null) {
+	// 		if (other.alpha != null)
+	// 			return false;
+	// 	} else if (!alpha.equals(other.alpha))
+	// 		return false;
+	// 	if (beta == null) {
+	// 		if (other.beta != null)
+	// 			return false;
+	// 	} else if (!beta.equals(other.beta))
+	// 		return false;
+	// 	if (buildingScheme == null) {
+	// 		if (other.buildingScheme != null)
+	// 			return false;
+	// 	} else if (!buildingScheme.equals(other.buildingScheme))
+	// 		return false;
+	// 	if (corpusFn == null) {
+	// 		if (other.corpusFn != null)
+	// 			return false;
+	// 	} else if (!corpusFn.equals(other.corpusFn))
+	// 		return false;
+	// 	if (datasetFilename == null) {
+	// 		if (other.datasetFilename != null)
+	// 			return false;
+	// 	} else if (!datasetFilename.equals(other.datasetFilename))
+	// 		return false;
+	// 	if (debug != other.debug)
+	// 		return false;
+	// 	if (dirichletSamplerBuilderClassName == null) {
+	// 		if (other.dirichletSamplerBuilderClassName != null)
+	// 			return false;
+	// 	} else if (!dirichletSamplerBuilderClassName.equals(other.dirichletSamplerBuilderClassName))
+	// 		return false;
+	// 	if (docLengthsFilename == null) {
+	// 		if (other.docLengthsFilename != null)
+	// 			return false;
+	// 	} else if (!docLengthsFilename.equals(other.docLengthsFilename))
+	// 		return false;
+	// 	if (documentSamplerSplitLimit != other.documentSamplerSplitLimit)
+	// 		return false;
+	// 	if (documentTopicDiagnosticsOutputFilename == null) {
+	// 		if (other.documentTopicDiagnosticsOutputFilename != null)
+	// 			return false;
+	// 	} else if (!documentTopicDiagnosticsOutputFilename.equals(other.documentTopicDiagnosticsOutputFilename))
+	// 		return false;
+	// 	if (documentTopicMeansOutputFilename == null) {
+	// 		if (other.documentTopicMeansOutputFilename != null)
+	// 			return false;
+	// 	} else if (!documentTopicMeansOutputFilename.equals(other.documentTopicMeansOutputFilename))
+	// 		return false;
+	// 	if (documentTopicThetaOutputFilename == null) {
+	// 		if (other.documentTopicThetaOutputFilename != null)
+	// 			return false;
+	// 	} else if (!documentTopicThetaOutputFilename.equals(other.documentTopicThetaOutputFilename))
+	// 		return false;
+	// 	if (experimentOutputDirectory == null) {
+	// 		if (other.experimentOutputDirectory != null)
+	// 			return false;
+	// 	}
+	// 	if (baseOutputDirectory == null) {
+	// 		if (other.baseOutputDirectory != null)
+	// 			return false;
+	// 	} else if (!experimentOutputDirectory.equals(other.experimentOutputDirectory))
+	// 		return false;
+	// 	if (fileRegex == null) {
+	// 		if (other.fileRegex != null)
+	// 			return false;
+	// 	} else if (!fileRegex.equals(other.fileRegex))
+	// 		return false;
+	// 	if (!Arrays.equals(fixed_split_size_doc, other.fixed_split_size_doc))
+	// 		return false;
+	// 	if (fullPhiPeriod == null) {
+	// 		if (other.fullPhiPeriod != null)
+	// 			return false;
+	// 	} else if (!fullPhiPeriod.equals(other.fullPhiPeriod))
+	// 		return false;
+	// 	if (Double.doubleToLongBits(hdpGgamma) != Double.doubleToLongBits(other.hdpGgamma))
+	// 		return false;
+	// 	if (Double.doubleToLongBits(hdpKPercentile) != Double.doubleToLongBits(other.hdpKPercentile))
+	// 		return false;
+	// 	if (hdpNrStartTopics != other.hdpNrStartTopics)
+	// 		return false;
+	// 	if (hyperparamOptimInterval == null) {
+	// 		if (other.hyperparamOptimInterval != null)
+	// 			return false;
+	// 	} else if (!hyperparamOptimInterval.equals(other.hyperparamOptimInterval))
+	// 		return false;
+	// 	if (instability_period != other.instability_period)
+	// 		return false;
+	// 	if (keepConnectingPunctuation != other.keepConnectingPunctuation)
+	// 		return false;
+	// 	if (keepNumbers != other.keepNumbers)
+	// 		return false;
+	// 	if (lambda == null) {
+	// 		if (other.lambda != null)
+	// 			return false;
+	// 	} else if (!lambda.equals(other.lambda))
+	// 		return false;
+	// 	if (logDocumentDensity != other.logDocumentDensity)
+	// 		return false;
+	// 	if (logPhiDensity != other.logPhiDensity)
+	// 		return false;
+	// 	if (logTokensPerTopic != other.logTokensPerTopic)
+	// 		return false;
+	// 	if (logTopicIndicators != other.logTopicIndicators)
+	// 		return false;
+	// 	if (logTypeTopicDensity != other.logTypeTopicDensity)
+	// 		return false;
+	// 	if (maxDocBufferSize != other.maxDocBufferSize)
+	// 		return false;
+	// 	if (measureTiming != other.measureTiming)
+	// 		return false;
+	// 	if (noBatches == null) {
+	// 		if (other.noBatches != null)
+	// 			return false;
+	// 	} else if (!noBatches.equals(other.noBatches))
+	// 		return false;
+	// 	if (noIters == null) {
+	// 		if (other.noIters != null)
+	// 			return false;
+	// 	} else if (!noIters.equals(other.noIters))
+	// 		return false;
+	// 	if (noPreprocess != other.noPreprocess)
+	// 		return false;
+	// 	if (noTopicBatches == null) {
+	// 		if (other.noTopicBatches != null)
+	// 			return false;
+	// 	} else if (!noTopicBatches.equals(other.noTopicBatches))
+	// 		return false;
+	// 	if (noTopics == null) {
+	// 		if (other.noTopics != null)
+	// 			return false;
+	// 	} else if (!noTopics.equals(other.noTopics))
+	// 		return false;
+	// 	if (nrTopWords != other.nrTopWords)
+	// 		return false;
+	// 	if (originalDatasetFilename == null) {
+	// 		if (other.originalDatasetFilename != null)
+	// 			return false;
+	// 	} else if (!originalDatasetFilename.equals(other.originalDatasetFilename))
+	// 		return false;
+	// 	if (Double.doubleToLongBits(percentageSplitSizeDoc) != Double
+	// 			.doubleToLongBits(other.percentageSplitSizeDoc))
+	// 		return false;
+	// 	if (Double.doubleToLongBits(percentageSplitSizeTopic) != Double
+	// 			.doubleToLongBits(other.percentageSplitSizeTopic))
+	// 		return false;
+	// 	if (phiBurnIn != other.phiBurnIn)
+	// 		return false;
+	// 	if (phiMeanThinDefault != other.phiMeanThinDefault)
+	// 		return false;
+	// 	if (phiMeansOutputFilename == null) {
+	// 		if (other.phiMeansOutputFilename != null)
+	// 			return false;
+	// 	} else if (!phiMeansOutputFilename.equals(other.phiMeansOutputFilename))
+	// 		return false;
+	// 	if (printPhi != other.printPhi)
+	// 		return false;
+	// 	if (rareThreshold == null) {
+	// 		if (other.rareThreshold != null)
+	// 			return false;
+	// 	} else if (!rareThreshold.equals(other.rareThreshold))
+	// 		return false;
+	// 	if (resultSetSize != other.resultSetSize)
+	// 		return false;
+	// 	if (samplerClass == null) {
+	// 		if (other.samplerClass != null)
+	// 			return false;
+	// 	} else if (!samplerClass.equals(other.samplerClass))
+	// 		return false;
+	// 	if (saveCorpus != other.saveCorpus)
+	// 		return false;
+	// 	if (saveDocLengths != other.saveDocLengths)
+	// 		return false;
+	// 	if (saveDocumentTopicDiagnostics != other.saveDocumentTopicDiagnostics)
+	// 		return false;
+	// 	if (saveDocumentTopicMeans != other.saveDocumentTopicMeans)
+	// 		return false;
+	// 	if (saveDocumentTopicTheta != other.saveDocumentTopicTheta)
+	// 		return false;
+	// 	if (savePhi != other.savePhi)
+	// 		return false;
+	// 	if (saveSampler != other.saveSampler)
+	// 		return false;
+	// 	if (saveTermFrequencies != other.saveTermFrequencies)
+	// 		return false;
+	// 	if (saveVocabulary != other.saveVocabulary)
+	// 		return false;
+	// 	if (savedSamplerDir == null) {
+	// 		if (other.savedSamplerDir != null)
+	// 			return false;
+	// 	} else if (!savedSamplerDir.equals(other.savedSamplerDir))
+	// 		return false;
+	// 	if (scheme == null) {
+	// 		if (other.scheme != null)
+	// 			return false;
+	// 	} else if (!scheme.equals(other.scheme))
+	// 		return false;
+	// 	if (seed == null) {
+	// 		if (other.seed != null)
+	// 			return false;
+	// 	} else if (!seed.equals(other.seed))
+	// 		return false;
+	// 	if (skipStep != other.skipStep)
+	// 		return false;
+	// 	if (startDiagnostic == null) {
+	// 		if (other.startDiagnostic != null)
+	// 			return false;
+	// 	} else if (!startDiagnostic.equals(other.startDiagnostic))
+	// 		return false;
+	// 	if (stoplistFilename == null) {
+	// 		if (other.stoplistFilename != null)
+	// 			return false;
+	// 	} else if (!stoplistFilename.equals(other.stoplistFilename))
+	// 		return false;
+	// 	if (symmetricAlpha != other.symmetricAlpha)
+	// 		return false;
+	// 	if (termFrequencyFilename == null) {
+	// 		if (other.termFrequencyFilename != null)
+	// 			return false;
+	// 	} else if (!termFrequencyFilename.equals(other.termFrequencyFilename))
+	// 		return false;
+	// 	if (testDatasetFilename == null) {
+	// 		if (other.testDatasetFilename != null)
+	// 			return false;
+	// 	} else if (!testDatasetFilename.equals(other.testDatasetFilename))
+	// 		return false;
+	// 	if (tfIdfThreshold == null) {
+	// 		if (other.tfIdfThreshold != null)
+	// 			return false;
+	// 	} else if (!tfIdfThreshold.equals(other.tfIdfThreshold))
+	// 		return false;
+	// 	if (topTokensToSample == null) {
+	// 		if (other.topTokensToSample != null)
+	// 			return false;
+	// 	} else if (!topTokensToSample.equals(other.topTokensToSample))
+	// 		return false;
+	// 	if (topicInterval == null) {
+	// 		if (other.topicInterval != null)
+	// 			return false;
+	// 	} else if (!topicInterval.equals(other.topicInterval))
+	// 		return false;
+	// 	if (topicPriorFilename == null) {
+	// 		if (other.topicPriorFilename != null)
+	// 			return false;
+	// 	} else if (!topicPriorFilename.equals(other.topicPriorFilename))
+	// 		return false;
+	// 	if (documentPriorFilename == null) {
+	// 		if (other.documentPriorFilename != null)
+	// 			return false;
+	// 	} else if (!documentPriorFilename.equals(other.documentPriorFilename))
+	// 		return false;
+	// 	if (topic_batch_building_scheme == null) {
+	// 		if (other.topic_batch_building_scheme != null)
+	// 			return false;
+	// 	} else if (!topic_batch_building_scheme.equals(other.topic_batch_building_scheme))
+	// 		return false;
+	// 	if (topic_building_scheme == null) {
+	// 		if (other.topic_building_scheme != null)
+	// 			return false;
+	// 	} else if (!topic_building_scheme.equals(other.topic_building_scheme))
+	// 		return false;
+	// 	if (vocabularyFilename == null) {
+	// 		if (other.vocabularyFilename != null)
+	// 			return false;
+	// 	} else if (!vocabularyFilename.equals(other.vocabularyFilename))
+	// 		return false;
+	// 	return true;
+	// }
 
 	@Override
 	public String getIterationCallbackClass(String modelCallbackDefault) {
@@ -1379,5 +1383,14 @@ public class SimpleLDAConfiguration implements LDAConfiguration, Serializable {
 	@Override
 	public String getTopicIndicatorLoggingFormat(String defaultFormat) {
 		return topicIndicatorLoggingFormat;
+	}
+
+	public void setShowProgressBar(boolean show_progress_bar) {
+		this.show_progress_bar = show_progress_bar;
+	}
+
+	@Override
+	public boolean showProgressBar(boolean defaultVal) {
+		return show_progress_bar;
 	}
 }

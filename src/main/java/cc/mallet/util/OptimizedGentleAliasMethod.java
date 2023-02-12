@@ -98,7 +98,17 @@ public class OptimizedGentleAliasMethod implements WalkerAliasTable, Serializabl
 		double u = ThreadLocalRandom.current().nextDouble();
 		return generateSample(u);
 	}
-	
+
+	@Override
+	public int [] generateSamples(int nrSamples) {
+		int [] samples = new int[nrSamples];
+		for (int i = 0; i < nrSamples; i++) {
+			double u = ThreadLocalRandom.current().nextDouble();
+			samples[i] = generateSample(u); 
+		}
+		return samples; 
+	}
+
 	@Override
 	public int generateSample(double u) {
 //		int i=random.nextInt(k);

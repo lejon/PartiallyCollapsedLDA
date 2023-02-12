@@ -8,6 +8,8 @@ import java.io.PrintWriter;
 import java.io.Serializable;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -47,7 +49,11 @@ public class LDANullLogger implements LDALoggingUtils, Serializable {
 	public synchronized File getLogDir() {
 		if(currentLogDirf==null) {
 			try {
-				currentLogDirf = File.createTempFile("LDA_", "_NUllLogger");
+				currentLogDirf = Files.createTempDirectory("LDA_NUllLogger").toFile();
+				if(!currentLogDirf.exists()) {
+					Files.createDirectories(
+						Paths.get(currentLogDirf.getAbsolutePath()));
+				}
 				return currentLogDirf;
 			} catch (IOException e) {
 				System.err.println("Could not create temp file: " + e);
@@ -55,7 +61,6 @@ public class LDANullLogger implements LDALoggingUtils, Serializable {
 			return null;
 		}
 		return currentLogDirf;
-
 	}
 
 	@Override

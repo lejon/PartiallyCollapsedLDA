@@ -266,11 +266,11 @@ implements LDASamplerWithPhi, LDASamplerWithTopicPriors, LDASamplerWithDocumentP
 				}
 			}
 		}
-		long elapsedMillis = System.currentTimeMillis();
-		long threadId = Thread.currentThread().getId();
-
-		LDALoggingUtils lu = config.getLoggingUtil();
 		if(measureTimings) {
+			long elapsedMillis = System.currentTimeMillis();
+			long threadId = Thread.currentThread().getId();
+	
+			LDALoggingUtils lu = config.getLoggingUtil();
 			PrintWriter pw = lu.checkCreateAndCreateLogPrinter(
 					lu.getLogDir() + "/timing_data",
 					"thr_" + threadId + "_Phi_sampling.txt");

@@ -79,6 +79,16 @@ public class GentleAliasMethod implements WalkerAliasTable {
 	public int generateSample() {
 		int i=random.nextInt(k); if (ThreadLocalRandom.current().nextDouble()>ps[i]) i=a[i]; return i;
 	}
+	
+	@Override
+	public int [] generateSamples(int nrSamples) {
+		int [] samples = new int[nrSamples];
+		for (int i = 0; i < nrSamples; i++) {
+			double u = ThreadLocalRandom.current().nextDouble();
+			samples[i] = generateSample(u); 
+		}
+		return samples; 
+	}
 
 	@Override
 	public int generateSample(double u) {

@@ -3,7 +3,7 @@ package cc.mallet.util;
 import java.text.DecimalFormat;
 
 public class ArrayStringUtils {
-	static DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0");
+	public static DecimalFormat mydecimalFormat = new DecimalFormat("00.###E0");
 	private static String DEFAULT_TITLE  = "Vector";
 	public static int noDigits = 4;
 	
@@ -257,12 +257,21 @@ public class ArrayStringUtils {
 	}
 
 	public static String formatDouble(double d) {
-		if ( d == 0.0 ) return "<0.0>";
+		if ( d == 0.0 ) {
+			if(d == (long) d)
+				return String.format("%1$3s",(long)d);
+		    else
+				return "<0.0>";
+		}
 		if ( d<0.0001 && d>0 || d > -0.0001 && d < 0) {
 			return mydecimalFormat.format(d);
-		} else {
-			String formatString = "%." + noDigits + "f";
-			return String.format(formatString, d);
+		} else {			
+			if(d == (long) d) {
+		        return String.format("%1$3s",(long)d);
+			}
+		    else {
+		        return String.format("%." + noDigits + "f",d);
+			}
 		}
 	}
 

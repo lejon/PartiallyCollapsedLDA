@@ -842,3 +842,8 @@ Example:
 ```
 topic_indicator_logging_format=mallet (default = "standard")
 ```
+
+## Show Progress Bar
+```
+show_progress_bar = true | false  (default = true)
+```

@@ -193,7 +193,13 @@ public class SubConfig extends HierarchicalINIConfiguration {
 	
 	public boolean hasBooleanProperty(String key) {
 		String stringProperty = getStringProperty(key);
-		return (stringProperty!=null) && (stringProperty.trim().equalsIgnoreCase("true") || stringProperty.trim().equalsIgnoreCase("yes") || stringProperty.trim().equals("1"));
+		return (stringProperty!=null) && 
+			(stringProperty.trim().equalsIgnoreCase("true") 
+			|| stringProperty.trim().equalsIgnoreCase("yes") 
+			|| stringProperty.trim().equals("1")
+			|| stringProperty.trim().equalsIgnoreCase("false") 
+			|| stringProperty.trim().equalsIgnoreCase("no") 
+			|| stringProperty.trim().equals("0"));
 	}
 
 	public boolean getBooleanProperty(String key) {

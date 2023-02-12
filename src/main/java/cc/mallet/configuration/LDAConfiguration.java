@@ -47,6 +47,7 @@ public interface LDAConfiguration {
 	public static final String MODEL_CALLBACK_DEFAULT = null;
 	public static final String BASE_OUTPUT_DIR_DEFAULT = "Runs";
 	public static final String TOPIC_INDICATOR_LOGGING_FORMAT_DEFAULT = "standard";
+    public static final boolean SHOW_PROGRESS_BAR_DEFAULT = true;
 
 	public LDALoggingUtils getLoggingUtil();
 
@@ -235,4 +236,6 @@ public interface LDAConfiguration {
 	public String getBaseOutputDirectory(String string);
 
     public String getTopicIndicatorLoggingFormat(String defaultFormat);
+
+    public boolean showProgressBar(boolean defaultVal);
 }

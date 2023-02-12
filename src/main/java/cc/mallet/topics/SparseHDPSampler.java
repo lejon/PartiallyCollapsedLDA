@@ -12,6 +12,7 @@ public abstract class SparseHDPSampler extends PolyaUrnSpaliasLDA implements HDP
 	
 	List<Integer> activeTopicHistory = new ArrayList<Integer>();
 	List<Integer> activeTopicInDataHistory = new ArrayList<Integer>();
+	// Used to track the number of times a topic occurs in the dataset
 	int [] topicOcurrenceCount;
 
 	public SparseHDPSampler(LDAConfiguration config) {
