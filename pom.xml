@@ -106,7 +106,8 @@
 	<!-- v9.1.0: Reverted back to default loading using file (instead of streams), fixed various small issues -->
 	<!-- v9.2.0: Added support for MALLET format in topic indicator logging -->
 	<!-- v9.2.1: Added support source for MALLET format in topic indicator logging, fixed base_output_dir bug  -->
-	<version>9.2.1</version>
+	<!-- v9.2.2: Progress bar  -->
+	<version>9.2.2</version>
 
 
 	<name>Partially Collapsed Parallel LDA</name>
