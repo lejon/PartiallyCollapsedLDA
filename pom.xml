@@ -129,7 +129,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>[24.1.1,)</version>
+			<version>33.4.8-jre</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-cli</groupId>
@@ -159,7 +159,7 @@
 		<dependency>
 		  <groupId>com.fasterxml.jackson.core</groupId>
 		  <artifactId>jackson-databind</artifactId>
-		  <version>2.12.6.1</version>
+		  <version>2.13.4.2</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
 		<dependency>
@@ -172,7 +172,7 @@
 		<dependency>
 			<groupId>org.ejml</groupId>
 			<artifactId>ejml-all</artifactId>
-			<version>0.41</version>
+			<version>0.41.1</version>
 		</dependency>
 		<dependency>
       		<groupId>me.tongfei</groupId>
